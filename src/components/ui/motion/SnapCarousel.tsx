@@ -71,19 +71,22 @@ function Dot({ active, color, track, label, onPress }: { active: boolean; color:
   const [scale] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
+    // width is a layout prop → must stay on the JS driver
     Animated.timing(width, { toValue: active ? 20 : 6, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
   }, [active, width]);
 
   useEffect(() => {
+    // scale lives on its own Animated.View so it can use the native driver independently
+    // On web, nativeDriver is false to avoid the collapsable DOM-attribute warning
     if (!active) {
       scale.stopAnimation();
-      Animated.timing(scale, { toValue: 1, duration: 150, useNativeDriver: true }).start();
+      Animated.timing(scale, { toValue: 1, duration: 150, useNativeDriver: nativeDriver }).start();
       return;
     }
     const pulse = Animated.loop(
       Animated.sequence([
-        Animated.timing(scale, { toValue: 1.35, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(scale, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1.35, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: nativeDriver }),
+        Animated.timing(scale, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: nativeDriver }),
       ]),
     );
     pulse.start();
@@ -92,7 +95,10 @@ function Dot({ active, color, track, label, onPress }: { active: boolean; color:
 
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={label} hitSlop={8} onPress={onPress}>
-      <Animated.View style={{ width, height: 6, borderRadius: 3, backgroundColor: active ? color : track, transform: [{ scaleY: scale }] }} />
+      {/* Two separate Animated.Views so width (JS driver) and scaleY (native driver) never share a node */}
+      <Animated.View style={{ transform: [{ scaleY: scale }] }}>
+        <Animated.View style={{ width, height: 6, borderRadius: 3, backgroundColor: active ? color : track }} />
+      </Animated.View>
     </Pressable>
   );
 }
