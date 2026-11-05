@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Admin Login</title>
+  <link rel="stylesheet" href="login.css" />
+  <script src="config.js"></script>
+  <style>
+    .remember-row {
+      margin-bottom: 16px;
+    }
+    .remember-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #9ca3af;
+      user-select: none;
+    }
+    .remember-label input[type="checkbox"] { display: none; }
+    .remember-box {
+      width: 18px; height: 18px; border-radius: 5px;
+      border: 2px solid #30363d;
+      background: #21262d;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: border-color 0.15s, background 0.15s;
+    }
+    .remember-label input:checked + .remember-box {
+      background: #58a6ff;
+      border-color: #58a6ff;
+    }
+    .remember-label input:checked + .remember-box::after {
+      content: '';
+      width: 5px; height: 9px;
+      border: 2px solid #fff;
+      border-top: none; border-left: none;
+      transform: rotate(45deg) translateY(-1px);
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-bg">
+    <div class="login-card">
+
+      <!-- Logo -->
+      <div class="login-logo">
+        <img src="clockyn-logo.png" alt="Clockyn" class="logo-img" />
+        <div>
+          <div class="logo-name">Clockyn</div>
+          <div class="logo-sub">Admin Portal</div>
+        </div>
+      </div>
+
+      <h2 class="login-title">Welcome back</h2>
+      <p class="login-desc">Sign in with your email</p>
+
+      <!-- Form -->
+      <form id="loginForm" onsubmit="handleSubmit(event)">
+
+        <div class="form-group" id="emailGroup">
+          <label>Email Address</label>
+          <div class="input-wrap">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="email" placeholder="Enter your email address" autocomplete="email" required />
+          </div>
+        </div>
+
+        <div class="form-group" id="otpGroup" style="display:none;">
+          <label>Enter OTP</label>
+          <div class="input-wrap otp-wrap" id="otpBoxes">
+            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+          </div>
+          <input type="hidden" id="otp" />
+        </div>
+
+        <div class="remember-row">
+          <label class="remember-label">
+            <input type="checkbox" id="rememberMe" />
+            <span class="remember-box"></span>
+            Remember me
+          </label>
+        </div>
+
+        <div id="errorMsg" class="error-msg" style="display:none;"></div>
+
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span id="btnText">Send OTP</span>
+          <span id="btnLoader" style="display:none;">⏳ Please wait...</span>
+        </button>
+
+        <button type="button" class="btn-login" id="backBtn" style="display:none; margin-top:8px; background:#6c757d;" onclick="resetToEmail()">
+          ← Change Email
+        </button>
+
+      </form>
+
+      <div class="login-footer">
+        <span>© 2025 Clockyn. All rights reserved.</span>
+      </div>
+
+    </div>
+
+    <!-- Background decoration -->
+    <div class="bg-circle c1"></div>
+    <div class="bg-circle c2"></div>
+    <div class="bg-circle c3"></div>
+  </div>
+
+  <script>
+    let step = 'email';
+
+    // ── OTP boxes: auto-advance, backspace, paste ──
+    (function () {
+      const boxes = document.querySelectorAll('.otp-box');
+
+      boxes.forEach(function (box, i) {
+        box.addEventListener('input', function () {
+          this.value = this.value.replace(/[^0-9]/g, '').slice(-1);
+          syncOtpHidden();
+          if (this.value && i < boxes.length - 1) boxes[i + 1].focus();
+        });
+
+        box.addEventListener('keydown', function (e) {
+          if (e.key === 'Backspace') {
+            if (this.value) {
+              this.value = '';
+              syncOtpHidden();
+            } else if (i > 0) {
+              boxes[i - 1].value = '';
+              boxes[i - 1].focus();
+              syncOtpHidden();
+            }
+            e.preventDefault();
+          }
+        });
+
+        box.addEventListener('focus', function () {
+          this.select();
+        });
+      });
+
+      // Handle paste on any box
+      document.getElementById('otpBoxes').addEventListener('paste', function (e) {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+        pasted.split('').forEach(function (ch, i) {
+          if (boxes[i]) boxes[i].value = ch;
+        });
+        const next = Math.min(pasted.length, boxes.length - 1);
+        boxes[next].focus();
+        syncOtpHidden();
+      });
+
+      function syncOtpHidden() {
+        document.getElementById('otp').value = Array.from(boxes).map(b => b.value).join('');
+      }
+    })();
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      if (step === 'email') await sendOTP();
+      else await verifyOTP();
+    }
+
+    async function sendOTP() {
+      const email     = document.getElementById('email').value.trim().toLowerCase();
+      const errorMsg  = document.getElementById('errorMsg');
+      const btnText   = document.getElementById('btnText');
+      const btnLoader = document.getElementById('btnLoader');
+
+      if (!email || !email.includes('@') || !email.includes('.')) {
+        showError('Please enter a valid email address.');
+        return;
+      }
+
+      btnText.style.display = 'none';
+      btnLoader.style.display = 'inline';
+      errorMsg.style.display = 'none';
+
+      try {
+        const res  = await fetch(API_BASE + '/auth/admin-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          step = 'otp';
+          document.getElementById('emailGroup').style.display = 'none';
+          document.getElementById('otpGroup').style.display = 'block';
+          document.getElementById('backBtn').style.display = 'block';
+          document.getElementById('otp').required = true;
+          document.querySelectorAll('.otp-box')[0].focus();
+          document.getElementById('btnText').textContent = 'Verify OTP';
+        } else {
+          showError(data.detail || data.message || 'Email not found.');
+        }
+      } catch (err) {
+        showError('Network error. Please try again.');
+      } finally {
+        btnText.style.display = 'inline';
+        btnLoader.style.display = 'none';
+      }
+    }
+
+    async function verifyOTP() {
+      const email     = document.getElementById('email').value.trim().toLowerCase();
+      const otp       = document.getElementById('otp').value.trim();
+      const btnText   = document.getElementById('btnText');
+      const btnLoader = document.getElementById('btnLoader');
+
+      if (otp.length !== 6) {
+        showError('Please enter all 6 digits of the OTP.');
+        return;
+      }
+
+      btnText.style.display = 'none';
+      btnLoader.style.display = 'inline';
+      document.getElementById('errorMsg').style.display = 'none';
+
+      try {
+        const res  = await fetch(API_BASE + '/auth/admin-login/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, otp })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const remember = document.getElementById('rememberMe').checked;
+          localStorage.setItem('admin_email', data.email);
+          localStorage.setItem('gen_admin_id', data.email);
+          localStorage.setItem('gen_admin_role', data.role_id);
+          localStorage.setItem('session_last_activity', Date.now().toString());
+          localStorage.setItem('remember_me', remember ? '1' : '0');
+          window.location.href = 'dashboard.html';
+        } else {
+          showError(data.detail || 'Invalid OTP.');
+        }
+      } catch (err) {
+        showError('Network error. Please try again.');
+      } finally {
+        btnText.style.display = 'inline';
+        btnLoader.style.display = 'none';
+      }
+    }
+
+    function resetToEmail() {
+      step = 'email';
+      document.getElementById('emailGroup').style.display = 'block';
+      document.getElementById('otpGroup').style.display = 'none';
+      document.getElementById('backBtn').style.display = 'none';
+      document.getElementById('otp').required = false;
+      document.getElementById('otp').value = '';
+      document.querySelectorAll('.otp-box').forEach(b => b.value = '');
+      document.getElementById('btnText').textContent = 'Send OTP';
+      document.getElementById('errorMsg').style.display = 'none';
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = '❌ ' + msg;
+      el.style.display = 'block';
+    }
+
+    window.addEventListener('DOMContentLoaded', function () {
+      const saved = localStorage.getItem('admin_email');
+      if (saved) document.getElementById('email').value = saved;
+      if (localStorage.getItem('remember_me') === '1') {
+        document.getElementById('rememberMe').checked = true;
+      }
+    });
+  </script>
+
+</body>
+</html>

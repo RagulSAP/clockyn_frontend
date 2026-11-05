@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Settings</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    .settings-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .settings-header h1 { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+    .settings-header p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .settings-panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .settings-panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .settings-panel-header h2 { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .settings-empty {
+      min-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 28px;
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0,0,0,0.6);
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      width: min(100%, 420px);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: 0 20px 70px rgba(0,0,0,0.45);
+      overflow: hidden;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .modal-close {
+      width: 32px; height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-tertiary);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--text-primary); background: var(--bg-hover); }
+    .modal-body { padding: 20px; display: grid; gap: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 7px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      height: 40px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 13px;
+      padding: 0 12px;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(88,166,255,0.14);
+    }
+    .form-group select { color-scheme: dark; cursor: pointer; }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 20px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .field-error { color: var(--red); font-size: 12px; min-height: 16px; }
+    .action-btns { display: flex; gap: 6px; }
+    .btn-icon {
+      width: 30px; height: 30px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-tertiary);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-icon:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .btn-icon.danger:hover { background: rgba(248,81,73,0.12); color: var(--red); border-color: var(--red); }
+    @media (max-width: 560px) {
+      .settings-header { align-items: stretch; }
+      .settings-header .btn { justify-content: center; width: 100%; }
+      .modal-footer { flex-direction: column-reverse; }
+      .modal-footer .btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
+      <div class="sidebar-logo-name">Clockyn</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">&#x1F4CA;</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a class="nav-item" href="organizations.html"><span class="nav-icon">&#x1F3E2;</span> Organizations</a>
+      <a class="nav-item" href="users.html"><span class="nav-icon">&#x1F465;</span> Users</a>
+      <a class="nav-item" href="subscriptions.html"><span class="nav-icon">&#x1F4CB;</span> Subscriptions</a>
+      <a class="nav-item" href="payments.html"><span class="nav-icon">&#x1F4B3;</span> Payments</a>
+      <a class="nav-item" href="coupons.html"><span class="nav-icon">&#x1F3AF;</span> Coupons</a>
+      <a class="nav-item" href="suggestions.html"><span class="nav-icon">&#x1F4A1;</span> Suggestions <span class="nav-suggestion-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;"></span></a>
+      <a class="nav-item" href="tickets.html"><span class="nav-icon">&#x1F3AB;</span> Ticketing &amp; Bugs</a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#activity"><span class="nav-icon">&#x1F550;</span> Activity Logs</a>
+      <a class="nav-item active" href="settings.html"><span class="nav-icon">&#x2699;&#xFE0F;</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar" id="sidebar-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-name">Admin</div>
+        <div class="user-role" id="sidebar-role">Administrator</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">&#x23FB;</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+      <span class="topbar-title">Settings</span>
+      <div class="topbar-search">
+        <span>&#x1F50D;</span>
+        <input type="text" placeholder="Search settings..." />
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="icon-btn">&#x1F514;<span class="dot"></span></button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="settings-header">
+        <div>
+          <h1>Settings</h1>
+          <p>Manage admin and staff access.</p>
+        </div>
+        <button type="button" id="add-user-btn" class="btn btn-primary" onclick="openAddUserModal()" style="display:none;">+ Add User</button>
+      </div>
+
+      <!-- My Profile (visible to all, edit name) -->
+      <section class="settings-panel" style="margin-bottom:20px;">
+        <div class="settings-panel-header">
+          <h2>My Profile</h2>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div id="profile-avatar" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;">SA</div>
+            <div style="flex:1;">
+              <div style="font-size:15px;font-weight:600;color:var(--text-primary);" id="profile-name-display">—</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px;" id="profile-role-display">—</div>
+              <div style="font-size:12px;color:var(--blue);margin-top:1px;" id="profile-mobile-display">—</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Display Name</label>
+              <input type="text" id="profile-name-input" placeholder="Enter your name"
+                style="width:100%;height:40px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;padding:0 12px;outline:none;box-sizing:border-box;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+            <button type="button" class="btn btn-primary" onclick="saveProfileName()" style="height:40px;white-space:nowrap;">Save Name</button>
+          </div>
+          <div id="profile-save-msg" style="font-size:12px;min-height:16px;"></div>
+        </div>
+      </section>
+
+      <!-- Users panel (Admin only) -->
+      <section class="settings-panel" id="users-panel">
+        <div class="settings-panel-header">
+          <h2>Users</h2>
+          <span class="count-badge" id="settings-user-count">0 users</span>
+        </div>
+        <div class="table-wrap" id="settings-users-table-wrap" style="display:none;">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th id="actions-th" style="display:none;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="settings-users-body"></tbody>
+          </table>
+        </div>
+        <div class="settings-empty" id="settings-empty">Loading...</div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Add / Edit Modal -->
+  <div class="modal-overlay" id="user-modal" onclick="closeOnOverlay(event)">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <h2 id="modal-title">Add User</h2>
+        <button type="button" class="modal-close" onclick="closeModal()" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="user-name">Name</label>
+          <input type="text" id="user-name" autocomplete="off" placeholder="User name" />
+        </div>
+        <div class="form-group">
+          <label for="user-email">Email</label>
+          <input type="email" id="user-email" autocomplete="off" placeholder="admin@example.com" />
+        </div>
+        <div class="form-group" id="role-group">
+          <label for="user-role">Role</label>
+          <select id="user-role">
+            <option value="1">Super Admin</option>
+            <option value="2" selected>Staff</option>
+          </select>
+        </div>
+        <div class="field-error" id="modal-error"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveUser()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div class="modal-overlay" id="delete-modal" onclick="closeDeleteOnOverlay(event)">
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h2>Delete User</h2>
+        <button type="button" class="modal-close" onclick="closeDeleteModal()" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-secondary);font-size:14px;">Are you sure you want to delete <strong id="delete-email" style="color:var(--text-primary);"></strong>?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const roleId = parseInt(localStorage.getItem('gen_admin_role') || '2', 10);
+    const adminId = localStorage.getItem('admin_email');
+    const isAdmin = roleId === 1;
+
+    let users = [];
+    let editingEmail = null;
+    let deletingEmail = null;
+
+    // Show Add button and Actions column only for role_id=1
+    if (isAdmin) {
+      document.getElementById('add-user-btn').style.display = 'inline-flex';
+      document.getElementById('actions-th').style.display = '';
+    }
+
+    // Sidebar role label
+    document.getElementById('sidebar-role').textContent = isAdmin ? 'Super Admin' : 'Staff';
+
+    function getHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'x-admin-id': adminId || '',
+        'x-role-id': String(roleId)
+      };
+    }
+
+    async function loadUsers() {
+      try {
+        const res = await fetch(API_BASE + '/auth/gen-admin-users', { headers: getHeaders() });
+        const data = await res.json();
+        if (data.success) {
+          users = data.users;
+          renderUsers();
+        }
+      } catch (e) {
+        document.getElementById('settings-empty').textContent = 'Failed to load users.';
+      }
+    }
+
+    function renderUsers() {
+      const tbody = document.getElementById('settings-users-body');
+      const empty = document.getElementById('settings-empty');
+      const wrap = document.getElementById('settings-users-table-wrap');
+      document.getElementById('settings-user-count').textContent = users.length + ' user' + (users.length === 1 ? '' : 's');
+
+      if (!users.length) {
+        wrap.style.display = 'none';
+        empty.style.display = 'flex';
+        empty.textContent = 'No users added yet.';
+        tbody.innerHTML = '';
+        return;
+      }
+
+      wrap.style.display = 'block';
+      empty.style.display = 'none';
+
+      tbody.innerHTML = '';
+      users.forEach(function(u) {
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td');
+        tdName.textContent = u.name || u.user_name || '—';
+        tr.appendChild(tdName);
+
+        const tdPhone = document.createElement('td');
+        tdPhone.className = 'td-primary';
+        tdPhone.textContent = u.email;
+        tr.appendChild(tdPhone);
+
+        const tdRole = document.createElement('td');
+        const badge = document.createElement('span');
+        badge.className = u.role_id === 1 ? 'badge badge-blue' : 'badge badge-green';
+        badge.textContent = u.role_id === 1 ? 'Super Admin' : 'Staff';
+        tdRole.appendChild(badge);
+        tr.appendChild(tdRole);
+
+        if (isAdmin) {
+          const tdActions = document.createElement('td');
+          const actionWrap = document.createElement('div');
+          actionWrap.className = 'action-btns';
+
+          const editBtn = document.createElement('button');
+          editBtn.className = 'btn-icon';
+          editBtn.title = 'Edit';
+          editBtn.innerHTML = '&#9998;';
+          editBtn.addEventListener('click', function() { openEditModal(u.email); });
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'btn-icon danger';
+          delBtn.title = 'Delete';
+          delBtn.innerHTML = '&#x1F5D1;';
+          delBtn.addEventListener('click', function() { openDeleteModal(u.email); });
+
+          actionWrap.appendChild(editBtn);
+          actionWrap.appendChild(delBtn);
+          tdActions.appendChild(actionWrap);
+          tr.appendChild(tdActions);
+        }
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openAddModal() {
+      editingEmail = null;
+      document.getElementById('modal-title').textContent = 'Add User';
+      document.getElementById('user-name').value = '';
+      document.getElementById('user-email').value = '';
+      document.getElementById('user-role').value = '2';
+      document.getElementById('role-group').style.display = '';
+      document.getElementById('modal-error').textContent = '';
+      document.getElementById('user-modal').classList.add('open');
+      setTimeout(() => document.getElementById('user-name').focus(), 0);
+    }
+
+    function openAddUserModal() {
+      openAddModal();
+    }
+
+    function openEditModal(email) {
+      const user = users.find(u => u.email === email);
+      if (!user) return;
+      editingEmail = user.email;
+      document.getElementById('modal-title').textContent = 'Edit User';
+      document.getElementById('user-name').value = user.name || '';
+      document.getElementById('user-email').value = user.email;
+      document.getElementById('user-role').value = String(user.role_id || 2);
+      document.getElementById('role-group').style.display = '';
+      document.getElementById('modal-error').textContent = '';
+      document.getElementById('user-modal').classList.add('open');
+      setTimeout(() => document.getElementById('user-name').focus(), 0);
+    }
+
+    function closeModal() {
+      document.getElementById('user-modal').classList.remove('open');
+      editingEmail = null;
+    }
+
+    function closeOnOverlay(e) {
+      if (e.target.id === 'user-modal') closeModal();
+    }
+
+    async function saveUser() {
+      const name = document.getElementById('user-name').value.trim();
+      const email = document.getElementById('user-email').value.trim().toLowerCase();
+      const role = parseInt(document.getElementById('user-role').value, 10);
+      const errorEl = document.getElementById('modal-error');
+      const saveBtn = document.querySelector('#user-modal .modal-footer .btn-primary');
+      errorEl.textContent = '';
+
+      if (!name) {
+        errorEl.textContent = 'Name is required.';
+        return;
+      }
+      if (!email || !email.includes('@') || !email.includes('.')) {
+        errorEl.textContent = 'Enter a valid email address.';
+        return;
+      }
+
+      const payload = {
+        email: email,
+        name: name,
+        role_id: role,
+        created_by: adminId || ''
+      };
+
+      const method = editingEmail ? 'PUT' : 'POST';
+      const url = API_BASE + '/auth/gen-admin-users' + (editingEmail ? '/' + encodeURIComponent(editingEmail) : '');
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = editingEmail ? 'Saving...' : 'Adding...';
+
+      try {
+        const res = await fetch(url, {
+          method: method,
+          headers: getHeaders(),
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!data.success) {
+          errorEl.textContent = data.detail || data.message || 'Failed to save user.';
+          return;
+        }
+
+        const savedUser = data.user || { email: email, role_id: role, name: name };
+
+        if (editingEmail) {
+          const existing = users.find(u => u.email === editingEmail);
+          if (existing) {
+            existing.name = savedUser.name || name;
+            existing.email = savedUser.email || email;
+            existing.role_id = savedUser.role_id || role;
+          }
+        } else {
+          users.push(savedUser);
+        }
+
+        renderUsers();
+        closeModal();
+      } catch (err) {
+        errorEl.textContent = 'Network error. Please try again.';
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
+      }
+    }
+
+    async function saveProfileName() {
+      var name = document.getElementById('profile-name-input').value.trim();
+      var msg = document.getElementById('profile-save-msg');
+      if (!name) { msg.textContent = 'Name cannot be empty.'; msg.style.color = 'var(--red)'; return; }
+      var email = localStorage.getItem('admin_email');
+      try {
+        var res = await fetch(API_BASE + '/gen-dashboard/me', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, name: name })
+        });
+        var data = await res.json();
+        if (data.success) {
+          msg.textContent = '\u2713 Name updated successfully.';
+          msg.style.color = 'var(--green)';
+          // Update cache and UI
+          var cached = localStorage.getItem('gen_admin_profile');
+          if (cached) {
+            var p = JSON.parse(cached);
+            p.name = name;
+            localStorage.setItem('gen_admin_profile', JSON.stringify(p));
+            populateUserProfile(p);
+          }
+          document.getElementById('profile-name-display').textContent = name;
+          document.getElementById('profile-avatar').textContent = name.trim().split(/\s+/).map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
+        } else {
+          msg.textContent = data.detail || 'Failed to update.';
+          msg.style.color = 'var(--red)';
+        }
+      } catch(e) {
+        msg.textContent = 'Network error. Try again.';
+        msg.style.color = 'var(--red)';
+      }
+      setTimeout(function(){ msg.textContent = ''; }, 3000);
+    }
+
+    // Populate profile section when profile loads
+    document.addEventListener('profileLoaded', function(e) {
+      var p = e.detail;
+      document.getElementById('profile-name-display').textContent = p.name;
+      document.getElementById('profile-role-display').textContent = p.role;
+      document.getElementById('profile-mobile-display').textContent = p.email;
+      document.getElementById('profile-name-input').value = p.name;
+      document.getElementById('profile-avatar').textContent = p.name.trim().split(/\s+/).map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
+      // Hide users panel for Staff
+      document.getElementById('users-panel').style.display = p.role === 'Staff' ? 'none' : '';
+    });
+
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) logout();
+    }
+
+    function openDeleteModal(email) {
+      deletingEmail = email;
+      document.getElementById('delete-email').textContent = email;
+      document.getElementById('delete-modal').classList.add('open');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('delete-modal').classList.remove('open');
+      deletingEmail = null;
+    }
+
+    function closeDeleteOnOverlay(e) {
+      if (e.target.id === 'delete-modal') closeDeleteModal();
+    }
+
+    async function confirmDelete() {
+      if (!deletingEmail) return;
+      const delBtn = document.querySelector('#delete-modal .btn-danger');
+      delBtn.disabled = true;
+      delBtn.textContent = 'Deleting...';
+      try {
+        const res = await fetch(API_BASE + '/auth/gen-admin-users/' + encodeURIComponent(deletingEmail), {
+          method: 'DELETE',
+          headers: getHeaders()
+        });
+        const data = await res.json();
+        if (!data.success) {
+          alert(data.detail || data.message || 'Failed to delete user.');
+          return;
+        }
+        users = users.filter(u => u.email !== deletingEmail);
+        renderUsers();
+        closeDeleteModal();
+      } catch (err) {
+        alert('Network error. Please try again.');
+      } finally {
+        delBtn.disabled = false;
+        delBtn.textContent = 'Delete';
+      }
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') { closeModal(); closeDeleteModal(); }
+    });
+
+    loadUsers();
+  </script>
+</body>
+</html>

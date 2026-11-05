@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Ticketing &amp; Bugs</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    .tk-msg-cell { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tk-org { font-weight: 600; color: var(--text-primary); }
+    .tk-org-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .tk-user { font-size: 12px; color: var(--text-secondary); }
+    .tk-user-sub { font-size: 11px; color: var(--text-muted); }
+    .tk-date { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .tk-view-btn {
+      background: rgba(88,166,255,0.12); color: var(--blue); border: 1px solid rgba(88,166,255,0.3);
+      border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .tk-view-btn:hover { background: rgba(88,166,255,0.2); }
+    .tk-photo-dot { font-size: 12px; margin-left: 4px; }
+
+    /* Detail modal */
+    .tk-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+      align-items: flex-start; justify-content: center; padding: 30px 16px; overflow-y: auto;
+    }
+    .tk-modal-overlay.open { display: flex; }
+    .tk-modal {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 16px; width: 100%; max-width: 640px; margin: auto;
+    }
+    .tk-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+    }
+    .tk-modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .tk-modal-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .tk-modal-close {
+      background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-muted);
+      font-size: 16px; width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tk-modal-close:hover { color: var(--text-primary); border-color: var(--blue); }
+    .tk-modal-body { padding: 18px 22px; max-height: 70vh; overflow-y: auto; }
+
+    .tk-detail-grid {
+      display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 16px;
+    }
+    .tk-detail-field { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; }
+    .tk-detail-label { font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+    .tk-detail-value { font-size: 13px; color: var(--text-primary); font-weight: 600; }
+
+    .tk-full-msg {
+      background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px; font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+      white-space: pre-wrap; margin-bottom: 14px;
+    }
+    .tk-photo-thumb {
+      max-width: 100%; max-height: 220px; border-radius: 10px; display: block; margin-bottom: 14px;
+      cursor: pointer; border: 1px solid var(--border);
+    }
+
+    .tk-thread-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+    .tk-reply-item {
+      display: flex; gap: 10px; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+    }
+    .tk-reply-item.admin { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); }
+    .tk-reply-item.user  { background: rgba(76,175,80,0.08); border: 1px solid rgba(76,175,80,0.2); }
+    .tk-reply-icon { font-size: 15px; flex-shrink: 0; }
+    .tk-reply-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+    .tk-reply-author { font-size: 12px; font-weight: 700; }
+    .tk-reply-item.admin .tk-reply-author { color: var(--blue); }
+    .tk-reply-item.user  .tk-reply-author { color: var(--green); }
+    .tk-reply-date { font-size: 10px; color: var(--text-muted); }
+    .tk-reply-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; }
+
+    .tk-reply-box { margin-top: 14px; }
+    .tk-reply-box textarea {
+      width: 100%; box-sizing: border-box; background: var(--bg-tertiary); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px; color: var(--text-primary); font-size: 13px; resize: vertical;
+      min-height: 70px; outline: none;
+    }
+    .tk-reply-box textarea:focus { border-color: var(--blue); }
+    .tk-modal-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+    /* Lightbox */
+    .tk-lightbox {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 2000;
+      align-items: center; justify-content: center; cursor: zoom-out;
+    }
+    .tk-lightbox.open { display: flex; }
+    .tk-lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 10px; object-fit: contain; }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
+      <div class="sidebar-logo-name">Clockyn</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" href="dashboard.html" onclick="closeSidebar()"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a class="nav-item" href="organizations.html" onclick="closeSidebar()"><span class="nav-icon">🏢</span> Organizations</a>
+      <a class="nav-item" href="users.html" onclick="closeSidebar()"><span class="nav-icon">👥</span> Users</a>
+      <a class="nav-item" href="subscriptions.html" onclick="closeSidebar()"><span class="nav-icon">📋</span> Subscriptions</a>
+      <a class="nav-item" href="payments.html" onclick="closeSidebar()"><span class="nav-icon">💳</span> Payments</a>
+      <a class="nav-item" href="coupons.html" onclick="closeSidebar()"><span class="nav-icon">🎯</span> Coupons</a>
+      <a class="nav-item" href="suggestions.html" onclick="closeSidebar()"><span class="nav-icon">💡</span> Suggestions <span class="nav-suggestion-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;"></span></a>
+      <a class="nav-item active" href="tickets.html" onclick="closeSidebar()"><span class="nav-icon">🎫</span> Ticketing &amp; Bugs</a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#activity" onclick="closeSidebar()"><span class="nav-icon">🕐</span> Activity Logs</a>
+      <a class="nav-item" href="settings.html" onclick="closeSidebar()"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar" id="sidebar-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-user-name">Super Admin</div>
+        <div class="user-mobile" id="sidebar-user-mobile"></div>
+        <div class="user-role" id="sidebar-user-role">System Administrator</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div id="toast" style="position:fixed;bottom:32px;right:32px;background:#16a34a;color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transform:translateY(20px);transition:opacity 0.3s,transform 0.3s;pointer-events:none;"></div>
+
+  <!-- Ticket Detail Modal -->
+  <div class="tk-modal-overlay" id="tk-modal-overlay" onclick="handleModalOverlayClick(event)">
+    <div class="tk-modal">
+      <div class="tk-modal-header">
+        <div>
+          <div class="tk-modal-title" id="tk-modal-title">Ticket #—</div>
+          <div class="tk-modal-sub" id="tk-modal-sub"></div>
+        </div>
+        <button class="tk-modal-close" onclick="closeTicketModal()">✕</button>
+      </div>
+      <div class="tk-modal-body" id="tk-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Photo lightbox -->
+  <div class="tk-lightbox" id="tk-lightbox" onclick="closeLightbox()">
+    <img id="tk-lightbox-img" src="" alt="" />
+  </div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <span class="topbar-title">Ticketing &amp; Bugs</span>
+      <div class="topbar-actions" style="margin-left:auto;">
+        <button class="icon-btn">🔔<span class="dot"></span></button>
+        <button class="icon-btn" onclick="loadTickets()" title="Refresh">🔄</button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-header">
+        <h1>Ticketing &amp; Bugs</h1>
+        <p>Manage support requests submitted by organizations.</p>
+      </div>
+
+      <!-- Stat row -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+        <div class="stat-card"><div class="stat-card-header"><span class="label">Total</span><div class="stat-icon blue">🎫</div></div><div class="stat-value" id="tk-total">—</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="label">Open</span><div class="stat-icon orange">🔓</div></div><div class="stat-value" id="tk-open">—</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="label">In Progress</span><div class="stat-icon purple">⚙️</div></div><div class="stat-value" id="tk-progress">—</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="label">Resolved</span><div class="stat-icon green">✅</div></div><div class="stat-value" id="tk-resolved">—</div></div>
+      </div>
+
+      <!-- Filter bar -->
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+        <input id="tk-search" type="text" placeholder="Search org, subject or user..." oninput="renderTickets()"
+          style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text-primary);font-size:13px;outline:none;width:240px;">
+        <select id="tk-filter-status" onchange="renderTickets()"
+          style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text-primary);font-size:13px;outline:none;">
+          <option value="">All Status</option>
+          <option value="created">Open</option>
+          <option value="in_progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="loadTickets()">🔄 Refresh</button>
+      </div>
+
+      <!-- Active tickets table -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><h3>Active Tickets</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>#</th><th>Organization</th><th>Submitted By</th><th>Subject</th><th>Message</th><th>Created</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="tk-active-body">
+              <tr><td colspan="8" style="text-align:center;color:var(--text-muted)">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Resolved tickets -->
+      <div class="card">
+        <div class="card-header"><h3>Resolved Tickets</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>#</th><th>Organization</th><th>Submitted By</th><th>Subject</th><th>Message</th><th>Created</th><th>Resolved</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="tk-resolved-body">
+              <tr><td colspan="8" style="text-align:center;color:var(--text-muted)">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    let allTickets = [];
+    let currentTicketId = null;
+
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) logout();
+    }
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function fmtDateTime(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleString('en-IN', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+    function fmtDate(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleDateString('en-IN', { year:'numeric', month:'short', day:'numeric' });
+    }
+
+    async function loadTickets() {
+      try {
+        const rows = await fetch(API_BASE + '/support/requests/all').then(r => r.json());
+        allTickets = Array.isArray(rows) ? rows : [];
+        updateTicketStats();
+        renderTickets();
+        if (currentTicketId != null) refreshOpenModal();
+      } catch(e) { console.error('Tickets failed', e); }
+    }
+
+    function updateTicketStats() {
+      document.getElementById('tk-total').textContent    = allTickets.length;
+      document.getElementById('tk-open').textContent     = allTickets.filter(t => t.status === 'created').length;
+      document.getElementById('tk-progress').textContent = allTickets.filter(t => t.status === 'in_progress').length;
+      document.getElementById('tk-resolved').textContent = allTickets.filter(t => t.status === 'resolved').length;
+    }
+
+    function matchesQuery(t, q) {
+      if (!q) return true;
+      var hay = [t.org_name, t.org_id, t.sub_name, t.user_name, t.user_mobile].join(' ').toLowerCase();
+      return hay.includes(q);
+    }
+
+    function orgCell(t) {
+      return '<div class="tk-org">' + esc(t.org_name || t.org_id || '—') + '</div>'
+        + (t.org_name ? '<div class="tk-org-sub">' + esc(t.org_id) + '</div>' : '');
+    }
+    function userCell(t) {
+      if (!t.user_name && !t.user_mobile) return '<span style="color:var(--text-muted);">—</span>';
+      return '<div class="tk-user">' + esc(t.user_name || '—') + '</div>'
+        + (t.user_mobile ? '<div class="tk-user-sub">' + esc(t.user_mobile) + '</div>' : '');
+    }
+
+    function renderTickets() {
+      const q     = (document.getElementById('tk-search').value || '').toLowerCase();
+      const fStat = document.getElementById('tk-filter-status').value;
+      const active = allTickets.filter(function(t) {
+        return t.status !== 'resolved' && matchesQuery(t, q) && (!fStat || t.status === fStat);
+      });
+      const resolved = allTickets.filter(function(t) {
+        return t.status === 'resolved' && matchesQuery(t, q);
+      });
+
+      const activeBody = document.getElementById('tk-active-body');
+      if (!active.length) {
+        activeBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No active tickets</td></tr>';
+      } else {
+        activeBody.innerHTML = active.map(function(t) {
+          var badge = t.status === 'created' ? 'badge-orange' : 'badge-purple';
+          var label = t.status === 'created' ? 'Open' : 'In Progress';
+          var replyCount = Array.isArray(t.replies) ? t.replies.length : 0;
+          return '<tr>'
+            + '<td class="td-primary">#' + t.id + '</td>'
+            + '<td>' + orgCell(t) + '</td>'
+            + '<td>' + userCell(t) + '</td>'
+            + '<td>' + esc(t.sub_name) + '</td>'
+            + '<td class="tk-msg-cell">' + esc(t.client_msg) + (t.photo_url ? '<span class="tk-photo-dot" title="Has attachment">📎</span>' : '') + '</td>'
+            + '<td class="tk-date">' + fmtDate(t.created_at) + '</td>'
+            + '<td><span class="badge ' + badge + '">' + label + '</span></td>'
+            + '<td><button class="tk-view-btn" onclick="openTicketModal(' + t.id + ')">View' + (replyCount ? ' (' + replyCount + ')' : '') + '</button></td>'
+            + '</tr>';
+        }).join('');
+      }
+
+      const resolvedBody = document.getElementById('tk-resolved-body');
+      if (!resolved.length) {
+        resolvedBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No resolved tickets</td></tr>';
+      } else {
+        resolvedBody.innerHTML = resolved.map(function(t) {
+          return '<tr>'
+            + '<td class="td-primary">#' + t.id + '</td>'
+            + '<td>' + orgCell(t) + '</td>'
+            + '<td>' + userCell(t) + '</td>'
+            + '<td>' + esc(t.sub_name) + '</td>'
+            + '<td class="tk-msg-cell">' + esc(t.client_msg) + (t.photo_url ? '<span class="tk-photo-dot" title="Has attachment">📎</span>' : '') + '</td>'
+            + '<td class="tk-date">' + fmtDate(t.created_at) + '</td>'
+            + '<td class="tk-date">' + fmtDate(t.updated_at) + '</td>'
+            + '<td><button class="tk-view-btn" onclick="openTicketModal(' + t.id + ')">View</button></td>'
+            + '</tr>';
+        }).join('');
+      }
+    }
+
+    /* ── Ticket detail modal ── */
+    function openTicketModal(id) {
+      currentTicketId = id;
+      document.getElementById('tk-modal-overlay').classList.add('open');
+      renderModal();
+    }
+
+    function closeTicketModal() {
+      document.getElementById('tk-modal-overlay').classList.remove('open');
+      currentTicketId = null;
+    }
+
+    function handleModalOverlayClick(e) {
+      if (e.target === document.getElementById('tk-modal-overlay')) closeTicketModal();
+    }
+
+    function refreshOpenModal() {
+      if (document.getElementById('tk-modal-overlay').classList.contains('open')) renderModal();
+    }
+
+    function renderModal() {
+      var t = allTickets.find(function(x) { return x.id === currentTicketId; });
+      if (!t) { closeTicketModal(); return; }
+
+      document.getElementById('tk-modal-title').textContent = 'Ticket #' + t.id + ' — ' + (t.sub_name || '');
+      document.getElementById('tk-modal-sub').textContent = 'Created ' + fmtDateTime(t.created_at);
+
+      var replies = Array.isArray(t.replies) ? t.replies : [];
+      var statusBadge = t.status === 'created' ? '<span class="badge badge-orange">Open</span>'
+        : t.status === 'in_progress' ? '<span class="badge badge-purple">In Progress</span>'
+        : '<span class="badge badge-green">Resolved</span>';
+
+      var html = '';
+
+      html += '<div class="tk-detail-grid">'
+        + '<div class="tk-detail-field"><div class="tk-detail-label">Organization</div><div class="tk-detail-value">' + esc(t.org_name || t.org_id || '—') + '</div></div>'
+        + '<div class="tk-detail-field"><div class="tk-detail-label">Status</div><div class="tk-detail-value">' + statusBadge + '</div></div>'
+        + '<div class="tk-detail-field"><div class="tk-detail-label">Submitted By</div><div class="tk-detail-value">' + esc(t.user_name || '—') + (t.user_mobile ? ' · ' + esc(t.user_mobile) : '') + '</div></div>'
+        + '<div class="tk-detail-field"><div class="tk-detail-label">Last Updated</div><div class="tk-detail-value">' + fmtDateTime(t.updated_at) + '</div></div>'
+        + '</div>';
+
+      html += '<div class="tk-thread-label">Original Message</div>';
+      html += '<div class="tk-full-msg">' + esc(t.client_msg) + '</div>';
+
+      if (t.photo_url) {
+        html += '<img class="tk-photo-thumb" src="' + esc(t.photo_url) + '" onclick="openLightbox(\'' + esc(t.photo_url) + '\')" alt="Attachment" />';
+      }
+
+      html += '<div class="tk-thread-label">Conversation' + (replies.length ? ' (' + replies.length + ')' : '') + '</div>';
+      if (!replies.length) {
+        html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">No replies yet.</div>';
+      } else {
+        replies.forEach(function(r) {
+          var cls = r.is_admin ? 'admin' : 'user';
+          var icon = r.is_admin ? '🛠️' : '💬';
+          var who = r.is_admin ? (r.author_name || 'Admin') : (r.author_name || 'User');
+          html += '<div class="tk-reply-item ' + cls + '">'
+            + '<div class="tk-reply-icon">' + icon + '</div>'
+            + '<div style="flex:1;min-width:0;">'
+            + '<div class="tk-reply-head"><span class="tk-reply-author">' + esc(who) + (r.is_admin ? ' (Admin)' : '') + '</span><span class="tk-reply-date">' + fmtDateTime(r.created_at) + '</span></div>'
+            + '<div class="tk-reply-text">' + esc(r.reply_text) + '</div>'
+            + '</div>'
+            + '</div>';
+        });
+      }
+
+      html += '<div class="tk-reply-box">'
+        + '<textarea id="tk-reply-input" placeholder="Type your reply to the organization..."></textarea>'
+        + '<div class="tk-modal-actions">'
+        +   '<button class="btn btn-primary btn-sm" onclick="sendReply()">Send Reply</button>'
+        +   (t.status !== 'resolved'
+              ? '<button class="btn btn-sm" style="background:rgba(76,175,80,0.15);color:#4caf50;border:1px solid rgba(76,175,80,0.3);" onclick="markResolved()">Mark Resolved</button>'
+              : '<button class="btn btn-ghost btn-sm" onclick="reopenTicket()">Reopen Ticket</button>')
+        + '</div>'
+        + '</div>';
+
+      document.getElementById('tk-modal-body').innerHTML = html;
+    }
+
+    async function sendReply() {
+      var input = document.getElementById('tk-reply-input');
+      var text = (input.value || '').trim();
+      if (!text) { showToast('Please type a reply before sending.', 'error'); return; }
+      var adminProfile = {};
+      try { adminProfile = JSON.parse(localStorage.getItem('gen_admin_profile') || '{}'); } catch(e) {}
+      try {
+        const res = await fetch(API_BASE + '/support/' + currentTicketId + '/reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reply_text: text, author_name: adminProfile.name || 'Admin', is_admin: true })
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          showToast(json.detail || 'Failed to send reply', 'error');
+          return;
+        }
+        showToast('Reply sent successfully!', 'success');
+        await loadTickets();
+      } catch(e) { showToast('Failed to send reply', 'error'); }
+    }
+
+    async function markResolved() { await setStatus('resolved'); }
+    async function reopenTicket() { await setStatus('in_progress'); }
+
+    async function setStatus(status) {
+      try {
+        const res = await fetch(API_BASE + '/support/update/' + currentTicketId, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: status })
+        });
+        if (!res.ok) { showToast('Failed to update status', 'error'); return; }
+        showToast(status === 'resolved' ? 'Ticket marked resolved!' : 'Ticket reopened', 'success');
+        await loadTickets();
+      } catch(e) { showToast('Failed to update status', 'error'); }
+    }
+
+    /* ── Lightbox ── */
+    function openLightbox(src) {
+      document.getElementById('tk-lightbox-img').src = src;
+      document.getElementById('tk-lightbox').classList.add('open');
+    }
+    function closeLightbox() {
+      document.getElementById('tk-lightbox').classList.remove('open');
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') { closeTicketModal(); closeLightbox(); }
+    });
+
+    function showToast(msg, type) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = type === 'success' ? '#16a34a' : '#dc2626';
+      t.style.opacity = '1';
+      t.style.transform = 'translateY(0)';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function() {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(20px)';
+      }, 2500);
+    }
+
+    loadTickets();
+  </script>
+
+</body>
+</html>

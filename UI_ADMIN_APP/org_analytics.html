@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Org Analytics</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--bg-tertiary); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 6px 14px;
+      color: var(--text-secondary); font-size: 13px; cursor: pointer;
+      text-decoration: none; margin-bottom: 20px;
+    }
+    .back-btn:hover { color: var(--text-primary); border-color: var(--blue); }
+
+    .filter-bar {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .filter-bar label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .day-btn {
+      padding: 6px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
+      background: var(--bg-tertiary); border: 1px solid var(--border);
+      color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+    }
+    .day-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .day-btn:hover:not(.active) { border-color: var(--blue); color: var(--blue); }
+
+    /* Bar chart */
+    .chart-wrap { display: flex; gap: 10px; height: 220px; align-items: stretch; }
+    .chart-y {
+      display: flex; flex-direction: column; justify-content: space-between;
+      align-items: flex-end; padding-bottom: 24px; min-width: 36px;
+    }
+    .chart-y span { font-size: 10px; color: var(--text-muted); }
+    .bar-area {
+      flex: 1; display: flex; align-items: flex-end; gap: 6px;
+      position: relative; padding-bottom: 0;
+    }
+    .bar-area::before {
+      content: ''; position: absolute; inset: 0 0 24px 0;
+      background: repeating-linear-gradient(to bottom, transparent, transparent calc(33.33% - 1px), rgba(48,54,61,0.6) calc(33.33% - 1px), rgba(48,54,61,0.6) 33.33%);
+      pointer-events: none;
+    }
+    .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; position: relative; }
+    .bar-group:hover .bar-tip { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+    .bar-tip {
+      position: absolute; bottom: calc(100% - 20px); left: 50%;
+      transform: translateX(-50%) translateY(0);
+      background: #2d333b; border: 1px solid #444c56;
+      color: var(--text-primary); font-size: 11px; font-weight: 600;
+      padding: 5px 9px; border-radius: 7px; white-space: nowrap;
+      pointer-events: none; opacity: 0; transition: opacity 0.15s, transform 0.15s; z-index: 10;
+    }
+    .bars { width: 100%; display: flex; gap: 2px; align-items: flex-end; height: calc(100% - 24px); }
+    .b-present { flex: 1; border-radius: 4px 4px 2px 2px; background: linear-gradient(180deg,#56d364,#1a7f37); min-height: 3px; transition: height 0.5s cubic-bezier(.4,0,.2,1); }
+    .b-absent  { flex: 1; border-radius: 4px 4px 2px 2px; background: linear-gradient(180deg,#f85149,#8b1a1a); min-height: 3px; transition: height 0.5s cubic-bezier(.4,0,.2,1); }
+    .bar-lbl { font-size: 10px; color: var(--text-muted); height: 24px; line-height: 24px; text-align: center; width: 100%; }
+
+    .chart-legend { display: flex; gap: 16px; margin-top: 12px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+
+    /* Timeline attendance strip */
+    .timeline-wrap { display: flex; flex-direction: column; gap: 6px; }
+    .timeline-row { display: flex; align-items: center; gap: 10px; }
+    .tl-date {
+      width: 72px; flex-shrink: 0;
+      font-size: 11px; color: var(--text-muted); text-align: right;
+    }
+    .tl-date strong { display: block; font-size: 12px; color: var(--text-secondary); }
+    .tl-bar-bg {
+      flex: 1; height: 22px; background: var(--bg-tertiary);
+      border-radius: 6px; overflow: hidden; position: relative;
+      border: 1px solid var(--border);
+    }
+    .tl-bar-fill {
+      height: 100%; border-radius: 6px;
+      transition: width 0.6s cubic-bezier(.4,0,.2,1);
+      position: relative;
+    }
+    .tl-bar-label {
+      position: absolute; right: 8px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px; font-weight: 700; color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      white-space: nowrap;
+    }
+    .tl-count {
+      width: 52px; flex-shrink: 0;
+      font-size: 12px; font-weight: 700; color: var(--text-primary); text-align: left;
+    }
+    .tl-pct {
+      width: 38px; flex-shrink: 0;
+      font-size: 11px; color: var(--text-muted); text-align: right;
+    }
+    .tl-day-header {
+      display: flex; align-items: center; gap: 10px;
+      padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 4px;
+    }
+    .tl-day-header span { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .tl-day-header span:first-child { width: 72px; text-align: right; }
+    .tl-day-header span:last-child  { width: 38px; text-align: right; }
+    .info-field { background:var(--bg-tertiary); border:1px solid var(--border); border-radius:8px; padding:10px 14px; }
+    .info-label { font-size:10px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+    .info-value { font-size:13px; color:var(--text-primary); font-weight:600; display:flex; align-items:center; gap:6px; word-break:break-all; }
+    .copy-btn { background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:12px; padding:2px 4px; border-radius:4px; flex-shrink:0; }
+    .copy-btn:hover { color:var(--blue); background:var(--bg-hover); }
+
+    /* Clickable timeline rows */
+    .timeline-row { cursor: pointer; border-radius: 6px; transition: background 0.12s; }
+    .timeline-row:hover { background: var(--bg-hover); }
+    .bar-group { cursor: pointer; }
+
+    /* Day attendance modal */
+    .day-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72); backdrop-filter: blur(5px);
+      z-index: 1000; align-items: flex-start; justify-content: center;
+      padding: 24px 16px; overflow-y: auto;
+    }
+    .day-modal-overlay.open { display: flex; }
+    .day-modal {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 16px; width: 100%; max-width: 960px;
+      display: flex; flex-direction: column;
+      margin: auto;
+    }
+    .day-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .day-modal-close {
+      background: var(--bg-tertiary); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 16px; width: 32px; height: 32px;
+      border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .day-modal-close:hover { color: var(--text-primary); border-color: var(--blue); }
+    .day-modal-body { padding: 18px 22px; overflow-y: auto; }
+    .day-summary-bar {
+      display: flex; gap: 14px; margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .day-summary-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--bg-tertiary); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 12px; font-size: 12px;
+    }
+    .day-summary-chip strong { font-size: 16px; font-weight: 800; }
+
+    /* Punch cards grid */
+    .punch-cards-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;
+    }
+    .punch-card {
+      background: var(--bg-tertiary); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .punch-card-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+    }
+    .punch-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .punch-card-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .punch-card-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .punch-card-photos {
+      display: flex; gap: 0;
+    }
+    .punch-photo-col {
+      flex: 1; padding: 10px; text-align: center; border-right: 1px solid var(--border);
+    }
+    .punch-photo-col:last-child { border-right: none; }
+    .punch-photo-type {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-muted); margin-bottom: 6px;
+    }
+    .punch-photo-img {
+      width: 100%; aspect-ratio: 1/1; object-fit: cover;
+      border-radius: 8px; background: var(--bg-secondary); display: block;
+      cursor: pointer; transition: transform 0.15s;
+    }
+    .punch-photo-img:hover { transform: scale(1.03); }
+    .punch-photo-placeholder {
+      width: 100%; aspect-ratio: 1/1; border-radius: 8px;
+      background: var(--bg-secondary); display: flex; align-items: center;
+      justify-content: center; font-size: 28px; color: var(--text-muted);
+    }
+    .punch-photo-time {
+      font-size: 11px; font-weight: 700; margin-top: 5px;
+      color: var(--text-primary);
+    }
+    .punch-photo-time.absent { color: var(--text-muted); font-style: italic; }
+
+    /* Absent section */
+    .absent-section { margin-top: 16px; }
+    .absent-section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--text-muted);
+      margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+    }
+    .absent-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .absent-chip {
+      background: rgba(248,81,73,0.08); border: 1px solid rgba(248,81,73,0.25);
+      border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--text-secondary);
+      display: flex; align-items: center; gap: 5px;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.92); z-index: 2000;
+      align-items: center; justify-content: center;
+      cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 10px; object-fit: contain; }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="clockyn-logo.png" alt="Clockyn" class="sidebar-logo-img" />
+      <div class="sidebar-logo-name">Clockyn</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a class="nav-item active" href="organizations.html"><span class="nav-icon">🏢</span> Organizations</a>
+      <a class="nav-item" href="users.html"><span class="nav-icon">👥</span> Users</a>
+      <a class="nav-item" href="subscriptions.html"><span class="nav-icon">📋</span> Subscriptions</a>
+      <a class="nav-item" href="#payments"><span class="nav-icon">💳</span> Payments</a>
+      <a class="nav-item" href="coupons.html"><span class="nav-icon">🎯</span> Coupons</a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#activity"><span class="nav-icon">🕐</span> Activity Logs</a>
+      <a class="nav-item" href="settings.html"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name">Super Admin</div>
+        <div class="user-role">System Administrator</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- Day attendance modal -->
+  <div class="day-modal-overlay" id="day-modal-overlay" onclick="handleDayModalOverlayClick(event)">
+    <div class="day-modal" id="day-modal">
+      <div class="day-modal-header">
+        <div>
+          <div id="day-modal-title" style="font-size:16px;font-weight:700;color:var(--text-primary);">Attendance Photos</div>
+          <div id="day-modal-sub" style="font-size:12px;color:var(--text-muted);margin-top:3px;"></div>
+        </div>
+        <button class="day-modal-close" onclick="closeDayModal()">✕</button>
+      </div>
+      <div class="day-modal-body" id="day-modal-body">
+        <div style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo lightbox -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="" />
+  </div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <span class="topbar-title" id="topbar-title">Org Analytics</span>
+      <div class="topbar-actions">
+        <button class="icon-btn" onclick="loadAll()" title="Refresh">🔄</button>
+        <div class="avatar" style="cursor:pointer;">SA</div>
+      </div>
+    </header>
+
+    <div class="content">
+      <a class="back-btn" href="organizations.html">← Back to Organizations</a>
+
+      <div class="page-header" style="margin-bottom:16px;">
+        <h1 id="org-title">Loading...</h1>
+        <p id="org-subtitle" style="color:var(--text-muted);font-size:13px;"></p>
+      </div>
+
+      <!-- Org Info Card -->
+      <div class="card" id="org-info-card" style="margin-bottom:20px;padding:20px 24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <h3 style="margin:0;font-size:16px;color:var(--text-primary);">Organization Details</h3>
+          <span id="org-status-badge" class="badge"></span>
+        </div>
+        <div id="org-info-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
+          <div style="color:var(--text-muted);font-size:13px;">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px;">
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">Total Employees</span><div class="stat-icon blue">👥</div></div>
+          <div class="stat-value" id="s-total">—</div>
+          <div class="stat-footer">Active staff</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">Present Today</span><div class="stat-icon green">✅</div></div>
+          <div class="stat-value" id="s-today">—</div>
+          <div class="stat-footer" id="s-today-pct">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">Avg Attendance</span><div class="stat-icon orange">📊</div></div>
+          <div class="stat-value" id="s-avg">—</div>
+          <div class="stat-footer" id="s-avg-label">over selected period</div>
+        </div>
+      </div>
+
+      <!-- Shared Period Filter -->
+      <div class="card" style="margin-bottom:24px;padding:14px 20px;">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Period:</span>
+          <button class="day-btn active" onclick="setPeriod(7)"  id="btn-7">Last 7 Days</button>
+          <button class="day-btn"        onclick="setPeriod(14)" id="btn-14">Last 14 Days</button>
+          <button class="day-btn"        onclick="setPeriod(30)" id="btn-30">Last 30 Days</button>
+
+        </div>
+      </div>
+
+      <!-- Bar Chart -->
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+          <h3 id="chart-title">Total Employees vs Active (Present) Employees — Last 7 Days</h3>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap">
+            <div class="chart-y">
+              <span id="y-top">—</span>
+              <span id="y-mid">—</span>
+              <span>0</span>
+            </div>
+            <div class="bar-area" id="bar-area">
+              <div style="margin:auto;color:var(--text-muted);font-size:13px;">Loading...</div>
+            </div>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#56d364;"></div> Present</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#f85149;"></div> Absent</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attendance Timeline Strip -->
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+          <h3 id="tl-title">Attendance Timeline — Last 7 Days</h3>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);"><div style="width:10px;height:10px;border-radius:3px;background:linear-gradient(90deg,#1a7f37,#56d364);"></div> High</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);"><div style="width:10px;height:10px;border-radius:3px;background:linear-gradient(90deg,#9a3412,#f97316);"></div> Low</div>
+          </div>
+        </div>
+        <div class="card-body" style="max-height:520px;overflow-y:auto;">
+          <div class="tl-day-header">
+            <span>Date</span>
+            <span style="flex:1;">Attendance</span>
+            <span>Present</span>
+            <span>Rate</span>
+          </div>
+          <div class="timeline-wrap" id="timeline-wrap">
+            <div style="color:var(--text-muted);font-size:13px;">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employee List -->
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+          <h3>Employees <span id="emp-count-badge" class="badge badge-blue" style="margin-left:8px;"></span></h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="search" id="emp-search" placeholder="Search employees..." class="search-input" style="width:200px;" oninput="filterEmployees()" />
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Name</th><th>Emp ID</th><th>Role</th><th>Department</th><th>Branch</th><th>Mobile</th><th>Today In</th><th>Today Out</th><th>Status</th>
+            </tr></thead>
+            <tbody id="emp-table-body">
+              <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:24px;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const params   = new URLSearchParams(location.search);
+    const ORG_ID   = params.get('org_id') || '';
+    const ORG_NAME = decodeURIComponent(params.get('org_name') || 'Organization');
+    let selectedDays = 7;
+    let analyticsData = null;
+
+    document.getElementById('org-title').textContent    = ORG_NAME;
+    document.getElementById('topbar-title').textContent = ORG_NAME + ' — Analytics';
+
+    function setPeriod(d) {
+      selectedDays = d;
+      [7,14,30].forEach(function(n) {
+        document.getElementById('btn-' + n).classList.toggle('active', n === d);
+      });
+      document.getElementById('chart-title').textContent = 'Total Employees vs Active (Present) Employees — Last ' + d + ' Days';
+      document.getElementById('tl-title').textContent    = 'Attendance Timeline — Last ' + d + ' Days';
+      if (analyticsData) { renderChart(analyticsData); renderTimeline(analyticsData); }
+    }
+
+    function barColor(pct) {
+      if (pct >= 0.80) return 'linear-gradient(90deg,#1a7f37,#56d364)';
+      if (pct >= 0.60) return 'linear-gradient(90deg,#1a5fa8,#58a6ff)';
+      if (pct >= 0.40) return 'linear-gradient(90deg,#9a6700,#f0b429)';
+      return 'linear-gradient(90deg,#9a3412,#f97316)';
+    }
+
+    function renderChart(data) {
+      const total   = data.total_employees || 1;
+      const days    = data.daily_attendance.slice(-selectedDays);
+      const barArea = document.getElementById('bar-area');
+      if (!days.length) {
+        barArea.innerHTML = '<div style="margin:auto;color:var(--text-muted);font-size:13px;">No attendance data for this period</div>';
+        document.getElementById('y-top').textContent = '0';
+        document.getElementById('y-mid').textContent = '0';
+        document.getElementById('s-avg').textContent = '0';
+        return;
+      }
+      document.getElementById('y-top').textContent = total;
+      document.getElementById('y-mid').textContent = Math.round(total / 2);
+      const avgPresent = Math.round(days.reduce(function(s, d) { return s + d.present; }, 0) / days.length);
+      document.getElementById('s-avg').textContent = avgPresent;
+      document.getElementById('s-avg-label').textContent = 'avg over last ' + selectedDays + ' days';
+      barArea.innerHTML = days.map(function(d) {
+        const pPct = Math.max((d.present / total) * 100, 2);
+        const aPct = Math.max((d.absent  / total) * 100, 2);
+        const label = d.date.slice(5);
+        return '<div class="bar-group" onclick="openDayModal(\'' + d.date + '\',\'' + label + '\')" title="View punch photos for ' + d.date + '">'
+          + '<div class="bar-tip">' + d.date + '<br>Present: ' + d.present + ' &middot; Click to view photos</div>'
+          + '<div class="bars"><div class="b-present" style="height:' + pPct + '%"></div><div class="b-absent" style="height:' + aPct + '%"></div></div>'
+          + '<div class="bar-lbl">' + label + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    function renderTimeline(data) {
+      const total = data.total_employees || 1;
+      const map   = {};
+      data.attendance_map.forEach(function(d) { map[d.date] = d.present; });
+      const today = new Date();
+      const todayKey = today.toISOString().slice(0, 10);
+      const rows = [];
+      for (var i = selectedDays - 1; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+        const mon = d.toLocaleString('default', { month: 'short' });
+        rows.push({ date: key, label: dow + ' ' + d.getDate() + ' ' + mon, present: map[key] || 0 });
+      }
+      const wrap = document.getElementById('timeline-wrap');
+      wrap.innerHTML = rows.map(function(r) {
+        const pct      = r.present / total;
+        const widthPct = Math.max(pct * 100, r.present > 0 ? 2 : 0);
+        const color    = barColor(pct);
+        const pctStr   = Math.round(pct * 100) + '%';
+        const isToday  = r.date === todayKey;
+        const parts    = r.label.split(' ');
+        const countColor = pct >= 0.8 ? 'var(--green)' : pct >= 0.5 ? 'var(--blue)' : pct > 0 ? 'var(--orange)' : 'var(--text-muted)';
+        return '<div class="timeline-row" onclick="openDayModal(\'' + r.date + '\',\'' + r.label + '\')" title="View punch photos for ' + r.label + '">'
+          + '<div class="tl-date"' + (isToday ? ' style="color:var(--blue);"' : '') + '>'
+          +   '<strong>' + parts[0] + '</strong>' + parts.slice(1).join(' ')
+          + '</div>'
+          + '<div class="tl-bar-bg">'
+          +   '<div class="tl-bar-fill" style="width:' + widthPct + '%;background:' + color + ';">'
+          +     (r.present > 0 ? '<span class="tl-bar-label">' + r.present + ' present</span>' : '')
+          +   '</div>'
+          + '</div>'
+          + '<div class="tl-count" style="color:' + countColor + '">' + r.present + ' / ' + total + '</div>'
+          + '<div class="tl-pct">' + (r.present > 0 ? pctStr : '—') + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    async function loadAll() {
+      if (!ORG_ID) { document.getElementById('org-title').textContent = 'Invalid organization'; return; }
+      loadOrgInfo(); loadOrgEmployees();
+      try {
+        const data = await fetch(API_BASE + '/gen-dashboard/org-analytics/' + ORG_ID + '?days=90').then(r => r.json());
+        analyticsData = data;
+        document.getElementById('s-total').textContent      = data.total_employees;
+        document.getElementById('org-subtitle').textContent = data.total_employees + ' total employees';
+        const todayKey    = new Date().toISOString().slice(0, 10);
+        const todayRow    = data.attendance_map.find(function(d) { return d.date === todayKey; });
+        const todayPresent = todayRow ? todayRow.present : 0;
+        document.getElementById('s-today').textContent = todayPresent;
+        const pct = data.total_employees > 0 ? Math.round((todayPresent / data.total_employees) * 100) : 0;
+        document.getElementById('s-today-pct').textContent = pct + '% attendance rate today';
+        renderChart(data);
+        renderTimeline(data);
+      } catch(e) {
+        document.getElementById('bar-area').innerHTML = '<div style="margin:auto;color:var(--red);">Failed to load analytics</div>';
+      }
+    }
+
+    let empData = [];
+
+    async function loadOrgInfo() {
+      if (!ORG_ID) return;
+      try {
+        const res = await fetch(API_BASE + '/gen-dashboard/org/' + ORG_ID + '/info');
+        const json = await res.json();
+        if (!json.success || !json.data) return;
+        const d = json.data;
+        const statusMap = {1:'Active', 0:'Inactive', 2:'Deleted'};
+        const badgeClasses = {1:'badge-green', 0:'badge-red', 2:'badge-red'};
+        document.getElementById('org-status-badge').textContent = statusMap[d.status] || d.status || '--';
+        document.getElementById('org-status-badge').className = 'badge ' + (badgeClasses[d.status] || 'badge-blue');
+        const fields = [
+          {label:'Org ID',      value: d.org_id,       copy:true},
+          {label:'Org Name',    value: d.org_name,      copy:true},
+          {label:'Admin Name',  value: d.admin_name,    copy:false},
+          {label:'Phone',       value: d.admin_mobile,  copy:true},
+          {label:'Email',       value: d.admin_email,   copy:true},
+          {label:'GST Number',  value: d.org_gst || '--', copy:true},
+          {label:'Address',     value: d.org_address,   copy:false},
+          {label:'State',       value: d.state || '--', copy:false},
+          {label:'District',    value: d.district || '--', copy:false},
+          {label:'Pincode',     value: d.pincode || '--', copy:false},
+          {label:'Plan',        value: d.plan_name || 'No Plan', copy:false},
+          {label:'Sub Status',  value: d.sub_status || '--', copy:false},
+          {label:'Valid Till',  value: d.end_date ? new Date(d.end_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '--', copy:false},
+          {label:'Staff Limit', value: d.staff_limit || '--', copy:false},
+        ];
+        document.getElementById('org-info-grid').innerHTML = fields.map(function(f) {
+          var copyBtn = f.copy && f.value && f.value !== '--'
+            ? '<button class="copy-btn" onclick="copyToClipboard(\''+escHtml(f.value)+'\')" title="Copy">&#x29C9;</button>'
+            : '';
+          return '<div class="info-field"><div class="info-label">'+f.label+'</div><div class="info-value"><span>'+escHtml(f.value || '--')+'</span>'+copyBtn+'</div></div>';
+        }).join('');
+      } catch(e) { console.error('org info error', e); }
+    }
+
+    function escHtml(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(function() {
+        showToast('Copied to clipboard');
+      }).catch(function() {
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        showToast('Copied');
+      });
+    }
+
+    function showToast(msg) {
+      var t = document.createElement('div');
+      t.textContent = msg;
+      t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#238636;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;animation:fadeIn .2s';
+      document.body.appendChild(t);
+      setTimeout(function(){ document.body.removeChild(t); }, 2000);
+    }
+
+    async function loadOrgEmployees() {
+      if (!ORG_ID) return;
+      try {
+        const res = await fetch(API_BASE + '/gen-dashboard/org/' + ORG_ID + '/employees');
+        const json = await res.json();
+        if (!json.success) return;
+        empData = json.data || [];
+        document.getElementById('emp-count-badge').textContent = empData.length + ' employees';
+        renderEmployees();
+      } catch(e) { console.error('emp load error', e); }
+    }
+
+    function filterEmployees() {
+      renderEmployees();
+    }
+
+    function renderEmployees() {
+      var q = (document.getElementById('emp-search').value || '').toLowerCase();
+      var filtered = empData.filter(function(e) {
+        return !q || (e.name||'').toLowerCase().includes(q) || (e.emp_id||'').toLowerCase().includes(q) || (e.dept_name||'').toLowerCase().includes(q);
+      });
+      var tbody = document.getElementById('emp-table-body');
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:24px;">No employees found</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(function(e) {
+        var statusBadge = e.status == 1 ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-red">Inactive</span>';
+        var inBadge  = e.punch_in_today  ? '<span class="badge badge-green">'+escHtml(e.punch_in_today)+'</span>'  : '<span class="badge badge-gray">—</span>';
+        var outBadge = e.punch_out_today ? '<span class="badge badge-blue">'+escHtml(e.punch_out_today)+'</span>' : '<span class="badge badge-gray">—</span>';
+        return '<tr>'
+          + '<td><div style="font-weight:600;color:var(--text-primary);">'+escHtml(e.name)+'</div><div style="font-size:11px;color:var(--text-muted);">'+escHtml(e.email||'')+'</div></td>'
+          + '<td>'+escHtml(e.emp_id||'—')+'</td>'
+          + '<td><span class="badge '+(e.role_id==2?'badge-purple':'badge-blue')+'">'+escHtml(e.role_name||'—')+'</span></td>'
+          + '<td>'+escHtml(e.dept_name||'—')+'</td>'
+          + '<td>'+escHtml(e.branch_name||'—')+'</td>'
+          + '<td>'+escHtml(e.mobile_number||'—')+'</td>'
+          + '<td>'+inBadge+'</td>'
+          + '<td>'+outBadge+'</td>'
+          + '<td>'+statusBadge+'</td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    /* ── Day attendance modal ── */
+    const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
+
+    function avatarColor(name) {
+      var code = 0;
+      for (var i = 0; i < (name||'').length; i++) code += name.charCodeAt(i);
+      return AVATAR_COLORS[code % AVATAR_COLORS.length];
+    }
+
+    function initials(name) {
+      var parts = (name||'?').split(' ');
+      return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+    }
+
+    async function openDayModal(date, label) {
+      var overlay = document.getElementById('day-modal-overlay');
+      var body    = document.getElementById('day-modal-body');
+      document.getElementById('day-modal-title').textContent = 'Attendance · ' + label;
+      document.getElementById('day-modal-sub').textContent   = date;
+      body.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-muted);font-size:14px;">⏳ Loading attendance photos…</div>';
+      overlay.classList.add('open');
+      try {
+        var res  = await fetch(API_BASE + '/gen-dashboard/org/' + ORG_ID + '/attendance/' + date);
+        var json = await res.json();
+        if (!json.success) throw new Error('Failed');
+        renderDayModal(json.data, date);
+      } catch(e) {
+        body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);">Failed to load attendance data</div>';
+      }
+    }
+
+    function renderDayModal(data, date) {
+      var present = data.filter(function(e){ return e.is_present; });
+      var absent  = data.filter(function(e){ return !e.is_present; });
+      var body    = document.getElementById('day-modal-body');
+      document.getElementById('day-modal-sub').textContent = date + ' — ' + present.length + ' present, ' + absent.length + ' absent';
+
+      var html = '';
+
+      /* Summary chips */
+      html += '<div class="day-summary-bar">'
+        + '<div class="day-summary-chip"><span>✅</span><strong style="color:var(--green);">' + present.length + '</strong> Present</div>'
+        + '<div class="day-summary-chip"><span>❌</span><strong style="color:var(--red);">'   + absent.length  + '</strong> Absent</div>'
+        + '<div class="day-summary-chip"><span>👥</span><strong>' + data.length + '</strong> Total</div>'
+        + '</div>';
+
+      /* Present employees — punch photo cards */
+      if (present.length) {
+        html += '<div class="punch-cards-grid">';
+        html += present.map(function(e) {
+          var color = avatarColor(e.name);
+          var inPhoto  = e.punch_in_photo
+            ? '<img class="punch-photo-img" src="'+escHtml(e.punch_in_photo)+'" alt="In" onclick="openLightbox(\''+escHtml(e.punch_in_photo)+'\')" />'
+            : '<div class="punch-photo-placeholder">🤳</div>';
+          var outPhoto = e.punch_out_photo
+            ? '<img class="punch-photo-img" src="'+escHtml(e.punch_out_photo)+'" alt="Out" onclick="openLightbox(\''+escHtml(e.punch_out_photo)+'\')" />'
+            : '<div class="punch-photo-placeholder">🚶</div>';
+          var inTime   = e.punch_in_time  ? e.punch_in_time  : '—';
+          var outTime  = e.punch_out_time ? e.punch_out_time : 'Not out yet';
+          var wh       = e.work_hours ? Math.round(e.work_hours * 10) / 10 + 'h' : '';
+          return '<div class="punch-card">'
+            + '<div class="punch-card-head">'
+            +   '<div class="punch-avatar" style="background:'+color+'">'+initials(e.name)+'</div>'
+            +   '<div style="flex:1;min-width:0;">'
+            +     '<div class="punch-card-name">'+escHtml(e.name)+'</div>'
+            +     '<div class="punch-card-meta">'+escHtml(e.role_name)+(e.dept_name && e.dept_name!=='—'?' &middot; '+escHtml(e.dept_name):'')+'</div>'
+            +   '</div>'
+            +   (wh ? '<div style="font-size:11px;font-weight:700;color:var(--green);">'+wh+'</div>' : '')
+            + '</div>'
+            + '<div class="punch-card-photos">'
+            +   '<div class="punch-photo-col">'
+            +     '<div class="punch-photo-type" style="color:var(--green);">🟢 IN</div>'
+            +     inPhoto
+            +     '<div class="punch-photo-time">'+escHtml(inTime)+'</div>'
+            +   '</div>'
+            +   '<div class="punch-photo-col">'
+            +     '<div class="punch-photo-type" style="color:var(--blue);">🔵 OUT</div>'
+            +     outPhoto
+            +     '<div class="punch-photo-time '+(e.punch_out_photo?'':'absent')+'">'+escHtml(outTime)+'</div>'
+            +   '</div>'
+            + '</div>'
+            + '</div>';
+        }).join('');
+        html += '</div>';
+      } else {
+        html += '<div style="text-align:center;padding:32px;color:var(--text-muted);">No attendance recorded for this day</div>';
+      }
+
+      /* Absent employees — compact chip list */
+      if (absent.length) {
+        html += '<div class="absent-section">'
+          + '<div class="absent-section-title"><span>Absent</span><span style="font-weight:400;text-transform:none;letter-spacing:0;">'+absent.length+' employees</span></div>'
+          + '<div class="absent-chips">'
+          + absent.map(function(e){
+              return '<div class="absent-chip">❌ '+escHtml(e.name)+'</div>';
+            }).join('')
+          + '</div></div>';
+      }
+
+      body.innerHTML = html;
+    }
+
+    function closeDayModal() {
+      document.getElementById('day-modal-overlay').classList.remove('open');
+    }
+
+    function handleDayModalOverlayClick(e) {
+      if (e.target === document.getElementById('day-modal-overlay')) closeDayModal();
+    }
+
+    /* ── Lightbox ── */
+    function openLightbox(src) {
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox').classList.add('open');
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') { closeDayModal(); closeLightbox(); }
+    });
+
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) logout();
+    }
+
+    loadOrgInfo(); loadOrgEmployees(); setPeriod(7); loadAll();
+
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Users</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    .page-topbar { display:flex; align-items:center; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+    .page-topbar h1 { font-size:20px; font-weight:700; color:var(--text-primary); flex:1; }
+    .search-box {
+      display:flex; align-items:center; gap:8px;
+      background:var(--bg-tertiary); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:7px 12px; width:260px;
+    }
+    .search-box input { background:none; border:none; outline:none; color:var(--text-primary); font-size:13px; width:100%; }
+    .search-box input::placeholder { color:var(--text-muted); }
+    .filter-select {
+      background:var(--bg-tertiary); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:7px 12px;
+      color:var(--text-secondary); font-size:13px; cursor:pointer; outline:none;
+    }
+    .summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+    .summary-card {
+      background:var(--bg-secondary); border:1px solid var(--border);
+      border-radius:var(--radius-md); padding:18px 20px;
+      display:flex; align-items:center; gap:16px;
+    }
+    .summary-icon {
+      width:44px; height:44px; border-radius:var(--radius-sm);
+      display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+    }
+    .summary-icon.blue   { background:rgba(88,166,255,0.15); }
+    .summary-icon.green  { background:rgba(76,175,80,0.15); }
+    .summary-icon.orange { background:rgba(255,152,0,0.15); }
+    .summary-icon.purple { background:rgba(167,139,250,0.15); }
+    .summary-info { display:flex; flex-direction:column; gap:3px; }
+    .summary-val  { font-size:24px; font-weight:700; color:var(--text-primary); line-height:1; }
+    .summary-lbl  { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
+    .table-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
+    .table-card-header {
+      padding:16px 20px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .table-card-header h3 { font-size:14px; font-weight:600; color:var(--text-primary); }
+    .count-badge { background:rgba(88,166,255,0.15); color:var(--blue); font-size:12px; font-weight:600; padding:2px 10px; border-radius:20px; }
+    .user-cell { display:flex; align-items:center; gap:10px; }
+    .user-avatar {
+      width:34px; height:34px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:700; color:#fff;
+    }
+    .user-name-text {
+      font-weight:600; color:var(--text-primary); font-size:13px;
+      cursor:pointer; transition:color .15s;
+    }
+    .user-name-text:hover { color:var(--blue); }
+    .user-empid     { font-size:11px; color:var(--text-muted); margin-top:1px; }
+    .contact-cell   { display:flex; flex-direction:column; gap:2px; }
+    .contact-email  { font-size:12px; color:var(--text-secondary); }
+    .contact-phone  { font-size:11px; color:var(--text-muted); }
+    .role-badge-admin    { background:rgba(88,166,255,0.15);  color:var(--blue);   padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .role-badge-manager  { background:rgba(255,152,0,0.15);   color:var(--orange); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .role-badge-employee { background:rgba(76,175,80,0.15);   color:var(--green);  padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .status-active   { background:rgba(76,175,80,0.15);  color:var(--green); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .status-inactive { background:rgba(239,68,68,0.15);  color:var(--red);   padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .empty-row td { text-align:center; color:var(--text-muted); padding:40px !important; }
+    @media(max-width:1100px){ .summary-grid{ grid-template-columns:repeat(2,1fr); } }
+
+    /* Punch-in photo avatar */
+    .user-avatar img {
+      width:100%; height:100%; border-radius:50%; object-fit:cover; display:block;
+    }
+    .user-avatar.has-photo.admin-view {
+      cursor:pointer; transition:opacity .2s, box-shadow .2s;
+    }
+    .user-avatar.has-photo.admin-view:hover {
+      opacity:.82; box-shadow:0 0 0 2px var(--blue);
+    }
+    /* Shimmer loading placeholder */
+    .avatar-shimmer {
+      width:34px; height:34px; border-radius:50%; flex-shrink:0;
+      background:linear-gradient(90deg,var(--bg-tertiary) 25%,var(--border) 50%,var(--bg-tertiary) 75%);
+      background-size:200% 100%; animation:shimmer 1.2s infinite;
+    }
+    @keyframes shimmer { to { background-position:-200% 0; } }
+
+    /* Punch attendance modal */
+    #punch-photo-modal {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.7); z-index:2000;
+      align-items:center; justify-content:center; padding:16px;
+    }
+    #punch-photo-modal.open { display:flex; }
+    .ppm-box {
+      background:var(--bg-secondary); border:1px solid var(--border);
+      border-radius:var(--radius-md); width:100%; max-width:460px;
+      padding:24px; position:relative;
+    }
+    .ppm-close {
+      position:absolute; top:14px; right:16px;
+      background:none; border:none; color:var(--text-muted);
+      font-size:20px; cursor:pointer; line-height:1;
+    }
+    .ppm-close:hover { color:var(--text-primary); }
+    .ppm-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; padding-right:28px; }
+    .ppm-avatar {
+      width:48px; height:48px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px; font-weight:700; color:#fff; overflow:hidden;
+    }
+    .ppm-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .ppm-title { font-size:15px; font-weight:700; color:var(--text-primary); }
+    .ppm-subtitle { font-size:12px; color:var(--text-muted); margin-top:2px; }
+    .ppm-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+    .ppm-card {
+      background:var(--bg-tertiary); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:14px;
+    }
+    .ppm-card-label { font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:6px; }
+    .ppm-card-time  { font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:8px; }
+    .ppm-card-photo { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:6px; background:var(--bg-secondary); display:block; }
+    .ppm-card-nophoto {
+      width:100%; aspect-ratio:1/1; border-radius:6px;
+      background:var(--bg-secondary); display:flex;
+      align-items:center; justify-content:center;
+      font-size:11px; color:var(--text-muted);
+    }
+    .ppm-in  .ppm-card-label { color:#4caf50; }
+    .ppm-out .ppm-card-label { color:#ff9800; }
+    .ppm-loading { text-align:center; padding:32px; color:var(--text-muted); font-size:13px; }
+    .ppm-error   { text-align:center; padding:24px; color:#ef4444; font-size:13px; }
+    /* Attendance range modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:2000; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--bg-secondary); border:1px solid var(--border); border-radius:16px; padding:28px; width:100%; }
+    .modal-title { font-size:18px; font-weight:600; color:var(--text-primary); }
+    .att-day-card { background:var(--bg-tertiary); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+    .att-day-date { font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:10px; }
+    .att-photos { display:flex; gap:16px; flex-wrap:wrap; }
+    .att-photo-block { display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .att-photo-img { width:100px; height:100px; object-fit:cover; border-radius:8px; border:2px solid var(--border); cursor:pointer; }
+    .att-photo-img:hover { border-color:var(--blue); }
+    .att-photo-label { font-size:11px; color:var(--text-muted); font-weight:600; }
+    .att-photo-time { font-size:12px; color:var(--text-primary); font-weight:600; }
+    .no-photo { width:100px; height:100px; border-radius:8px; border:2px dashed var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:11px; }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
+      <div class="sidebar-logo-name">Clockyn</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a class="nav-item" href="organizations.html"><span class="nav-icon">🏢</span> Organizations</a>
+      <a class="nav-item active" href="users.html"><span class="nav-icon">👥</span> Users <span class="nav-badge nav-users-badge" style="display:none;"></span></a>
+      <a class="nav-item" href="subscriptions.html"><span class="nav-icon">📋</span> Subscriptions</a>
+      <a class="nav-item" href="payments.html"><span class="nav-icon">💳</span> Payments</a>
+      <a class="nav-item" href="coupons.html"><span class="nav-icon">🎯</span> Coupons</a>
+      <a class="nav-item" href="suggestions.html"><span class="nav-icon">💡</span> Suggestions <span class="nav-suggestion-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;"></span></a>
+      <a class="nav-item" href="tickets.html"><span class="nav-icon">🎫</span> Ticketing &amp; Bugs</a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#activity"><span class="nav-icon">🕐</span> Activity Logs</a>
+      <a class="nav-item" href="settings.html"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar" id="sidebar-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-user-name">Super Admin</div>
+        <div class="user-mobile" id="sidebar-user-mobile"></div>
+        <div class="user-role" id="sidebar-user-role">System Administrator</div>
+      </div>
+      <button type="button" class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <span class="topbar-title">Users</span>
+      <div class="topbar-search">
+        <span>🔍</span>
+        <input type="text" id="search-input" placeholder="Search name, email, phone, org, dept..." oninput="applyFilters()" />
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="icon-btn">🔔<span class="dot"></span></button>
+        <button type="button" class="icon-btn" onclick="loadUsers()" title="Refresh">🔄</button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-topbar">
+        <h1>All Users</h1>
+
+        <select class="filter-select" id="role-filter" onchange="applyFilters()">
+          <option value="">All Roles</option>
+          <option value="1">Admin</option>
+          <option value="2">Manager</option>
+          <option value="3">Employee</option>
+        </select>
+        <select class="filter-select" id="status-filter" onchange="applyFilters()">
+          <option value="">All Status</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+<div class="export-wrap">
+          <button class="btn btn-ghost btn-sm" onclick="toggleExportMenu('user-export-menu')">⬇ Export ▾</button>
+          <div class="export-menu" id="user-export-menu">
+            <button onclick="doExportExcel()">📊 Export Excel</button>
+            <button onclick="doExportPDF()">📄 Export PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deletion Requests Card (top) -->
+      <div class="table-card" style="margin-bottom:24px;cursor:pointer;" onclick="window.location.href='delete_account.html'">
+        <div class="table-card-header" style="border-bottom:none;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;border-radius:10px;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;font-size:20px;">🗑️</div>
+            <div>
+              <h3 style="margin:0;">Account Deletion Requests</h3>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Pending requests from app users</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="del-req-count" style="background:rgba(239,68,68,0.15);color:var(--red);font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;">— requests</span>
+            <span style="color:var(--text-muted);font-size:18px;">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-icon blue">👥</div>
+          <div class="summary-info">
+            <div class="summary-val" id="s-total">—</div>
+            <div class="summary-lbl">Total Users</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon blue">🛡️</div>
+          <div class="summary-info">
+            <div class="summary-val" id="s-admin" style="color:var(--blue)">—</div>
+            <div class="summary-lbl">Admins</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon orange">👔</div>
+          <div class="summary-info">
+            <div class="summary-val" id="s-manager" style="color:var(--orange)">—</div>
+            <div class="summary-lbl">Managers</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon green">🧑‍💼</div>
+          <div class="summary-info">
+            <div class="summary-val" id="s-employee" style="color:var(--green)">—</div>
+            <div class="summary-lbl">Employees</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Table -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <h3>Users</h3>
+          <span class="count-badge" id="table-count">0 users</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Contact</th>
+                <th>Organization</th>
+                <th>Department</th>
+                <th>Branch</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Today's Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr class="empty-row"><td colspan="10">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Attendance Range Modal -->
+  <div class="modal-overlay" id="att-range-modal">
+    <div class="modal" style="max-width:700px;width:96vw;max-height:90vh;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-shrink:0;">
+        <div>
+          <div class="modal-title" style="margin-bottom:4px;" id="att-modal-name">Attendance</div>
+          <div style="font-size:12px;color:var(--text-muted);" id="att-modal-days-label"></div>
+        </div>
+        <button onclick="closeAttModal()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px 8px;">&#x2715;</button>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;flex-shrink:0;">
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">From</label>
+          <input type="date" id="att-from-date" class="search-input" style="width:150px;" />
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">To</label>
+          <input type="date" id="att-to-date" class="search-input" style="width:150px;" />
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="applyAttRange()">Apply</button>
+      </div>
+      <div id="att-modal-body" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:12px;">
+        <div style="text-align:center;color:var(--text-muted);padding:32px;">Select a date range and click Apply</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script src="export.js"></script>
+  <script>
+    let allUsers = [];
+    let filteredUsers = [];
+
+    const USER_COLS = [
+      { key: 'name',        label: 'Name' },
+      { key: 'emp_id',      label: 'Emp ID' },
+      { key: 'email',       label: 'Email' },
+      { key: 'mobile',      label: 'Mobile' },
+      { key: 'org_name',    label: 'Organization' },
+      { key: 'dept_name',   label: 'Department' },
+      { key: 'branch_name', label: 'Branch' },
+      { key: 'role_name',   label: 'Role' },
+      { key: 'status',      label: 'Status' },
+      { key: 'joined',      label: 'Joined' },
+    ];
+
+    function doExportExcel() { exportExcel(filteredUsers, USER_COLS, 'Clockyn_Users_' + new Date().toISOString().slice(0,10)); }
+    function doExportPDF()   { exportPDF(filteredUsers, USER_COLS, 'Clockyn_Users_' + new Date().toISOString().slice(0,10), 'Clockyn — Users'); }
+
+    const avatarColors = ['#58a6ff','#4caf50','#ff9800','#a78bfa','#22d3ee','#ef4444','#f59e0b'];
+
+    function avatarColor(name) {
+      var code = 0;
+      for (var i = 0; i < name.length; i++) code += name.charCodeAt(i);
+      return avatarColors[code % avatarColors.length];
+    }
+
+    function initials(name) {
+      return name ? name.split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase() : '??';
+    }
+
+    function roleBadge(roleId, roleName) {
+      var cls = roleId === 1 ? 'role-badge-admin' : roleId === 2 ? 'role-badge-manager' : 'role-badge-employee';
+      return '<span class="' + cls + '">' + roleName + '</span>';
+    }
+
+    function statusBadge(status) {
+      return status === 'Active'
+        ? '<span class="status-active">Active</span>'
+        : '<span class="status-inactive">Inactive</span>';
+    }
+
+    function avatarHTML(r) {
+      return '<div class="user-avatar admin-view" style="background:' + avatarColor(r.name) + ';cursor:pointer;" onclick="openAttModal(\'' + r.user_id + '\')">' + initials(r.name) + '</div>';
+    }
+
+    function renderTable(rows) {
+      var tbody = document.getElementById('users-tbody');
+      // Filter out org admins (role_id === 1)
+      var displayRows = rows.filter(function(r) { return r.role_id !== 1; });
+      document.getElementById('table-count').textContent = displayRows.length + ' user' + (displayRows.length !== 1 ? 's' : '');
+      if (!displayRows.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No users found</td></tr>';
+        return;
+      }
+      tbody.innerHTML = displayRows.map(function(r) {
+        var todayStatus = r.punch_in_today
+          ? '<span class="badge badge-green">In ' + (r.punch_in_today||'') + '</span>'
+          : (r.punch_in_today === undefined ? '<span style="color:var(--text-muted);">—</span>' : '<span class="badge badge-gray">Absent</span>');
+        return '<tr>'
+          + '<td><div class="user-cell">'
+          +   avatarHTML(r)
+          +   '<div><div class="user-name-text" onclick="openAttModal(\'' + r.user_id + '\')">' + r.name + '</div>'
+          +   '<div class="user-empid">ID: ' + r.emp_id + '</div></div>'
+          + '</div></td>'
+          + '<td><div class="contact-cell">'
+          +   '<span class="contact-email">' + r.email + '</span>'
+          +   '<span class="contact-phone">' + r.mobile + '</span>'
+          + '</div></td>'
+          + '<td style="color:var(--text-secondary);font-size:13px;">' + r.org_name + '</td>'
+          + '<td style="color:var(--text-muted);font-size:12px;">' + r.dept_name + '</td>'
+          + '<td style="color:var(--text-muted);font-size:12px;">' + r.branch_name + '</td>'
+          + '<td>' + roleBadge(r.role_id, r.role_name) + '</td>'
+          + '<td>' + statusBadge(r.status) + '</td>'
+          + '<td style="color:var(--text-muted);font-size:12px;">' + r.joined + '</td>'
+          + '<td>' + todayStatus + '</td>'
+          + '<td><button onclick="deleteUser(\''+r.user_id+'\')" style="background:none;border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:4px 9px;font-size:12px;color:var(--red);cursor:pointer;" onmouseover="this.style.background=\'rgba(239,68,68,.12)\'" onmouseout="this.style.background=\'none\'">Delete</button></td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    function updateStats(users) {
+      document.getElementById('s-total').textContent    = users.length;
+      document.getElementById('s-admin').textContent    = users.filter(function(u){ return u.role_id === 1; }).length;
+      document.getElementById('s-manager').textContent  = users.filter(function(u){ return u.role_id === 2; }).length;
+      document.getElementById('s-employee').textContent = users.filter(function(u){ return u.role_id === 3; }).length;
+    }
+
+    function applyFilters() {
+      var search = document.getElementById('search-input').value.toLowerCase().trim();
+      var role   = document.getElementById('role-filter').value;
+      var status = document.getElementById('status-filter').value;
+      filteredUsers = allUsers.filter(function(u) {
+        var name     = (u.name      || '').toLowerCase();
+        var email    = (u.email     || '').toLowerCase();
+        var mobile   = (u.mobile    || '');
+        var org      = (u.org_name  || '').toLowerCase();
+        var empid    = (u.emp_id    || '').toLowerCase();
+        var dept     = (u.dept_name || '').toLowerCase();
+        var branch   = (u.branch_name || '').toLowerCase();
+        var role_name = (u.role_name || '').toLowerCase();
+        var matchSearch = !search
+          || name.includes(search)
+          || email.includes(search)
+          || mobile.includes(search)
+          || org.includes(search)
+          || empid.includes(search)
+          || dept.includes(search)
+          || branch.includes(search)
+          || role_name.includes(search);
+        var matchRole   = !role   || String(u.role_id) === role;
+        var matchStatus = !status || (u.status || '') === status;
+        return matchSearch && matchRole && matchStatus;
+      });
+      renderTable(filteredUsers);
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm('Are you sure you want to permanently delete this user? This cannot be undone.')) return;
+      try {
+        var res = await fetch(API_BASE + '/gen-dashboard/users/' + userId, { method: 'DELETE' });
+        var data = await res.json();
+        if (data.success) {
+          allUsers = allUsers.filter(function(u) { return u.user_id !== userId; });
+          applyFilters();
+        } else {
+          alert(data.detail || 'Failed to delete user.');
+        }
+      } catch(e) {
+        alert('Network error. Please try again.');
+      }
+    }
+
+    function fmtTime(val) {
+      if (!val) return '—';
+      return val;  // backend returns pre-formatted IST string e.g. "15 Jan 2025, 09:00 AM"
+    }
+
+    function photoCard(label, time, photoUrl, colorClass) {
+      var photoHtml = photoUrl
+        ? '<img class="ppm-card-photo" src="' + photoUrl + '" loading="lazy" onerror="this.outerHTML=\'<div class=ppm-card-nophoto>No photo</div>\'" />'
+        : '<div class="ppm-card-nophoto">No photo</div>';
+      return '<div class="ppm-card ' + colorClass + '">'
+        + '<div class="ppm-card-label">' + label + '</div>'
+        + '<div class="ppm-card-time">' + fmtTime(time) + '</div>'
+        + photoHtml
+        + '</div>';
+    }
+
+    var currentAttUserId = null;
+
+    function openAttModal(userId) {
+      var user = allUsers.find(function(u) { return String(u.user_id) === String(userId); });
+      var userName = user ? user.name : 'User';
+      currentAttUserId = userId;
+      document.getElementById('att-modal-name').textContent = userName || 'Attendance';
+      document.getElementById('att-modal-days-label').textContent = '';
+      document.getElementById('att-modal-body').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;">Loading...</div>';
+      // Pre-fill last 5 days
+      var today = new Date();
+      var from  = new Date(today); from.setDate(today.getDate() - 4);
+      document.getElementById('att-to-date').value   = today.toISOString().slice(0, 10);
+      document.getElementById('att-from-date').value = from.toISOString().slice(0, 10);
+      document.getElementById('att-range-modal').classList.add('open');
+      fetchAttRange();
+    }
+
+    function closeAttModal() {
+      document.getElementById('att-range-modal').classList.remove('open');
+      currentAttUserId = null;
+    }
+
+    function applyAttRange() {
+      fetchAttRange();
+    }
+
+    async function fetchAttRange() {
+      if (!currentAttUserId) return;
+      var fromDate = document.getElementById('att-from-date').value;
+      var toDate   = document.getElementById('att-to-date').value;
+      if (!fromDate || !toDate) return;
+      document.getElementById('att-modal-body').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;">Loading...</div>';
+      try {
+        var url = API_BASE + '/gen-dashboard/users/' + currentAttUserId + '/attendance-range?from_date=' + fromDate + '&to_date=' + toDate;
+        var res  = await fetch(url);
+        var json = await res.json();
+        var days = json.data || [];
+        document.getElementById('att-modal-days-label').textContent = (json.total_days || 0) + ' day(s) with attendance from ' + fromDate + ' to ' + toDate;
+        if (!days.length) {
+          document.getElementById('att-modal-body').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;">No attendance records in selected range</div>';
+          return;
+        }
+        document.getElementById('att-modal-body').innerHTML = days.map(function(d) {
+          var inPhoto  = d.punch_in_photo  ? '<img src="'+d.punch_in_photo+'"  class="att-photo-img" onclick="window.open(this.src)" />' : '<div class="no-photo">No photo</div>';
+          var outPhoto = d.punch_out_photo ? '<img src="'+d.punch_out_photo+'" class="att-photo-img" onclick="window.open(this.src)" />' : '<div class="no-photo">No photo</div>';
+          var dateLabel = new Date(d.date+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'2-digit',month:'short',year:'numeric'});
+          return '<div class="att-day-card">'
+            + '<div class="att-day-date">'+dateLabel+(d.work_hours?' &nbsp;&middot;&nbsp; '+d.work_hours+'h worked':'')+'</div>'
+            + '<div class="att-photos">'
+            + '<div class="att-photo-block">'+inPhoto+'<div class="att-photo-label">Punch In</div><div class="att-photo-time">'+(d.punch_in_time||'\u2014')+'</div></div>'
+            + '<div class="att-photo-block">'+outPhoto+'<div class="att-photo-label">Punch Out</div><div class="att-photo-time">'+(d.punch_out_time||'\u2014')+'</div></div>'
+            + '</div>'
+            + '</div>';
+        }).join('');
+      } catch(e) {
+        document.getElementById('att-modal-body').innerHTML = '<div style="text-align:center;color:var(--red);padding:32px;">Failed to load attendance</div>';
+      }
+    }
+
+    // Close on backdrop click or Escape
+    document.getElementById('att-range-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeAttModal();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeAttModal();
+    });
+
+    async function loadUsers() {
+      var tbody = document.getElementById('users-tbody');
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Loading...</td></tr>';
+      document.getElementById('search-input').value = '';
+      document.getElementById('role-filter').value = '';
+      document.getElementById('status-filter').value = '';
+      document.querySelectorAll('[onclick="loadUsers()"]').forEach(function(b){ b.disabled = true; });
+      try {
+        var res = await fetch(API_BASE + '/gen-dashboard/users', { cache: 'no-store' });
+        if (!res.ok) {
+          var err = await res.json().catch(function(){ return {}; });
+          tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Error: ' + (err.detail || res.status) + '</td></tr>';
+          return;
+        }
+        allUsers = await res.json();
+        updateStats(allUsers);
+        applyFilters();
+      } catch(e) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Failed to connect to server.</td></tr>';
+      } finally {
+        document.querySelectorAll('[onclick="loadUsers()"]').forEach(function(b){ b.disabled = false; });
+      }
+    }
+
+    async function loadDeletionRequestCount() {
+      try {
+        var res = await fetch(API_BASE + '/company/deletion-requests', { cache: 'no-store' });
+        var rows = await res.json();
+        var count = Array.isArray(rows) ? rows.length : 0;
+        document.getElementById('del-req-count').textContent = count + ' request' + (count !== 1 ? 's' : '');
+        document.querySelectorAll('.nav-users-badge').forEach(function(el) {
+          el.textContent = count;
+          el.style.display = count > 0 ? '' : 'none';
+        });
+      } catch(e) {}
+    }
+
+    loadDeletionRequestCount();
+
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) logout();
+    }
+
+    loadUsers();
+
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+  </script>
+
+</body>
+</html>

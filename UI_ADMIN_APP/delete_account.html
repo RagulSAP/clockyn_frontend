@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Account Deletion Requests</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    .page-header { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+    .page-header h1 { font-size:20px; font-weight:700; color:var(--text-primary); flex:1; }
+    .back-btn {
+      background:var(--bg-tertiary); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:7px 12px;
+      color:var(--text-secondary); font-size:13px; cursor:pointer;
+    }
+    .back-btn:hover { border-color:var(--blue); color:var(--blue); }
+    .table-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
+    .table-card-header {
+      padding:16px 20px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .table-card-header h3 { font-size:14px; font-weight:600; color:var(--text-primary); }
+    .count-badge { background:rgba(239,68,68,0.15); color:var(--red); font-size:12px; font-weight:600; padding:2px 10px; border-radius:20px; }
+    .empty-row td { text-align:center; color:var(--text-muted); padding:40px !important; }
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); width:100%; max-width:400px; padding:28px 28px 24px; }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .modal-header h2 { font-size:16px; font-weight:700; color:var(--text-primary); }
+    .modal-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; }
+    .modal-close:hover { color:var(--text-primary); }
+    .form-group { margin-bottom:14px; }
+    .form-group label { display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:5px; }
+    .form-group input { width:100%; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text-primary); font-size:13px; outline:none; box-sizing:border-box; }
+    .form-group input:focus { border-color:var(--blue); }
+    .field-error { font-size:11px; color:var(--red,#f85149); margin-top:3px; }
+    .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+    .del-btn { background:none; border:1px solid rgba(239,68,68,.3); border-radius:6px; padding:4px 10px; font-size:12px; color:var(--red); cursor:pointer; transition:all .15s; }
+    .del-btn:hover { background:rgba(239,68,68,.12); border-color:var(--red); }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
+      <div class="sidebar-logo-name">Clockyn</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a class="nav-item" href="organizations.html"><span class="nav-icon">🏢</span> Organizations</a>
+      <a class="nav-item active" href="users.html"><span class="nav-icon">👥</span> Users</a>
+      <a class="nav-item" href="subscriptions.html"><span class="nav-icon">📋</span> Subscriptions</a>
+      <a class="nav-item" href="payments.html"><span class="nav-icon">💳</span> Payments</a>
+      <a class="nav-item" href="coupons.html"><span class="nav-icon">🎯</span> Coupons</a>
+      <a class="nav-item" href="tickets.html"><span class="nav-icon">🎫</span> Ticketing &amp; Bugs</a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#activity"><span class="nav-icon">🕐</span> Activity Logs</a>
+      <a class="nav-item" href="settings.html"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar" id="sidebar-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-user-name">Super Admin</div>
+        <div class="user-mobile" id="sidebar-user-mobile"></div>
+        <div class="user-role" id="sidebar-user-role">System Administrator</div>
+      </div>
+      <button type="button" class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <span class="topbar-title">Account Deletion Requests</span>
+      <div class="topbar-actions">
+        <button type="button" class="icon-btn">🔔<span class="dot"></span></button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-header">
+        <button class="back-btn" onclick="window.location.href='users.html'">← Back to Users</button>
+        <h1>Account Deletion Requests</h1>
+        <button type="button" class="back-btn" onclick="loadRequests()">🔄 Refresh</button>
+      </div>
+
+      <div class="table-card">
+        <div class="table-card-header">
+          <h3>🗑️ Pending Deletion Requests</h3>
+          <span class="count-badge" id="req-count">0 requests</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Organization</th>
+                <th>Mobile</th>
+                <th>Email</th>
+                <th>Requested At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="req-tbody">
+              <tr class="empty-row"><td colspan="5">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- OTP Confirm Modal -->
+  <div class="modal-overlay" id="otp-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>🗑️ Confirm Account Deletion</h2>
+        <button type="button" class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+        An OTP has been sent to your registered phone number. Enter it to permanently delete this account and all its data.
+      </p>
+      <div class="form-group">
+        <label>Enter OTP</label>
+        <input type="text" id="otp-input" placeholder="6-digit OTP" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+        <div class="field-error" id="otp-error"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+        <button type="button" class="btn btn-sm" id="btn-delete" onclick="confirmDelete()" style="background:#ef4444;color:#fff;border:none;border-radius:var(--radius-sm);padding:7px 18px;cursor:pointer;font-size:13px;font-weight:600;">Delete Account</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    var pendingUserId = null;
+
+    async function loadRequests() {
+      var tbody = document.getElementById('req-tbody');
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Loading...</td></tr>';
+      try {
+        var res = await fetch(API_BASE + '/company/deletion-requests', { cache: 'no-store' });
+        var rows = await res.json();
+        document.getElementById('req-count').textContent = rows.length + ' request' + (rows.length !== 1 ? 's' : '');
+        if (!rows.length) {
+          tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No pending deletion requests</td></tr>';
+          return;
+        }
+        tbody.innerHTML = rows.map(function(r) {
+          return '<tr>'
+            + '<td style="font-weight:600;color:var(--text-primary);font-size:13px;">' + r.org_name + '</td>'
+            + '<td style="font-size:12px;color:var(--text-secondary);">' + r.mobile + '</td>'
+            + '<td style="font-size:12px;color:var(--text-secondary);">' + r.email + '</td>'
+            + '<td style="font-size:12px;color:var(--text-muted);">' + r.requested_at + '</td>'
+            + '<td><button class="del-btn" onclick="initDelete(\'' + r.user_id + '\')">Delete Account</button></td>'
+            + '</tr>';
+        }).join('');
+      } catch(e) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Failed to load requests.</td></tr>';
+      }
+    }
+
+    async function initDelete(userId) {
+      var adminEmail = localStorage.getItem('admin_email');
+      if (!adminEmail) { alert('Session expired. Please login again.'); window.location.href = 'login.html'; return; }
+      try {
+        var res = await fetch(API_BASE + '/auth/admin-login', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ email: adminEmail })
+        });
+        var data = await res.json();
+        if (!data.success) { alert(data.detail || 'Failed to send OTP'); return; }
+      } catch(e) { alert('Network error. Try again.'); return; }
+      pendingUserId = userId;
+      document.getElementById('otp-input').value = '';
+      document.getElementById('otp-error').textContent = '';
+      document.getElementById('otp-modal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('otp-modal').classList.remove('open');
+      pendingUserId = null;
+    }
+
+    async function confirmDelete() {
+      var otp = document.getElementById('otp-input').value.trim();
+      var errEl = document.getElementById('otp-error');
+      errEl.textContent = '';
+      if (otp.length !== 6) { errEl.textContent = 'Enter the 6-digit OTP.'; return; }
+      var adminEmail = localStorage.getItem('admin_email');
+      var btn = document.getElementById('btn-delete');
+      btn.disabled = true; btn.textContent = 'Verifying...';
+      try {
+        // Step 1: verify OTP
+        var vRes = await fetch(API_BASE + '/auth/admin-login/verify-otp', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ email: adminEmail, otp: otp })
+        });
+        var vData = await vRes.json();
+        if (!vData.success) { errEl.textContent = vData.detail || 'Invalid or expired OTP.'; return; }
+
+        // Step 2: delete account
+        btn.textContent = 'Deleting...';
+        var dRes = await fetch(API_BASE + '/company/delete-account/' + pendingUserId, { method: 'DELETE' });
+        var dData = await dRes.json();
+        if (dData.success) {
+          closeModal();
+          loadRequests();
+        } else {
+          errEl.textContent = dData.detail || 'Deletion failed.';
+        }
+      } catch(e) {
+        errEl.textContent = 'Network error. Try again.';
+      } finally {
+        btn.disabled = false; btn.textContent = 'Delete Account';
+      }
+    }
+
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) logout();
+    }
+
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+
+    loadRequests();
+  </script>
+
+</body>
+</html>

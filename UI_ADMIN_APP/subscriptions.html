@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Subscriptions</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    /* ── Compact layout ── */
+    .content { padding: 20px 24px; }
+
+    /* Sidebar logo compact */
+    .sidebar-logo { padding: 12px 16px; flex-direction: row; align-items: center; gap: 10px; justify-content: flex-start; }
+    .sidebar-logo-img { width: 36px; height: 36px; border-radius: 8px; }
+    .sidebar-logo-name { font-size: 14px; font-weight: 700; }
+
+    /* Page header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
+    .page-header-left h1 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+    .page-header-left p  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Stat tiles */
+    .quick-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+    .quick-tile {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 16px; cursor: pointer; transition: border-color 0.2s;
+      display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden;
+    }
+    .quick-tile::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:10px 10px 0 0; }
+    .quick-tile.t-purple::before { background: var(--purple); }
+    .quick-tile.t-red::before    { background: var(--red); }
+    .quick-tile.t-orange::before { background: var(--orange); }
+    .quick-tile:hover { border-color: var(--blue); }
+    .qt-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+    .qt-value { font-size: 24px; font-weight: 800; color: var(--text-primary); line-height: 1; letter-spacing: -.02em; }
+    .qt-sub   { font-size: 11px; color: var(--text-muted); }
+    .qt-icon  { position: absolute; top: 10px; right: 12px; font-size: 18px; opacity: 0.3; }
+
+    /* Plans panel */
+    .plans-panel {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+      margin-bottom: 14px;
+    }
+    .plans-panel-header {
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .plans-panel-header h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+    .plans-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    .plan-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 16px; border-bottom: 1px solid var(--border);
+      cursor: pointer; transition: background 0.12s;
+    }
+    .plan-row:hover { background: var(--bg-tertiary); }
+    .plan-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .plan-info { flex: 1; min-width: 0; }
+    .plan-info-name  { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+    .plan-info-price { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .plan-bar-wrap { flex: 1; min-width: 50px; max-width: 80px; }
+    .plan-bar-track { height: 3px; background: var(--bg-tertiary); border-radius: 2px; }
+    .plan-bar-fill  { height: 100%; border-radius: 2px; transition: width .4s; }
+    .plan-count { font-size: 14px; font-weight: 800; min-width: 20px; text-align: right; }
+    .plan-actions { display: flex; gap: 2px; flex-shrink: 0; }
+    .plan-act-btn {
+      background: none; border: none; cursor: pointer; padding: 3px 6px;
+      border-radius: 5px; font-size: 12px; color: var(--text-muted);
+      transition: background 0.12s, color 0.12s;
+    }
+    .plan-act-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    /* Org subs table compact */
+    .card-header { padding: 10px 16px; }
+    .card-header h3 { font-size: 13px; }
+    thead th { padding: 7px 12px; font-size: 10px; }
+    tbody td { padding: 7px 12px; font-size: 12px; }
+    .search-input {
+      background: var(--bg-tertiary); border: 1px solid var(--border);
+      border-radius: 6px; padding: 5px 10px; color: var(--text-primary);
+      font-size: 12px; outline: none; width: 180px;
+    }
+    .search-input:focus { border-color: var(--blue); }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+      z-index: 1000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 14px; padding: 22px; width: 100%; max-width: 380px;
+    }
+    .modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; }
+    .modal-field { margin-bottom: 12px; }
+    .modal-field label { display: block; font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+    .modal-field input {
+      width: 100%; padding: 8px 11px; border-radius: 7px;
+      border: 1px solid var(--border); background: var(--bg-tertiary);
+      color: var(--text-primary); font-size: 13px; box-sizing: border-box;
+    }
+    .modal-field input:focus { outline: none; border-color: var(--blue); }
+    .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+    .modal-actions .btn { flex: 1; }
+
+    /* Toast */
+    #toast { position:fixed; bottom:20px; right:20px; background:#238636; color:#fff; padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; z-index:9999; opacity:0; transform:translateY(8px); transition:opacity .25s,transform .25s; pointer-events:none; }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
+      <div class="sidebar-logo-name">Clockyn</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a class="nav-item" href="organizations.html"><span class="nav-icon">🏢</span> Organizations</a>
+      <a class="nav-item" href="users.html"><span class="nav-icon">👥</span> Users</a>
+      <a class="nav-item active" href="subscriptions.html"><span class="nav-icon">📋</span> Subscriptions</a>
+      <a class="nav-item" href="payments.html"><span class="nav-icon">💳</span> Payments</a>
+      <a class="nav-item" href="coupons.html"><span class="nav-icon">🎯</span> Coupons</a>
+      <a class="nav-item" href="suggestions.html"><span class="nav-icon">💡</span> Suggestions <span class="nav-suggestion-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;"></span></a>
+      <a class="nav-item" href="tickets.html"><span class="nav-icon">🎫</span> Ticketing &amp; Bugs</a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#activity"><span class="nav-icon">🕐</span> Activity Logs</a>
+      <a class="nav-item" href="settings.html"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar" id="sidebar-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-user-name">Super Admin</div>
+        <div class="user-mobile" id="sidebar-user-mobile"></div>
+        <div class="user-role" id="sidebar-user-role">System Administrator</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <!-- Edit Plan Modal -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+      <div class="modal-title">Edit Plan</div>
+      <div class="modal-field"><label>Plan Name</label><input type="text" id="edit-name" placeholder="e.g. Pro" /></div>
+      <div class="modal-field"><label>Amount (₹)</label><input type="number" id="edit-amount" placeholder="e.g. 999" min="0" /></div>
+      <div class="modal-field"><label>Duration (months)</label><input type="number" id="edit-months" placeholder="e.g. 1" min="1" /></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" onclick="closeEditModal()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="saveEditPlan()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Plan Modal -->
+  <div class="modal-overlay" id="add-modal">
+    <div class="modal">
+      <div class="modal-title">Add New Plan</div>
+      <div class="modal-field"><label>Plan Name</label><input type="text" id="add-name" placeholder="e.g. Pro" /></div>
+      <div class="modal-field"><label>Amount (₹)</label><input type="number" id="add-amount" placeholder="e.g. 999" min="0" /></div>
+      <div class="modal-field"><label>Duration (months)</label><input type="number" id="add-months" placeholder="e.g. 1" min="1" /></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" onclick="closeAddModal()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="saveAddPlan()">Add Plan</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+  <div id="toast"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <span class="topbar-title">Subscriptions</span>
+      <div class="topbar-search">
+        <span>🔍</span>
+        <input type="text" placeholder="Search plans, orgs..." />
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn">🔔<span class="dot"></span></button>
+        <button class="icon-btn" onclick="loadPage()" title="Refresh">🔄</button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>Subscriptions</h1>
+          <p>Plans, active subscribers &amp; billing overview</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add Plan</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadPage()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <!-- Quick stat tiles -->
+      <div class="quick-bar">
+        <div class="quick-tile t-purple">
+          <div class="qt-icon">📋</div>
+          <div class="qt-label">Active Subscriptions</div>
+          <div class="qt-value" id="stat-active-subs">—</div>
+          <div class="qt-sub">Currently active plans</div>
+        </div>
+        <div class="quick-tile t-orange">
+          <div class="qt-icon">⏳</div>
+          <div class="qt-label">Pending Payments</div>
+          <div class="qt-value" id="stat-pending">—</div>
+          <div class="qt-sub">Awaiting confirmation</div>
+        </div>
+        <div class="quick-tile t-red">
+          <div class="qt-icon">❌</div>
+          <div class="qt-label">Failed Payments</div>
+          <div class="qt-value" id="stat-failed">—</div>
+          <div class="qt-sub">Razorpay webhook</div>
+        </div>
+      </div>
+
+      <!-- Plans panel -->
+      <div class="plans-panel">
+        <div class="plans-panel-header">
+          <h3>Available Plans <span id="plans-total-badge" class="badge badge-blue"></span></h3>
+          <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add</button>
+        </div>
+        <div class="plans-list" id="plans-grid">
+          <div style="padding:16px;color:var(--text-muted);font-size:12px;">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Org Subscriptions table -->
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-header">
+          <h3>Organization Subscriptions <span id="org-sub-count" class="badge badge-blue" style="margin-left:6px;"></span></h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="search" id="org-sub-search" placeholder="Search org or email…" class="search-input" oninput="filterOrgSubs()" />
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Organization</th><th>Contact</th><th>Plan</th><th>Staff</th><th>Valid Till</th><th>Status</th><th>Coupon</th><th>Invoice</th>
+            </tr></thead>
+            <tbody id="org-sub-body">
+              <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const COLORS = ['#58a6ff','#4caf50','#ff9800','#ab7ae0','#26c6da'];
+    var plansData = [], editingIndex = -1, orgSubData = [];
+
+    /* ── Toast ── */
+    function showToast(msg, ok) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = ok === false ? '#dc2626' : '#238636';
+      t.style.opacity = '1'; t.style.transform = 'translateY(0)';
+      setTimeout(function(){ t.style.opacity='0'; t.style.transform='translateY(8px)'; }, 2500);
+    }
+
+    function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    /* ── Stats ── */
+    async function loadStats() {
+      try {
+        var d = await fetch(API_BASE + '/gen-dashboard/stats').then(r => r.json());
+        document.getElementById('stat-active-subs').textContent = d.active_subscriptions.toLocaleString();
+        document.getElementById('stat-pending').textContent     = (d.pending_payments  || 0).toLocaleString();
+        document.getElementById('stat-failed').textContent      = (d.failed_payments   || 0).toLocaleString();
+      } catch(e) {}
+    }
+
+    /* ── Plans ── */
+    async function loadPlanBreakdown() {
+      try {
+        var plans = await fetch(API_BASE + '/gen-dashboard/plan-breakdown').then(r => r.json());
+        plansData = plans;
+        var grid  = document.getElementById('plans-grid');
+        var badge = document.getElementById('plans-total-badge');
+
+        if (!plans.length) {
+          grid.innerHTML = '<div style="padding:12px 16px;color:var(--text-muted);font-size:12px;">No plans found</div>';
+          badge.textContent = '';
+          return;
+        }
+
+        var total = plans.reduce(function(s,p){ return s + p.active_count; }, 0) || 1;
+        badge.textContent = total + ' active';
+
+        /* Plans list */
+        grid.innerHTML = plans.map(function(p, i) {
+          var pct = Math.round((p.active_count / total) * 100);
+          return '<div class="plan-row">'
+            + '<div class="plan-dot" style="background:'+COLORS[i]+';box-shadow:0 0 5px '+COLORS[i]+'66;"></div>'
+            + '<div class="plan-info">'
+            +   '<div class="plan-info-name">'+escHtml(p.plan_name)+'</div>'
+            +   '<div class="plan-info-price">₹'+p.plan_amount.toLocaleString()+' &middot; '+p.plan_month+' mo</div>'
+            + '</div>'
+            + '<div class="plan-bar-wrap"><div class="plan-bar-track"><div class="plan-bar-fill" style="width:'+pct+'%;background:'+COLORS[i]+';"></div></div></div>'
+            + '<div class="plan-count" style="color:'+COLORS[i]+'">'+p.active_count+'</div>'
+            + '<div class="plan-actions">'
+            +   '<button class="plan-act-btn" onclick="editPlan('+i+')" title="Edit">✏️</button>'
+            +   '<button class="plan-act-btn" onclick="deletePlan('+p.plan_id+',\''+escHtml(p.plan_name)+'\')" title="Delete" style="color:var(--red);">🗑</button>'
+            + '</div>'
+            + '</div>';
+        }).join('');
+      } catch(e) {
+        document.getElementById('plans-grid').innerHTML = '<div style="padding:12px 16px;color:var(--text-muted);font-size:12px;">Failed to load plans</div>';
+      }
+    }
+
+    /* ── Edit Plan ── */
+    function editPlan(i) {
+      editingIndex = i;
+      var p = plansData[i];
+      document.getElementById('edit-name').value   = p.plan_name;
+      document.getElementById('edit-amount').value = p.plan_amount;
+      document.getElementById('edit-months').value = p.plan_month;
+      document.getElementById('edit-modal').classList.add('open');
+    }
+    function closeEditModal() { document.getElementById('edit-modal').classList.remove('open'); editingIndex = -1; }
+    async function saveEditPlan() {
+      var name = document.getElementById('edit-name').value.trim();
+      var amount = parseFloat(document.getElementById('edit-amount').value);
+      var months = parseInt(document.getElementById('edit-months').value);
+      if (!name || isNaN(amount) || isNaN(months)) { showToast('Please fill all fields.', false); return; }
+      try {
+        var p = plansData[editingIndex];
+        var res = await fetch(API_BASE + '/plans/' + p.plan_id, {
+          method: 'PUT', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ plan_name: name, plan_amount: amount, plan_month: months })
+        }).then(r => r.json());
+        if (!res.success) throw new Error(res.detail || 'Save failed');
+        closeEditModal(); loadPlanBreakdown(); showToast('Plan updated');
+      } catch(e) { showToast('Failed: ' + e.message, false); }
+    }
+
+    /* ── Add Plan ── */
+    function openAddModal() {
+      document.getElementById('add-name').value = document.getElementById('add-amount').value = document.getElementById('add-months').value = '';
+      document.getElementById('add-modal').classList.add('open');
+    }
+    function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
+    async function saveAddPlan() {
+      var name = document.getElementById('add-name').value.trim();
+      var amount = parseFloat(document.getElementById('add-amount').value);
+      var months = parseInt(document.getElementById('add-months').value);
+      if (!name || isNaN(amount) || isNaN(months)) { showToast('Please fill all fields.', false); return; }
+      try {
+        var res = await fetch(API_BASE + '/plans/', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ plan_name: name, plan_amount: amount, plan_month: months })
+        }).then(r => r.json());
+        if (!res.success) throw new Error(res.detail || 'Add failed');
+        closeAddModal(); loadPlanBreakdown(); showToast('Plan added');
+      } catch(e) { showToast('Failed: ' + e.message, false); }
+    }
+
+    /* ── Delete Plan ── */
+    async function deletePlan(id, name) {
+      if (!confirm('Delete plan "' + name + '"? This cannot be undone.')) return;
+      try {
+        var res = await fetch(API_BASE + '/plans/' + id, { method: 'DELETE' }).then(r => r.json());
+        if (res.success) { loadPlanBreakdown(); showToast('Plan deleted'); }
+        else showToast(res.detail || 'Failed to delete plan.', false);
+      } catch(e) { showToast('Failed: ' + e.message, false); }
+    }
+
+    /* ── Org Subscriptions ── */
+    async function loadOrgSubscriptions() {
+      try {
+        var res  = await fetch(API_BASE + '/gen-dashboard/org-subscriptions');
+        var json = await res.json();
+        orgSubData = json.data || [];
+        document.getElementById('org-sub-count').textContent = orgSubData.length + ' active';
+        renderOrgSubs();
+      } catch(e) {
+        document.getElementById('org-sub-body').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px;">Failed to load</td></tr>';
+      }
+    }
+
+    function filterOrgSubs() { renderOrgSubs(); }
+
+    function renderOrgSubs() {
+      var q = (document.getElementById('org-sub-search').value || '').toLowerCase();
+      var filtered = orgSubData.filter(function(o){
+        return !q || (o.org_name||'').toLowerCase().includes(q) || (o.admin_email||'').toLowerCase().includes(q) || (o.coupon_code||'').toLowerCase().includes(q);
+      });
+      var tbody = document.getElementById('org-sub-body');
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px;">No active subscriptions found</td></tr>';
+        return;
+      }
+      var now = new Date();
+      tbody.innerHTML = filtered.map(function(o) {
+        var end = o.end_date ? new Date(o.end_date) : null;
+        var isExpiring = end && (end - now) < 15 * 86400000;
+        var validTill = end ? end.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+        var statusBadge = o.status === 'ACTIVE'
+          ? '<span class="badge '+(isExpiring?'badge-orange':'badge-green')+'">'+(isExpiring?'Expiring':'Active')+'</span>'
+          : '<span class="badge badge-red">'+(o.status||'—')+'</span>';
+        var couponBadge = o.coupon_code
+          ? '<span class="badge badge-purple" style="font-size:10px;">🏷️ '+escHtml(o.coupon_code)+'</span>'
+          : '<span style="color:var(--text-muted);">—</span>';
+        var invBtn = o.invoice_number && o.invoice_user_id
+          ? '<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:3px 8px;" onclick="downloadOrgInvoice(\''+escHtml(String(o.invoice_user_id||''))+'\',\''+escHtml(String(o.org_id||''))+'\',\''+escHtml(String(o.invoice_number||''))+'\')">PDF</button>'
+          : '<span style="color:var(--text-muted);">—</span>';
+        return '<tr style="cursor:pointer;" onclick="window.location.href=\'org_analytics.html?org_id='+encodeURIComponent(o.org_id||'')+'\'">'
+          + '<td><div style="font-weight:600;font-size:12px;color:var(--text-primary);">'+escHtml(o.org_name||'—')+'</div></td>'
+          + '<td><div style="font-size:11px;">'+escHtml(o.admin_mobile||'—')+'</div><div style="font-size:10px;color:var(--text-muted);">'+escHtml(o.admin_email||'—')+'</div></td>'
+          + '<td><span class="badge badge-blue" style="font-size:10px;">'+escHtml(o.plan_name||'—')+'</span></td>'
+          + '<td style="font-size:12px;">'+escHtml(String(o.staff_limit||'—'))+'</td>'
+          + '<td style="font-size:11px;'+(isExpiring?'color:var(--orange);font-weight:600;':'color:var(--text-muted);')+'">'+validTill+'</td>'
+          + '<td>'+statusBadge+'</td>'
+          + '<td>'+couponBadge+'</td>'
+          + '<td onclick="event.stopPropagation()">'+invBtn+'</td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    function downloadOrgInvoice(userId, orgId, invoiceNumber) {
+      var params = new URLSearchParams({ user_id: userId, org_id: orgId, invoice_number: invoiceNumber });
+      var a = document.createElement('a');
+      a.href = API_BASE + '/invoice/download?' + params.toString();
+      a.download = 'Invoice_' + invoiceNumber + '.pdf';
+      a.target = '_blank';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    async function loadPage() {
+      await Promise.all([loadStats(), loadPlanBreakdown(), loadOrgSubscriptions()]);
+    }
+
+    function handleLogout() { if (confirm('Logout?')) logout(); }
+    loadPage();
+
+    function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open'); }
+    function closeSidebar()  { document.querySelector('.sidebar').classList.remove('open');  document.getElementById('sidebar-overlay').classList.remove('open');  }
+  </script>
+
+</body>
+</html>

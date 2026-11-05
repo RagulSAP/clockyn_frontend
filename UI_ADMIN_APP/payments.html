@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn &mdash; Payments</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    .bulk-invoice-bar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+    }
+    .bulk-invoice-bar .bi-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: var(--text-primary); margin-right: 4px;
+    }
+    .bulk-invoice-bar label { font-size: 12px; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+    .bulk-invoice-bar input[type="date"] {
+      background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px;
+      padding: 7px 10px; color: var(--text-primary); font-size: 13px; outline: none;
+    }
+    .bulk-invoice-bar input[type="date"]:focus { border-color: var(--blue); }
+    .bi-hint { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+    #bi-download-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Progress modal */
+    .bi-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .bi-modal-overlay.open { display: flex; }
+    .bi-modal {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 14px; padding: 28px; width: 100%; max-width: 380px;
+      text-align: center;
+    }
+    .bi-modal-icon { font-size: 30px; margin-bottom: 12px; }
+    .bi-modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+    .bi-modal-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; min-height: 16px; }
+    .bi-progress-track {
+      height: 8px; background: var(--bg-tertiary); border-radius: 5px; overflow: hidden;
+      border: 1px solid var(--border); margin-bottom: 10px;
+    }
+    .bi-progress-fill {
+      height: 100%; border-radius: 5px; width: 0%;
+      background: linear-gradient(90deg, #1a7f37, #56d364);
+      transition: width 0.4s ease;
+    }
+    .bi-progress-fill.error { background: linear-gradient(90deg, #8b1a1a, #f85149); }
+    .bi-progress-pct { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+    .bi-modal-close-btn { margin-top: 16px; }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
+      <div class="sidebar-logo-name">Clockyn</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">&#x1F4CA;</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a class="nav-item" href="organizations.html"><span class="nav-icon">&#x1F3E2;</span> Organizations</a>
+      <a class="nav-item" href="users.html"><span class="nav-icon">&#x1F465;</span> Users</a>
+      <a class="nav-item" href="subscriptions.html"><span class="nav-icon">&#x1F4CB;</span> Subscriptions</a>
+      <a class="nav-item active" href="payments.html"><span class="nav-icon">&#x1F4B3;</span> Payments</a>
+      <a class="nav-item" href="coupons.html"><span class="nav-icon">&#x1F3AF;</span> Coupons</a>
+      <a class="nav-item" href="suggestions.html"><span class="nav-icon">&#x1F4A1;</span> Suggestions <span class="nav-suggestion-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;"></span></a>
+      <a class="nav-item" href="tickets.html"><span class="nav-icon">&#x1F3AB;</span> Ticketing &amp; Bugs</a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#activity"><span class="nav-icon">&#x1F550;</span> Activity Logs</a>
+      <a class="nav-item" href="settings.html"><span class="nav-icon">&#x2699;&#xFE0F;</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar" id="sidebar-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-user-name">Super Admin</div>
+        <div class="user-mobile" id="sidebar-user-mobile"></div>
+        <div class="user-role" id="sidebar-user-role">System Administrator</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">&#x23FB;</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">&#x2630;</button>
+      <span class="topbar-title">Payments</span>
+      <div class="topbar-search">
+        <span>&#x1F50D;</span>
+        <input type="text" id="search-input" placeholder="Search payment ID, org, plan..." oninput="applyFilters()" />
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" onclick="loadPayments()" title="Refresh">&#x1F504;</button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- 6 Summary Cards -->
+      <div class="stats-grid" style="grid-template-columns:repeat(6,1fr);margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">Total Payments</span><div class="stat-icon blue">&#x1F4B3;</div></div>
+          <div class="stat-value" id="s-total">&mdash;</div>
+          <div class="stat-footer">All transactions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">Total Revenue</span><div class="stat-icon green">&#x1F4B0;</div></div>
+          <div class="stat-value" id="s-revenue">&mdash;</div>
+          <div class="stat-footer">Paid only</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">Pending</span><div class="stat-icon orange">&#x23F3;</div></div>
+          <div class="stat-value" id="s-pending">&mdash;</div>
+          <div class="stat-footer">Awaiting + expired trials</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">Failed</span><div class="stat-icon red">&#x274C;</div></div>
+          <div class="stat-value" id="s-failed">&mdash;</div>
+          <div class="stat-footer">Failed transactions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">Success Rate</span><div class="stat-icon green">&#x2705;</div></div>
+          <div class="stat-value" id="s-rate">&mdash;</div>
+          <div class="stat-footer">Paid / Total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">Free Trial</span><div class="stat-icon blue">&#x1F193;</div></div>
+          <div class="stat-value" id="s-free">&mdash;</div>
+          <div class="stat-footer">Trial orgs</div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="analytics-row" style="margin-bottom:24px;">
+
+        <!-- Monthly Revenue Bar Chart -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">Monthly Revenue</div>
+              <div class="chart-card-sub" id="chart-revenue-sub">Last 6 months</div>
+            </div>
+            <div class="chart-tabs">
+              <button class="chart-tab active" id="ptab-6m" onclick="switchPayTab(6)">6M</button>
+              <button class="chart-tab" id="ptab-12m" onclick="switchPayTab(12)">1Y</button>
+            </div>
+          </div>
+          <div class="bar-chart-wrap">
+            <div class="bar-chart-y">
+              <span id="py-top"></span>
+              <span id="py-mid"></span>
+              <span>&#x20B9;0</span>
+            </div>
+            <div class="bar-chart" id="pay-bar-chart">
+              <div class="bar-chart-loading">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Donut -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">Payment Status</div>
+              <div class="chart-card-sub" id="donut-sub">Breakdown</div>
+            </div>
+          </div>
+          <div class="donut-section">
+            <div class="donut-container">
+              <svg viewBox="0 0 42 42" class="donut-svg" id="pay-donut-svg">
+                <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#21262d" stroke-width="4"/>
+              </svg>
+              <div class="donut-center">
+                <div class="donut-center-val" id="pay-donut-val">&mdash;</div>
+                <div class="donut-center-lbl">Total</div>
+              </div>
+            </div>
+            <div class="donut-legend" id="pay-donut-legend">
+              <div class="bar-chart-loading">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Date Range Filter -->
+      <div class="date-filter-bar">
+        <label>From</label>
+        <input type="date" id="date-from" onchange="applyFilters()" />
+        <span class="date-sep">&rarr;</span>
+        <label>To</label>
+        <input type="date" id="date-to" onchange="applyFilters()" />
+        <div class="date-quick-btns">
+          <button class="date-quick-btn" onclick="setQuick(7,this)">Last 7D</button>
+          <button class="date-quick-btn" onclick="setQuick(30,this)">Last 30D</button>
+          <button class="date-quick-btn" onclick="setQuick(90,this)">Last 90D</button>
+          <button class="date-quick-btn" onclick="setQuick(0,this)">This Month</button>
+          <button class="date-quick-btn" onclick="clearDates(this)">All</button>
+        </div>
+      </div>
+
+      <!-- Bulk Invoice Download -->
+      <div class="bulk-invoice-bar">
+        <div class="bi-label">&#x1F4E6; Bulk Invoice Download</div>
+        <label>From</label>
+        <input type="date" id="bi-from-date" onchange="updateBulkInvoiceBtn()" />
+        <span class="date-sep">&rarr;</span>
+        <label>To</label>
+        <input type="date" id="bi-to-date" onchange="updateBulkInvoiceBtn()" />
+        <button class="btn btn-primary btn-sm" id="bi-download-btn" onclick="downloadBulkInvoices()" disabled>&#x2B07; Download Invoices (ZIP)</button>
+        <span class="bi-hint">Includes all invoice PDFs + one consolidated Excel summary for audit</span>
+      </div>
+
+      <!-- Bulk Invoice Progress Modal -->
+      <div class="bi-modal-overlay" id="bi-modal-overlay">
+        <div class="bi-modal">
+          <div class="bi-modal-icon" id="bi-modal-icon">&#x1F4E6;</div>
+          <div class="bi-modal-title" id="bi-modal-title">Preparing your invoices&hellip;</div>
+          <div class="bi-modal-sub" id="bi-modal-sub">Generating invoice PDFs, this can take a few moments</div>
+          <div class="bi-progress-track"><div class="bi-progress-fill" id="bi-progress-fill"></div></div>
+          <div class="bi-progress-pct" id="bi-progress-pct">0%</div>
+          <button class="btn btn-ghost btn-sm bi-modal-close-btn" id="bi-modal-close-btn" style="display:none;" onclick="closeBulkInvoiceModal()">Close</button>
+        </div>
+      </div>
+
+      <!-- Filters + Export Row -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <select id="status-filter" onchange="applyFilters()" style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text-secondary);font-size:13px;outline:none;">
+          <option value="">All Status</option>
+          <option value="PAID">Paid</option>
+          <option value="PENDING">Pending</option>
+          <option value="FAILED">Failed</option>
+          <option value="CREATED">Created</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="loadPayments()">&#x1F504; Refresh</button>
+        <span style="font-size:12px;color:var(--text-muted);" id="filter-count"></span>
+        <div style="margin-left:auto;">
+          <div class="export-wrap">
+            <button class="btn btn-ghost btn-sm" onclick="toggleExportMenu('export-menu')">&#x2B07; Export &#x25BE;</button>
+            <div class="export-menu" id="export-menu">
+              <button onclick="doExportExcel()">&#x1F4CA; Export Excel</button>
+              <button onclick="doExportPDF()">&#x1F4C4; Export PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payments Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Payment Transactions</h3>
+          <span class="count-badge" id="table-count" style="background:rgba(88,166,255,0.15);color:var(--blue);font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;">0</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Payment ID</th>
+                <th>Organization</th>
+                <th>Plan</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="payments-tbody">
+              <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script src="export.js"></script>
+  <script>
+    var allPayments  = [];
+    var allOrgs      = [];
+    var filtered     = [];
+    var payTabMonths = 6;
+    var freeTrialCount = 0;
+    var expiredTrialCount = 0;
+
+    var COLS = [
+      { key: 'payment_id', label: 'Payment ID' },
+      { key: 'org_name',   label: 'Organization' },
+      { key: 'plan_name',  label: 'Plan' },
+      { key: 'amount',     label: 'Amount (Rs)' },
+      { key: 'status',     label: 'Status' },
+      { key: 'date',       label: 'Date' },
+    ];
+
+    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    function statusBadge(s) {
+      var map = { PAID:'badge-green', FAILED:'badge-red', PENDING:'badge-orange', CREATED:'badge-orange' };
+      return '<span class="badge ' + (map[s] || 'badge-gray') + '">' + s + '</span>';
+    }
+
+    function toISODate(d) {
+      var dt = new Date(d);
+      return isNaN(dt) ? '' : dt.toISOString().slice(0, 10);
+    }
+
+    function fmtMoney(v) {
+      if (v >= 100000) return 'Rs' + (v / 100000).toFixed(1) + 'L';
+      if (v >= 1000)   return 'Rs' + (v / 1000).toFixed(1) + 'K';
+      return 'Rs' + v;
+    }
+
+    function setQuick(days, btn) {
+      document.querySelectorAll('.date-quick-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var to = new Date(), from = new Date();
+      if (days === 0) { from = new Date(to.getFullYear(), to.getMonth(), 1); }
+      else { from.setDate(to.getDate() - days); }
+      document.getElementById('date-from').value = from.toISOString().slice(0, 10);
+      document.getElementById('date-to').value   = to.toISOString().slice(0, 10);
+      applyFilters();
+    }
+
+    function clearDates(btn) {
+      document.querySelectorAll('.date-quick-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('date-from').value = '';
+      document.getElementById('date-to').value   = '';
+      applyFilters();
+    }
+
+    function applyFilters() {
+      var search = document.getElementById('search-input').value.toLowerCase();
+      var status = document.getElementById('status-filter').value;
+      var from   = document.getElementById('date-from').value;
+      var to     = document.getElementById('date-to').value;
+      filtered = allPayments.filter(function(r) {
+        var ms = !search || r.payment_id.toLowerCase().includes(search) || r.org_name.toLowerCase().includes(search) || r.plan_name.toLowerCase().includes(search);
+        var mst = !status || r.status === status;
+        var mf  = !from || toISODate(r.date) >= from;
+        var mt  = !to   || toISODate(r.date) <= to;
+        return ms && mst && mf && mt;
+      });
+      renderTable(filtered);
+      updateStats(filtered);
+    }
+
+    function renderTable(rows) {
+      var tbody = document.getElementById('payments-tbody');
+      document.getElementById('table-count').textContent = rows.length + ' records';
+      document.getElementById('filter-count').textContent = rows.length + ' of ' + allPayments.length + ' payments';
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">No payments found</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(function(r) {
+        return '<tr>'
+          + '<td class="td-primary" style="font-size:12px;font-family:monospace;">' + r.payment_id + '</td>'
+          + '<td>' + r.org_name + '</td>'
+          + '<td>' + (r.plan_name && r.plan_name !== '-' ? '<span class="badge badge-blue">' + r.plan_name + '</span>' : '&mdash;') + '</td>'
+          + '<td style="font-weight:600;color:var(--text-primary);">&#x20B9;' + Number(r.amount).toLocaleString() + '</td>'
+          + '<td>' + statusBadge(r.status) + '</td>'
+          + '<td style="color:var(--text-muted);font-size:12px;">' + r.date + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    function updateStats(rows) {
+      var paid    = rows.filter(function(r) { return r.status === 'PAID'; });
+      var pending = rows.filter(function(r) { return r.status === 'CREATED'; });
+      var pendingCount = pending.length + expiredTrialCount;
+      var failed  = rows.filter(function(r) { return r.status === 'FAILED'; });
+      var revenue = paid.reduce(function(s, r) { return s + Number(r.amount); }, 0);
+      var rate    = rows.length ? Math.round((paid.length / rows.length) * 100) : 0;
+      document.getElementById('s-total').textContent   = rows.length;
+      document.getElementById('s-revenue').innerHTML = '&#x20B9;' + revenue.toLocaleString();
+      document.getElementById('s-pending').textContent = pendingCount;
+      document.getElementById('s-failed').textContent  = failed.length;
+      document.getElementById('s-rate').textContent    = rate + '%';
+      document.getElementById('s-free').textContent    = freeTrialCount;
+      renderBarChart(rows);
+      renderDonut(rows);
+    }
+
+    /* ── Bar Chart: always show all N month slots ── */
+    function switchPayTab(m) {
+      payTabMonths = m;
+      document.getElementById('ptab-6m').classList.toggle('active', m === 6);
+      document.getElementById('ptab-12m').classList.toggle('active', m === 12);
+      renderBarChart(filtered);
+    }
+
+    function renderBarChart(rows) {
+      var paid = rows.filter(function(r) { return r.status === 'PAID'; });
+
+      // Build revenue map keyed by YYYY-MM
+      var revenueMap = {};
+      paid.forEach(function(r) {
+        var d = new Date(r.date);
+        if (isNaN(d)) return;
+        var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        revenueMap[key] = (revenueMap[key] || 0) + Number(r.amount);
+      });
+
+      // Determine slot range: use date filter range if active, else last N months
+      var fromVal = document.getElementById('date-from').value;
+      var toVal   = document.getElementById('date-to').value;
+      var slots = [];
+      if (fromVal || toVal) {
+        var start = fromVal ? new Date(fromVal) : new Date(toVal);
+        var end   = toVal   ? new Date(toVal)   : new Date();
+        start = new Date(start.getFullYear(), start.getMonth(), 1);
+        end   = new Date(end.getFullYear(),   end.getMonth(),   1);
+        for (var d = new Date(start); d <= end; d.setMonth(d.getMonth() + 1)) {
+          var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+          slots.push({ label: MONTHS[d.getMonth()] + ' \'' + String(d.getFullYear()).slice(2), revenue: revenueMap[key] || 0 });
+        }
+      } else {
+        var now = new Date();
+        for (var i = payTabMonths - 1; i >= 0; i--) {
+          var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+          slots.push({ label: MONTHS[d.getMonth()] + ' \'' + String(d.getFullYear()).slice(2), revenue: revenueMap[key] || 0 });
+        }
+      }
+
+      var max   = Math.max.apply(null, slots.map(function(s) { return s.revenue; })) || 1;
+      var total = slots.reduce(function(s, m) { return s + m.revenue; }, 0);
+      var subLabel = (fromVal || toVal) ? (fromVal + ' → ' + (toVal || 'today')) : 'last ' + payTabMonths + ' months';
+
+      document.getElementById('chart-revenue-sub').innerHTML = '&#x20B9;' + total.toLocaleString() + ' &mdash; ' + subLabel;
+      document.getElementById('py-top').textContent = fmtMoney(max);
+      document.getElementById('py-mid').textContent = fmtMoney(Math.round(max / 2));
+
+      document.getElementById('pay-bar-chart').innerHTML = slots.map(function(m, i) {
+        var h   = m.revenue > 0 ? Math.max((m.revenue / max) * 100, 4) : 0;
+        var cls = i === slots.length - 1 ? 'bar-inner bar-green' : 'bar-inner bar-blue';
+        return '<div class="bar-col">'
+          + '<div class="bar-tooltip">' + m.label + ': &#x20B9;' + m.revenue.toLocaleString() + '</div>'
+          + '<div class="bar-outer"><div class="' + cls + '" style="height:' + h + '%"></div></div>'
+          + '<div class="bar-label">' + m.label + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    /* ── Status Donut ── */
+    function renderDonut(rows) {
+      var groups = [
+        { label: 'Paid',    status: 'PAID',    color: '#4caf50' },
+        { label: 'Failed',  status: 'FAILED',  color: '#ef4444' },
+        { label: 'Pending', status: 'CREATED', color: '#ff9800' },
+      ];
+      var counts = groups.map(function(g) {
+        return { label: g.label, color: g.color, count: rows.filter(function(r) { return r.status === g.status; }).length };
+      });
+      var total = counts.reduce(function(s, g) { return s + g.count; }, 0) || 1;
+      document.getElementById('pay-donut-val').textContent = total;
+      document.getElementById('donut-sub').textContent = total + ' total transactions';
+      var rv = 15.9155, circ = 2 * Math.PI * rv, offset = 25;
+      var segs = counts.filter(function(g) { return g.count > 0; }).map(function(g) {
+        var pct = (g.count / total) * 100, dash = (pct / 100) * circ, gap = circ - dash;
+        var off = ((100 - offset) / 100) * circ;
+        offset += pct;
+        return '<circle cx="21" cy="21" r="' + rv + '" fill="none" stroke="' + g.color + '" stroke-width="4"'
+          + ' stroke-dasharray="' + dash.toFixed(2) + ' ' + gap.toFixed(2) + '"'
+          + ' stroke-dashoffset="' + off.toFixed(2) + '" stroke-linecap="round"/>';
+      }).join('');
+      document.getElementById('pay-donut-svg').innerHTML =
+        '<circle cx="21" cy="21" r="' + rv + '" fill="none" stroke="#21262d" stroke-width="4"/>' + segs;
+      document.getElementById('pay-donut-legend').innerHTML = counts.map(function(g) {
+        var pct = Math.round((g.count / total) * 100);
+        return '<div class="donut-legend-item">'
+          + '<div class="donut-legend-dot" style="background:' + g.color + '"></div>'
+          + '<div class="donut-legend-info"><span class="donut-legend-name">' + g.label + '</span>'
+          + '<span class="donut-legend-meta">' + pct + '% of total</span></div>'
+          + '<div class="donut-legend-count" style="color:' + g.color + '">' + g.count + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    function doExportExcel() { exportExcel(filtered, COLS, 'Clockyn_Payments_' + new Date().toISOString().slice(0,10)); }
+    function doExportPDF()   { exportPDF(filtered, COLS, 'Clockyn_Payments_' + new Date().toISOString().slice(0,10), 'Clockyn - Payment Transactions'); }
+
+    /* ── Bulk Invoice ZIP Download ── */
+    var biProgressTimer = null;
+
+    function updateBulkInvoiceBtn() {
+      var from = document.getElementById('bi-from-date').value;
+      var to   = document.getElementById('bi-to-date').value;
+      document.getElementById('bi-download-btn').disabled = !(from && to);
+    }
+
+    function openBulkInvoiceModal() {
+      document.getElementById('bi-modal-icon').textContent = '📦';
+      document.getElementById('bi-modal-title').textContent = 'Preparing your invoices…';
+      document.getElementById('bi-modal-sub').textContent = 'Generating invoice PDFs, this can take a few moments';
+      document.getElementById('bi-modal-close-btn').style.display = 'none';
+      var fill = document.getElementById('bi-progress-fill');
+      fill.style.width = '0%';
+      fill.classList.remove('error');
+      document.getElementById('bi-progress-pct').textContent = '0%';
+      document.getElementById('bi-modal-overlay').classList.add('open');
+
+      // Simulated progress: climbs fast at first, then eases toward ~90% while we wait for the server.
+      var pct = 0;
+      biProgressTimer = setInterval(function() {
+        var step = pct < 40 ? 6 : pct < 70 ? 3 : pct < 88 ? 1 : 0;
+        pct = Math.min(pct + step, 90);
+        fill.style.width = pct + '%';
+        document.getElementById('bi-progress-pct').textContent = pct + '%';
+      }, 350);
+    }
+
+    function finishBulkInvoiceProgress(success, message) {
+      if (biProgressTimer) { clearInterval(biProgressTimer); biProgressTimer = null; }
+      var fill = document.getElementById('bi-progress-fill');
+      fill.style.width = '100%';
+      document.getElementById('bi-progress-pct').textContent = '100%';
+      if (success) {
+        document.getElementById('bi-modal-icon').textContent = '✅';
+        document.getElementById('bi-modal-title').textContent = 'Download ready!';
+        document.getElementById('bi-modal-sub').textContent = message || 'Your ZIP file has been downloaded.';
+      } else {
+        fill.classList.add('error');
+        document.getElementById('bi-modal-icon').textContent = '❌';
+        document.getElementById('bi-modal-title').textContent = 'Download failed';
+        document.getElementById('bi-modal-sub').textContent = message || 'Something went wrong. Please try again.';
+      }
+      document.getElementById('bi-modal-close-btn').style.display = 'inline-flex';
+    }
+
+    function closeBulkInvoiceModal() {
+      if (biProgressTimer) { clearInterval(biProgressTimer); biProgressTimer = null; }
+      document.getElementById('bi-modal-overlay').classList.remove('open');
+    }
+
+    async function downloadBulkInvoices() {
+      var from = document.getElementById('bi-from-date').value;
+      var to   = document.getElementById('bi-to-date').value;
+      if (!from || !to) { showToast ? showToast('Please select both From and To dates', false) : alert('Please select both From and To dates'); return; }
+      if (from > to) { alert('"From" date must be before "To" date'); return; }
+
+      openBulkInvoiceModal();
+      try {
+        var res = await fetch(API_BASE + '/invoice/bulk-download?from_date=' + from + '&to_date=' + to);
+        if (!res.ok) {
+          var errMsg = 'No invoices found for the selected date range';
+          try { var errJson = await res.json(); errMsg = errJson.detail || errMsg; } catch (e) {}
+          finishBulkInvoiceProgress(false, errMsg);
+          return;
+        }
+        var blob = await res.blob();
+        var filename = 'punchapp_invoices_' + from + '_to_' + to + '.zip';
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 4000);
+        finishBulkInvoiceProgress(true, filename + ' downloaded successfully.');
+      } catch (e) {
+        finishBulkInvoiceProgress(false, 'Network error — please try again.');
+      }
+    }
+
+    async function loadPayments() {
+      document.getElementById('payments-tbody').innerHTML =
+        '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">Loading...</td></tr>';
+      document.getElementById('search-input').value = '';
+      document.getElementById('status-filter').value = '';
+      document.getElementById('date-from').value = '';
+      document.getElementById('date-to').value = '';
+      document.querySelectorAll('.date-quick-btn').forEach(function(b) { b.classList.remove('active'); });
+      try {
+        var results = await Promise.all([
+          fetch(API_BASE + '/gen-dashboard/recent-payments', { cache: 'no-store' }).then(function(r) { return r.json(); }),
+          fetch(API_BASE + '/gen-dashboard/organizations', { cache: 'no-store' }).then(function(r) { return r.json(); })
+        ]);
+        allPayments       = results[0];
+        allOrgs           = results[1];
+        freeTrialCount    = allOrgs.filter(function(o) { return o.sub_status === 'FREE_TRIAL'; }).length;
+        expiredTrialCount = allOrgs.filter(function(o) { return o.sub_status === 'EXPIRED'; }).length;
+        filtered = allPayments;
+        renderTable(filtered);
+        updateStats(filtered);
+      } catch(e) {
+        document.getElementById('payments-tbody').innerHTML =
+          '<tr><td colspan="6" style="text-align:center;color:var(--red);padding:40px;">Failed to load payments</td></tr>';
+      }
+    }
+
+    function handleLogout() { if (confirm('Are you sure you want to logout?')) logout(); }
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+
+    loadPayments();
+  </script>
+
+</body>
+</html>

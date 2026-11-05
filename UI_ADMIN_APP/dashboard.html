@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Admin Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    /* ── Compact overrides ── */
+    .content { padding: 20px 24px; }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px; flex-wrap: wrap; gap: 8px;
+    }
+    .page-header-left h1 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+    .page-header-left p  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .page-header-right   { display: flex; align-items: center; gap: 8px; }
+    .page-date { font-size: 11px; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; white-space: nowrap; }
+
+    /* ── Compact stat cards ── */
+    .stats-grid { gap: 12px; margin-bottom: 16px; }
+    .stat-card  { padding: 14px 16px; gap: 8px; border-left: 3px solid transparent; }
+    .stat-card.blue-accent   { border-left-color: var(--blue); }
+    .stat-card.green-accent  { border-left-color: var(--green); }
+    .stat-card.orange-accent { border-left-color: var(--orange); }
+    .stat-card.purple-accent { border-left-color: var(--purple); }
+    .stat-card-header .label { font-size: 11px; }
+    .stat-icon { width: 30px; height: 30px; font-size: 14px; border-radius: 7px; }
+    .stat-value { font-size: 22px; }
+    .stat-footer { font-size: 11px; }
+
+    /* ── Compact analytics row ── */
+    .analytics-row { gap: 14px; margin-bottom: 16px; }
+    .chart-card { padding: 16px; gap: 14px; }
+    .chart-card-title { font-size: 13px; }
+    .bar-chart-wrap { height: 170px; }
+    .donut-container { width: 120px; height: 120px; }
+    .donut-svg { width: 120px; height: 120px; }
+    .donut-center-val { font-size: 22px; }
+    .donut-legend { gap: 10px; }
+    .donut-legend-item { gap: 8px; }
+    .donut-legend-name { font-size: 12px; }
+    .donut-legend-count { font-size: 16px; }
+
+    /* ── Compact cards & tables ── */
+    .card { margin-bottom: 14px !important; }
+    .card-header { padding: 10px 16px; }
+    .card-header h3 { font-size: 13px; }
+    thead th { padding: 8px 14px; font-size: 10px; }
+    tbody td { padding: 8px 14px; font-size: 12px; }
+
+    /* ── Sidebar compact logo ── */
+    .sidebar-logo { padding: 12px 16px; flex-direction: row; align-items: center; gap: 10px; justify-content: flex-start; }
+    .sidebar-logo-img { width: 36px; height: 36px; border-radius: 8px; }
+    .sidebar-logo-name { font-size: 14px; font-weight: 700; }
+
+    /* ── Quick stats bar ── */
+    .quick-bar {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px;
+    }
+    .quick-tile {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 16px; cursor: pointer; transition: border-color 0.2s;
+      display: flex; flex-direction: column; gap: 4px;
+      position: relative; overflow: hidden;
+    }
+    .quick-tile::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      border-radius: 10px 10px 0 0;
+    }
+    .quick-tile.t-blue::before   { background: var(--blue); }
+    .quick-tile.t-green::before  { background: var(--green); }
+    .quick-tile.t-orange::before { background: var(--orange); }
+    .quick-tile.t-purple::before { background: var(--purple); }
+    .quick-tile:hover { border-color: var(--blue); }
+    .qt-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+    .qt-value { font-size: 24px; font-weight: 800; color: var(--text-primary); line-height: 1; letter-spacing: -.02em; }
+    .qt-sub   { font-size: 11px; color: var(--text-muted); }
+    .qt-icon  { position: absolute; top: 10px; right: 12px; font-size: 18px; opacity: 0.35; }
+
+    /* ── Active orgs cards ── */
+    .active-orgs-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 14px 16px;
+    }
+    .active-org-chip {
+      background: var(--bg-tertiary); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;
+      cursor: pointer; transition: border-color 0.15s, background 0.15s;
+      text-decoration: none;
+    }
+    .active-org-chip:hover { border-color: var(--green); background: rgba(76,175,80,0.05); }
+    .aoc-name  { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .aoc-meta  { display: flex; align-items: center; justify-content: space-between; }
+    .aoc-staff { font-size: 11px; color: var(--green); font-weight: 600; }
+    .aoc-time  { font-size: 10px; color: var(--text-muted); }
+
+    /* ── Orgs table compact ── */
+    .td-org-name { font-weight: 600; font-size: 12px; color: var(--text-primary); }
+    .td-org-id   { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
+      <div class="sidebar-logo-name">Clockyn</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item active" href="dashboard.html" onclick="closeSidebar()"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a class="nav-item" href="organizations.html" onclick="closeSidebar()"><span class="nav-icon">🏢</span> Organizations</a>
+      <a class="nav-item" href="users.html" onclick="closeSidebar()"><span class="nav-icon">👥</span> Users</a>
+      <a class="nav-item" href="subscriptions.html" onclick="closeSidebar()"><span class="nav-icon">📋</span> Subscriptions</a>
+      <a class="nav-item" href="payments.html" onclick="closeSidebar()"><span class="nav-icon">💳</span> Payments</a>
+      <a class="nav-item" href="coupons.html" onclick="closeSidebar()"><span class="nav-icon">🎯</span> Coupons</a>
+      <a class="nav-item" href="suggestions.html" onclick="closeSidebar()"><span class="nav-icon">💡</span> Suggestions <span class="nav-suggestion-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;"></span></a>
+      <a class="nav-item" href="tickets.html" onclick="closeSidebar()"><span class="nav-icon">🎫</span> Ticketing &amp; Bugs</a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#activity" onclick="closeSidebar()"><span class="nav-icon">🕐</span> Activity Logs</a>
+      <a class="nav-item" href="settings.html" onclick="closeSidebar()"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar" id="sidebar-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-user-name">Super Admin</div>
+        <div class="user-mobile" id="sidebar-user-mobile"></div>
+        <div class="user-role" id="sidebar-user-role">System Administrator</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div id="toast" style="position:fixed;bottom:24px;right:24px;background:#16a34a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:opacity 0.25s,transform 0.25s;pointer-events:none;"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <span class="topbar-title">Dashboard</span>
+      <div class="topbar-search">
+        <span>🔍</span>
+        <input type="text" placeholder="Search orgs, users..." />
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn">🔔<span class="dot"></span></button>
+        <button class="icon-btn" onclick="loadDashboard()" title="Refresh">🔄</button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>Admin Overview</h1>
+          <p>Live metrics across all organizations</p>
+        </div>
+        <div class="page-header-right">
+          <div class="page-date" id="page-date-label">—</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <!-- Quick stat tiles -->
+      <div class="quick-bar">
+        <div class="quick-tile t-blue" onclick="window.location.href='organizations.html'" style="cursor:pointer;">
+          <div class="qt-icon">🏢</div>
+          <div class="qt-label">Organizations</div>
+          <div class="qt-value" id="stat-total-orgs">—</div>
+          <div class="qt-sub">Total registered</div>
+        </div>
+        <div class="quick-tile t-green" onclick="window.location.href='users.html'" style="cursor:pointer;">
+          <div class="qt-icon">👥</div>
+          <div class="qt-label">Users</div>
+          <div class="qt-value" id="stat-total-users">—</div>
+          <div class="qt-sub">Active across orgs</div>
+        </div>
+        <div class="quick-tile t-orange" onclick="window.location.href='payments.html'" style="cursor:pointer;">
+          <div class="qt-icon">💰</div>
+          <div class="qt-label">Revenue (Month)</div>
+          <div class="qt-value" id="stat-revenue">—</div>
+          <div class="qt-sub">Verified payments</div>
+        </div>
+        <div class="quick-tile t-purple" onclick="window.location.href='subscriptions.html'" style="cursor:pointer;">
+          <div class="qt-icon">📋</div>
+          <div class="qt-label">Active Plans</div>
+          <div class="qt-value" id="stat-active-subs">—</div>
+          <div class="qt-sub">Live subscriptions</div>
+        </div>
+      </div>
+
+      <!-- Active Orgs Today (card grid) -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Active Today <span id="active-orgs-count" class="badge badge-green" style="margin-left:6px;"></span></h3>
+          <span style="font-size:11px;color:var(--text-muted);">Orgs with punch activity right now</span>
+        </div>
+        <div id="active-orgs-container">
+          <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Analytics Row: Bar Chart + Donut -->
+      <div class="analytics-row">
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">Monthly Revenue</div>
+              <div class="chart-card-sub" id="revenue-total">Loading...</div>
+            </div>
+            <div class="chart-tabs">
+              <button class="chart-tab active" id="tab-6m" onclick="switchRevenueTab(6)">6M</button>
+              <button class="chart-tab" id="tab-12m" onclick="switchRevenueTab(12)">1Y</button>
+            </div>
+          </div>
+          <div class="bar-chart-wrap">
+            <div class="bar-chart-y">
+              <span id="y-top"></span>
+              <span id="y-mid"></span>
+              <span>₹0</span>
+            </div>
+            <div class="bar-chart" id="revenue-chart">
+              <div class="bar-chart-loading">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">Plan Distribution</div>
+              <div class="chart-card-sub" id="donut-total-label">Active subscriptions</div>
+            </div>
+          </div>
+          <div class="donut-section">
+            <div class="donut-container">
+              <svg viewBox="0 0 42 42" class="donut-svg" id="donut-svg">
+                <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#21262d" stroke-width="4"/>
+              </svg>
+              <div class="donut-center">
+                <div class="donut-center-val" id="donut-center-val">—</div>
+                <div class="donut-center-lbl">Total</div>
+              </div>
+            </div>
+            <div class="donut-legend" id="donut-legend">
+              <div class="bar-chart-loading">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Two-column lower row -->
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px;">
+
+        <!-- Recent Organizations -->
+        <div class="card" style="margin-bottom:0 !important;">
+          <div class="card-header">
+            <h3>Recent Organizations</h3>
+            <button class="btn btn-ghost btn-sm" id="orgs-view-all-btn" onclick="toggleViewAll('orgs')">View All</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Organization</th><th>Plan</th><th>Users</th><th>Status</th><th>Expires</th></tr>
+              </thead>
+              <tbody id="orgs-table-body">
+                <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Plan donut legend / plan cards -->
+        <div class="card" style="margin-bottom:0 !important;">
+          <div class="card-header">
+            <h3>Subscription Plans</h3>
+          </div>
+          <div style="padding:12px 16px;" id="plans-grid">
+            <div style="color:var(--text-muted);font-size:12px;padding:8px 0;">Loading...</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const PAGE = 5;
+    const orgsData = [];
+    const viewAllState = { orgs: false };
+    let allRevenueData = [];
+    let revenueMonths = 6;
+
+    // Date label
+    (function() {
+      var d = new Date();
+      var opts = { weekday:'short', day:'2-digit', month:'short', year:'numeric' };
+      document.getElementById('page-date-label').textContent = d.toLocaleDateString('en-IN', opts);
+    })();
+
+    function formatRevenue(amount) {
+      if (amount >= 100000) return '₹' + (amount / 100000).toFixed(1) + 'L';
+      if (amount >= 1000)   return '₹' + (amount / 1000).toFixed(1) + 'K';
+      return '₹' + amount.toFixed(0);
+    }
+
+    function statusBadge(status) {
+      var map = { ACTIVE:'badge-green', FREE_TRIAL:'badge-blue', INACTIVE:'badge-gray', EXPIRED:'badge-red', PAID:'badge-green', FAILED:'badge-red', CREATED:'badge-orange', PENDING:'badge-orange' };
+      return '<span class="badge ' + (map[status] || 'badge-gray') + '">' + status + '</span>';
+    }
+
+    function escHtml(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /* ── Stats ── */
+    async function loadStats() {
+      try {
+        var d = await fetch(API_BASE + '/gen-dashboard/stats').then(r => r.json());
+        document.getElementById('stat-total-orgs').textContent  = d.total_orgs.toLocaleString();
+        document.getElementById('stat-total-users').textContent  = d.total_users.toLocaleString();
+        document.getElementById('stat-revenue').textContent      = formatRevenue(d.revenue_this_month);
+        document.getElementById('stat-active-subs').textContent  = d.active_subscriptions.toLocaleString();
+      } catch(e) { console.error('Stats failed', e); }
+    }
+
+    /* ── Revenue Chart ── */
+    function switchRevenueTab(months) {
+      revenueMonths = months;
+      document.getElementById('tab-6m').classList.toggle('active', months === 6);
+      document.getElementById('tab-12m').classList.toggle('active', months === 12);
+      renderRevenueChart();
+    }
+
+    function renderRevenueChart() {
+      var chart = document.getElementById('revenue-chart');
+      var data  = allRevenueData.slice(-revenueMonths);
+      if (!data.length) {
+        chart.innerHTML = '<div class="bar-chart-loading">No revenue data</div>';
+        document.getElementById('revenue-total').textContent = '₹0 this period';
+        return;
+      }
+      var max   = Math.max.apply(null, data.map(function(d){ return d.revenue; })) || 1;
+      var total = data.reduce(function(s,d){ return s + d.revenue; }, 0);
+      document.getElementById('revenue-total').textContent = formatRevenue(total) + ' this period';
+      document.getElementById('y-top').textContent = formatRevenue(max);
+      document.getElementById('y-mid').textContent = formatRevenue(max / 2);
+      chart.innerHTML = data.map(function(d, i) {
+        var isLast = i === data.length - 1;
+        var h   = Math.max((d.revenue / max) * 100, 4);
+        var cls = isLast ? 'bar-inner bar-green' : 'bar-inner bar-blue';
+        return '<div class="bar-col">'
+          + '<div class="bar-tooltip">' + d.month + ': ₹' + d.revenue.toLocaleString() + '</div>'
+          + '<div class="bar-outer"><div class="' + cls + '" style="height:' + h + '%"></div></div>'
+          + '<div class="bar-label">' + d.month + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    async function loadMonthlyRevenue() {
+      try {
+        allRevenueData = await fetch(API_BASE + '/gen-dashboard/monthly-revenue').then(r => r.json());
+        renderRevenueChart();
+      } catch(e) { console.error('Revenue failed', e); }
+    }
+
+    /* ── Plan Breakdown ── */
+    async function loadPlanBreakdown() {
+      try {
+        var plans  = await fetch(API_BASE + '/gen-dashboard/plan-breakdown').then(r => r.json());
+        var colors = ['#58a6ff','#4caf50','#ff9800','#ab7ae0','#26c6da'];
+        var legend = document.getElementById('donut-legend');
+        var svg    = document.getElementById('donut-svg');
+        var grid   = document.getElementById('plans-grid');
+
+        if (!plans.length) {
+          legend.innerHTML = grid.innerHTML = '<div style="color:var(--text-muted)">No plans</div>';
+          return;
+        }
+
+        var total = plans.reduce(function(s,p){ return s + p.active_count; }, 0) || 1;
+        document.getElementById('donut-center-val').textContent  = total;
+        document.getElementById('donut-total-label').textContent = total + ' active';
+
+        var r = 15.9155, circ = 2 * Math.PI * r, offset = 25;
+        var segs = plans.map(function(p, i) {
+          var pct  = (p.active_count / total) * 100;
+          var dash = (pct / 100) * circ;
+          var gap  = circ - dash;
+          var dashOffset = ((100 - offset) / 100) * circ;
+          offset += pct;
+          return '<circle cx="21" cy="21" r="' + r + '" fill="none"'
+            + ' stroke="' + colors[i] + '" stroke-width="4"'
+            + ' stroke-dasharray="' + dash.toFixed(2) + ' ' + gap.toFixed(2) + '"'
+            + ' stroke-dashoffset="' + dashOffset.toFixed(2) + '"'
+            + ' stroke-linecap="round"/>';
+        }).join('');
+        svg.innerHTML = '<circle cx="21" cy="21" r="' + r + '" fill="none" stroke="#21262d" stroke-width="4"/>' + segs;
+
+        legend.innerHTML = plans.map(function(p, i) {
+          return '<div class="donut-legend-item">'
+            + '<div class="donut-legend-dot" style="background:' + colors[i] + '"></div>'
+            + '<div class="donut-legend-info"><span class="donut-legend-name">' + escHtml(p.plan_name) + '</span>'
+            + '<span class="donut-legend-meta">₹' + p.plan_amount.toLocaleString() + '/' + p.plan_month + 'mo</span></div>'
+            + '<div class="donut-legend-count" style="color:' + colors[i] + '">' + p.active_count + '</div>'
+            + '</div>';
+        }).join('');
+
+        grid.innerHTML = plans.map(function(p, i) {
+          var pct = Math.round((p.active_count / total) * 100);
+          return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);">'
+            + '<div style="width:8px;height:8px;border-radius:50%;background:' + colors[i] + ';flex-shrink:0;"></div>'
+            + '<div style="flex:1;min-width:0;">'
+            +   '<div style="font-size:12px;font-weight:600;color:var(--text-primary);">' + escHtml(p.plan_name) + '</div>'
+            +   '<div style="font-size:10px;color:var(--text-muted);">₹' + p.plan_amount.toLocaleString() + ' · ' + p.plan_month + ' mo</div>'
+            +   '<div style="margin-top:4px;height:3px;background:var(--bg-tertiary);border-radius:2px;">'
+            +     '<div style="height:100%;width:' + pct + '%;background:' + colors[i] + ';border-radius:2px;transition:width .4s;"></div>'
+            +   '</div>'
+            + '</div>'
+            + '<div style="font-size:16px;font-weight:800;color:' + colors[i] + ';min-width:24px;text-align:right;">' + p.active_count + '</div>'
+            + '</div>';
+        }).join('');
+      } catch(e) {
+        console.error('Plan breakdown failed', e);
+      }
+    }
+
+    /* ── Orgs Table ── */
+    function renderOrgs() {
+      var tbody = document.getElementById('orgs-table-body');
+      var rows  = viewAllState.orgs ? orgsData : orgsData.slice(0, PAGE);
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">No organizations found</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(function(r) {
+        return '<tr style="cursor:pointer;" onclick="window.location.href=\'org_analytics.html?org_id=' + encodeURIComponent(r.org_id || '') + '&org_name=' + encodeURIComponent(r.org_name || '') + '\'">'
+          + '<td><div class="td-org-name">' + escHtml(r.org_name) + '</div></td>'
+          + '<td>' + (r.plan_name ? '<span class="badge badge-blue">' + escHtml(r.plan_name) + '</span>' : '<span style="color:var(--text-muted);font-size:11px;">—</span>') + '</td>'
+          + '<td style="font-size:12px;">' + r.user_count + '</td>'
+          + '<td>' + statusBadge(r.sub_status) + '</td>'
+          + '<td style="font-size:11px;color:var(--text-muted);">' + (r.end_date || '—') + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    async function loadRecentOrgs() {
+      try {
+        var rows = await fetch(API_BASE + '/gen-dashboard/recent-orgs').then(r => r.json());
+        orgsData.length = 0;
+        orgsData.push.apply(orgsData, rows);
+        renderOrgs();
+        document.getElementById('orgs-view-all-btn').style.display = orgsData.length <= PAGE ? 'none' : '';
+      } catch(e) { console.error('Orgs failed', e); }
+    }
+
+    function toggleViewAll(type) {
+      viewAllState[type] = !viewAllState[type];
+      if (type === 'orgs') {
+        renderOrgs();
+        document.getElementById('orgs-view-all-btn').textContent = viewAllState.orgs ? 'Show Less' : 'View All';
+      }
+    }
+
+    /* ── Active Orgs Today (chip grid) ── */
+    async function loadActiveOrgs() {
+      try {
+        var res  = await fetch(API_BASE + '/gen-dashboard/active-orgs');
+        var json = await res.json();
+        var orgs = json.data || [];
+        document.getElementById('active-orgs-count').textContent = orgs.length + (orgs.length === 1 ? ' org' : ' orgs');
+        var container = document.getElementById('active-orgs-container');
+        if (!orgs.length) {
+          container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">No punch activity today yet</div>';
+          return;
+        }
+        container.innerHTML = '<div class="active-orgs-grid">'
+          + orgs.map(function(o) {
+              return '<a class="active-org-chip" href="org_analytics.html?org_id=' + encodeURIComponent(o.org_id) + '&org_name=' + encodeURIComponent(o.org_name) + '">'
+                + '<div class="aoc-name">' + escHtml(o.org_name) + '</div>'
+                + '<div class="aoc-meta">'
+                +   '<span class="aoc-staff">↑ ' + o.active_count + ' staff</span>'
+                +   '<span class="aoc-time">' + (o.last_punch_time || '') + '</span>'
+                + '</div>'
+                + '</a>';
+            }).join('')
+          + '</div>';
+      } catch(e) { console.error('Active orgs error', e); }
+    }
+
+    async function loadDashboard() {
+      await Promise.all([loadStats(), loadMonthlyRevenue(), loadRecentOrgs(), loadPlanBreakdown(), loadActiveOrgs()]);
+    }
+
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) logout();
+    }
+
+    loadDashboard();
+
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Suggestions</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    .suggestion-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      transition: border-color 0.18s, transform 0.18s;
+    }
+    .suggestion-card:hover { border-color: rgba(88,166,255,0.35); transform: translateY(-1px); }
+    .suggestion-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .suggestion-avatar {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: #fff;
+    }
+    .suggestion-meta { flex: 1; min-width: 0; }
+    .suggestion-sender { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .suggestion-email { font-size: 11px; color: var(--blue); margin-top: 2px; }
+    .suggestion-date { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .suggestion-subject { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 10px 0 6px; }
+    .suggestion-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; }
+    .suggestion-company { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; background: rgba(88,166,255,0.1); color: var(--blue); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .reply-thread { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); display: none; }
+    .reply-thread.open { display: block; }
+    .reply-item {
+      display: flex; gap: 10px; background: rgba(88,166,255,0.06);
+      border: 1px solid rgba(88,166,255,0.15); border-radius: 10px;
+      padding: 10px 12px; margin-bottom: 8px;
+    }
+    .reply-item:last-child { margin-bottom: 0; }
+    .reply-item-icon { font-size: 15px; flex-shrink: 0; }
+    .reply-item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .reply-item-admin { font-size: 12px; font-weight: 700; color: var(--blue); }
+    .reply-item-date { font-size: 10px; color: var(--text-muted); }
+    .reply-item-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; }
+    .toggle-replies-btn {
+      background: none; border: none; cursor: pointer; font-size: 11px;
+      color: var(--blue); font-weight: 600; padding: 0;
+    }
+    .toggle-replies-btn:hover { text-decoration: underline; }
+    .modal-past-replies { max-height: 180px; overflow-y: auto; margin-bottom: 14px; }
+    .modal-past-replies-label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+    .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .search-box { display: flex; align-items: center; gap: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 12px; flex: 1; min-width: 200px; }
+    .search-box input { background: none; border: none; outline: none; color: var(--text-primary); font-size: 13px; width: 100%; }
+    .search-box input::placeholder { color: var(--text-muted); }
+    .filter-select { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 12px; color: var(--text-secondary); font-size: 13px; cursor: pointer; outline: none; }
+    .count-tag { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-left: auto; }
+    .empty-state { text-align: center; padding: 64px 20px; color: var(--text-muted); }
+    .empty-icon { font-size: 44px; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
+      <div class="sidebar-logo-name">Clockyn</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" href="dashboard.html" onclick="closeSidebar()"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a class="nav-item" href="organizations.html" onclick="closeSidebar()"><span class="nav-icon">🏢</span> Organizations</a>
+      <a class="nav-item" href="users.html" onclick="closeSidebar()"><span class="nav-icon">👥</span> Users</a>
+      <a class="nav-item" href="subscriptions.html" onclick="closeSidebar()"><span class="nav-icon">📋</span> Subscriptions</a>
+      <a class="nav-item" href="payments.html" onclick="closeSidebar()"><span class="nav-icon">💳</span> Payments</a>
+      <a class="nav-item" href="coupons.html" onclick="closeSidebar()"><span class="nav-icon">🎯</span> Coupons</a>
+      <a class="nav-item active" href="suggestions.html" onclick="closeSidebar()"><span class="nav-icon">💡</span> Suggestions <span class="nav-suggestion-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;"></span></a>
+      <a class="nav-item" href="tickets.html" onclick="closeSidebar()"><span class="nav-icon">🎫</span> Ticketing &amp; Bugs</a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#activity" onclick="closeSidebar()"><span class="nav-icon">🕐</span> Activity Logs</a>
+      <a class="nav-item" href="settings.html" onclick="closeSidebar()"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar" id="sidebar-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-user-name">Super Admin</div>
+        <div class="user-mobile" id="sidebar-user-mobile"></div>
+        <div class="user-role" id="sidebar-user-role">System Administrator</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+  <div id="toast" style="position:fixed;bottom:32px;right:32px;background:#16a34a;color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transform:translateY(20px);transition:opacity 0.3s,transform 0.3s;pointer-events:none;"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <span class="topbar-title">Suggestions</span>
+      <div class="topbar-search">
+        <span>🔍</span>
+        <input type="text" id="topbar-search" placeholder="Search suggestions..." oninput="applyFilters()" />
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" onclick="loadSuggestions()" title="Refresh">🔄</button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-header">
+        <h1>💡 User Suggestions</h1>
+        <p>Feature requests and feedback from app users (email_log table)</p>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">Total</span><div class="stat-icon blue">💡</div></div>
+          <div class="stat-value" id="s-total">—</div>
+          <div class="stat-footer">All suggestions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">Companies</span><div class="stat-icon purple">🏢</div></div>
+          <div class="stat-value" id="s-companies">—</div>
+          <div class="stat-footer">Unique organizations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header"><span class="label">This Month</span><div class="stat-icon green">📅</div></div>
+          <div class="stat-value" id="s-month">—</div>
+          <div class="stat-footer">Received this month</div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="search-input" placeholder="Search by subject, email or company..." oninput="applyFilters()" />
+        </div>
+        <select class="filter-select" id="company-filter" onchange="applyFilters()">
+          <option value="">All Companies</option>
+        </select>
+        <select class="filter-select" id="sort-filter" onchange="applyFilters()">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+        </select>
+        <span class="count-tag" id="count-tag"></span>
+      </div>
+
+      <!-- Suggestions list -->
+      <div id="suggestions-list">
+        <div class="empty-state"><div class="empty-icon">⏳</div><p>Loading...</p></div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination" style="display:none;">
+        <span class="page-info" id="page-info"></span>
+        <button class="page-btn" id="btn-prev" onclick="changePage(-1)">&#9664;</button>
+        <span id="page-numbers" style="display:flex;gap:4px;"></span>
+        <button class="page-btn" id="btn-next" onclick="changePage(1)">&#9654;</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Reply Modal -->
+  <div style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;" id="reply-modal" class="reply-modal-overlay">
+    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:480px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-size:18px;font-weight:600;color:var(--text-primary);" id="reply-modal-title">Reply to Suggestion</div>
+        <button onclick="closeReplyModal()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px 8px;">&#x2715;</button>
+      </div>
+      <div style="margin-bottom:12px;font-size:12px;color:var(--text-muted);" id="reply-modal-sub"></div>
+      <div class="modal-past-replies" id="modal-past-replies" style="display:none;">
+        <div class="modal-past-replies-label">Previous Replies</div>
+        <div id="modal-past-replies-list"></div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;">Your Reply (will be shown to the user in the app)</label>
+        <textarea id="reply-text-input" rows="5" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);font-size:14px;box-sizing:border-box;resize:vertical;" placeholder="Type your reply here..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:24px;">
+        <button class="btn btn-ghost" onclick="closeReplyModal()" style="flex:1;">Cancel</button>
+        <button class="btn btn-primary" id="reply-submit-btn" onclick="submitReply()" style="flex:1;">Send Reply</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    var all = [], filtered = [], curPage = 1, pageSize = 15;
+
+    async function loadSuggestions() {
+      document.getElementById('suggestions-list').innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>Loading...</p></div>';
+      try {
+        var res = await fetch(API_BASE + '/company/suggest-feature/with-replies', { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var data = await res.json();
+        all = Array.isArray(data) ? data : (Array.isArray(data.data) ? data.data : []);
+        updateStats();
+        populateCompanyFilter();
+        applyFilters();
+        updateBadge(all.length);
+      } catch(e) {
+        document.getElementById('suggestions-list').innerHTML =
+          '<div class="empty-state"><div class="empty-icon">⚠️</div>'
+          + '<p style="color:var(--red)">Failed to load suggestions.<br><small>' + e.message + '</small></p></div>';
+      }
+    }
+
+    function updateStats() {
+      var now = new Date(), thisMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+      var companies = new Set(all.map(function(s){ return s.company_name || s.org_name || s.organization || ''; }).filter(Boolean));
+      var month = all.filter(function(s){
+        var d = s.created_at || s.sent_at || s.timestamp || s.date || s.log_date || '';
+        return d.slice(0,7) === thisMonth;
+      }).length;
+      document.getElementById('s-total').textContent = all.length;
+      document.getElementById('s-companies').textContent = companies.size;
+      document.getElementById('s-month').textContent = month;
+    }
+
+    function populateCompanyFilter() {
+      var sel = document.getElementById('company-filter'), cur = sel.value, seen = {};
+      sel.innerHTML = '<option value="">All Companies</option>';
+      all.forEach(function(s){
+        var n = s.company_name || s.org_name || s.organization || '';
+        if (n && !seen[n]) { seen[n]=1; var o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); }
+      });
+      sel.value = cur;
+    }
+
+    function applyFilters() {
+      var q = (document.getElementById('search-input').value || document.getElementById('topbar-search').value || '').toLowerCase();
+      var company = document.getElementById('company-filter').value;
+      var sort = document.getElementById('sort-filter').value;
+      filtered = all.filter(function(s){
+        var subject = s.subject || s.sub_name || s.title || '';
+        var body    = s.content || s.message || s.body || s.client_msg || s.description || '';
+        var email   = s.user_email || s.email || s.sender_email || s.recipient_email || '';
+        var comp    = s.company_name || s.org_name || s.organization || '';
+        var mq = !q || subject.toLowerCase().includes(q) || body.toLowerCase().includes(q)
+          || email.toLowerCase().includes(q) || comp.toLowerCase().includes(q);
+        var mc = !company || comp === company;
+        return mq && mc;
+      });
+      filtered.sort(function(a,b){
+        var da = new Date(a.created_at||a.sent_at||a.timestamp||a.date||a.log_date||0).getTime();
+        var db = new Date(b.created_at||b.sent_at||b.timestamp||b.date||b.log_date||0).getTime();
+        return sort === 'oldest' ? da-db : db-da;
+      });
+      curPage = 1;
+      renderPage();
+    }
+
+    function renderPage() {
+      var total = filtered.length, pages = Math.max(1, Math.ceil(total/pageSize));
+      curPage = Math.min(curPage, pages);
+      var slice = filtered.slice((curPage-1)*pageSize, curPage*pageSize);
+      document.getElementById('count-tag').textContent = total + ' suggestion' + (total!==1?'s':'');
+
+      if (!slice.length) {
+        document.getElementById('suggestions-list').innerHTML = '<div class="empty-state"><div class="empty-icon">💡</div><p>No suggestions found.</p></div>';
+        document.getElementById('pagination').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('suggestions-list').innerHTML = slice.map(function(s){
+        // Map all possible email_log column name variations
+        var subject  = s.subject || s.sub_name || s.title || '(No subject)';
+        var body     = s.content || s.message || s.body || s.client_msg || s.description || '';
+        var email    = s.user_email || s.email || s.sender_email || s.recipient_email || s.from_email || '';
+        var company  = s.company_name || s.org_name || s.organization || '';
+        var date     = s.created_at || s.sent_at || s.timestamp || s.date || s.log_date || '';
+        var orgId    = s.org_id || '';
+        var initials = (email || company || 'US').substring(0,2).toUpperCase();
+        var dateStr  = date ? new Date(date).toLocaleString('en-IN', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+        var replies  = Array.isArray(s.replies) ? s.replies : [];
+        var cardId   = 'thread-' + (s.log_id||0);
+        return '<div class="suggestion-card">'
+          + '<div class="suggestion-card-header">'
+          + '<div class="suggestion-avatar">' + initials + '</div>'
+          + '<div class="suggestion-meta">'
+          + '<div class="suggestion-sender">' + esc(company || email || orgId || 'Unknown') + '</div>'
+          + (email ? '<div class="suggestion-email">' + esc(email) + '</div>' : '')
+          + (orgId && !company ? '<div class="suggestion-email" style="color:var(--text-muted)">Org: ' + esc(orgId) + '</div>' : '')
+          + '</div>'
+          + (dateStr ? '<div class="suggestion-date">' + dateStr + '</div>' : '')
+          + '</div>'
+          + '<div class="suggestion-subject">' + esc(subject) + '</div>'
+          + (body ? '<div class="suggestion-body">' + esc(body) + '</div>' : '')
+          + (company ? '<span class="suggestion-company">🏢 ' + esc(company) + '</span>' : '')
+          + '<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:10px;gap:8px;">'
+          + (replies.length > 0 ? '<button class="toggle-replies-btn" onclick="toggleReplyThread(\''+cardId+'\')" id="'+cardId+'-toggle">💬 View '+replies.length+' repl'+(replies.length>1?'ies':'y')+'</button>' : '')
+          + '<button class="btn btn-sm btn-ghost" onclick="openReplyModal(' + (s.log_id||0) + ',\'' + esc(company||'Unknown').replace(/'/g,'&#39;') + '\')">Reply</button>'
+          + '</div>'
+          + (replies.length > 0 ? '<div class="reply-thread" id="'+cardId+'">' + replies.map(function(r){
+              var rDate = r.created_at ? new Date(r.created_at).toLocaleString('en-IN', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+              return '<div class="reply-item">'
+                + '<div class="reply-item-icon">💬</div>'
+                + '<div style="flex:1;min-width:0;">'
+                + '<div class="reply-item-head"><span class="reply-item-admin">' + esc(r.admin_name||'Admin') + '</span>' + (rDate ? '<span class="reply-item-date">' + rDate + '</span>' : '') + '</div>'
+                + '<div class="reply-item-text">' + esc(r.reply_text||'') + '</div>'
+                + '</div>'
+                + '</div>';
+            }).join('') + '</div>' : '')
+          + '</div>';
+      }).join('');
+
+      renderPagination(total, pages);
+    }
+
+    function renderPagination(total, pages) {
+      var start = (curPage-1)*pageSize+1, end = Math.min(curPage*pageSize, total);
+      document.getElementById('page-info').textContent = 'Showing ' + start + '–' + end + ' of ' + total;
+      document.getElementById('btn-prev').disabled = curPage <= 1;
+      document.getElementById('btn-next').disabled = curPage >= pages;
+      var nums = '';
+      for (var i=1; i<=pages; i++) {
+        if (i===1||i===pages||Math.abs(i-curPage)<=1)
+          nums += '<button class="page-btn'+(i===curPage?' active':'')+'" onclick="goPage('+i+')">'+i+'</button>';
+        else if (Math.abs(i-curPage)===2)
+          nums += '<span style="color:var(--text-muted);align-self:center;">…</span>';
+      }
+      document.getElementById('page-numbers').innerHTML = nums;
+      document.getElementById('pagination').style.display = pages > 1 ? 'flex' : 'none';
+    }
+
+    function goPage(n) { curPage = n; renderPage(); }
+    function changePage(d) { curPage += d; renderPage(); }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function toggleReplyThread(cardId) {
+      var thread = document.getElementById(cardId);
+      var toggle = document.getElementById(cardId + '-toggle');
+      if (!toggle.dataset.label) toggle.dataset.label = toggle.textContent;
+      var isOpen = thread.classList.toggle('open');
+      toggle.textContent = isOpen ? '💬 Hide replies' : toggle.dataset.label;
+    }
+
+    var replyTargetLogId = null;
+
+    function openReplyModal(logId, companyName) {
+      replyTargetLogId = logId;
+      document.getElementById('reply-modal-title').textContent = 'Reply to Suggestion';
+      document.getElementById('reply-modal-sub').textContent = 'From: ' + (companyName || 'Unknown org');
+      document.getElementById('reply-text-input').value = '';
+
+      var suggestion = all.find(function(s){ return (s.log_id||0) === logId; });
+      var replies = (suggestion && Array.isArray(suggestion.replies)) ? suggestion.replies : [];
+      var pastWrap = document.getElementById('modal-past-replies');
+      if (replies.length) {
+        document.getElementById('modal-past-replies-list').innerHTML = replies.map(function(r){
+          var rDate = r.created_at ? new Date(r.created_at).toLocaleString('en-IN', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+          return '<div class="reply-item">'
+            + '<div class="reply-item-icon">💬</div>'
+            + '<div style="flex:1;min-width:0;">'
+            + '<div class="reply-item-head"><span class="reply-item-admin">' + esc(r.admin_name||'Admin') + '</span>' + (rDate ? '<span class="reply-item-date">' + rDate + '</span>' : '') + '</div>'
+            + '<div class="reply-item-text">' + esc(r.reply_text||'') + '</div>'
+            + '</div>'
+            + '</div>';
+        }).join('');
+        pastWrap.style.display = 'block';
+      } else {
+        pastWrap.style.display = 'none';
+      }
+
+      var el = document.getElementById('reply-modal');
+      el.style.display = 'flex';
+    }
+
+    function closeReplyModal() {
+      document.getElementById('reply-modal').style.display = 'none';
+      replyTargetLogId = null;
+    }
+
+    async function submitReply() {
+      var replyText = (document.getElementById('reply-text-input').value || '').trim();
+      if (!replyText) { alert('Please type a reply first'); return; }
+      var btn = document.getElementById('reply-submit-btn');
+      btn.disabled = true; btn.textContent = 'Sending...';
+      try {
+        var adminProfile = {};
+        try { adminProfile = JSON.parse(localStorage.getItem('gen_admin_profile') || '{}'); } catch(e) {}
+        var adminName = adminProfile.name || 'Admin';
+        var res = await fetch(API_BASE + '/company/suggest-feature/' + replyTargetLogId + '/reply', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({reply_text: replyText, admin_name: adminName}),
+        });
+        var json = await res.json();
+        if (json.success) {
+          closeReplyModal();
+          showNotification('Reply sent successfully');
+          loadSuggestions();
+        } else {
+          alert('Failed to send reply: ' + (json.detail || 'Unknown error'));
+        }
+      } catch(e) {
+        alert('Error: ' + e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Send Reply';
+      }
+    }
+
+    function showNotification(msg) {
+      var n = document.createElement('div');
+      n.textContent = msg;
+      n.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#238636;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;';
+      document.body.appendChild(n);
+      setTimeout(function(){ document.body.removeChild(n); }, 2500);
+    }
+
+    // Close reply modal on backdrop click
+    document.getElementById('reply-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeReplyModal();
+    });
+
+    function updateBadge(count) {
+      document.querySelectorAll('.nav-suggestion-badge').forEach(function(b){
+        b.textContent = count > 99 ? '99+' : count;
+        b.style.display = count > 0 ? 'inline' : 'none';
+      });
+    }
+
+    function handleLogout() { if (confirm('Are you sure you want to logout?')) logout(); }
+    function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open'); }
+    function closeSidebar() { document.querySelector('.sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('open'); }
+
+    loadSuggestions();
+  </script>
+
+</body>
+</html>
