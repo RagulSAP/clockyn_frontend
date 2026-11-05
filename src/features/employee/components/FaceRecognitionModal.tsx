@@ -30,7 +30,7 @@ import {
 } from './faceCaptureParts';
 
 /** `holding` = the short "hold still" moment between the tap and the shutter. */
-type Phase = 'idle' | 'holding' | 'processing' | 'success' | 'admin' | 'holiday';
+type Phase = 'idle' | 'holding' | 'processing' | 'success' | 'holiday';
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -44,20 +44,14 @@ export interface FaceRecognitionModalProps {
   coords?: { latitude: number; longitude: number };
   /** Called with the server response as soon as a punch is accepted (before the user taps Done). */
   onSuccess?: (result: PunchResult, action: PunchAction) => void;
-  /**
-   * Called when the forced retry came back "failed": resolves whether the server nevertheless recorded the punch
-   * (the v1 force-accept fallback never checked the forced response).
-   */
-  verifyApplied?: (action: PunchAction) => Promise<boolean>;
 }
 
 export { isNoFaceMessage };
 
 /**
  * Full-screen face punch camera. Flow: tap -> short "hold still" -> capture one selfie -> downscale -> `POST /face/punch`
- * -> result. Failure handling is the v1 behaviour (a Deferred product decision), keyed by the structured `code` when the
- * server sends one and by the message otherwise: `no face` retries the photo, a holiday shows "No Attendance Needed",
- * any OTHER failure is retried once with `force_accept` and shown as "Sent for admin review". After
+ * -> result. `no face` / `image_unreadable` retries the photo, holiday shows "No Attendance Needed", face mismatch
+ * (`no_match`) and other business failures show an inline hint and return to the camera to retry. After
  * `TIPS_AFTER_FAILURES` failed attempts in a row a tips sheet is shown.
  */
 export function FaceRecognitionModal({ visible, ...rest }: FaceRecognitionModalProps) {
@@ -65,7 +59,7 @@ export function FaceRecognitionModal({ visible, ...rest }: FaceRecognitionModalP
   return visible ? <FaceRecognitionSession {...rest} /> : null;
 }
 
-function FaceRecognitionSession({ onClose, userId, orgId, action, coords, onSuccess, verifyApplied }: Omit<FaceRecognitionModalProps, 'visible'>) {
+function FaceRecognitionSession({ onClose, userId, orgId, action, coords, onSuccess }: Omit<FaceRecognitionModalProps, 'visible'>) {
   const [permission, requestCameraPermission] = useCameraPermissions();
   const geometry = useOvalGeometry();
   const flash = useShutterFlash();
@@ -126,12 +120,12 @@ function FaceRecognitionSession({ onClose, userId, orgId, action, coords, onSucc
       const gen = generation.current;
       const alive = () => generation.current === gen;
       const base = { userId, orgId, action, faceUri: uri, latitude: coords?.latitude, longitude: coords?.longitude };
-      const accepted = (r: PunchResult, mismatch: boolean, withTime: boolean) => {
+      const accepted = (r: PunchResult, withTime: boolean) => {
         hapticNotification('success');
         onSuccess?.(r, action);
         if (!alive()) return;
         setResult({ time: withTime ? r.time : undefined });
-        setPhase(mismatch ? 'admin' : 'success');
+        setPhase('success');
       };
 
       let first: PunchResult;
@@ -142,7 +136,7 @@ function FaceRecognitionSession({ onClose, userId, orgId, action, coords, onSucc
         return;
       }
       if (first.success) {
-        accepted(first, first.faceMismatch, true);
+        accepted(first, true);
         return;
       }
       if (isHolidayFailure(first)) {
@@ -155,27 +149,10 @@ function FaceRecognitionSession({ onClose, userId, orgId, action, coords, onSucc
         if (alive()) fail(noFaceText(first));
         return;
       }
-
-      // v1 fallback (Deferred): any other failure is retried once with force_accept (flagged for admin review).
-      let forced: PunchResult;
-      try {
-        forced = await faceApi.punch({ ...base, forceAccept: true });
-      } catch (e) {
-        if (alive()) fail(isApiError(e) && !e.isNetwork && e.message ? e.message : 'Network error — tap to try again');
-        return;
-      }
-      if (forced.success) {
-        accepted(forced, true, true);
-        return;
-      }
-      const applied = verifyApplied ? await verifyApplied(action) : false;
-      if (applied) {
-        accepted(forced, true, false);
-        return;
-      }
-      if (alive()) fail(punchFailureText(forced.code || forced.message ? forced : first));
+      // Face did not match (no_match) or any other business failure: prompt the user to retry.
+      if (alive()) fail(punchFailureText(first));
     },
-    [userId, orgId, action, coords, onSuccess, verifyApplied, fail],
+    [userId, orgId, action, coords, onSuccess, fail],
   );
 
   const capture = useCallback(async () => {
@@ -210,7 +187,7 @@ function FaceRecognitionSession({ onClose, userId, orgId, action, coords, onSucc
 
   const denied = !!permission && !permission.granted && (!permission.canAskAgain || askedDone);
   const showCamera = (phase === 'idle' || phase === 'holding') && !!permission?.granted;
-  const resultPhase = phase === 'success' || phase === 'admin' || phase === 'holiday';
+  const resultPhase = phase === 'success' || phase === 'holiday';
   const title = action === 'punch_in' ? 'Punched In!' : 'Punched Out!';
 
   return (
@@ -299,14 +276,6 @@ function FaceRecognitionSession({ onClose, userId, orgId, action, coords, onSucc
                     </Text>
                   </View>
                 ) : null}
-                {phase === 'admin' ? (
-                  <View style={[styles.notice, { borderColor: CAM.warning }]}>
-                    <Icon name="info" size={16} color={CAM.warning} />
-                    <Text variant="callout" color={CAM.warning}>
-                      Sent for admin review
-                    </Text>
-                  </View>
-                ) : null}
                 <Button title={phase === 'holiday' ? 'Got it' : 'Done'} onPress={close} size="lg" style={styles.resultButton} testID="face-done" />
               </View>
             ) : null}
@@ -339,6 +308,5 @@ const styles = StyleSheet.create({
   resultIcon: { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center' },
   resultText: { maxWidth: 360 },
   timeChip: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radii.pill, backgroundColor: CAM.chip },
-  notice: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2, paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2, borderRadius: radii.pill, borderWidth: 1 },
   resultButton: { alignSelf: 'stretch', maxWidth: 360, width: '100%', marginTop: spacing.md },
 });

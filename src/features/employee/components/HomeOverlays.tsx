@@ -42,7 +42,6 @@ export function HomeOverlays({ home, punch }: { home: EmployeeHomeData; punch: P
         action={punch.recognition?.action ?? 'punch_in'}
         coords={punch.recognition?.coords}
         onSuccess={(result, action) => punch.onPunchAccepted(action, result)}
-        verifyApplied={punch.verifyApplied}
       />
       <BirthdayModal visible={showBirthday} names={birthdays.names} onClose={birthdays.close} />
       <PermissionOnboarding visible={showOnboarding} role="staff" onComplete={onboarding.complete} />

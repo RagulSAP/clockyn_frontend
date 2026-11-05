@@ -37,8 +37,6 @@ export interface PunchFlow {
   onRegistered: () => Promise<void>;
   /** A punch was accepted by the server. */
   onPunchAccepted: (action: PunchAction, result: PunchResult) => void;
-  /** Whether the server now reflects `action` (used to verify a forced punch whose response said "failed"). */
-  verifyApplied: (action: PunchAction) => Promise<boolean>;
 }
 
 /**
@@ -183,16 +181,6 @@ export function usePunchFlow(home: EmployeeHomeData, opts: { onAccepted?: (actio
     onAcceptedRef.current?.(action, result);
   }, [queryClient]);
 
-  const verifyApplied = useCallback(async (action: PunchAction): Promise<boolean> => {
-    try {
-      const today = await homeRef.current.refetchToday();
-      if (!today) return false;
-      return action === 'punch_in' ? today.isPunchedIn : !today.isPunchedIn && today.punchCount > 0;
-    } catch {
-      return false;
-    }
-  }, []);
-
   const closeRegistration = useCallback(() => setRegistrationOpen(false), []);
   const closeRecognition = useCallback(() => setRecognition(null), []);
 
@@ -205,6 +193,5 @@ export function usePunchFlow(home: EmployeeHomeData, opts: { onAccepted?: (actio
     closeRecognition,
     onRegistered,
     onPunchAccepted,
-    verifyApplied,
   };
 }

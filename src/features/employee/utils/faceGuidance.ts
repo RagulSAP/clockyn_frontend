@@ -24,7 +24,7 @@ const REASON_MESSAGE: Record<Exclude<FaceFailureReason, 'unknown'>, string> = {
 const CODE_MESSAGE: Partial<Record<FaceResultCode, string>> = {
   no_face: 'We couldn’t see your face — fill the oval',
   image_unreadable: 'We couldn’t read that photo — try again',
-  no_match: 'Face not recognised — try again',
+  no_match: 'Photo is not matching — please try again',
 };
 
 /** `code` / `reason` of a thrown registration/punch error (the 400 body); `{}` for old servers and non-API errors. */
