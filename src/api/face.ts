@@ -45,7 +45,7 @@ export function failureOf(e: unknown): FaceFailureInfo {
  * shown as-is); HTTP errors throw.
  */
 export async function checkPunchLocation(input: { userId: string; latitude: number; longitude: number }): Promise<LocationCheck> {
-  const form = new URLSearchParams();
+  const form = new FormData();
   form.append('user_id', input.userId);
   form.append('latitude', String(input.latitude));
   form.append('longitude', String(input.longitude));

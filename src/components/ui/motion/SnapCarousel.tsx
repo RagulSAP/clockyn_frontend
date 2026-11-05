@@ -53,6 +53,10 @@ export type SnapCarouselProps<T> = {
   edgeInset?: number;
   paddingTop?: number;
   paddingBottom?: number;
+  /** Auto-advances through items on a timer; stops permanently on user touch. */
+  autoPlay?: boolean;
+  /** Interval between auto-advances in ms. Default 2800. */
+  autoPlayInterval?: number;
   testID?: string;
   dotsTestID?: string;
   prevTestID?: string;
@@ -61,15 +65,34 @@ export type SnapCarouselProps<T> = {
   nextLabel?: string;
 };
 
-/** Pagination dot: the focused one stretches into a pill. */
+/** Pagination dot: the focused one stretches into a pill and pulses gently. */
 function Dot({ active, color, track, label, onPress }: { active: boolean; color: string; track: string; label: string; onPress: () => void }) {
   const [width] = useState(() => new Animated.Value(active ? 20 : 6));
+  const [scale] = useState(() => new Animated.Value(1));
+
   useEffect(() => {
     Animated.timing(width, { toValue: active ? 20 : 6, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
   }, [active, width]);
+
+  useEffect(() => {
+    if (!active) {
+      scale.stopAnimation();
+      Animated.timing(scale, { toValue: 1, duration: 150, useNativeDriver: true }).start();
+      return;
+    }
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.35, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [active, scale]);
+
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={label} hitSlop={8} onPress={onPress}>
-      <Animated.View style={{ width, height: 6, borderRadius: 3, backgroundColor: active ? color : track }} />
+      <Animated.View style={{ width, height: 6, borderRadius: 3, backgroundColor: active ? color : track, transform: [{ scaleY: scale }] }} />
     </Pressable>
   );
 }
@@ -92,6 +115,8 @@ export function SnapCarousel<T>({
   edgeInset = spacing.lg,
   paddingTop = spacing.sm,
   paddingBottom = spacing.xs,
+  autoPlay = false,
+  autoPlayInterval = 2800,
   testID,
   dotsTestID,
   prevTestID,
@@ -117,20 +142,45 @@ export function SnapCarousel<T>({
     listener: (e: NativeSyntheticEvent<NativeScrollEvent>) => setIndex(clamp(Math.round(e.nativeEvent.contentOffset.x / step), 0, last)),
   });
 
+  // ── auto-play ────────────────────────────────────────────────────────────────
+  const autoPlayPausedRef = useRef(false);
+  const indexRef = useRef(0);
+  const stepRef = useRef(step);
+  const lastRef = useRef(last);
+
+  useEffect(() => { stepRef.current = step; }, [step]);
+  useEffect(() => { lastRef.current = last; }, [last]);
+  useEffect(() => { indexRef.current = index; }, [index]);
+
+  const stopAutoPlay = useCallback(() => { autoPlayPausedRef.current = true; }, []);
+
+  useEffect(() => {
+    if (!autoPlay || data.length <= 1) return;
+    const id = setInterval(() => {
+      if (autoPlayPausedRef.current) return;
+      const next = indexRef.current >= lastRef.current ? 0 : indexRef.current + 1;
+      scroller.current?.scrollTo({ x: next * stepRef.current, animated: true });
+      indexRef.current = next;
+      setIndex(next);
+    }, autoPlayInterval);
+    return () => clearInterval(id);
+  }, [autoPlay, autoPlayInterval, data.length]);
+
   const goTo = useCallback(
     (i: number) => {
+      stopAutoPlay();
       const target = clamp(i, 0, last);
       scroller.current?.scrollTo({ x: target * step, animated: true });
       setIndex(target);
     },
-    [last, step],
+    [last, step, stopAutoPlay],
   );
 
   const showArrows = Platform.OS === 'web' && width > 0;
   const activeColor = typeof accent === 'function' ? accent(index) : accent;
 
   return (
-    <View testID={testID}>
+    <View testID={testID} onTouchStart={autoPlay ? stopAutoPlay : undefined}>
       <View onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)} style={{ marginHorizontal: -edgeInset }}>
         <Animated.ScrollView
           ref={scroller}
@@ -141,6 +191,7 @@ export function SnapCarousel<T>({
           disableIntervalMomentum
           scrollEventThrottle={16}
           onScroll={onScroll}
+          onScrollBeginDrag={stopAutoPlay}
           style={WEB_SNAP_SCROLLER}
           contentContainerStyle={{ paddingLeft: edgeInset, paddingRight: endPad, paddingTop, paddingBottom }}
         >

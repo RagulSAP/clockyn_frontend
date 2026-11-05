@@ -92,6 +92,8 @@ export function StaffOverviewRings({ figures, loading = false, onFigurePress }: 
       nextTestID="summary-rings-next"
       prevLabel="Previous figure"
       nextLabel="Next figure"
+      autoPlay
+      autoPlayInterval={2800}
       itemStyle={({ index, scrollX, step }) => {
         const input = [(index - 1) * step, index * step, (index + 1) * step];
         return {
