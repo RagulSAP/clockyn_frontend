@@ -1,0 +1,10 @@
+{
+  "_comment": "Known-benign browser noise that must not fail a test. Each entry: kind (console | pageerror | requestfailed | http), match (regex source, tested against the issue text), reason. Keep this list short and justified; prefer fixing the app or the mock.",
+  "entries": [
+    {
+      "kind": "http",
+      "match": "GET .*/auth/push-token/",
+      "reason": "The backend does not route this endpoint; the app treats the 404 as 'no push token' (src/api/chat.ts getReceiverPushToken)."
+    }
+  ]
+}

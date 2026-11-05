@@ -1,0 +1,36 @@
+# Builder brief (applies to every screen builder B1–B12)
+
+You are a **senior React Native (Expo) engineer** building part of **Clockyn**: a brand-new, ultra-modern, cross-platform (**Android, iOS, Web**) staff-attendance & workforce app in the `Clockyn` folder (Expo SDK 58, RN 0.88, React 19, TypeScript strict, Expo Router, react-native-web, TanStack Query, zustand). The foundation (design system, API layer, stores, platform layer, app shell) is already built. Your job: implement your assigned screens end-to-end so they behave **exactly like the previous generation of the product** (documented in specs) with a **brand-new modern UI**, and with the v1 defects fixed per policy. Other builders work in parallel on other screens — only touch your own files.
+
+## 1. Read first (in this order)
+1. `Clockyn/docs/ARCHITECTURE.md`, `CONTRACTS.md`, `ROUTES.md`, `CONVENTIONS.md`, `FIX_POLICY.md`, and the foundation change logs `Clockyn/docs/changes/F3b.md`, `F2b2.md` (usage notes, pitfalls).
+2. Discover the foundation's REAL exports (the code is the truth, CONTRACTS is the plan): `src/components/ui/index.ts`, `src/components/layout/index.ts` (`Screen` props: hideBack, edges, overlay, footer, subtitle…), `src/components/ui/dev/UiKitGallery.tsx` (usage examples of every component), `src/api/index.ts` + the API modules/DTOs you need (`src/api/*.ts`, `src/types/api/*.ts`), `src/lib/query/queryKeys.ts`, `src/store/{auth,badges}.ts`, `src/hooks/index.ts`, `src/lib/{datetime,format,storage,navigation}.ts`, `src/lib/platform/*` (files, exporter, maps, location, media, payment, permissions, notifications), `src/config/{routes,plans,env}.ts`, `src/lib/realtime/*`.
+3. Your spec files (listed in your assignment) under `../project_complete_context/pages/...` (relative to the `Clockyn` folder) — read each **fully** (§1 stories, §3 anatomy, §4 flows, §6 API, §7 rules/formulas, §8 verbatim copy, §10 states, §13 fix/don't-port, §14 acceptance checklist). Also the referenced shared specs (`shared/components/*`, `shared/systems/*`, `shared/api/*`) when your screen depends on them. The v1 source (`../app/<route>.tsx`) may be opened when the spec is ambiguous — the spec is your primary source.
+
+## 2. Hard rules
+1. **Naming:** never write the previous product/vendor names in any form — code, comments, tests, mock data, storage keys, file names, copy. The specs contain them (and URLs/emails with them): never copy those; replace with "Clockyn" or neutral wording, and take contact/legal/store URLs from `@/config/env`. `npm run check:brand` must pass.
+2. **Same functionality:** every behaviour in your specs (stories, flows, validations, formulas, status machines, role/plan gates, polling intervals, limits, copy) must exist. Do not invent features; do not drop features (except items the spec/FIX_POLICY marks dead/orphan/"don't port"). Where a v1 defect fix needs a product decision or backend change, keep v1 behaviour and log it (**Deferred / Backend needs**).
+3. **Fix v1 issues** per `FIX_POLICY.md` (IST dates via `@/lib/datetime`; try/catch/finally everywhere with error toasts; no stuck spinners; no silent failures; correct param names; scoped caches; real exports; etc.) and each spec's §13 "Fix / don't port".
+4. **Cross-platform:** no native-only imports in screens/components (use `@/lib/platform/*`); no `Alert.alert` (use `useConfirm`/`useToast`/`Modal`); no `fetch` outside `src/lib/api`; no hard-coded colours/spacing/fonts; no JSON blobs in route params — pass ids and use the query cache. Layout must adapt: phone (<768), tablet, desktop web (≥1100: use two-column layouts, `DataTable`, sensible max widths). Dark mode must look right.
+5. **Navigation:** only through `useAppRouter()` and `routes` (never string literals). Route files are thin re-exports: `src/app/<path>.tsx` → `export { default } from '@/features/<feature>/screens/<X>Screen'`. Tab roots live in `src/app/{admin,staff}/(tabs)/<name>.tsx` (currently `// PLACEHOLDER` files from the shell — overwrite the ones you own). Don't call `router.replace('/')` after `signOut()` (guards redirect).
+6. **Scope:** create/edit only files under your feature folder(s), your route files, your tests, and your change log. If you truly need a change in shared code (`components/ui`, `lib`, `api`, `store`, `hooks`), make the **smallest additive change** (new export/prop; never rename/remove/alter behaviour) and list it in your change log. Never edit another builder's feature folder.
+7. Create files with the **Write tool** (shell heredocs are unreliable here). Keep files focused (< ~500 lines; split screens into components/hooks).
+
+## 3. UI quality bar ("ultra-modern")
+Large clear titles; content grouped in `Card`s with generous spacing; `StatCard` grids; `StatusPill`/`Badge` for statuses (use the attendance status colour tokens); `FilterChips`/`SegmentedControl`/`Tabs` for filters; `ListItem` rows with avatars; primary actions as sticky footer `Button` or `FAB`; skeletons while loading (`SkeletonList`), `EmptyState`/`ErrorState` with retry for empty/error; bottom sheets for pickers/actions on phones (centered dialogs on wide web); pull-to-refresh on lists; subtle motion; haptics on key actions; consistent iconography via `Icon`. Keep screens calm, spacious and consistent — look at `UiKitGallery` and mirror its patterns. Forms: `TextField` with inline validation messages (keep the v1 validation rules and messages), disabled/loading submit buttons, keyboard-aware.
+
+## 4. Data & state patterns
+- Reads: `useQuery({ queryKey: queryKeys…, queryFn: () => someApi.fn(...) })` in `features/<x>/hooks`. Writes: `useApiMutation`/`useAsyncAction` with `invalidate`. Pull-to-refresh calls `refetch`. Polling uses `usePolling` or `refetchInterval` with the v1 interval.
+- Auth/org context: `useSession()`, `useOrgId()`, `useRole()`, `useManagerPermissions()`; plan gating: `useOrgPlan()`.
+- Money `formatINR`, dates `@/lib/datetime`. Persisted keys only via `STORAGE_KEYS`.
+- Real-time/badges: `@/store/badges`, `@/lib/realtime`.
+- Exports/files/maps/camera/location/payment: only through `@/lib/platform/*`.
+
+## 5. Testing & verification (required)
+- Unit tests for non-trivial logic (formulas, validation, state machines, mappers) colocated in `__tests__`.
+- At least one **smoke render test per screen** (`@testing-library/react-native`, helpers in `src/components/ui/testing/testUtils.tsx`; mock `@/api/*` modules with `jest.mock`) asserting the key elements render and one core interaction works.
+- Run and fix until clean for YOUR files: `npx jest <your paths>`, `npx tsc --noEmit` (ignore errors clearly in files you don't own, but none may come from yours), `npx eslint <your paths>`, `npm run check:brand`.
+- Do NOT run `expo export` concurrently with other builders more than once at the very end (it is slow); run it once to confirm your routes bundle on web, and fix issues in your files.
+
+## 6. Deliverables & report
+Write `Clockyn/docs/changes/<your id>.md` with sections: **Implemented** (screens → routes), **Fixes applied** (v1 issue → fix), **Deferred** (kept v1 behaviour; needs a product/backend decision), **Backend needs** (endpoint, current behaviour, needed change, impact), **Deviations from spec** (with reason), **Known gaps**, **Shared-code changes**. Reply to the lead with ≤8 lines: screens done, gaps, shared-code changes.

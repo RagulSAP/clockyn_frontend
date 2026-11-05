@@ -1,0 +1,26 @@
+/** Barrel of the typed domain API modules (one namespace per domain). Append new modules; do not reorder. */
+export * as authApi from './auth';
+export * as homeApi from './home';
+export * as staffApi from './staff';
+export * as branchesApi from './branches';
+export * as departmentsApi from './departments';
+export * as companyApi from './company';
+export * as managersApi from './managers';
+export * as shiftsApi from './shifts';
+export * as attendanceApi from './attendance';
+export * as faceApi from './face';
+export * as requestsApi from './requests';
+export * as expensesApi from './expenses';
+export * as locationApi from './location';
+export * as chatApi from './chat';
+export * as groupChatApi from './groupChat';
+export * as announcementsApi from './announcements';
+export * as leadsApi from './leads';
+export * as payrollApi from './payroll';
+export * as salaryReportsApi from './salaryReports';
+export * as reportsApi from './reports';
+export * as plansApi from './plans';
+export * as billingApi from './billing';
+export * as supportApi from './support';
+export * as systemApi from './system';
+export * as employeeApi from './employee';

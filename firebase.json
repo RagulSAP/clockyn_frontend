@@ -1,0 +1,6 @@
+{
+  "react-native": {
+    "messaging_android_notification_channel_id": "attendance_notifications",
+    "messaging_android_notification_color": "@color/notification_icon_color"
+  }
+}
