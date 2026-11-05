@@ -61,8 +61,9 @@ export default function EmployeeHomeScreen() {
       punchIn: today.punchIn,
       punchOut: today.punchOut,
       punchCount: today.punchCount,
+      maxSessionsPerDay: home.maxSessionsPerDay,
     }),
-    [home.isFaceRegistered, today.isPunchedIn, today.punchIn, today.punchOut, today.punchCount],
+    [home.isFaceRegistered, today.isPunchedIn, today.punchIn, today.punchOut, today.punchCount, home.maxSessionsPerDay],
   );
   const { isDone } = derivePunchState(stateInput);
   const chip = statusChip(stateInput);

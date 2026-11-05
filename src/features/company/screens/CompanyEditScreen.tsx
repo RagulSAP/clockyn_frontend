@@ -243,6 +243,19 @@ export default function CompanyEditScreen() {
             <TextListEditor noun="Department" values={values.departments} onChange={(departmentsList) => patch({ departments: departmentsList })} disabled={busy} testID="company-departments" />
           </FormSection>
 
+          <FormSection title="Attendance Settings" description="Controls how many times staff can punch in per day.">
+            <TextField
+              label="Max Daily Punch Sessions"
+              value={values.maxSessionsPerDay}
+              onChangeText={(t) => patch({ maxSessionsPerDay: digitsOnly(t) })}
+              placeholder="3"
+              keyboardType="number-pad"
+              maxLength={2}
+              editable={!busy}
+              testID="company-max-sessions"
+            />
+          </FormSection>
+
           <FormSection title="Additional details">
             <Button
               title={showMore ? 'Hide Additional Details' : 'Add More Details'}

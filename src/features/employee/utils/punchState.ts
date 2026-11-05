@@ -1,7 +1,7 @@
 /** Punch-button / status-chip state machine of the employee home (pure, unit-tested). */
 import type { IconName } from '@/components/ui';
 
-export const MAX_SESSIONS_PER_DAY = 2;
+export const MAX_SESSIONS_PER_DAY = 3;
 
 export interface PunchStateInput {
   isFaceRegistered: boolean;
@@ -9,6 +9,8 @@ export interface PunchStateInput {
   punchIn?: string;
   punchOut?: string;
   punchCount: number;
+  /** Per-org limit from company settings; defaults to MAX_SESSIONS_PER_DAY when absent. */
+  maxSessionsPerDay?: number;
 }
 
 export interface DerivedPunchState {
@@ -23,7 +25,8 @@ export interface DerivedPunchState {
 }
 
 export function derivePunchState(input: PunchStateInput): DerivedPunchState {
-  const isMaxSessionsReached = input.punchCount >= MAX_SESSIONS_PER_DAY && !input.isPunchedIn;
+  const limit = input.maxSessionsPerDay ?? MAX_SESSIONS_PER_DAY;
+  const isMaxSessionsReached = input.punchCount >= limit && !input.isPunchedIn;
   const isDone = !input.isPunchedIn && (!!(input.punchIn && input.punchOut) || isMaxSessionsReached);
   return { isMaxSessionsReached, isDone };
 }

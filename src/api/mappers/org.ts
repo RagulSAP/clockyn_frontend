@@ -83,6 +83,7 @@ export function mapCompanyDetails(input: unknown): CompanyDetails {
     msme: optStr(r.msme_number),
     businessCategory: optStr(r.business_category),
     gstNumber: optStr(r.gst_number),
+    maxSessionsPerDay: optNum(r.max_sessions_per_day),
   };
 }
 
@@ -109,6 +110,7 @@ export function toCompanyBody(input: CompanyInput): Record<string, unknown> {
     state: input.state,
     district: input.district,
     pincode: input.pincode,
+    max_sessions_per_day: input.maxSessionsPerDay,
   };
   for (const [k, v] of Object.entries(optional)) {
     if (v !== undefined && v !== '') body[k] = v;

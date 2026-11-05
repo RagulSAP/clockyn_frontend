@@ -38,6 +38,7 @@ export type CompanyFormValues = {
   tan: string;
   msme: string;
   businessCategory: string;
+  maxSessionsPerDay: string;
 };
 
 export function emptyCompanyForm(): CompanyFormValues {
@@ -58,6 +59,7 @@ export function emptyCompanyForm(): CompanyFormValues {
     tan: '',
     msme: '',
     businessCategory: '',
+    maxSessionsPerDay: '3',
   };
 }
 
@@ -80,6 +82,7 @@ export function formFromDetails(d: CompanyDetails, departmentNames: readonly str
     tan: d.tan ?? '',
     msme: d.msme ?? '',
     businessCategory: d.businessCategory ?? '',
+    maxSessionsPerDay: String(d.maxSessionsPerDay ?? 3),
   };
 }
 
@@ -173,6 +176,7 @@ export function buildCompanyInput(v: CompanyFormValues, ctx: BuildContext): Comp
     state: v.state.trim(),
     district: v.district.trim(),
     pincode: Number(v.pincode.trim()),
+    maxSessionsPerDay: Math.max(1, Math.min(10, Number(v.maxSessionsPerDay) || 3)),
   };
 }
 

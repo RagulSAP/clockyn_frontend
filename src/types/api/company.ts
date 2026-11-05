@@ -27,6 +27,8 @@ export interface CompanyDetails extends Company {
   msme?: string;
   businessCategory?: string;
   gstNumber?: string;
+  /** Max punch-in sessions allowed per day for this org (1–10; default 3). */
+  maxSessionsPerDay?: number;
 }
 
 /** Payload for adding / updating a company. */
@@ -53,6 +55,7 @@ export interface CompanyInput {
   state?: string;
   district?: string;
   pincode?: number;
+  maxSessionsPerDay?: number;
 }
 
 export interface CompanyWriteResult {

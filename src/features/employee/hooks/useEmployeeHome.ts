@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-import { attendanceApi, authApi, faceApi, shiftsApi, staffApi } from '@/api';
+import { attendanceApi, authApi, companyApi, faceApi, shiftsApi, staffApi } from '@/api';
 import { useRefreshOnFocus } from '@/hooks';
 import { PLAN_STALE_TIME_MS } from '@/lib/query/queryClient';
 import { queryKeys } from '@/lib/query/queryKeys';
@@ -37,6 +37,8 @@ export interface EmployeeHomeData {
   attendanceLoaded: boolean;
   refetchToday: () => Promise<TodayAttendance | undefined>;
   refreshAll: () => Promise<void>;
+  /** Per-org max daily punch sessions from company settings. */
+  maxSessionsPerDay?: number;
 }
 
 /** Everything the employee home needs: identity, logo, face status, shift, field-staff flag and today's punches (10 s poll). */
@@ -48,6 +50,12 @@ export function useEmployeeHome(): EmployeeHomeData {
   const logo = useQuery({
     queryKey: queryKeys.company.logo(orgId),
     queryFn: () => authApi.getOrgLogoUrl(orgId),
+    enabled: orgId !== '',
+    staleTime: PLAN_STALE_TIME_MS,
+  });
+  const companyDetails = useQuery({
+    queryKey: queryKeys.company.details(orgId),
+    queryFn: () => companyApi.getCompanyDetails(orgId),
     enabled: orgId !== '',
     staleTime: PLAN_STALE_TIME_MS,
   });
@@ -95,6 +103,7 @@ export function useEmployeeHome(): EmployeeHomeData {
   const { refetch: refetchLogo } = logo;
   const { refetch: refetchStaff } = staff;
   const { refetch: refetchShift } = shiftQuery;
+  const { refetch: refetchCompanyDetails } = companyDetails;
 
   return {
     userId,
@@ -116,7 +125,8 @@ export function useEmployeeHome(): EmployeeHomeData {
     attendanceLoaded: todayQuery.data !== undefined,
     refetchToday: async () => (await refetchTodayQuery()).data,
     refreshAll: async () => {
-      await Promise.allSettled([refetchTodayQuery(), refetchFaceQuery(), refetchLogo(), refetchStaff(), shiftId > 0 ? refetchShift() : Promise.resolve()]);
+      await Promise.allSettled([refetchTodayQuery(), refetchFaceQuery(), refetchLogo(), refetchStaff(), refetchCompanyDetails(), shiftId > 0 ? refetchShift() : Promise.resolve()]);
     },
+    maxSessionsPerDay: companyDetails.data?.maxSessionsPerDay,
   };
 }
