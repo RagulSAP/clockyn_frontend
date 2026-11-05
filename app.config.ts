@@ -8,6 +8,7 @@ import fs from 'node:fs';
  * credentials live in the repository. See `.env.example`.
  */
 const APP_ID = process.env.APP_ID ?? 'com.clockyn.app';
+const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID || 'dcae5d96-b513-4274-94b7-79167b05283a';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY ?? '';
 const GOOGLE_SERVICES_JSON = process.env.GOOGLE_SERVICES_JSON ?? './google-services.json';
 const GOOGLE_SERVICE_INFO_PLIST = process.env.GOOGLE_SERVICE_INFO_PLIST ?? './GoogleService-Info.plist';
@@ -111,6 +112,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // `android.config` (where the key lives) is stripped from the runtime manifest; the map component needs to know
     // whether a key was baked into this build (Android without one would crash natively when a map view is created).
     googleMapsKeyConfigured: Boolean(GOOGLE_MAPS_API_KEY),
-    eas: { projectId: process.env.EAS_PROJECT_ID },
+    eas: { projectId: EAS_PROJECT_ID },
   },
 });
