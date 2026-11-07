@@ -8,107 +8,98 @@
   <script src="../js/theme.js"></script>
   <link rel="stylesheet" href="../css/dashboard.css" />
   <style>
-    /* ── Compact layout ── */
-    .content { padding: 20px 24px; }
+    /* ── icons (Lucide, inline) ── */
+    .ico { width: 18px; height: 18px; flex: none; display: block; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .ico-sm { width: 15px; height: 15px; }
+    .topbar-search > span { display: inline-flex; filter: none; opacity: 0.6; }
+    .topbar-search > span .ico { width: 16px; height: 16px; }
 
-    /* Sidebar logo compact */
-    .sidebar-logo { padding: 12px 16px; flex-direction: row; align-items: center; gap: 10px; justify-content: flex-start; }
-    .sidebar-logo-img { width: 36px; height: 36px; border-radius: 8px; }
-    .sidebar-logo-name { font-size: 14px; font-weight: 700; }
+    /* ── KPI tiles ── */
+    .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .kpis .stat-tile { position: relative; }
+    .kpis .stat-val { font-variant-numeric: tabular-nums; }
+    .kpis .stat-label { padding-right: 40px; }
+    .stat-ico { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; background: var(--surface-muted); color: var(--text-secondary); }
+    .stat-ico.tone-success { background: var(--success-soft); color: var(--success); }
+    .stat-ico.tone-warning { background: var(--warning-soft); color: var(--warning); }
+    .stat-ico.tone-danger { background: var(--danger-soft); color: var(--danger); }
 
-    /* Page header */
-    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
-    .page-header-left h1 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
-    .page-header-left p  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .card + .card { margin-top: 24px; }
+    .card-title { display: flex; align-items: center; gap: 10px; }
+    .card-header .card-actions { margin-left: auto; }
 
-    /* Stat tiles */
-    .quick-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
-    .quick-tile {
-      background: var(--bg-secondary); border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px 16px; cursor: pointer; transition: border-color 0.2s;
-      display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden;
-    }
-    .quick-tile::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:10px 10px 0 0; }
-    .quick-tile.t-purple::before { background: var(--purple); }
-    .quick-tile.t-red::before    { background: var(--red); }
-    .quick-tile.t-orange::before { background: var(--orange); }
-    .quick-tile:hover { border-color: var(--blue); }
-    .qt-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
-    .qt-value { font-size: 24px; font-weight: 800; color: var(--text-primary); line-height: 1; letter-spacing: -.02em; }
-    .qt-sub   { font-size: 11px; color: var(--text-muted); }
-    .qt-icon  { position: absolute; top: 10px; right: 12px; font-size: 18px; opacity: 0.3; }
+    /* ── Plans ── */
+    .plans-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; padding: 18px 20px 20px; }
+    .pt-tile { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; background: var(--surface-muted); border: 1px solid var(--border); border-radius: var(--radius-md); min-width: 0; transition: border-color var(--motion-fast) var(--ease), background-color var(--motion-fast) var(--ease); }
+    .pt-tile:hover { border-color: var(--border-strong); }
+    .pt-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .pt-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .pt-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pt-actions { display: flex; gap: 2px; flex-shrink: 0; }
+    .pt-btn { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: none; border-radius: var(--radius-xs); background: none; color: var(--text-muted); cursor: pointer; transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease); }
+    .pt-btn:hover { background: var(--surface-hover); color: var(--text); }
+    .pt-btn.del:hover { background: var(--danger-soft); color: var(--danger); }
+    .pt-price { font-size: 24px; font-weight: 800; letter-spacing: -0.6px; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1.15; }
+    .pt-price span { font-size: 12.5px; font-weight: 500; letter-spacing: 0; color: var(--text-muted); margin-left: 4px; }
+    .pt-sub { font-size: 12.5px; color: var(--text-muted); }
+    .pt-sub strong { color: var(--text); font-variant-numeric: tabular-nums; }
+    .pt-tile .progress { margin-top: 6px; background: var(--border); }
 
-    /* Plans panel */
-    .plans-panel {
-      background: var(--bg-secondary); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
-      margin-bottom: 14px;
-    }
-    .plans-panel-header {
-      padding: 10px 16px; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .plans-panel-header h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
-    .plans-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-    .plan-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 9px 16px; border-bottom: 1px solid var(--border);
-      cursor: pointer; transition: background 0.12s;
-    }
-    .plan-row:hover { background: var(--bg-tertiary); }
-    .plan-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .plan-info { flex: 1; min-width: 0; }
-    .plan-info-name  { font-size: 12px; font-weight: 600; color: var(--text-primary); }
-    .plan-info-price { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-    .plan-bar-wrap { flex: 1; min-width: 50px; max-width: 80px; }
-    .plan-bar-track { height: 3px; background: var(--bg-tertiary); border-radius: 2px; }
-    .plan-bar-fill  { height: 100%; border-radius: 2px; transition: width .4s; }
-    .plan-count { font-size: 14px; font-weight: 800; min-width: 20px; text-align: right; }
-    .plan-actions { display: flex; gap: 2px; flex-shrink: 0; }
-    .plan-act-btn {
-      background: none; border: none; cursor: pointer; padding: 3px 6px;
-      border-radius: 5px; font-size: 12px; color: var(--text-muted);
-      transition: background 0.12s, color 0.12s;
-    }
-    .plan-act-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    /* ── Organization subscriptions table ── */
+    .search-input { width: 260px; max-width: 100%; height: 36px; min-height: 36px; padding: 0 12px; font-size: 13px; border-radius: var(--radius-sm); }
+    table.data { table-layout: fixed; min-width: 900px; }
+    table.data td { overflow: hidden; }
+    th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .nowrap { white-space: nowrap; }
+    .muted { color: var(--text-muted); }
+    .trunc { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    tbody tr.row-link { cursor: pointer; }
+    .contact-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .org-main { display: block; font-size: 13.5px; font-weight: 600; color: var(--text); }
+    td .badge { max-width: 100%; }
+    td .badge .coupon-code { overflow: hidden; text-overflow: ellipsis; }
+    .contact-email { font-size: 12.5px; color: var(--text-secondary); }
+    .contact-phone { font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .expiring { color: var(--warning); font-weight: 600; }
+    .pdf-btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease); }
+    .pdf-btn:hover { background: var(--surface-muted); color: var(--text); }
 
-    /* Org subs table compact */
-    .card-header { padding: 10px 16px; }
-    .card-header h3 { font-size: 13px; }
-    thead th { padding: 7px 12px; font-size: 10px; }
-    tbody td { padding: 7px 12px; font-size: 12px; }
-    .search-input {
-      background: var(--bg-tertiary); border: 1px solid var(--border);
-      border-radius: 6px; padding: 5px 10px; color: var(--text-primary);
-      font-size: 12px; outline: none; width: 180px;
-    }
-    .search-input:focus { border-color: var(--blue); }
+    tbody tr.state-row:hover { background: none; }
+    .state-row td { padding: 0; }
+    .sk-stack { display: grid; gap: 18px; padding: 24px 20px; }
+    .sk-stack .skeleton-line { height: 14px; }
+    .state-row .empty-state, .plans-list .empty-state { padding: 40px 24px; }
+    .empty-state .empty-icon .ico { width: 24px; height: 24px; }
+    .plans-list .empty-state { grid-column: 1 / -1; }
+    .pt-skel { height: 118px; border-radius: var(--radius-md); }
 
-    /* Modal */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
-      z-index: 1000; align-items: center; justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal {
-      background: var(--bg-secondary); border: 1px solid var(--border);
-      border-radius: 14px; padding: 22px; width: 100%; max-width: 380px;
-    }
-    .modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; }
-    .modal-field { margin-bottom: 12px; }
-    .modal-field label { display: block; font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
-    .modal-field input {
-      width: 100%; padding: 8px 11px; border-radius: 7px;
-      border: 1px solid var(--border); background: var(--bg-tertiary);
-      color: var(--text-primary); font-size: 13px; box-sizing: border-box;
-    }
-    .modal-field input:focus { outline: none; border-color: var(--blue); }
-    .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
-    .modal-actions .btn { flex: 1; }
+    /* ── Modals ── */
+    .modal-body .form-group { margin-bottom: 0; }
 
-    /* Toast */
-    #toast { position:fixed; bottom:20px; right:20px; background:#238636; color:#fff; padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; z-index:9999; opacity:0; transform:translateY(8px); transition:opacity .25s,transform .25s; pointer-events:none; }
+    /* ── Toast (colour comes from the shared #toast rules; the page JS sets the green / red background inline) ── */
+    #toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; z-index: 9999; opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .25s; pointer-events: none; }
+
+    /* phones: every row becomes a compact two-column card */
+    @media (max-width: 700px) {
+      table.data { table-layout: auto; min-width: 0; }
+      table.data thead { display: none; }
+      table.data, table.data tbody { display: block; width: 100%; }
+      table.data tbody tr:not(.state-row) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 16px; padding: 16px; border-bottom: 1px solid var(--border); }
+      table.data tbody tr.state-row { display: block; padding: 0; }
+      table.data td { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; padding: 0; border: 0; text-align: left; overflow: visible; }
+      table.data td::before { content: attr(data-label); font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); }
+      table.data td[data-label=""]::before { display: none; }
+      table.data td.c-main { grid-column: 1 / -1; }
+      table.data td.c-actions { grid-column: 1 / -1; flex-direction: row; justify-content: flex-end; padding-top: 12px; border-top: 1px dashed var(--border); }
+      table.data td.num { text-align: left; }
+      table.data td .contact-cell { width: 100%; }
+      table.data .state-row td { display: block; padding: 0; }
+      .search-input { width: 100%; }
+    }
+    @media (max-width: 900px) {
+      .card-header .card-actions.search-actions { margin-left: 0; width: 100%; }
+    }
+    @media (max-width: 560px) { .kpis { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -118,46 +109,56 @@
 
   <!-- Edit Plan Modal -->
   <div class="modal-overlay" id="edit-modal">
-    <div class="modal">
-      <div class="modal-title">Edit Plan</div>
-      <div class="modal-field"><label>Plan Name</label><input type="text" id="edit-name" placeholder="e.g. Pro" /></div>
-      <div class="modal-field"><label>Amount (₹)</label><input type="number" id="edit-amount" placeholder="e.g. 999" min="0" /></div>
-      <div class="modal-field"><label>Duration (months)</label><input type="number" id="edit-months" placeholder="e.g. 1" min="1" /></div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost btn-sm" onclick="closeEditModal()">Cancel</button>
-        <button class="btn btn-primary btn-sm" onclick="saveEditPlan()">Save Changes</button>
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h2>Edit plan</h2>
+        <button type="button" class="modal-close" onclick="closeEditModal()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label for="edit-name">Plan name</label><input type="text" id="edit-name" placeholder="e.g. Pro" /></div>
+        <div class="form-group"><label for="edit-amount">Amount (₹)</label><input type="number" id="edit-amount" placeholder="e.g. 999" min="0" /></div>
+        <div class="form-group"><label for="edit-months">Duration (months)</label><input type="number" id="edit-months" placeholder="e.g. 1" min="1" /></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveEditPlan()">Save Changes</button>
       </div>
     </div>
   </div>
 
   <!-- Add Plan Modal -->
   <div class="modal-overlay" id="add-modal">
-    <div class="modal">
-      <div class="modal-title">Add New Plan</div>
-      <div class="modal-field"><label>Plan Name</label><input type="text" id="add-name" placeholder="e.g. Pro" /></div>
-      <div class="modal-field"><label>Amount (₹)</label><input type="number" id="add-amount" placeholder="e.g. 999" min="0" /></div>
-      <div class="modal-field"><label>Duration (months)</label><input type="number" id="add-months" placeholder="e.g. 1" min="1" /></div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost btn-sm" onclick="closeAddModal()">Cancel</button>
-        <button class="btn btn-primary btn-sm" onclick="saveAddPlan()">Add Plan</button>
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h2>Add new plan</h2>
+        <button type="button" class="modal-close" onclick="closeAddModal()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label for="add-name">Plan name</label><input type="text" id="add-name" placeholder="e.g. Pro" /></div>
+        <div class="form-group"><label for="add-amount">Amount (₹)</label><input type="number" id="add-amount" placeholder="e.g. 999" min="0" /></div>
+        <div class="form-group"><label for="add-months">Duration (months)</label><input type="number" id="add-months" placeholder="e.g. 1" min="1" /></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveAddPlan()">Add Plan</button>
       </div>
     </div>
   </div>
 
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-  <div id="toast"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <div class="main">
     <header class="topbar">
-      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <button class="hamburger-btn" type="button" onclick="toggleSidebar()" title="Menu" aria-label="Open menu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button>
       <span class="topbar-title">Subscriptions</span>
       <div class="topbar-search">
-        <span>🔍</span>
-        <input type="text" placeholder="Search plans, orgs..." />
+        <span aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></span>
+        <input type="text" placeholder="Search plans, orgs..." aria-label="Search" />
       </div>
       <div class="topbar-actions">
-        <button class="icon-btn">🔔<span class="dot"></span></button>
-        <button class="icon-btn" onclick="loadPage()" title="Refresh">🔄</button>
+        <button type="button" class="icon-btn" aria-label="Notifications"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg><span class="dot"></span></button>
+        <button type="button" class="icon-btn" onclick="loadPage()" title="Refresh" aria-label="Refresh"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
         <div class="topbar-user-pill">
           <div class="avatar" id="topbar-avatar">SA</div>
           <div class="topbar-user-info">
@@ -172,64 +173,79 @@
 
       <!-- Page header -->
       <div class="page-header">
-        <div class="page-header-left">
+        <div>
           <h1>Subscriptions</h1>
-          <p>Plans, active subscribers &amp; billing overview</p>
+          <p>Plans, active subscribers and billing overview.</p>
         </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add Plan</button>
-          <button class="btn btn-ghost btn-sm" onclick="loadPage()">↻ Refresh</button>
-        </div>
-      </div>
-
-      <!-- Quick stat tiles -->
-      <div class="quick-bar">
-        <div class="quick-tile t-purple">
-          <div class="qt-icon">📋</div>
-          <div class="qt-label">Active Subscriptions</div>
-          <div class="qt-value" id="stat-active-subs">—</div>
-          <div class="qt-sub">Currently active plans</div>
-        </div>
-        <div class="quick-tile t-orange">
-          <div class="qt-icon">⏳</div>
-          <div class="qt-label">Pending Payments</div>
-          <div class="qt-value" id="stat-pending">—</div>
-          <div class="qt-sub">Awaiting confirmation</div>
-        </div>
-        <div class="quick-tile t-red">
-          <div class="qt-icon">❌</div>
-          <div class="qt-label">Failed Payments</div>
-          <div class="qt-value" id="stat-failed">—</div>
-          <div class="qt-sub">Razorpay webhook</div>
+        <div class="page-header-actions">
+          <button type="button" class="btn btn-ghost" onclick="loadPage()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Refresh</button>
+          <button type="button" class="btn btn-primary" onclick="openAddModal()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add plan</button>
         </div>
       </div>
 
-      <!-- Plans panel -->
-      <div class="plans-panel">
-        <div class="plans-panel-header">
-          <h3>Available Plans <span id="plans-total-badge" class="badge badge-blue"></span></h3>
-          <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add</button>
+      <!-- Stat tiles -->
+      <div class="stat-grid kpis">
+        <div class="stat-tile">
+          <span class="stat-ico tone-success" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg></span>
+          <div class="stat-label">Active subscriptions</div>
+          <div class="stat-val" id="stat-active-subs">—</div>
+          <div class="stat-sub">Currently active plans</div>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-ico tone-warning" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg></span>
+          <div class="stat-label">Pending payments</div>
+          <div class="stat-val" id="stat-pending">—</div>
+          <div class="stat-sub">Awaiting confirmation</div>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-ico tone-danger" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div class="stat-label">Failed payments</div>
+          <div class="stat-val" id="stat-failed">—</div>
+          <div class="stat-sub">Razorpay webhook</div>
+        </div>
+      </div>
+
+      <!-- Plans -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <h3>Available plans</h3>
+            <span id="plans-total-badge" class="badge"></span>
+          </div>
+          <div class="card-actions">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="openAddModal()"><svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add</button>
+          </div>
         </div>
         <div class="plans-list" id="plans-grid">
-          <div style="padding:16px;color:var(--text-muted);font-size:12px;">Loading...</div>
+          <div class="skeleton pt-skel"></div><div class="skeleton pt-skel"></div><div class="skeleton pt-skel"></div>
         </div>
       </div>
 
       <!-- Org Subscriptions table -->
-      <div class="card" style="margin-bottom:0;">
+      <div class="card">
         <div class="card-header">
-          <h3>Organization Subscriptions <span id="org-sub-count" class="badge badge-blue" style="margin-left:6px;"></span></h3>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="search" id="org-sub-search" placeholder="Search org or email…" class="search-input" oninput="filterOrgSubs()" />
+          <div class="card-title">
+            <h3>Organization subscriptions</h3>
+            <span id="org-sub-count" class="badge"></span>
+          </div>
+          <div class="card-actions search-actions">
+            <input type="search" id="org-sub-search" placeholder="Search org or email…" aria-label="Search organization subscriptions" class="search-input" oninput="filterOrgSubs()" />
           </div>
         </div>
         <div class="table-wrap">
-          <table>
+          <table class="data">
             <thead><tr>
-              <th>Organization</th><th>Contact</th><th>Plan</th><th>Staff</th><th>Valid Till</th><th>Status</th><th>Coupon</th><th>Invoice</th>
+              <th style="width:20%">Organization</th>
+              <th style="width:19%">Contact</th>
+              <th style="width:12%">Plan</th>
+              <th class="num" style="width:7%">Staff</th>
+              <th style="width:11%">Valid till</th>
+              <th style="width:10%">Status</th>
+              <th style="width:15%">Coupon</th>
+              <th class="num" style="width:96px">Invoice</th>
             </tr></thead>
             <tbody id="org-sub-body">
-              <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px;">Loading...</td></tr>
+              <tr class="state-row"><td colspan="8"><div class="sk-stack"><div class="skeleton skeleton-line" style="width:100%"></div><div class="skeleton skeleton-line" style="width:92%"></div><div class="skeleton skeleton-line" style="width:96%"></div><div class="skeleton skeleton-line" style="width:88%"></div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -241,8 +257,23 @@
   <script src="../js/config.js"></script>
   <script src="../js/auth.js"></script>
   <script>
-    const COLORS = ['#58a6ff','#4caf50','#ff9800','#ab7ae0','#26c6da'];
+    /* plan accents come from the theme tokens, so they stay readable in light and dark */
+    const COLORS = ['var(--info)', 'var(--success)', 'var(--warning)', 'var(--purple)', 'var(--cyan)'];
     var plansData = [], editingIndex = -1, orgSubData = [];
+
+    /* Lucide icon paths (same icon set as the Clockyn app) for markup built in JS */
+    const ICONS = {
+      pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+      trash: '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+      fileDown: '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/>',
+      tag: '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>',
+      layers: '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>',
+      alert: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+      building: '<path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 6h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M8 6h.01"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><rect x="4" y="2" width="16" height="20" rx="2"/>'
+    };
+    function ico(name, cls) {
+      return '<svg class="ico ico-sm' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>';
+    }
 
     /* ── Toast ── */
     function showToast(msg, ok) {
@@ -253,7 +284,14 @@
       setTimeout(function(){ t.style.opacity='0'; t.style.transform='translateY(8px)'; }, 2500);
     }
 
-    function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+    function emptyState(title, text, iconName, retryFn) {
+      return '<div class="empty-state"><div class="empty-icon">' + ico(iconName) + '</div><h3>' + escHtml(title) + '</h3>'
+        + (text ? '<p>' + escHtml(text) + '</p>' : '')
+        + (retryFn ? '<button type="button" class="btn btn-ghost btn-sm" onclick="' + retryFn + '" style="margin-top:8px;">Try again</button>' : '')
+        + '</div>';
+    }
 
     /* ── Stats ── */
     async function loadStats() {
@@ -274,7 +312,7 @@
         var badge = document.getElementById('plans-total-badge');
 
         if (!plans.length) {
-          grid.innerHTML = '<div style="padding:12px 16px;color:var(--text-muted);font-size:12px;">No plans found</div>';
+          grid.innerHTML = emptyState('No plans yet', 'Add your first plan to start selling subscriptions.', 'layers');
           badge.textContent = '';
           return;
         }
@@ -285,22 +323,23 @@
         /* Plans list */
         grid.innerHTML = plans.map(function(p, i) {
           var pct = Math.round((p.active_count / total) * 100);
-          return '<div class="plan-row">'
-            + '<div class="plan-dot" style="background:'+COLORS[i]+';box-shadow:0 0 5px '+COLORS[i]+'66;"></div>'
-            + '<div class="plan-info">'
-            +   '<div class="plan-info-name">'+escHtml(p.plan_name)+'</div>'
-            +   '<div class="plan-info-price">₹'+p.plan_amount.toLocaleString()+' &middot; '+p.plan_month+' mo</div>'
+          var color = COLORS[i % COLORS.length];
+          return '<div class="pt-tile">'
+            + '<div class="pt-top">'
+            +   '<span class="pt-dot" style="background:' + color + ';"></span>'
+            +   '<span class="pt-name" title="' + escHtml(p.plan_name) + '">' + escHtml(p.plan_name) + '</span>'
+            +   '<span class="pt-actions">'
+            +     '<button type="button" class="pt-btn" onclick="editPlan(' + i + ')" title="Edit plan" aria-label="Edit ' + escHtml(p.plan_name) + '">' + ico('pencil') + '</button>'
+            +     '<button type="button" class="pt-btn del" data-id="' + escHtml(p.plan_id) + '" data-name="' + escHtml(p.plan_name) + '" onclick="deletePlan(this.dataset.id, this.dataset.name)" title="Delete plan" aria-label="Delete ' + escHtml(p.plan_name) + '">' + ico('trash') + '</button>'
+            +   '</span>'
             + '</div>'
-            + '<div class="plan-bar-wrap"><div class="plan-bar-track"><div class="plan-bar-fill" style="width:'+pct+'%;background:'+COLORS[i]+';"></div></div></div>'
-            + '<div class="plan-count" style="color:'+COLORS[i]+'">'+p.active_count+'</div>'
-            + '<div class="plan-actions">'
-            +   '<button class="plan-act-btn" onclick="editPlan('+i+')" title="Edit">✏️</button>'
-            +   '<button class="plan-act-btn" onclick="deletePlan('+p.plan_id+',\''+escHtml(p.plan_name)+'\')" title="Delete" style="color:var(--red);">🗑</button>'
-            + '</div>'
+            + '<div class="pt-price">₹' + Number(p.plan_amount).toLocaleString() + '<span>/ ' + escHtml(p.plan_month) + ' mo</span></div>'
+            + '<div class="pt-sub"><strong>' + escHtml(p.active_count) + '</strong> active · ' + pct + '% of subscribers</div>'
+            + '<div class="progress"><div class="progress-fill" style="width:' + pct + '%;background:' + color + ';"></div></div>'
             + '</div>';
         }).join('');
       } catch(e) {
-        document.getElementById('plans-grid').innerHTML = '<div style="padding:12px 16px;color:var(--text-muted);font-size:12px;">Failed to load plans</div>';
+        document.getElementById('plans-grid').innerHTML = emptyState('Couldn’t load plans', 'Check your connection and try again.', 'alert', 'loadPlanBreakdown()');
       }
     }
 
@@ -362,6 +401,8 @@
     }
 
     /* ── Org Subscriptions ── */
+    function stateRow(html) { return '<tr class="state-row"><td colspan="8">' + html + '</td></tr>'; }
+
     async function loadOrgSubscriptions() {
       try {
         var res  = await fetch(API_BASE + '/gen-dashboard/org-subscriptions');
@@ -370,7 +411,7 @@
         document.getElementById('org-sub-count').textContent = orgSubData.length + ' active';
         renderOrgSubs();
       } catch(e) {
-        document.getElementById('org-sub-body').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px;">Failed to load</td></tr>';
+        document.getElementById('org-sub-body').innerHTML = stateRow(emptyState('Couldn’t load subscriptions', 'Check your connection and try again.', 'alert', 'loadOrgSubscriptions()'));
       }
     }
 
@@ -383,7 +424,7 @@
       });
       var tbody = document.getElementById('org-sub-body');
       if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px;">No active subscriptions found</td></tr>';
+        tbody.innerHTML = stateRow(emptyState('No active subscriptions found', q ? 'Try a different search.' : 'Subscriptions will appear here once organizations subscribe.', 'building'));
         return;
       }
       var now = new Date();
@@ -392,23 +433,23 @@
         var isExpiring = end && (end - now) < 15 * 86400000;
         var validTill = end ? end.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—';
         var statusBadge = o.status === 'ACTIVE'
-          ? '<span class="badge '+(isExpiring?'badge-orange':'badge-green')+'">'+(isExpiring?'Expiring':'Active')+'</span>'
-          : '<span class="badge badge-red">'+(o.status||'—')+'</span>';
+          ? '<span class="badge badge-dot ' + (isExpiring ? 'badge-orange' : 'badge-green') + '">' + (isExpiring ? 'Expiring' : 'Active') + '</span>'
+          : '<span class="badge badge-dot badge-red">' + escHtml(o.status || '—') + '</span>';
         var couponBadge = o.coupon_code
-          ? '<span class="badge badge-purple" style="font-size:10px;">🏷️ '+escHtml(o.coupon_code)+'</span>'
-          : '<span style="color:var(--text-muted);">—</span>';
+          ? '<span class="badge badge-purple" title="' + escHtml(o.coupon_code) + '">' + ico('tag') + '<span class="coupon-code">' + escHtml(o.coupon_code) + '</span></span>'
+          : '<span class="muted">—</span>';
         var invBtn = o.invoice_number && o.invoice_user_id
-          ? '<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:3px 8px;" onclick="downloadOrgInvoice(\''+escHtml(String(o.invoice_user_id||''))+'\',\''+escHtml(String(o.org_id||''))+'\',\''+escHtml(String(o.invoice_number||''))+'\')">PDF</button>'
-          : '<span style="color:var(--text-muted);">—</span>';
-        return '<tr style="cursor:pointer;" onclick="window.location.href=\'org_analytics.html?org_id='+encodeURIComponent(o.org_id||'')+'\'">'
-          + '<td><div style="font-weight:600;font-size:12px;color:var(--text-primary);">'+escHtml(o.org_name||'—')+'</div></td>'
-          + '<td><div style="font-size:11px;">'+escHtml(o.admin_mobile||'—')+'</div><div style="font-size:10px;color:var(--text-muted);">'+escHtml(o.admin_email||'—')+'</div></td>'
-          + '<td><span class="badge badge-blue" style="font-size:10px;">'+escHtml(o.plan_name||'—')+'</span></td>'
-          + '<td style="font-size:12px;">'+escHtml(String(o.staff_limit||'—'))+'</td>'
-          + '<td style="font-size:11px;'+(isExpiring?'color:var(--orange);font-weight:600;':'color:var(--text-muted);')+'">'+validTill+'</td>'
-          + '<td>'+statusBadge+'</td>'
-          + '<td>'+couponBadge+'</td>'
-          + '<td onclick="event.stopPropagation()">'+invBtn+'</td>'
+          ? '<button type="button" class="pdf-btn" data-user="' + escHtml(String(o.invoice_user_id||'')) + '" data-org="' + escHtml(String(o.org_id||'')) + '" data-inv="' + escHtml(String(o.invoice_number||'')) + '" onclick="downloadOrgInvoice(this.dataset.user, this.dataset.org, this.dataset.inv)" title="Download invoice PDF" aria-label="Download invoice PDF">' + ico('fileDown') + 'PDF</button>'
+          : '<span class="muted">—</span>';
+        return '<tr class="row-link" onclick="window.location.href=\'org_analytics.html?org_id=' + encodeURIComponent(o.org_id||'') + '\'">'
+          + '<td data-label="" class="c-main"><span class="org-main trunc" title="' + escHtml(o.org_name||'') + '">' + escHtml(o.org_name||'—') + '</span></td>'
+          + '<td data-label="Contact"><div class="contact-cell"><span class="contact-email trunc" title="' + escHtml(o.admin_email||'') + '">' + escHtml(o.admin_email||'—') + '</span><span class="contact-phone">' + escHtml(o.admin_mobile||'—') + '</span></div></td>'
+          + '<td data-label="Plan"><span class="badge">' + escHtml(o.plan_name||'—') + '</span></td>'
+          + '<td data-label="Staff" class="num td-primary">' + escHtml(String(o.staff_limit||'—')) + '</td>'
+          + '<td data-label="Valid till" class="nowrap ' + (isExpiring ? 'expiring' : 'muted') + '"' + (isExpiring ? ' title="Expires soon"' : '') + '>' + escHtml(validTill) + '</td>'
+          + '<td data-label="Status">' + statusBadge + '</td>'
+          + '<td data-label="Coupon">' + couponBadge + '</td>'
+          + '<td data-label="" class="num c-actions" onclick="event.stopPropagation()">' + invBtn + '</td>'
           + '</tr>';
       }).join('');
     }

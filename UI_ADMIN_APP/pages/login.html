@@ -8,164 +8,274 @@
   <script src="../js/theme.js"></script>
   <link rel="stylesheet" href="../css/login.css" />
   <script src="../js/config.js"></script>
-  <style>
-    .remember-row {
-      margin-bottom: 16px;
-    }
-    .remember-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      font-size: 13px;
-      color: #9ca3af;
-      user-select: none;
-    }
-    .remember-label input[type="checkbox"] { display: none; }
-    .remember-box {
-      width: 18px; height: 18px; border-radius: 5px;
-      border: 2px solid #30363d;
-      background: #21262d;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: border-color 0.15s, background 0.15s;
-    }
-    .remember-label input:checked + .remember-box {
-      background: #58a6ff;
-      border-color: #58a6ff;
-    }
-    .remember-label input:checked + .remember-box::after {
-      content: '';
-      width: 5px; height: 9px;
-      border: 2px solid #fff;
-      border-top: none; border-left: none;
-      transform: rotate(45deg) translateY(-1px);
-      display: block;
-    }
-  </style>
 </head>
 <body>
 
-  <div class="login-bg">
-    <div class="login-card">
+  <div class="auth-shell">
 
-      <!-- Logo -->
-      <div class="login-logo">
-        <img src="../assets/images/clockyn-logo.png" alt="Clockyn" class="logo-img" />
+    <!-- Brand / hero panel (wide screens; collapses to a slim brand bar on small ones) -->
+    <aside class="auth-hero">
+      <div class="hero-brand">
+        <img class="hero-logo" src="../assets/images/clockyn-logo.png" alt="Clockyn" />
         <div>
-          <div class="logo-name">Clockyn</div>
-          <div class="logo-sub">Admin Portal</div>
+          <div class="hero-name">Clockyn</div>
+          <div class="hero-sub">Admin Console</div>
         </div>
       </div>
 
-      <h2 class="login-title">Welcome back</h2>
-      <p class="login-desc">Sign in with your email</p>
-
-      <!-- Form -->
-      <form id="loginForm" onsubmit="handleSubmit(event)">
-
-        <div class="form-group" id="emailGroup">
-          <label>Email Address</label>
-          <div class="input-wrap">
-            <span class="input-icon">✉️</span>
-            <input type="email" id="email" placeholder="Enter your email address" autocomplete="email" required />
-          </div>
-        </div>
-
-        <div class="form-group" id="otpGroup" style="display:none;">
-          <label>Enter OTP</label>
-          <div class="input-wrap otp-wrap" id="otpBoxes">
-            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
-            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
-            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
-            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
-            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
-            <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
-          </div>
-          <input type="hidden" id="otp" />
-        </div>
-
-        <div class="remember-row">
-          <label class="remember-label">
-            <input type="checkbox" id="rememberMe" />
-            <span class="remember-box"></span>
-            Remember me
-          </label>
-        </div>
-
-        <div id="errorMsg" class="error-msg" style="display:none;"></div>
-
-        <button type="submit" class="btn-login" id="loginBtn">
-          <span id="btnText">Send OTP</span>
-          <span id="btnLoader" style="display:none;">⏳ Please wait...</span>
-        </button>
-
-        <button type="button" class="btn-login" id="backBtn" style="display:none; margin-top:8px; background:#6c757d;" onclick="resetToEmail()">
-          ← Change Email
-        </button>
-
-      </form>
-
-      <div class="login-footer">
-        <span>© 2025 Clockyn. All rights reserved.</span>
+      <div class="hero-copy">
+        <h2 class="hero-title">Every organization, one calm console.</h2>
+        <p class="hero-lead">Keep an eye on plans, payments and support, and manage the guide videos your teams watch inside the app.</p>
+        <ul class="hero-points">
+          <li>
+            <span class="hero-point-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 6h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M8 6h.01"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><rect x="4" y="2" width="16" height="20" rx="2"/></svg>
+            </span>
+            <div>
+              <div class="hero-point-title">Organizations &amp; plans</div>
+              <div class="hero-point-text">Status, subscriptions and staff counts at a glance.</div>
+            </div>
+          </li>
+          <li>
+            <span class="hero-point-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+            </span>
+            <div>
+              <div class="hero-point-title">Revenue &amp; payments</div>
+              <div class="hero-point-text">Monthly revenue, plan mix and every payment in one place.</div>
+            </div>
+          </li>
+          <li>
+            <span class="hero-point-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>
+            </span>
+            <div>
+              <div class="hero-point-title">Video Hub</div>
+              <div class="hero-point-text">Upload guide videos and see which organizations watch them.</div>
+            </div>
+          </li>
+        </ul>
       </div>
 
-    </div>
+      <div class="hero-foot">Sign-in uses a one-time code sent to your email. No passwords to remember.</div>
+    </aside>
 
-    <!-- Background decoration -->
-    <div class="bg-circle c1"></div>
-    <div class="bg-circle c2"></div>
-    <div class="bg-circle c3"></div>
+    <!-- Theme switch (theme.js: light / dark) -->
+    <button type="button" class="theme-btn" id="themeBtn" aria-label="Switch theme" title="Switch theme">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+    </button>
+
+    <main class="auth-main">
+      <div class="auth-card">
+
+        <h1 class="auth-title" id="authTitle">Welcome back</h1>
+        <p class="auth-desc" id="authDesc">Sign in with your email</p>
+
+        <!-- Form -->
+        <form id="loginForm" onsubmit="handleSubmit(event)">
+
+          <div class="field" id="emailGroup">
+            <label for="email">Email address</label>
+            <div class="input-wrap">
+              <span class="input-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+              </span>
+              <input type="email" id="email" placeholder="you@company.com" autocomplete="email" required />
+            </div>
+          </div>
+
+          <div class="field" id="otpGroup" style="display:none;">
+            <span class="field-label" id="otpLabel">Verification code</span>
+            <div class="otp-wrap" id="otpBoxes" role="group" aria-labelledby="otpLabel">
+              <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 1" />
+              <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 2" />
+              <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 3" />
+              <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 4" />
+              <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 5" />
+              <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 6" />
+            </div>
+            <input type="hidden" id="otp" />
+            <div class="otp-meta">
+              <span class="otp-hint" id="otpHint" aria-live="polite"></span>
+              <span>Didn't get it? <button type="button" class="link-btn" id="resendBtn" disabled>Resend code</button></span>
+            </div>
+          </div>
+
+          <div class="remember-row">
+            <label class="remember-label">
+              <input type="checkbox" id="rememberMe" />
+              <span class="remember-box"></span>
+              Remember me
+            </label>
+          </div>
+
+          <div id="errorMsg" class="error-msg" style="display:none;" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+            <span id="errorText"></span>
+          </div>
+
+          <button type="submit" class="btn-login" id="loginBtn">
+            <span id="btnText">Send OTP</span>
+            <span id="btnLoader" style="display:none;"><span class="spin" aria-hidden="true"></span> Please wait...</span>
+          </button>
+
+          <button type="button" class="btn-back" id="backBtn" style="display:none;" onclick="resetToEmail()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            Change Email
+          </button>
+
+        </form>
+
+        <div class="login-footer">
+          <span>© 2025 Clockyn. All rights reserved.</span>
+        </div>
+
+      </div>
+    </main>
+
   </div>
 
   <script>
     let step = 'email';
+    let resendTimer = null;
+    const $ = function (id) { return document.getElementById(id); };
+    const boxes = Array.from(document.querySelectorAll('.otp-box'));
 
     // ── OTP boxes: auto-advance, backspace, paste ──
-    (function () {
-      const boxes = document.querySelectorAll('.otp-box');
+    function syncOtpHidden() {
+      $('otp').value = boxes.map(function (b) { return b.value; }).join('');
+      boxes.forEach(function (b) { b.classList.toggle('filled', !!b.value); });
+    }
 
-      boxes.forEach(function (box, i) {
-        box.addEventListener('input', function () {
-          this.value = this.value.replace(/[^0-9]/g, '').slice(-1);
-          syncOtpHidden();
-          if (this.value && i < boxes.length - 1) boxes[i + 1].focus();
-        });
-
-        box.addEventListener('keydown', function (e) {
-          if (e.key === 'Backspace') {
-            if (this.value) {
-              this.value = '';
-              syncOtpHidden();
-            } else if (i > 0) {
-              boxes[i - 1].value = '';
-              boxes[i - 1].focus();
-              syncOtpHidden();
-            }
-            e.preventDefault();
-          }
-        });
-
-        box.addEventListener('focus', function () {
-          this.select();
-        });
-      });
-
-      // Handle paste on any box
-      document.getElementById('otpBoxes').addEventListener('paste', function (e) {
-        e.preventDefault();
-        const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 6);
-        pasted.split('').forEach(function (ch, i) {
-          if (boxes[i]) boxes[i].value = ch;
-        });
-        const next = Math.min(pasted.length, boxes.length - 1);
-        boxes[next].focus();
+    boxes.forEach(function (box, i) {
+      box.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(-1);
         syncOtpHidden();
+        if (this.value && i < boxes.length - 1) boxes[i + 1].focus();
       });
 
-      function syncOtpHidden() {
-        document.getElementById('otp').value = Array.from(boxes).map(b => b.value).join('');
-      }
-    })();
+      box.addEventListener('keydown', function (e) {
+        if (e.key === 'Backspace') {
+          if (this.value) {
+            this.value = '';
+            syncOtpHidden();
+          } else if (i > 0) {
+            boxes[i - 1].value = '';
+            boxes[i - 1].focus();
+            syncOtpHidden();
+          }
+          e.preventDefault();
+        } else if (e.key === 'ArrowLeft' && i > 0) {
+          boxes[i - 1].focus();
+          e.preventDefault();
+        } else if (e.key === 'ArrowRight' && i < boxes.length - 1) {
+          boxes[i + 1].focus();
+          e.preventDefault();
+        }
+      });
+
+      box.addEventListener('focus', function () {
+        this.select();
+      });
+    });
+
+    // Handle paste on any box
+    $('otpBoxes').addEventListener('paste', function (e) {
+      e.preventDefault();
+      const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+      pasted.split('').forEach(function (ch, i) {
+        if (boxes[i]) boxes[i].value = ch;
+      });
+      const next = Math.min(pasted.length, boxes.length - 1);
+      boxes[next].focus();
+      syncOtpHidden();
+    });
+
+    function clearOtp() {
+      boxes.forEach(function (b) { b.value = ''; });
+      $('otp').value = '';
+      syncOtpHidden();
+    }
+
+    // ── helpers ──
+    function setBusy(on) {
+      $('btnText').style.display = on ? 'none' : 'inline';
+      $('btnLoader').style.display = on ? 'inline-flex' : 'none';
+      $('loginBtn').disabled = on;
+      $('backBtn').disabled = on;
+    }
+
+    function hideError() {
+      $('errorMsg').style.display = 'none';
+    }
+
+    function showError(msg) {
+      const el = $('errorMsg');
+      $('errorText').textContent = msg;
+      el.style.display = 'flex';
+      const form = $('loginForm');
+      form.classList.remove('shake');
+      void form.offsetWidth; // restart the animation
+      form.classList.add('shake');
+    }
+
+    function maskEmail(email) {
+      const at = email.indexOf('@');
+      if (at < 1) return email;
+      return email.slice(0, 1) + '***' + email.slice(at);
+    }
+
+    function setDesc(parts) {
+      const el = $('authDesc');
+      el.textContent = '';
+      parts.forEach(function (p) {
+        if (p.strong) {
+          const s = document.createElement('strong');
+          s.textContent = p.strong;
+          el.appendChild(s);
+        } else {
+          el.appendChild(document.createTextNode(p));
+        }
+      });
+    }
+
+    function startResendTimer() {
+      const btn = $('resendBtn');
+      clearInterval(resendTimer);
+      let left = 30;
+      btn.disabled = true;
+      btn.textContent = 'Resend in ' + left + 's';
+      resendTimer = setInterval(function () {
+        left -= 1;
+        if (left <= 0) {
+          clearInterval(resendTimer);
+          btn.disabled = false;
+          btn.textContent = 'Resend code';
+        } else {
+          btn.textContent = 'Resend in ' + left + 's';
+        }
+      }, 1000);
+    }
+
+    function enterOtpStep(email, isResend) {
+      step = 'otp';
+      $('authTitle').textContent = 'Check your email';
+      setDesc(['We sent a 6-digit code to ', { strong: maskEmail(email) }, '. It expires in 5 minutes.']);
+      $('emailGroup').style.display = 'none';
+      const group = $('otpGroup');
+      group.style.display = 'block';
+      group.classList.remove('step-in');
+      void group.offsetWidth;
+      group.classList.add('step-in');
+      $('backBtn').style.display = 'inline-flex';
+      $('otp').required = true;
+      if (isResend) clearOtp();
+      $('otpHint').textContent = isResend ? 'A new code is on its way.' : '';
+      boxes[0].focus();
+      $('btnText').textContent = 'Verify OTP';
+      startResendTimer();
+    }
 
     async function handleSubmit(e) {
       e.preventDefault();
@@ -173,71 +283,65 @@
       else await verifyOTP();
     }
 
-    async function sendOTP() {
-      const email     = document.getElementById('email').value.trim().toLowerCase();
-      const errorMsg  = document.getElementById('errorMsg');
-      const btnText   = document.getElementById('btnText');
-      const btnLoader = document.getElementById('btnLoader');
+    async function sendOTP(isResend) {
+      const email = $('email').value.trim().toLowerCase();
 
       if (!email || !email.includes('@') || !email.includes('.')) {
         showError('Please enter a valid email address.');
         return;
       }
 
-      btnText.style.display = 'none';
-      btnLoader.style.display = 'inline';
-      errorMsg.style.display = 'none';
+      const resendBtn = $('resendBtn');
+      if (isResend) {
+        resendBtn.disabled = true;
+        resendBtn.textContent = 'Sending...';
+      } else {
+        setBusy(true);
+      }
+      hideError();
 
       try {
-        const res  = await fetch(API_BASE + '/auth/admin-login', {
+        const res = await fetch(API_BASE + '/auth/admin-login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email })
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          step = 'otp';
-          document.getElementById('emailGroup').style.display = 'none';
-          document.getElementById('otpGroup').style.display = 'block';
-          document.getElementById('backBtn').style.display = 'block';
-          document.getElementById('otp').required = true;
-          document.querySelectorAll('.otp-box')[0].focus();
-          document.getElementById('btnText').textContent = 'Verify OTP';
+          enterOtpStep(email, !!isResend);
         } else {
           showError(data.detail || data.message || 'Email not found.');
+          if (isResend) startResendTimer();
         }
       } catch (err) {
         showError('Network error. Please try again.');
+        if (isResend) startResendTimer();
       } finally {
-        btnText.style.display = 'inline';
-        btnLoader.style.display = 'none';
+        if (!isResend) setBusy(false);
       }
     }
 
     async function verifyOTP() {
-      const email     = document.getElementById('email').value.trim().toLowerCase();
-      const otp       = document.getElementById('otp').value.trim();
-      const btnText   = document.getElementById('btnText');
-      const btnLoader = document.getElementById('btnLoader');
+      const email = $('email').value.trim().toLowerCase();
+      const otp = $('otp').value.trim();
 
       if (otp.length !== 6) {
         showError('Please enter all 6 digits of the OTP.');
         return;
       }
 
-      btnText.style.display = 'none';
-      btnLoader.style.display = 'inline';
-      document.getElementById('errorMsg').style.display = 'none';
+      setBusy(true);
+      hideError();
 
       try {
-        const res  = await fetch(API_BASE + '/auth/admin-login/verify-otp', {
+        const res = await fetch(API_BASE + '/auth/admin-login/verify-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, otp })
         });
         const data = await res.json();
         if (data.success) {
-          const remember = document.getElementById('rememberMe').checked;
+          const remember = $('rememberMe').checked;
           localStorage.setItem('admin_email', data.email);
           localStorage.setItem('gen_admin_id', data.email);
           localStorage.setItem('gen_admin_role', data.role_id);
@@ -250,35 +354,39 @@
       } catch (err) {
         showError('Network error. Please try again.');
       } finally {
-        btnText.style.display = 'inline';
-        btnLoader.style.display = 'none';
+        setBusy(false);
       }
     }
 
     function resetToEmail() {
       step = 'email';
-      document.getElementById('emailGroup').style.display = 'block';
-      document.getElementById('otpGroup').style.display = 'none';
-      document.getElementById('backBtn').style.display = 'none';
-      document.getElementById('otp').required = false;
-      document.getElementById('otp').value = '';
-      document.querySelectorAll('.otp-box').forEach(b => b.value = '');
-      document.getElementById('btnText').textContent = 'Send OTP';
-      document.getElementById('errorMsg').style.display = 'none';
+      clearInterval(resendTimer);
+      $('authTitle').textContent = 'Welcome back';
+      setDesc(['Sign in with your email']);
+      $('emailGroup').style.display = 'block';
+      $('otpGroup').style.display = 'none';
+      $('backBtn').style.display = 'none';
+      $('otp').required = false;
+      clearOtp();
+      $('otpHint').textContent = '';
+      $('btnText').textContent = 'Send OTP';
+      hideError();
+      $('email').focus();
     }
 
-    function showError(msg) {
-      const el = document.getElementById('errorMsg');
-      el.textContent = '❌ ' + msg;
-      el.style.display = 'block';
-    }
+    $('resendBtn').addEventListener('click', function () { sendOTP(true); });
+
+    $('themeBtn').addEventListener('click', function () {
+      if (window.ClockynTheme) window.ClockynTheme.toggle();
+    });
 
     window.addEventListener('DOMContentLoaded', function () {
       const saved = localStorage.getItem('admin_email');
-      if (saved) document.getElementById('email').value = saved;
+      if (saved) $('email').value = saved;
       if (localStorage.getItem('remember_me') === '1') {
-        document.getElementById('rememberMe').checked = true;
+        $('rememberMe').checked = true;
       }
+      $('email').focus();
     });
   </script>
 

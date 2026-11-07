@@ -8,91 +8,107 @@
   <script src="../js/theme.js"></script>
   <link rel="stylesheet" href="../css/dashboard.css" />
   <style>
-    .tk-msg-cell { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tk-org { font-weight: 600; color: var(--text-primary); }
-    .tk-org-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-    .tk-user { font-size: 12px; color: var(--text-secondary); }
-    .tk-user-sub { font-size: 11px; color: var(--text-muted); }
-    .tk-date { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
-    .tk-view-btn {
-      background: rgba(88,166,255,0.12); color: var(--blue); border: 1px solid rgba(88,166,255,0.3);
-      border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
-    }
-    .tk-view-btn:hover { background: rgba(88,166,255,0.2); }
-    .tk-photo-dot { font-size: 12px; margin-left: 4px; }
+    .ic { display: block; flex-shrink: 0; }
 
-    /* Detail modal */
-    .tk-modal-overlay {
-      display: none; position: fixed; inset: 0; z-index: 1000;
-      background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
-      align-items: flex-start; justify-content: center; padding: 30px 16px; overflow-y: auto;
+    /* Summary tiles */
+    .stat-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (min-width: 900px) { .stat-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .stat-tile { position: relative; }
+    .stat-tile .stat-val { font-variant-numeric: tabular-nums; }
+    .st-icon {
+      position: absolute; top: 16px; right: 16px; width: 30px; height: 30px; border-radius: var(--radius-sm);
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--surface-muted); color: var(--text-muted);
     }
-    .tk-modal-overlay.open { display: flex; }
-    .tk-modal {
-      background: var(--bg-secondary); border: 1px solid var(--border);
-      border-radius: 16px; width: 100%; max-width: 640px; margin: auto;
-    }
-    .tk-modal-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 22px; border-bottom: 1px solid var(--border);
-    }
-    .tk-modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
-    .tk-modal-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .tk-modal-close {
-      background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-muted);
-      font-size: 16px; width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .tk-modal-close:hover { color: var(--text-primary); border-color: var(--blue); }
-    .tk-modal-body { padding: 18px 22px; max-height: 70vh; overflow-y: auto; }
+    .st-icon.success { background: var(--success-soft); color: var(--success); }
+    .st-icon.warning { background: var(--warning-soft); color: var(--warning); }
+    .st-icon.info    { background: var(--info-soft);    color: var(--info); }
+    .st-icon.purple  { background: var(--purple-soft);  color: var(--purple); }
 
-    .tk-detail-grid {
-      display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 16px;
+    /* Filter bar */
+    .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .search-box {
+      display: flex; align-items: center; gap: 10px; flex: 1 1 260px; min-width: 200px; max-width: 420px; height: 42px; padding: 0 14px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted);
+      transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
     }
-    .tk-detail-field { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; }
-    .tk-detail-label { font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
-    .tk-detail-value { font-size: 13px; color: var(--text-primary); font-weight: 600; }
+    .search-box:hover { border-color: var(--border-strong); }
+    .search-box:focus-within { border-color: var(--text-muted); box-shadow: 0 0 0 3px var(--ring); }
+    .search-box input { background: none; border: none; outline: none; box-shadow: none; padding: 0; min-height: 0; width: 100%; font-size: 14px; color: var(--text); }
+    .search-box input::placeholder { color: var(--text-muted); }
+    .filter-bar select { width: auto; min-width: 150px; }
 
+    /* Tables */
+    .card + .card { margin-top: 20px; }
+    .card-header .title-wrap { display: flex; align-items: center; gap: 10px; }
+    .tk-table thead th, .tk-table tbody td { padding-left: 14px; padding-right: 14px; }
+    th.actions, td.actions { text-align: right; white-space: nowrap; }
+    td.tid { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .tk-clip { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tk-msg-cell { width: 26%; max-width: 0; overflow: hidden; } /* absorbs the squeeze and truncates, so no column is ever clipped */
+    .tk-msg { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .tk-msg > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .tk-msg .ic { color: var(--text-muted); }
+    .tk-org { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+    .tk-org-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+    .tk-user { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
+    .tk-user-sub { font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .tk-date { font-size: 12.5px; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .tk-count { margin-left: 2px; padding: 0 6px; border-radius: var(--radius-pill); background: var(--surface-muted); color: var(--text-secondary); font-size: 11px; font-variant-numeric: tabular-nums; }
+    tr.state-row:hover { background: none; }
+    tr.state-row td { padding: 8px 18px; }
+    .empty-icon.is-error { background: var(--danger-soft); color: var(--danger); }
+    .skeleton-line.s-1 { width: 30%; } .skeleton-line.s-2 { width: 75%; } .skeleton-line.s-3 { width: 55%; } .skeleton-line.s-4 { width: 45%; }
+
+    /* Detail modal (shared .modal-overlay / .modal-box.modal-lg) */
+    .tk-modal-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+    .tk-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+    .tk-detail-field { background: var(--surface-muted); border-radius: var(--radius-sm); padding: 10px 14px; min-width: 0; }
+    .tk-detail-label { font-size: 10.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; margin-bottom: 4px; }
+    .tk-detail-value { font-size: 14px; color: var(--text); font-weight: 600; overflow-wrap: anywhere; }
+    .tk-thread-label { font-size: 10.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.1px; margin-bottom: 8px; }
     .tk-full-msg {
-      background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 10px;
-      padding: 14px; font-size: 13px; color: var(--text-secondary); line-height: 1.6;
-      white-space: pre-wrap; margin-bottom: 14px;
+      background: var(--surface-muted); border-radius: var(--radius-sm); padding: 14px 16px;
+      font-size: 14px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 16px;
     }
-    .tk-photo-thumb {
-      max-width: 100%; max-height: 220px; border-radius: 10px; display: block; margin-bottom: 14px;
-      cursor: pointer; border: 1px solid var(--border);
-    }
+    .tk-photo-thumb { max-width: 100%; max-height: 220px; border-radius: var(--radius-sm); display: block; margin-bottom: 16px; cursor: zoom-in; border: 1px solid var(--border); }
+    .tk-none { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
 
-    .tk-thread-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
-    .tk-reply-item {
-      display: flex; gap: 10px; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+    .tk-reply-item { display: flex; gap: 10px; border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px; }
+    .tk-reply-item.admin { background: var(--info-soft); border: 1px solid rgba(var(--info-rgb), 0.22); }
+    .tk-reply-item.user  { background: var(--surface-muted); border: 1px solid var(--border); }
+    .tk-reply-avatar {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.3px;
+      background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border);
     }
-    .tk-reply-item.admin { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); }
-    .tk-reply-item.user  { background: rgba(76,175,80,0.08); border: 1px solid rgba(76,175,80,0.2); }
-    .tk-reply-icon { font-size: 15px; flex-shrink: 0; }
-    .tk-reply-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
-    .tk-reply-author { font-size: 12px; font-weight: 700; }
-    .tk-reply-item.admin .tk-reply-author { color: var(--blue); }
-    .tk-reply-item.user  .tk-reply-author { color: var(--green); }
-    .tk-reply-date { font-size: 10px; color: var(--text-muted); }
-    .tk-reply-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; }
+    .tk-reply-item.admin .tk-reply-avatar { background: var(--info); color: var(--on-info); border-color: transparent; }
+    .tk-reply-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap; }
+    .tk-reply-author { font-size: 12.5px; font-weight: 700; color: var(--text); }
+    .tk-reply-item.admin .tk-reply-author { color: var(--info); }
+    .tk-reply-date { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .tk-reply-text { font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 
-    .tk-reply-box { margin-top: 14px; }
-    .tk-reply-box textarea {
-      width: 100%; box-sizing: border-box; background: var(--bg-tertiary); border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px 12px; color: var(--text-primary); font-size: 13px; resize: vertical;
-      min-height: 70px; outline: none;
-    }
-    .tk-reply-box textarea:focus { border-color: var(--blue); }
-    .tk-modal-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .tk-reply-box { margin-top: 16px; }
+    .tk-reply-box textarea { display: block; width: 100%; min-height: 84px; resize: vertical; }
+    .tk-modal-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
-    /* Lightbox */
+    /* Photo lightbox: a photo viewing surface, always dark like the app's image viewer (gradient tokens are graphite/white in both themes) */
     .tk-lightbox {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 2000;
+      display: none; position: fixed; inset: 0; background: color-mix(in srgb, var(--gradient-end) 95%, transparent); z-index: 2000;
       align-items: center; justify-content: center; cursor: zoom-out;
     }
-    .tk-lightbox.open { display: flex; }
-    .tk-lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 10px; object-fit: contain; }
+    .tk-lightbox.open { display: flex; animation: ck-fade var(--motion-base) var(--ease) both; }
+    .tk-lightbox img { max-width: 92vw; max-height: 88vh; border-radius: var(--radius-sm); object-fit: contain; }
+    .tk-lightbox-close {
+      position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      background: color-mix(in srgb, var(--on-gradient) 14%, transparent); border: 1px solid color-mix(in srgb, var(--on-gradient) 22%, transparent); color: var(--on-gradient);
+    }
+    .tk-lightbox-close:hover { background: color-mix(in srgb, var(--on-gradient) 24%, transparent); }
+
+    @media (max-width: 560px) { .tk-detail-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -102,34 +118,35 @@
 
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
-  <div id="toast" style="position:fixed;bottom:32px;right:32px;background:#16a34a;color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transform:translateY(20px);transition:opacity 0.3s,transform 0.3s;pointer-events:none;"></div>
+  <div id="toast" role="status" aria-live="polite" style="position:fixed;bottom:32px;right:32px;background:#16a34a;color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transform:translateY(20px);transition:opacity 0.3s,transform 0.3s;pointer-events:none;"></div>
 
   <!-- Ticket Detail Modal -->
-  <div class="tk-modal-overlay" id="tk-modal-overlay" onclick="handleModalOverlayClick(event)">
-    <div class="tk-modal">
-      <div class="tk-modal-header">
-        <div>
-          <div class="tk-modal-title" id="tk-modal-title">Ticket #—</div>
+  <div class="modal-overlay" id="tk-modal-overlay" onclick="handleModalOverlayClick(event)">
+    <div class="modal-box modal-lg" role="dialog" aria-modal="true" aria-labelledby="tk-modal-title">
+      <div class="modal-header">
+        <div style="min-width:0;">
+          <h2 id="tk-modal-title">Ticket #&mdash;</h2>
           <div class="tk-modal-sub" id="tk-modal-sub"></div>
         </div>
-        <button class="tk-modal-close" onclick="closeTicketModal()">✕</button>
+        <button class="modal-close" onclick="closeTicketModal()" aria-label="Close"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       </div>
-      <div class="tk-modal-body" id="tk-modal-body"></div>
+      <div id="tk-modal-body"></div>
     </div>
   </div>
 
   <!-- Photo lightbox -->
   <div class="tk-lightbox" id="tk-lightbox" onclick="closeLightbox()">
+    <button class="tk-lightbox-close" onclick="closeLightbox()" aria-label="Close image"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
     <img id="tk-lightbox-img" src="" alt="" />
   </div>
 
   <div class="main">
     <header class="topbar">
-      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button>
       <span class="topbar-title">Ticketing &amp; Bugs</span>
       <div class="topbar-actions" style="margin-left:auto;">
-        <button class="icon-btn">🔔<span class="dot"></span></button>
-        <button class="icon-btn" onclick="loadTickets()" title="Refresh">🔄</button>
+        <button class="icon-btn" aria-label="Notifications" title="Notifications"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg><span class="dot"></span></button>
+        <button class="icon-btn" onclick="loadTickets()" title="Refresh" aria-label="Refresh tickets"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
         <div class="topbar-user-pill">
           <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
           <div class="topbar-user-info">
@@ -143,42 +160,47 @@
     <div class="content">
 
       <div class="page-header">
-        <h1>Ticketing &amp; Bugs</h1>
-        <p>Manage support requests submitted by organizations.</p>
+        <div>
+          <h1>Ticketing &amp; Bugs</h1>
+          <p>Manage support requests submitted by organizations.</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-ghost btn-sm" onclick="loadTickets()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Refresh</button>
+        </div>
       </div>
 
       <!-- Stat row -->
-      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
-        <div class="stat-card"><div class="stat-card-header"><span class="label">Total</span><div class="stat-icon blue">🎫</div></div><div class="stat-value" id="tk-total">—</div></div>
-        <div class="stat-card"><div class="stat-card-header"><span class="label">Open</span><div class="stat-icon orange">🔓</div></div><div class="stat-value" id="tk-open">—</div></div>
-        <div class="stat-card"><div class="stat-card-header"><span class="label">In Progress</span><div class="stat-icon purple">⚙️</div></div><div class="stat-value" id="tk-progress">—</div></div>
-        <div class="stat-card"><div class="stat-card-header"><span class="label">Resolved</span><div class="stat-icon green">✅</div></div><div class="stat-value" id="tk-resolved">—</div></div>
+      <div class="stat-grid cols-4">
+        <div class="stat-tile"><span class="st-icon info"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg></span><div class="stat-label">Total</div><div class="stat-val" id="tk-total">&mdash;</div><div class="stat-sub">All requests</div></div>
+        <div class="stat-tile"><span class="st-icon warning"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></span><div class="stat-label">Open</div><div class="stat-val" id="tk-open">&mdash;</div><div class="stat-sub">Waiting for a reply</div></div>
+        <div class="stat-tile"><span class="st-icon purple"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span><div class="stat-label">In Progress</div><div class="stat-val" id="tk-progress">&mdash;</div><div class="stat-sub">Being handled</div></div>
+        <div class="stat-tile"><span class="st-icon success"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg></span><div class="stat-label">Resolved</div><div class="stat-val" id="tk-resolved">&mdash;</div><div class="stat-sub">Closed requests</div></div>
       </div>
 
       <!-- Filter bar -->
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
-        <input id="tk-search" type="text" placeholder="Search org, subject or user..." oninput="renderTickets()"
-          style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text-primary);font-size:13px;outline:none;width:240px;">
-        <select id="tk-filter-status" onchange="renderTickets()"
-          style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text-primary);font-size:13px;outline:none;">
+      <div class="filter-bar">
+        <div class="search-box">
+          <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+          <input id="tk-search" type="text" placeholder="Search org, subject or user..." aria-label="Search tickets" oninput="renderTickets()" />
+        </div>
+        <select id="tk-filter-status" onchange="renderTickets()" aria-label="Filter by status">
           <option value="">All Status</option>
           <option value="created">Open</option>
           <option value="in_progress">In Progress</option>
           <option value="resolved">Resolved</option>
         </select>
-        <button class="btn btn-ghost btn-sm" onclick="loadTickets()">🔄 Refresh</button>
       </div>
 
       <!-- Active tickets table -->
-      <div class="card" style="margin-bottom:20px;">
-        <div class="card-header"><h3>Active Tickets</h3></div>
+      <div class="card">
+        <div class="card-header"><div class="title-wrap"><h3>Active Tickets</h3><span class="badge badge-gray" id="tk-active-count">0</span></div></div>
         <div class="table-wrap">
-          <table>
+          <table class="tk-table">
             <thead><tr>
-              <th>#</th><th>Organization</th><th>Submitted By</th><th>Subject</th><th>Message</th><th>Created</th><th>Status</th><th>Actions</th>
+              <th>#</th><th>Organization</th><th>Submitted By</th><th>Subject</th><th>Message</th><th>Created</th><th>Status</th><th class="actions">Actions</th>
             </tr></thead>
             <tbody id="tk-active-body">
-              <tr><td colspan="8" style="text-align:center;color:var(--text-muted)">Loading...</td></tr>
+              <tr class="state-row"><td colspan="8"><div class="empty-state"><p>Loading...</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -186,14 +208,14 @@
 
       <!-- Resolved tickets -->
       <div class="card">
-        <div class="card-header"><h3>Resolved Tickets</h3></div>
+        <div class="card-header"><div class="title-wrap"><h3>Resolved Tickets</h3><span class="badge badge-gray" id="tk-resolved-count">0</span></div></div>
         <div class="table-wrap">
-          <table>
+          <table class="tk-table">
             <thead><tr>
-              <th>#</th><th>Organization</th><th>Submitted By</th><th>Subject</th><th>Message</th><th>Created</th><th>Resolved</th><th>Actions</th>
+              <th>#</th><th>Organization</th><th>Submitted By</th><th>Subject</th><th>Message</th><th>Created</th><th>Resolved</th><th class="actions">Actions</th>
             </tr></thead>
             <tbody id="tk-resolved-body">
-              <tr><td colspan="8" style="text-align:center;color:var(--text-muted)">Loading...</td></tr>
+              <tr class="state-row"><td colspan="8"><div class="empty-state"><p>Loading...</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -208,6 +230,15 @@
     let allTickets = [];
     let currentTicketId = null;
 
+    const ICON = {
+      inbox:  '<svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
+      alert:  '<svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>',
+      clip:   '<svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"/></svg>',
+      send:   '<svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>',
+      check:  '<svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg>',
+      undo:   '<svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>'
+    };
+
     function toggleSidebar() {
       document.querySelector('.sidebar').classList.toggle('open');
       document.getElementById('sidebar-overlay').classList.toggle('open');
@@ -219,7 +250,7 @@
     function handleLogout() {
       if (confirm('Are you sure you want to logout?')) logout();
     }
-    function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
     function fmtDateTime(d) {
       if (!d) return '—';
       return new Date(d).toLocaleString('en-IN', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
@@ -228,15 +259,45 @@
       if (!d) return '—';
       return new Date(d).toLocaleDateString('en-IN', { year:'numeric', month:'short', day:'numeric' });
     }
+    function fmtShort(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' });
+    }
+    function initialsOf(name) {
+      var w = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if (!w.length) return '?';
+      return (w.length > 1 ? w[0][0] + w[1][0] : w[0].slice(0, 2)).toUpperCase();
+    }
 
-    async function loadTickets() {
+    /* ── Table states ── */
+    function skeletonRows(n) {
+      var w = ['s-1', 's-2', 's-3', 's-4', 's-2', 's-4', 's-1', 's-3'], out = '';
+      for (var i = 0; i < n; i++) out += '<tr class="state-row">' + w.map(function(c) { return '<td><div class="skeleton skeleton-line ' + c + '"></div></td>'; }).join('') + '</tr>';
+      return out;
+    }
+    function stateRow(kind, title, text) {
+      var retry = kind === 'error' ? '<button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="loadTickets()">Try again</button>' : '';
+      return '<tr class="state-row"><td colspan="8"><div class="empty-state">'
+        + '<div class="empty-icon' + (kind === 'error' ? ' is-error' : '') + '">' + (kind === 'error' ? ICON.alert : ICON.inbox) + '</div>'
+        + '<h3>' + esc(title) + '</h3><p>' + esc(text) + '</p>' + retry + '</div></td></tr>';
+    }
+
+    async function loadTickets(silent) {
+      if (silent !== true) {
+        document.getElementById('tk-active-body').innerHTML = skeletonRows(4);
+        document.getElementById('tk-resolved-body').innerHTML = skeletonRows(3);
+      }
       try {
         const rows = await fetch(API_BASE + '/support/requests/all').then(r => r.json());
         allTickets = Array.isArray(rows) ? rows : [];
         updateTicketStats();
         renderTickets();
         if (currentTicketId != null) refreshOpenModal();
-      } catch(e) { console.error('Tickets failed', e); }
+      } catch(e) {
+        console.error('Tickets failed', e);
+        document.getElementById('tk-active-body').innerHTML = stateRow('error', 'Failed to load tickets', 'Check your connection and try again.');
+        document.getElementById('tk-resolved-body').innerHTML = '';
+      }
     }
 
     function updateTicketStats() {
@@ -253,13 +314,17 @@
     }
 
     function orgCell(t) {
-      return '<div class="tk-org">' + esc(t.org_name || t.org_id || '—') + '</div>'
+      return '<div class="tk-org" title="' + esc(t.org_name || t.org_id || '') + '">' + esc(t.org_name || t.org_id || '—') + '</div>'
         + (t.org_name ? '<div class="tk-org-sub">' + esc(t.org_id) + '</div>' : '');
     }
     function userCell(t) {
       if (!t.user_name && !t.user_mobile) return '<span style="color:var(--text-muted);">—</span>';
       return '<div class="tk-user">' + esc(t.user_name || '—') + '</div>'
         + (t.user_mobile ? '<div class="tk-user-sub">' + esc(t.user_mobile) + '</div>' : '');
+    }
+    function msgCell(t) {
+      return '<td class="tk-msg-cell"><div class="tk-msg" title="' + esc(t.client_msg) + '"><span>' + esc(t.client_msg) + '</span>'
+        + (t.photo_url ? '<span title="Has attachment" style="flex-shrink:0;display:inline-flex;">' + ICON.clip + '</span>' : '') + '</div></td>';
     }
 
     function renderTickets() {
@@ -271,42 +336,44 @@
       const resolved = allTickets.filter(function(t) {
         return t.status === 'resolved' && matchesQuery(t, q);
       });
+      document.getElementById('tk-active-count').textContent = active.length;
+      document.getElementById('tk-resolved-count').textContent = resolved.length;
 
       const activeBody = document.getElementById('tk-active-body');
       if (!active.length) {
-        activeBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No active tickets</td></tr>';
+        activeBody.innerHTML = stateRow('empty', 'No active tickets', allTickets.length ? 'Nothing matches your filters.' : 'New support requests will appear here.');
       } else {
         activeBody.innerHTML = active.map(function(t) {
           var badge = t.status === 'created' ? 'badge-orange' : 'badge-purple';
           var label = t.status === 'created' ? 'Open' : 'In Progress';
           var replyCount = Array.isArray(t.replies) ? t.replies.length : 0;
           return '<tr>'
-            + '<td class="td-primary">#' + t.id + '</td>'
+            + '<td class="tid">#' + esc(t.id) + '</td>'
             + '<td>' + orgCell(t) + '</td>'
             + '<td>' + userCell(t) + '</td>'
-            + '<td>' + esc(t.sub_name) + '</td>'
-            + '<td class="tk-msg-cell">' + esc(t.client_msg) + (t.photo_url ? '<span class="tk-photo-dot" title="Has attachment">📎</span>' : '') + '</td>'
-            + '<td class="tk-date">' + fmtDate(t.created_at) + '</td>'
-            + '<td><span class="badge ' + badge + '">' + label + '</span></td>'
-            + '<td><button class="tk-view-btn" onclick="openTicketModal(' + t.id + ')">View' + (replyCount ? ' (' + replyCount + ')' : '') + '</button></td>'
+            + '<td><div class="tk-clip" title="' + esc(t.sub_name) + '">' + esc(t.sub_name) + '</div></td>'
+            + msgCell(t)
+            + '<td class="tk-date" title="' + esc(fmtDateTime(t.created_at)) + '">' + fmtShort(t.created_at) + '</td>'
+            + '<td><span class="badge badge-dot ' + badge + '">' + label + '</span></td>'
+            + '<td class="actions"><button class="btn btn-ghost btn-sm" onclick="openTicketModal(' + Number(t.id) + ')">View' + (replyCount ? ' <span class="tk-count">' + replyCount + '</span>' : '') + '</button></td>'
             + '</tr>';
         }).join('');
       }
 
       const resolvedBody = document.getElementById('tk-resolved-body');
       if (!resolved.length) {
-        resolvedBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No resolved tickets</td></tr>';
+        resolvedBody.innerHTML = stateRow('empty', 'No resolved tickets', allTickets.length ? 'Nothing matches your search.' : 'Resolved requests will be listed here.');
       } else {
         resolvedBody.innerHTML = resolved.map(function(t) {
           return '<tr>'
-            + '<td class="td-primary">#' + t.id + '</td>'
+            + '<td class="tid">#' + esc(t.id) + '</td>'
             + '<td>' + orgCell(t) + '</td>'
             + '<td>' + userCell(t) + '</td>'
-            + '<td>' + esc(t.sub_name) + '</td>'
-            + '<td class="tk-msg-cell">' + esc(t.client_msg) + (t.photo_url ? '<span class="tk-photo-dot" title="Has attachment">📎</span>' : '') + '</td>'
-            + '<td class="tk-date">' + fmtDate(t.created_at) + '</td>'
-            + '<td class="tk-date">' + fmtDate(t.updated_at) + '</td>'
-            + '<td><button class="tk-view-btn" onclick="openTicketModal(' + t.id + ')">View</button></td>'
+            + '<td><div class="tk-clip" title="' + esc(t.sub_name) + '">' + esc(t.sub_name) + '</div></td>'
+            + msgCell(t)
+            + '<td class="tk-date" title="' + esc(fmtDateTime(t.created_at)) + '">' + fmtShort(t.created_at) + '</td>'
+            + '<td class="tk-date" title="' + esc(fmtDateTime(t.updated_at)) + '">' + fmtShort(t.updated_at) + '</td>'
+            + '<td class="actions"><button class="btn btn-ghost btn-sm" onclick="openTicketModal(' + Number(t.id) + ')">View</button></td>'
             + '</tr>';
         }).join('');
       }
@@ -340,9 +407,9 @@
       document.getElementById('tk-modal-sub').textContent = 'Created ' + fmtDateTime(t.created_at);
 
       var replies = Array.isArray(t.replies) ? t.replies : [];
-      var statusBadge = t.status === 'created' ? '<span class="badge badge-orange">Open</span>'
-        : t.status === 'in_progress' ? '<span class="badge badge-purple">In Progress</span>'
-        : '<span class="badge badge-green">Resolved</span>';
+      var statusBadge = t.status === 'created' ? '<span class="badge badge-dot badge-orange">Open</span>'
+        : t.status === 'in_progress' ? '<span class="badge badge-dot badge-purple">In Progress</span>'
+        : '<span class="badge badge-dot badge-green">Resolved</span>';
 
       var html = '';
 
@@ -357,19 +424,18 @@
       html += '<div class="tk-full-msg">' + esc(t.client_msg) + '</div>';
 
       if (t.photo_url) {
-        html += '<img class="tk-photo-thumb" src="' + esc(t.photo_url) + '" onclick="openLightbox(\'' + esc(t.photo_url) + '\')" alt="Attachment" />';
+        html += '<img class="tk-photo-thumb" src="' + esc(t.photo_url) + '" data-lightbox="' + esc(t.photo_url) + '" alt="Attachment" />';
       }
 
       html += '<div class="tk-thread-label">Conversation' + (replies.length ? ' (' + replies.length + ')' : '') + '</div>';
       if (!replies.length) {
-        html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">No replies yet.</div>';
+        html += '<div class="tk-none">No replies yet.</div>';
       } else {
         replies.forEach(function(r) {
           var cls = r.is_admin ? 'admin' : 'user';
-          var icon = r.is_admin ? '🛠️' : '💬';
           var who = r.is_admin ? (r.author_name || 'Admin') : (r.author_name || 'User');
           html += '<div class="tk-reply-item ' + cls + '">'
-            + '<div class="tk-reply-icon">' + icon + '</div>'
+            + '<div class="tk-reply-avatar" aria-hidden="true">' + esc(initialsOf(who)) + '</div>'
             + '<div style="flex:1;min-width:0;">'
             + '<div class="tk-reply-head"><span class="tk-reply-author">' + esc(who) + (r.is_admin ? ' (Admin)' : '') + '</span><span class="tk-reply-date">' + fmtDateTime(r.created_at) + '</span></div>'
             + '<div class="tk-reply-text">' + esc(r.reply_text) + '</div>'
@@ -379,17 +445,22 @@
       }
 
       html += '<div class="tk-reply-box">'
-        + '<textarea id="tk-reply-input" placeholder="Type your reply to the organization..."></textarea>'
+        + '<textarea id="tk-reply-input" placeholder="Type your reply to the organization..." aria-label="Your reply"></textarea>'
         + '<div class="tk-modal-actions">'
-        +   '<button class="btn btn-primary btn-sm" onclick="sendReply()">Send Reply</button>'
+        +   '<button class="btn btn-primary btn-sm" id="tk-send-btn" onclick="sendReply()">' + ICON.send + ' Send Reply</button>'
         +   (t.status !== 'resolved'
-              ? '<button class="btn btn-sm" style="background:rgba(76,175,80,0.15);color:#4caf50;border:1px solid rgba(76,175,80,0.3);" onclick="markResolved()">Mark Resolved</button>'
-              : '<button class="btn btn-ghost btn-sm" onclick="reopenTicket()">Reopen Ticket</button>')
+              ? '<button class="btn btn-success btn-sm" onclick="markResolved()">' + ICON.check + ' Mark Resolved</button>'
+              : '<button class="btn btn-ghost btn-sm" onclick="reopenTicket()">' + ICON.undo + ' Reopen Ticket</button>')
         + '</div>'
         + '</div>';
 
       document.getElementById('tk-modal-body').innerHTML = html;
     }
+
+    document.getElementById('tk-modal-body').addEventListener('click', function(e) {
+      var img = e.target.closest('img[data-lightbox]');
+      if (img) openLightbox(img.getAttribute('data-lightbox'));
+    });
 
     async function sendReply() {
       var input = document.getElementById('tk-reply-input');
@@ -397,6 +468,8 @@
       if (!text) { showToast('Please type a reply before sending.', 'error'); return; }
       var adminProfile = {};
       try { adminProfile = JSON.parse(localStorage.getItem('gen_admin_profile') || '{}'); } catch(e) {}
+      var btn = document.getElementById('tk-send-btn');
+      if (btn) btn.classList.add('is-loading');
       try {
         const res = await fetch(API_BASE + '/support/' + currentTicketId + '/reply', {
           method: 'POST',
@@ -409,8 +482,9 @@
           return;
         }
         showToast('Reply sent successfully!', 'success');
-        await loadTickets();
+        await loadTickets(true);
       } catch(e) { showToast('Failed to send reply', 'error'); }
+      finally { if (btn) btn.classList.remove('is-loading'); }
     }
 
     async function markResolved() { await setStatus('resolved'); }
@@ -425,7 +499,7 @@
         });
         if (!res.ok) { showToast('Failed to update status', 'error'); return; }
         showToast(status === 'resolved' ? 'Ticket marked resolved!' : 'Ticket reopened', 'success');
-        await loadTickets();
+        await loadTickets(true);
       } catch(e) { showToast('Failed to update status', 'error'); }
     }
 
@@ -438,7 +512,10 @@
       document.getElementById('tk-lightbox').classList.remove('open');
     }
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') { closeTicketModal(); closeLightbox(); }
+      if (e.key === 'Escape') {
+        if (document.getElementById('tk-lightbox').classList.contains('open')) closeLightbox();
+        else closeTicketModal();
+      }
     });
 
     function showToast(msg, type) {

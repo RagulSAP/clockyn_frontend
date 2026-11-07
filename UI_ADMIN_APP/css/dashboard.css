@@ -967,7 +967,9 @@ tbody td { padding: 14px 18px; font-size: 13.5px; color: var(--text-secondary); 
 }
 
 @media (max-width: 640px) {
-  .topbar-search { display: none; }
+  /* the search is the page's main filter on several screens: keep it, as a full-width second row */
+  .topbar { flex-wrap: wrap; height: auto; min-height: var(--topbar-height); padding-top: 8px; padding-bottom: 8px; row-gap: 8px; }
+  .topbar-search { order: 5; flex: 1 1 100%; width: 100%; margin-left: 0; }
   .topbar-title { flex: 1; }
   .plans-grid { grid-template-columns: 1fr; }
   .date-quick-btns { margin-left: 0; }

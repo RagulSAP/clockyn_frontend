@@ -8,37 +8,70 @@
   <script src="../js/theme.js"></script>
   <link rel="stylesheet" href="../css/dashboard.css" />
   <style>
-    .page-header { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
-    .page-header h1 { font-size:20px; font-weight:700; color:var(--text-primary); flex:1; }
-    .back-btn {
-      background:var(--bg-tertiary); border:1px solid var(--border);
-      border-radius:var(--radius-sm); padding:7px 12px;
-      color:var(--text-secondary); font-size:13px; cursor:pointer;
+    /* Page-specific styles only; cards, buttons, forms, modals, badges and tables come from the shared system. */
+    .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+    /* this page has no search box (which normally pushes the actions right) */
+    .topbar-actions { margin-left: auto; }
+
+    .ph-left { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; min-width: 0; }
+    .ph-left > div { min-width: 0; }
+
+    .callout {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 16px; margin-bottom: 20px;
+      background: var(--warning-soft); color: var(--text-secondary);
+      border: 1px solid rgba(var(--warning-rgb), 0.3); border-radius: var(--radius-md);
+      font-size: 14px; line-height: 1.5;
     }
-    .back-btn:hover { border-color:var(--blue); color:var(--blue); }
-    .table-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
-    .table-card-header {
-      padding:16px 20px; border-bottom:1px solid var(--border);
-      display:flex; align-items:center; justify-content:space-between;
+    .callout svg { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; color: var(--warning); }
+    .callout strong { color: var(--text); font-weight: 600; }
+
+    .card-title-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .card-sub { font-size: 12.5px; color: var(--text-muted); }
+
+    .th-actions { text-align: right; }
+    td.td-actions { text-align: right; white-space: nowrap; }
+    .org-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .avatar-sm { width: 34px; height: 34px; font-size: 11.5px; }
+    .org-name { color: var(--text); font-weight: 600; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cell-trunc { display: block; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cell-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .cell-muted { color: var(--text-muted); font-size: 12.5px; white-space: nowrap; }
+
+    .btn-danger-ghost { --btn-fg: var(--danger); border-color: rgba(var(--danger-rgb), 0.3); }
+    .btn-danger-ghost:hover:not(:disabled) { background: var(--danger-soft); border-color: var(--danger); }
+
+    .skel-cell { padding: 16px 18px; }
+    .state-cell { padding: 0 !important; }
+    .state-cell .empty-state { padding: 52px 24px; }
+
+    .confirm-icon { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--danger-soft); color: var(--danger); }
+    .confirm-icon svg { width: 22px; height: 22px; }
+    .confirm-text { font-size: 14.5px; line-height: 1.55; color: var(--text-secondary); overflow-wrap: anywhere; }
+    .confirm-text strong { color: var(--text); font-weight: 600; }
+    .modal-body .form-group { margin-bottom: 0; }
+    .modal-body .field-error:empty { display: none; }
+    .otp-input { width: 100%; height: 52px; text-align: center; font-size: 22px; font-weight: 700; letter-spacing: 8px; font-variant-numeric: tabular-nums; }
+    .otp-input::placeholder { letter-spacing: 0; font-size: 14px; font-weight: 500; }
+
+    @media (max-width: 640px) {
+      .page-header-actions, .page-header-actions .btn { width: 100%; }
+      /* phones: one card per request instead of a sideways-scrolling table */
+      #req-tbody, .card table { display: block; }
+      .card thead { display: none; }
+      #req-tbody tr { display: grid; gap: 8px; padding: 16px; }
+      #req-tbody td { display: block; padding: 0; min-width: 0; }
+      #req-tbody td[data-label]::before {
+        content: attr(data-label); display: block; margin-bottom: 1px;
+        font-size: 10.5px; font-weight: 600; letter-spacing: 1.1px; text-transform: uppercase; color: var(--text-muted);
+      }
+      #req-tbody td.td-actions { text-align: left; padding-top: 4px; }
+      #req-tbody td.td-actions .btn { width: 100%; }
+      #req-tbody td.skel-cell { padding: 0; }
+      .org-name, .cell-trunc { max-width: none; }
+      .modal-footer { flex-direction: column-reverse; align-items: stretch; }
+      .modal-footer .btn { width: 100%; }
     }
-    .table-card-header h3 { font-size:14px; font-weight:600; color:var(--text-primary); }
-    .count-badge { background:rgba(239,68,68,0.15); color:var(--red); font-size:12px; font-weight:600; padding:2px 10px; border-radius:20px; }
-    .empty-row td { text-align:center; color:var(--text-muted); padding:40px !important; }
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center; }
-    .modal-overlay.open { display:flex; }
-    .modal-box { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); width:100%; max-width:400px; padding:28px 28px 24px; }
-    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-    .modal-header h2 { font-size:16px; font-weight:700; color:var(--text-primary); }
-    .modal-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; }
-    .modal-close:hover { color:var(--text-primary); }
-    .form-group { margin-bottom:14px; }
-    .form-group label { display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:5px; }
-    .form-group input { width:100%; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text-primary); font-size:13px; outline:none; box-sizing:border-box; }
-    .form-group input:focus { border-color:var(--blue); }
-    .field-error { font-size:11px; color:var(--red,#f85149); margin-top:3px; }
-    .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
-    .del-btn { background:none; border:1px solid rgba(239,68,68,.3); border-radius:6px; padding:4px 10px; font-size:12px; color:var(--red); cursor:pointer; transition:all .15s; }
-    .del-btn:hover { background:rgba(239,68,68,.12); border-color:var(--red); }
   </style>
 </head>
 <body>
@@ -50,10 +83,15 @@
 
   <div class="main">
     <header class="topbar">
-      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+      </button>
       <span class="topbar-title">Account Deletion Requests</span>
       <div class="topbar-actions">
-        <button type="button" class="icon-btn">🔔<span class="dot"></span></button>
+        <button type="button" class="icon-btn" aria-label="Notifications" title="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+          <span class="dot"></span>
+        </button>
         <div class="topbar-user-pill">
           <div class="avatar" id="topbar-avatar">SA</div>
           <div class="topbar-user-info">
@@ -67,15 +105,36 @@
     <div class="content">
 
       <div class="page-header">
-        <button class="back-btn" onclick="window.location.href='users.html'">← Back to Users</button>
-        <h1>Account Deletion Requests</h1>
-        <button type="button" class="back-btn" onclick="loadRequests()">🔄 Refresh</button>
+        <div class="ph-left">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="window.location.href='users.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            Back to Users
+          </button>
+          <div>
+            <h1>Account Deletion Requests</h1>
+            <p>Owners who asked for their account and data to be removed.</p>
+          </div>
+        </div>
+        <div class="page-header-actions">
+          <button type="button" class="btn btn-ghost" onclick="loadRequests()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            Refresh
+          </button>
+        </div>
       </div>
 
-      <div class="table-card">
-        <div class="table-card-header">
-          <h3>🗑️ Pending Deletion Requests</h3>
-          <span class="count-badge" id="req-count">0 requests</span>
+      <div class="callout" role="note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        <div><strong>Deleting an account is permanent.</strong> The account and all of its data are removed and cannot be restored. You confirm each deletion with a one-time code sent to your email.</div>
+      </div>
+
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3>Pending deletion requests</h3>
+            <span class="card-sub">Oldest requests are handled first</span>
+          </div>
+          <span class="badge badge-gray" id="req-count">0 requests</span>
         </div>
         <div class="table-wrap">
           <table>
@@ -85,86 +144,150 @@
                 <th>Mobile</th>
                 <th>Email</th>
                 <th>Requested At</th>
-                <th>Action</th>
+                <th class="th-actions">Action</th>
               </tr>
             </thead>
             <tbody id="req-tbody">
-              <tr class="empty-row"><td colspan="5">Loading...</td></tr>
+              <tr><td class="skel-cell" colspan="5"><span class="skeleton skeleton-line" style="width:40%"></span></td></tr>
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
     </div>
   </div>
 
   <!-- OTP Confirm Modal -->
   <div class="modal-overlay" id="otp-modal">
-    <div class="modal-box">
+    <div class="modal-box modal-sm" role="dialog" aria-modal="true" aria-labelledby="otp-title">
       <div class="modal-header">
-        <h2>🗑️ Confirm Account Deletion</h2>
-        <button type="button" class="modal-close" onclick="closeModal()">✕</button>
+        <h2 id="otp-title">Confirm account deletion</h2>
+        <button type="button" class="modal-close" onclick="closeModal()" title="Close" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
       </div>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
-        An OTP has been sent to your registered phone number. Enter it to permanently delete this account and all its data.
-      </p>
-      <div class="form-group">
-        <label>Enter OTP</label>
-        <input type="text" id="otp-input" placeholder="6-digit OTP" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
-        <div class="field-error" id="otp-error"></div>
+      <div class="modal-body">
+        <span class="confirm-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </span>
+        <p class="confirm-text">A one-time code was sent to <strong id="otp-email">your registered email</strong>. Enter it to permanently delete this account and all its data.</p>
+        <div class="form-group">
+          <label for="otp-input">Verification code</label>
+          <input type="text" id="otp-input" class="otp-input" placeholder="6-digit OTP" maxlength="6" inputmode="numeric" autocomplete="one-time-code" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+          <div class="field-error" id="otp-error"></div>
+        </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
-        <button type="button" class="btn btn-sm" id="btn-delete" onclick="confirmDelete()" style="background:#ef4444;color:#fff;border:none;border-radius:var(--radius-sm);padding:7px 18px;cursor:pointer;font-size:13px;font-weight:600;">Delete Account</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="btn-delete" onclick="confirmDelete()">Delete Account</button>
       </div>
     </div>
   </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="../js/config.js"></script>
   <script src="../js/auth.js"></script>
   <script>
     var pendingUserId = null;
+    var TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+    var INBOX_ICON = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>';
+    var ALERT_ICON = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>';
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function initials(name) {
+      var parts = String(name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2);
+      return (parts.map(function (w) { return w[0]; }).join('') || '?').toUpperCase();
+    }
+
+    function showToast(msg, kind) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + (kind === 'success' ? 'success' : 'error');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(function () { t.className = 'toast'; }, 3500);
+    }
+
+    function setCount(n) {
+      var el = document.getElementById('req-count');
+      el.textContent = n + ' request' + (n !== 1 ? 's' : '');
+      el.className = 'badge ' + (n > 0 ? 'badge-red' : 'badge-gray');
+    }
+
+    function stateRow(icon, title, text, withRetry) {
+      return '<tr><td class="state-cell" colspan="5"><div class="empty-state">'
+        + '<div class="empty-icon">' + icon + '</div><h3>' + esc(title) + '</h3><p>' + esc(text) + '</p>'
+        + (withRetry ? '<button type="button" class="btn btn-ghost btn-sm" onclick="loadRequests()">Try again</button>' : '')
+        + '</div></td></tr>';
+    }
+
+    function skeletonRows() {
+      var row = '<tr>'
+        + '<td class="skel-cell"><span class="skeleton skeleton-line" style="width:70%"></span></td>'
+        + '<td class="skel-cell"><span class="skeleton skeleton-line" style="width:60%"></span></td>'
+        + '<td class="skel-cell"><span class="skeleton skeleton-line" style="width:80%"></span></td>'
+        + '<td class="skel-cell"><span class="skeleton skeleton-line" style="width:55%"></span></td>'
+        + '<td class="skel-cell"><span class="skeleton skeleton-line" style="width:50%;margin-left:auto"></span></td>'
+        + '</tr>';
+      return row + row + row;
+    }
 
     async function loadRequests() {
       var tbody = document.getElementById('req-tbody');
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Loading...</td></tr>';
+      tbody.innerHTML = skeletonRows();
       try {
         var res = await fetch(API_BASE + '/company/deletion-requests', { cache: 'no-store' });
         var rows = await res.json();
-        document.getElementById('req-count').textContent = rows.length + ' request' + (rows.length !== 1 ? 's' : '');
+        if (!Array.isArray(rows)) throw new Error('bad response');
+        setCount(rows.length);
         if (!rows.length) {
-          tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No pending deletion requests</td></tr>';
+          tbody.innerHTML = stateRow(INBOX_ICON, 'No pending deletion requests', 'When an owner asks to delete their account it will show up here.', false);
           return;
         }
         tbody.innerHTML = rows.map(function(r) {
           return '<tr>'
-            + '<td style="font-weight:600;color:var(--text-primary);font-size:13px;">' + r.org_name + '</td>'
-            + '<td style="font-size:12px;color:var(--text-secondary);">' + r.mobile + '</td>'
-            + '<td style="font-size:12px;color:var(--text-secondary);">' + r.email + '</td>'
-            + '<td style="font-size:12px;color:var(--text-muted);">' + r.requested_at + '</td>'
-            + '<td><button class="del-btn" onclick="initDelete(\'' + r.user_id + '\')">Delete Account</button></td>'
+            + '<td><div class="org-cell"><span class="avatar avatar-sm">' + esc(initials(r.org_name)) + '</span>'
+            +   '<span class="org-name" title="' + esc(r.org_name) + '">' + esc(r.org_name || '—') + '</span></div></td>'
+            + '<td class="cell-num" data-label="Mobile">' + esc(r.mobile || '—') + '</td>'
+            + '<td data-label="Email"><span class="cell-trunc" title="' + esc(r.email) + '">' + esc(r.email || '—') + '</span></td>'
+            + '<td class="cell-muted" data-label="Requested">' + esc(r.requested_at || '—') + '</td>'
+            + '<td class="td-actions"><button type="button" class="btn btn-ghost btn-sm btn-danger-ghost" data-user="' + esc(r.user_id) + '">'
+            +   TRASH_ICON + ' Delete Account</button></td>'
             + '</tr>';
         }).join('');
       } catch(e) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Failed to load requests.</td></tr>';
+        setCount(0);
+        tbody.innerHTML = stateRow(ALERT_ICON, 'Failed to load requests', 'Check your connection and try again.', true);
       }
     }
 
-    async function initDelete(userId) {
+    document.getElementById('req-tbody').addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-user]');
+      if (btn) initDelete(btn.getAttribute('data-user'), btn);
+    });
+
+    async function initDelete(userId, btn) {
       var adminEmail = localStorage.getItem('admin_email');
       if (!adminEmail) { alert('Session expired. Please login again.'); window.location.href = 'login.html'; return; }
+      if (btn) { btn.disabled = true; btn.classList.add('is-loading'); }
       try {
         var res = await fetch(API_BASE + '/auth/admin-login', {
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ email: adminEmail })
         });
         var data = await res.json();
-        if (!data.success) { alert(data.detail || 'Failed to send OTP'); return; }
-      } catch(e) { alert('Network error. Try again.'); return; }
+        if (!data.success) { showToast(data.detail || 'Failed to send OTP', 'error'); return; }
+      } catch(e) { showToast('Network error. Try again.', 'error'); return; }
+      finally { if (btn) { btn.disabled = false; btn.classList.remove('is-loading'); } }
       pendingUserId = userId;
+      document.getElementById('otp-email').textContent = adminEmail;
       document.getElementById('otp-input').value = '';
       document.getElementById('otp-error').textContent = '';
       document.getElementById('otp-modal').classList.add('open');
+      setTimeout(function () { document.getElementById('otp-input').focus(); }, 0);
     }
 
     function closeModal() {
@@ -195,6 +318,7 @@
         var dData = await dRes.json();
         if (dData.success) {
           closeModal();
+          showToast('Account deleted', 'success');
           loadRequests();
         } else {
           errEl.textContent = dData.detail || 'Deletion failed.';
@@ -218,6 +342,10 @@
       document.querySelector('.sidebar').classList.remove('open');
       document.getElementById('sidebar-overlay').classList.remove('open');
     }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeModal();
+    });
 
     loadRequests();
   </script>

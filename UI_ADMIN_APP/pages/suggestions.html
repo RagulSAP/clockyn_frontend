@@ -8,57 +8,118 @@
   <script src="../js/theme.js"></script>
   <link rel="stylesheet" href="../css/dashboard.css" />
   <style>
-    .suggestion-card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 18px 20px;
-      margin-bottom: 12px;
-      transition: border-color 0.18s, transform 0.18s;
+    .ic { display: block; flex-shrink: 0; }
+    .topbar-search > span { display: inline-flex; }
+
+    /* Summary tiles */
+    .stat-grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (min-width: 720px) { .stat-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    .stat-tile { position: relative; }
+    .stat-tile .stat-val { font-variant-numeric: tabular-nums; }
+    .st-icon {
+      position: absolute; top: 16px; right: 16px; width: 30px; height: 30px; border-radius: var(--radius-sm);
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--surface-muted); color: var(--text-muted);
     }
-    .suggestion-card:hover { border-color: rgba(88,166,255,0.35); transform: translateY(-1px); }
-    .suggestion-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .st-icon.success { background: var(--success-soft); color: var(--success); }
+    .st-icon.info    { background: var(--info-soft);    color: var(--info); }
+    .st-icon.purple  { background: var(--purple-soft);  color: var(--purple); }
+
+    /* Filter bar */
+    .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .search-box {
+      display: flex; align-items: center; gap: 10px; flex: 1 1 260px; min-width: 200px; height: 42px; padding: 0 14px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+    }
+    .search-box:hover { border-color: var(--border-strong); }
+    .search-box:focus-within { border-color: var(--text-muted); box-shadow: 0 0 0 3px var(--ring); }
+    .search-box input { background: none; border: none; outline: none; box-shadow: none; padding: 0; min-height: 0; width: 100%; font-size: 14px; color: var(--text); }
+    .search-box input::placeholder { color: var(--text-muted); }
+    .filter-bar select { width: auto; min-width: 150px; }
+    .count-tag { font-size: 12.5px; color: var(--text-muted); font-weight: 600; margin-left: auto; font-variant-numeric: tabular-nums; }
+
+    /* Suggestion cards */
+    .suggestion-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+      padding: 20px; margin-bottom: 12px; min-width: 0;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 var(--highlight);
+      transition: border-color var(--motion-base) var(--ease);
+    }
+    .suggestion-card:hover { border-color: var(--border-strong); }
+    .suggestion-card-header { display: flex; align-items: flex-start; gap: 12px; }
     .suggestion-avatar {
-      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      background: var(--primary-soft); color: var(--text); border: 1px solid var(--border);
       display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 800; color: #fff;
+      font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
     }
     .suggestion-meta { flex: 1; min-width: 0; }
-    .suggestion-sender { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-    .suggestion-email { font-size: 11px; color: var(--blue); margin-top: 2px; }
-    .suggestion-date { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
-    .suggestion-subject { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 10px 0 6px; }
-    .suggestion-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; }
-    .suggestion-company { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; background: rgba(88,166,255,0.1); color: var(--blue); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
-    .reply-thread { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); display: none; }
-    .reply-thread.open { display: block; }
+    .suggestion-sender { font-size: 14px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .suggestion-email { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .suggestion-date { font-size: 12px; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; padding-top: 2px; }
+    .suggestion-subject { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; color: var(--text); margin: 14px 0 6px; overflow-wrap: anywhere; }
+    .suggestion-body { font-size: 14px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .suggestion-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .suggestion-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .org-chip { max-width: 100%; min-width: 0; }
+    .org-chip .clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+    .toggle-replies-btn {
+      display: inline-flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; padding: 6px 8px;
+      border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text-secondary);
+      transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+    }
+    .toggle-replies-btn:hover { background: var(--surface-muted); color: var(--text); }
+    .toggle-replies-btn .chev { transition: transform var(--motion-base) var(--ease); }
+    .toggle-replies-btn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+
+    /* Reply thread */
+    .reply-thread { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); display: none; }
+    .reply-thread.open { display: block; animation: ck-fade var(--motion-base) var(--ease) both; }
     .reply-item {
-      display: flex; gap: 10px; background: rgba(88,166,255,0.06);
-      border: 1px solid rgba(88,166,255,0.15); border-radius: 10px;
-      padding: 10px 12px; margin-bottom: 8px;
+      display: flex; gap: 10px; background: var(--info-soft); border: 1px solid rgba(var(--info-rgb), 0.2);
+      border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px;
     }
     .reply-item:last-child { margin-bottom: 0; }
-    .reply-item-icon { font-size: 15px; flex-shrink: 0; }
-    .reply-item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-    .reply-item-admin { font-size: 12px; font-weight: 700; color: var(--blue); }
-    .reply-item-date { font-size: 10px; color: var(--text-muted); }
-    .reply-item-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; }
-    .toggle-replies-btn {
-      background: none; border: none; cursor: pointer; font-size: 11px;
-      color: var(--blue); font-weight: 600; padding: 0;
+    .reply-item-icon { color: var(--info); padding-top: 1px; }
+    .reply-item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+    .reply-item-admin { font-size: 12.5px; font-weight: 700; color: var(--info); }
+    .reply-item-date { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .reply-item-text { font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+    /* Reply modal */
+    .modal-sub { font-size: 13px; color: var(--text-muted); margin: -8px 0 16px; overflow-wrap: anywhere; }
+    .modal-past-replies { max-height: 190px; overflow-y: auto; margin-bottom: 16px; }
+    .modal-past-replies-label { font-size: 10.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; margin-bottom: 8px; }
+    .modal-box .form-group { margin-bottom: 0; }
+    .modal-box .form-group label span { font-weight: 400; color: var(--text-muted); }
+    textarea#reply-text-input { min-height: 120px; resize: vertical; }
+
+    /* Skeleton / empty / error */
+    .suggestion-card.is-skeleton { display: grid; gap: 12px; }
+    .empty-state.boxed {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm), inset 0 1px 0 var(--highlight);
     }
-    .toggle-replies-btn:hover { text-decoration: underline; }
-    .modal-past-replies { max-height: 180px; overflow-y: auto; margin-bottom: 14px; }
-    .modal-past-replies-label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
-    .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-    .search-box { display: flex; align-items: center; gap: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 12px; flex: 1; min-width: 200px; }
-    .search-box input { background: none; border: none; outline: none; color: var(--text-primary); font-size: 13px; width: 100%; }
-    .search-box input::placeholder { color: var(--text-muted); }
-    .filter-select { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 12px; color: var(--text-secondary); font-size: 13px; cursor: pointer; outline: none; }
-    .count-tag { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-left: auto; }
-    .empty-state { text-align: center; padding: 64px 20px; color: var(--text-muted); }
-    .empty-icon { font-size: 44px; margin-bottom: 14px; }
+    .empty-icon.is-error { background: var(--danger-soft); color: var(--danger); }
+    .empty-state .detail { font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+
+    /* Pagination */
+    .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; margin-top: 18px; }
+    .page-info { margin-right: auto; font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .page-btn {
+      min-width: 36px; height: 36px; padding: 0 10px; border-radius: var(--radius-pill);
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary);
+      font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; font-variant-numeric: tabular-nums;
+      transition: background-color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+    }
+    .page-btn:hover:not(:disabled) { background: var(--surface-muted); border-color: var(--border-strong); color: var(--text); }
+    .page-btn.active { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .page-gap { color: var(--text-muted); align-self: center; padding: 0 2px; }
   </style>
 </head>
 <body>
@@ -67,18 +128,18 @@
   <script src="../js/layout.js"></script>
 
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-  <div id="toast" style="position:fixed;bottom:32px;right:32px;background:#16a34a;color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transform:translateY(20px);transition:opacity 0.3s,transform 0.3s;pointer-events:none;"></div>
+  <div id="toast" role="status" aria-live="polite" style="position:fixed;bottom:32px;right:32px;background:#16a34a;color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transform:translateY(20px);transition:opacity 0.3s,transform 0.3s;pointer-events:none;"></div>
 
   <div class="main">
     <header class="topbar">
-      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button>
       <span class="topbar-title">Suggestions</span>
       <div class="topbar-search">
-        <span>🔍</span>
-        <input type="text" id="topbar-search" placeholder="Search suggestions..." oninput="applyFilters()" />
+        <span><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></span>
+        <input type="text" id="topbar-search" placeholder="Search suggestions..." aria-label="Search suggestions" oninput="applyFilters()" />
       </div>
       <div class="topbar-actions">
-        <button class="icon-btn" onclick="loadSuggestions()" title="Refresh">🔄</button>
+        <button class="icon-btn" onclick="loadSuggestions()" title="Refresh" aria-label="Refresh suggestions"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
         <div class="topbar-user-pill">
           <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
           <div class="topbar-user-info">
@@ -92,39 +153,44 @@
     <div class="content">
 
       <div class="page-header">
-        <h1>💡 User Suggestions</h1>
-        <p>Feature requests and feedback from app users (email_log table)</p>
+        <div>
+          <h1>User Suggestions</h1>
+          <p>Feature requests and feedback from app users.</p>
+        </div>
       </div>
 
       <!-- Stats row -->
-      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">Total</span><div class="stat-icon blue">💡</div></div>
-          <div class="stat-value" id="s-total">—</div>
-          <div class="stat-footer">All suggestions</div>
+      <div class="stat-grid cols-3">
+        <div class="stat-tile">
+          <span class="st-icon info"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+          <div class="stat-label">Total</div>
+          <div class="stat-val" id="s-total">&mdash;</div>
+          <div class="stat-sub">All suggestions</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">Companies</span><div class="stat-icon purple">🏢</div></div>
-          <div class="stat-value" id="s-companies">—</div>
-          <div class="stat-footer">Unique organizations</div>
+        <div class="stat-tile">
+          <span class="st-icon purple"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 6h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M8 6h.01"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><rect x="4" y="2" width="16" height="20" rx="2"/></svg></span>
+          <div class="stat-label">Companies</div>
+          <div class="stat-val" id="s-companies">&mdash;</div>
+          <div class="stat-sub">Unique organizations</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">This Month</span><div class="stat-icon green">📅</div></div>
-          <div class="stat-value" id="s-month">—</div>
-          <div class="stat-footer">Received this month</div>
+        <div class="stat-tile">
+          <span class="st-icon success"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg></span>
+          <div class="stat-label">This Month</div>
+          <div class="stat-val" id="s-month">&mdash;</div>
+          <div class="stat-sub">Received this month</div>
         </div>
       </div>
 
       <!-- Filter bar -->
       <div class="filter-bar">
         <div class="search-box">
-          <span>🔍</span>
-          <input type="text" id="search-input" placeholder="Search by subject, email or company..." oninput="applyFilters()" />
+          <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+          <input type="text" id="search-input" placeholder="Search by subject, email or company..." aria-label="Search by subject, email or company" oninput="applyFilters()" />
         </div>
-        <select class="filter-select" id="company-filter" onchange="applyFilters()">
+        <select class="filter-select" id="company-filter" onchange="applyFilters()" aria-label="Filter by company">
           <option value="">All Companies</option>
         </select>
-        <select class="filter-select" id="sort-filter" onchange="applyFilters()">
+        <select class="filter-select" id="sort-filter" onchange="applyFilters()" aria-label="Sort order">
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
         </select>
@@ -133,39 +199,39 @@
 
       <!-- Suggestions list -->
       <div id="suggestions-list">
-        <div class="empty-state"><div class="empty-icon">⏳</div><p>Loading...</p></div>
+        <div class="suggestion-card is-skeleton"><div class="skeleton skeleton-line" style="width:35%"></div><div class="skeleton skeleton-line" style="width:70%"></div><div class="skeleton skeleton-line" style="width:90%"></div></div>
       </div>
 
       <!-- Pagination -->
       <div class="pagination" id="pagination" style="display:none;">
         <span class="page-info" id="page-info"></span>
-        <button class="page-btn" id="btn-prev" onclick="changePage(-1)">&#9664;</button>
+        <button class="page-btn" id="btn-prev" onclick="changePage(-1)" aria-label="Previous page"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"/></svg></button>
         <span id="page-numbers" style="display:flex;gap:4px;"></span>
-        <button class="page-btn" id="btn-next" onclick="changePage(1)">&#9654;</button>
+        <button class="page-btn" id="btn-next" onclick="changePage(1)" aria-label="Next page"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></button>
       </div>
 
     </div>
   </div>
 
   <!-- Reply Modal -->
-  <div style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;" id="reply-modal" class="reply-modal-overlay">
-    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:480px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <div style="font-size:18px;font-weight:600;color:var(--text-primary);" id="reply-modal-title">Reply to Suggestion</div>
-        <button onclick="closeReplyModal()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px 8px;">&#x2715;</button>
+  <div class="modal-overlay" id="reply-modal">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="reply-modal-title">
+      <div class="modal-header">
+        <h2 id="reply-modal-title">Reply to Suggestion</h2>
+        <button class="modal-close" onclick="closeReplyModal()" aria-label="Close"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       </div>
-      <div style="margin-bottom:12px;font-size:12px;color:var(--text-muted);" id="reply-modal-sub"></div>
+      <div class="modal-sub" id="reply-modal-sub"></div>
       <div class="modal-past-replies" id="modal-past-replies" style="display:none;">
         <div class="modal-past-replies-label">Previous Replies</div>
         <div id="modal-past-replies-list"></div>
       </div>
-      <div style="margin-bottom:16px;">
-        <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;">Your Reply (will be shown to the user in the app)</label>
-        <textarea id="reply-text-input" rows="5" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);font-size:14px;box-sizing:border-box;resize:vertical;" placeholder="Type your reply here..."></textarea>
+      <div class="form-group">
+        <label for="reply-text-input">Your Reply <span>(shown to the user in the app)</span></label>
+        <textarea id="reply-text-input" rows="5" placeholder="Type your reply here..."></textarea>
       </div>
-      <div style="display:flex;gap:10px;margin-top:24px;">
-        <button class="btn btn-ghost" onclick="closeReplyModal()" style="flex:1;">Cancel</button>
-        <button class="btn btn-primary" id="reply-submit-btn" onclick="submitReply()" style="flex:1;">Send Reply</button>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeReplyModal()">Cancel</button>
+        <button class="btn btn-primary" id="reply-submit-btn" onclick="submitReply()">Send Reply</button>
       </div>
     </div>
   </div>
@@ -175,8 +241,44 @@
   <script>
     var all = [], filtered = [], curPage = 1, pageSize = 15;
 
+    var ICON = {
+      alert:  '<svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>',
+      bulb:   '<svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>',
+      reply:  '<svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/></svg>',
+      thread: '<svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/></svg>',
+      chev:   '<svg class="ic chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>',
+      send:   '<svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 18v-2a4 4 0 0 0-4-4H4"/><path d="m9 17-5-5 5-5"/></svg>',
+      org:    '<svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 6h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M8 6h.01"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><rect x="4" y="2" width="16" height="20" rx="2"/></svg>'
+    };
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function fmtDate(d) {
+      return d ? new Date(d).toLocaleString('en-IN', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    }
+
+    function initialsOf(company, email) {
+      var words = String(company || '').trim().split(/\s+/).filter(Boolean);
+      if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+      return String(company || email || 'US').replace(/[^A-Za-z0-9]/g, '').substring(0, 2).toUpperCase() || 'US';
+    }
+
+    function listState(kind, title, text, detail) {
+      var retry = kind === 'error' ? '<button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="loadSuggestions()">Try again</button>' : '';
+      return '<div class="empty-state boxed"><div class="empty-icon' + (kind === 'error' ? ' is-error' : '') + '">' + (kind === 'error' ? ICON.alert : ICON.bulb) + '</div>'
+        + '<h3>' + esc(title) + '</h3><p>' + esc(text) + '</p>' + (detail ? '<div class="detail">' + esc(detail) + '</div>' : '') + retry + '</div>';
+    }
+
+    function skeletonCards(n) {
+      var out = '';
+      for (var i = 0; i < n; i++) out += '<div class="suggestion-card is-skeleton"><div class="skeleton skeleton-line" style="width:35%"></div><div class="skeleton skeleton-line" style="width:70%"></div><div class="skeleton skeleton-line" style="width:90%"></div></div>';
+      return out;
+    }
+
     async function loadSuggestions() {
-      document.getElementById('suggestions-list').innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>Loading...</p></div>';
+      document.getElementById('suggestions-list').innerHTML = skeletonCards(3);
       try {
         var res = await fetch(API_BASE + '/company/suggest-feature/with-replies', { cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -187,9 +289,8 @@
         applyFilters();
         updateBadge(all.length);
       } catch(e) {
-        document.getElementById('suggestions-list').innerHTML =
-          '<div class="empty-state"><div class="empty-icon">⚠️</div>'
-          + '<p style="color:var(--red)">Failed to load suggestions.<br><small>' + e.message + '</small></p></div>';
+        document.getElementById('suggestions-list').innerHTML = listState('error', 'Failed to load suggestions', 'Check your connection and try again.', e.message);
+        document.getElementById('pagination').style.display = 'none';
       }
     }
 
@@ -238,6 +339,21 @@
       renderPage();
     }
 
+    function replyItemHtml(r) {
+      var rDate = fmtDate(r.created_at);
+      return '<div class="reply-item">'
+        + '<div class="reply-item-icon">' + ICON.thread + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div class="reply-item-head"><span class="reply-item-admin">' + esc(r.admin_name||'Admin') + '</span>' + (rDate ? '<span class="reply-item-date">' + esc(rDate) + '</span>' : '') + '</div>'
+        + '<div class="reply-item-text">' + esc(r.reply_text||'') + '</div>'
+        + '</div>'
+        + '</div>';
+    }
+
+    function replyLabel(n, open) {
+      return open ? 'Hide replies' : 'View ' + n + ' repl' + (n > 1 ? 'ies' : 'y');
+    }
+
     function renderPage() {
       var total = filtered.length, pages = Math.max(1, Math.ceil(total/pageSize));
       curPage = Math.min(curPage, pages);
@@ -245,7 +361,7 @@
       document.getElementById('count-tag').textContent = total + ' suggestion' + (total!==1?'s':'');
 
       if (!slice.length) {
-        document.getElementById('suggestions-list').innerHTML = '<div class="empty-state"><div class="empty-icon">💡</div><p>No suggestions found.</p></div>';
+        document.getElementById('suggestions-list').innerHTML = listState('empty', 'No suggestions found', all.length ? 'Try a different search or company.' : 'Feedback from app users will show up here.');
         document.getElementById('pagination').style.display = 'none';
         return;
       }
@@ -258,42 +374,39 @@
         var company  = s.company_name || s.org_name || s.organization || '';
         var date     = s.created_at || s.sent_at || s.timestamp || s.date || s.log_date || '';
         var orgId    = s.org_id || '';
-        var initials = (email || company || 'US').substring(0,2).toUpperCase();
-        var dateStr  = date ? new Date(date).toLocaleString('en-IN', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+        var dateStr  = fmtDate(date);
         var replies  = Array.isArray(s.replies) ? s.replies : [];
         var cardId   = 'thread-' + (s.log_id||0);
         return '<div class="suggestion-card">'
           + '<div class="suggestion-card-header">'
-          + '<div class="suggestion-avatar">' + initials + '</div>'
+          + '<div class="suggestion-avatar">' + esc(initialsOf(company, email)) + '</div>'
           + '<div class="suggestion-meta">'
-          + '<div class="suggestion-sender">' + esc(company || email || orgId || 'Unknown') + '</div>'
-          + (email ? '<div class="suggestion-email">' + esc(email) + '</div>' : '')
-          + (orgId && !company ? '<div class="suggestion-email" style="color:var(--text-muted)">Org: ' + esc(orgId) + '</div>' : '')
+          + '<div class="suggestion-sender" title="' + esc(company || email || orgId || 'Unknown') + '">' + esc(company || email || orgId || 'Unknown') + '</div>'
+          + (email ? '<div class="suggestion-email" title="' + esc(email) + '">' + esc(email) + '</div>' : '')
+          + (orgId && !company ? '<div class="suggestion-email">Org: ' + esc(orgId) + '</div>' : '')
           + '</div>'
-          + (dateStr ? '<div class="suggestion-date">' + dateStr + '</div>' : '')
+          + (dateStr ? '<div class="suggestion-date">' + esc(dateStr) + '</div>' : '')
           + '</div>'
           + '<div class="suggestion-subject">' + esc(subject) + '</div>'
           + (body ? '<div class="suggestion-body">' + esc(body) + '</div>' : '')
-          + (company ? '<span class="suggestion-company">🏢 ' + esc(company) + '</span>' : '')
-          + '<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:10px;gap:8px;">'
-          + (replies.length > 0 ? '<button class="toggle-replies-btn" onclick="toggleReplyThread(\''+cardId+'\')" id="'+cardId+'-toggle">💬 View '+replies.length+' repl'+(replies.length>1?'ies':'y')+'</button>' : '')
-          + '<button class="btn btn-sm btn-ghost" onclick="openReplyModal(' + (s.log_id||0) + ',\'' + esc(company||'Unknown').replace(/'/g,'&#39;') + '\')">Reply</button>'
+          + '<div class="suggestion-footer">'
+          + (company ? '<span class="badge badge-gray org-chip" title="' + esc(company) + '">' + ICON.org + '<span class="clip">' + esc(company) + '</span></span>' : '<span></span>')
+          + '<div class="suggestion-actions">'
+          + (replies.length > 0 ? '<button class="toggle-replies-btn" aria-expanded="false" data-thread="' + cardId + '" data-n="' + replies.length + '" onclick="toggleReplyThread(\'' + cardId + '\')" id="' + cardId + '-toggle"><span class="lbl">' + replyLabel(replies.length, false) + '</span>' + ICON.chev + '</button>' : '')
+          + '<button class="btn btn-sm btn-ghost" data-reply-id="' + (s.log_id||0) + '" data-company="' + esc(company||'Unknown') + '">' + ICON.send + ' Reply</button>'
           + '</div>'
-          + (replies.length > 0 ? '<div class="reply-thread" id="'+cardId+'">' + replies.map(function(r){
-              var rDate = r.created_at ? new Date(r.created_at).toLocaleString('en-IN', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-              return '<div class="reply-item">'
-                + '<div class="reply-item-icon">💬</div>'
-                + '<div style="flex:1;min-width:0;">'
-                + '<div class="reply-item-head"><span class="reply-item-admin">' + esc(r.admin_name||'Admin') + '</span>' + (rDate ? '<span class="reply-item-date">' + rDate + '</span>' : '') + '</div>'
-                + '<div class="reply-item-text">' + esc(r.reply_text||'') + '</div>'
-                + '</div>'
-                + '</div>';
-            }).join('') + '</div>' : '')
+          + '</div>'
+          + (replies.length > 0 ? '<div class="reply-thread" id="'+cardId+'">' + replies.map(replyItemHtml).join('') + '</div>' : '')
           + '</div>';
       }).join('');
 
       renderPagination(total, pages);
     }
+
+    document.getElementById('suggestions-list').addEventListener('click', function(e) {
+      var btn = e.target.closest('button[data-reply-id]');
+      if (btn) openReplyModal(Number(btn.getAttribute('data-reply-id')), btn.getAttribute('data-company'));
+    });
 
     function renderPagination(total, pages) {
       var start = (curPage-1)*pageSize+1, end = Math.min(curPage*pageSize, total);
@@ -305,7 +418,7 @@
         if (i===1||i===pages||Math.abs(i-curPage)<=1)
           nums += '<button class="page-btn'+(i===curPage?' active':'')+'" onclick="goPage('+i+')">'+i+'</button>';
         else if (Math.abs(i-curPage)===2)
-          nums += '<span style="color:var(--text-muted);align-self:center;">…</span>';
+          nums += '<span class="page-gap">…</span>';
       }
       document.getElementById('page-numbers').innerHTML = nums;
       document.getElementById('pagination').style.display = pages > 1 ? 'flex' : 'none';
@@ -313,14 +426,13 @@
 
     function goPage(n) { curPage = n; renderPage(); }
     function changePage(d) { curPage += d; renderPage(); }
-    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     function toggleReplyThread(cardId) {
       var thread = document.getElementById(cardId);
       var toggle = document.getElementById(cardId + '-toggle');
-      if (!toggle.dataset.label) toggle.dataset.label = toggle.textContent;
       var isOpen = thread.classList.toggle('open');
-      toggle.textContent = isOpen ? '💬 Hide replies' : toggle.dataset.label;
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      toggle.querySelector('.lbl').textContent = replyLabel(Number(toggle.getAttribute('data-n')), isOpen);
     }
 
     var replyTargetLogId = null;
@@ -335,33 +447,24 @@
       var replies = (suggestion && Array.isArray(suggestion.replies)) ? suggestion.replies : [];
       var pastWrap = document.getElementById('modal-past-replies');
       if (replies.length) {
-        document.getElementById('modal-past-replies-list').innerHTML = replies.map(function(r){
-          var rDate = r.created_at ? new Date(r.created_at).toLocaleString('en-IN', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-          return '<div class="reply-item">'
-            + '<div class="reply-item-icon">💬</div>'
-            + '<div style="flex:1;min-width:0;">'
-            + '<div class="reply-item-head"><span class="reply-item-admin">' + esc(r.admin_name||'Admin') + '</span>' + (rDate ? '<span class="reply-item-date">' + rDate + '</span>' : '') + '</div>'
-            + '<div class="reply-item-text">' + esc(r.reply_text||'') + '</div>'
-            + '</div>'
-            + '</div>';
-        }).join('');
+        document.getElementById('modal-past-replies-list').innerHTML = replies.map(replyItemHtml).join('');
         pastWrap.style.display = 'block';
       } else {
         pastWrap.style.display = 'none';
       }
 
-      var el = document.getElementById('reply-modal');
-      el.style.display = 'flex';
+      document.getElementById('reply-modal').classList.add('open');
+      setTimeout(function() { document.getElementById('reply-text-input').focus(); }, 0);
     }
 
     function closeReplyModal() {
-      document.getElementById('reply-modal').style.display = 'none';
+      document.getElementById('reply-modal').classList.remove('open');
       replyTargetLogId = null;
     }
 
     async function submitReply() {
       var replyText = (document.getElementById('reply-text-input').value || '').trim();
-      if (!replyText) { alert('Please type a reply first'); return; }
+      if (!replyText) { showNotification('Please type a reply first', false); return; }
       var btn = document.getElementById('reply-submit-btn');
       btn.disabled = true; btn.textContent = 'Sending...';
       try {
@@ -379,27 +482,30 @@
           showNotification('Reply sent successfully');
           loadSuggestions();
         } else {
-          alert('Failed to send reply: ' + (json.detail || 'Unknown error'));
+          showNotification('Failed to send reply: ' + (json.detail || 'Unknown error'), false);
         }
       } catch(e) {
-        alert('Error: ' + e.message);
+        showNotification('Error: ' + e.message, false);
       } finally {
         btn.disabled = false; btn.textContent = 'Send Reply';
       }
     }
 
-    function showNotification(msg) {
-      var n = document.createElement('div');
-      n.textContent = msg;
-      n.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#238636;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;';
-      document.body.appendChild(n);
-      setTimeout(function(){ document.body.removeChild(n); }, 2500);
+    function showNotification(msg, ok) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = ok === false ? '#dc2626' : '#16a34a';
+      t.style.opacity = '1';
+      t.style.transform = 'translateY(0)';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function() { t.style.opacity = '0'; t.style.transform = 'translateY(20px)'; }, 2800);
     }
 
-    // Close reply modal on backdrop click
+    // Close reply modal on backdrop click and Escape
     document.getElementById('reply-modal').addEventListener('click', function(e) {
       if (e.target === this) closeReplyModal();
     });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeReplyModal(); });
 
     function updateBadge(count) {
       document.querySelectorAll('.nav-suggestion-badge').forEach(function(b){

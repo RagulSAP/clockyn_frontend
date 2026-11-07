@@ -8,131 +8,80 @@
   <script src="../js/theme.js"></script>
   <link rel="stylesheet" href="../css/dashboard.css" />
   <style>
-    .settings-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
+    /* Page-specific styles only; everything else (cards, buttons, forms, modals, badges, tables) is the shared system. */
+    .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .settings-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; margin-bottom: 20px; align-items: start; }
+    .settings-grid > .card { min-width: 0; }
+
+    /* ── Profile ── */
+    .profile-body { display: grid; gap: 22px; }
+    .profile-id { display: flex; align-items: center; gap: 16px; min-width: 0; }
+    .avatar-lg { width: 64px; height: 64px; font-size: 20px; }
+    .profile-meta { min-width: 0; }
+    .profile-name { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; line-height: 1.2; color: var(--text); overflow-wrap: anywhere; }
+    .profile-sub { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 7px; font-size: 13.5px; color: var(--text-muted); }
+    .profile-email { overflow-wrap: anywhere; }
+    .profile-form .form-group { margin: 0; }
+    .profile-form-row { display: flex; gap: 10px; align-items: stretch; }
+    .profile-form-row input { flex: 1; min-width: 0; }
+    .profile-msg { min-height: 18px; margin-top: 8px; font-size: 13px; font-weight: 500; }
+
+    /* ── Appearance ── */
+    .appearance-lead { font-size: 14px; color: var(--text-muted); margin-bottom: 14px; }
+    #theme-seg { display: flex; width: 100%; }
+    #theme-seg > button { flex: 1; }
+
+    /* ── Users ── */
+    .card-title-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .card-sub { font-size: 12.5px; color: var(--text-muted); }
+    .th-actions { text-align: right; }
+    .user-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .avatar-sm { width: 34px; height: 34px; font-size: 11.5px; }
+    .user-name { color: var(--text); font-weight: 600; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-name.is-empty { color: var(--text-muted); font-weight: 500; }
+    .email-cell { color: var(--text); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .action-btns { display: flex; gap: 6px; justify-content: flex-end; }
+    .btn-icon-danger:hover:not(:disabled) { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
+    .state-box { min-height: 220px; display: flex; align-items: center; justify-content: center; padding: 28px; }
+    .state-box .empty-state { padding: 24px; }
+    .skel-row { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-top: 1px solid var(--border); }
+    .skel-row:first-child { border-top: none; }
+    .skel-row .skeleton-line { height: 12px; }
+
+    .confirm-icon { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--danger-soft); color: var(--danger); }
+    .confirm-icon svg { width: 22px; height: 22px; }
+    .confirm-text { font-size: 14.5px; line-height: 1.55; color: var(--text-secondary); overflow-wrap: anywhere; }
+    .confirm-text strong { color: var(--text); font-weight: 600; }
+    .modal-body .form-group { margin-bottom: 0; }
+    .modal-body .field-error:empty { display: none; }
+
+    @media (max-width: 900px) {
+      .settings-grid { grid-template-columns: minmax(0, 1fr); }
     }
-    .settings-header h1 { font-size: 22px; font-weight: 700; color: var(--text-primary); }
-    .settings-header p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-    .settings-panel {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      overflow: hidden;
+    /* phones: each user becomes a card so the role and the actions are never off screen */
+    @media (max-width: 640px) {
+      #settings-users-table-wrap table, #settings-users-table-wrap tbody { display: block; }
+      #settings-users-table-wrap thead { display: none; }
+      #settings-users-table-wrap tbody tr {
+        display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center;
+        grid-template-areas: "name actions" "email email" "role role";
+        padding: 14px 16px;
+      }
+      #settings-users-table-wrap tbody td { display: block; padding: 0; min-width: 0; }
+      #settings-users-table-wrap tbody td:nth-child(1) { grid-area: name; }
+      #settings-users-table-wrap tbody td:nth-child(2) { grid-area: email; }
+      #settings-users-table-wrap tbody td:nth-child(3) { grid-area: role; }
+      #settings-users-table-wrap tbody td:nth-child(4) { grid-area: actions; }
+      .email-cell { max-width: none; }
+      .user-name { max-width: 150px; }
     }
-    .settings-panel-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .settings-panel-header h2 { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-    .settings-empty {
-      min-height: 220px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      font-size: 13px;
-      text-align: center;
-      padding: 28px;
-    }
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      background: rgba(0,0,0,0.6);
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-box {
-      width: min(100%, 420px);
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      box-shadow: 0 20px 70px rgba(0,0,0,0.45);
-      overflow: hidden;
-    }
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 20px;
-      border-bottom: 1px solid var(--border);
-    }
-    .modal-header h2 { font-size: 16px; font-weight: 700; color: var(--text-primary); }
-    .modal-close {
-      width: 32px; height: 32px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--bg-tertiary);
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 16px;
-      line-height: 1;
-    }
-    .modal-close:hover { color: var(--text-primary); background: var(--bg-hover); }
-    .modal-body { padding: 20px; display: grid; gap: 16px; }
-    .form-group label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      margin-bottom: 7px;
-    }
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      height: 40px;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-size: 13px;
-      padding: 0 12px;
-      outline: none;
-    }
-    .form-group input:focus,
-    .form-group select:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(88,166,255,0.14);
-    }
-    .form-group select { color-scheme: dark; cursor: pointer; }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      padding: 16px 20px 20px;
-      border-top: 1px solid var(--border);
-    }
-    .field-error { color: var(--red); font-size: 12px; min-height: 16px; }
-    .action-btns { display: flex; gap: 6px; }
-    .btn-icon {
-      width: 30px; height: 30px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--bg-tertiary);
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 13px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .btn-icon:hover { background: var(--bg-hover); color: var(--text-primary); }
-    .btn-icon.danger:hover { background: rgba(248,81,73,0.12); color: var(--red); border-color: var(--red); }
     @media (max-width: 560px) {
-      .settings-header { align-items: stretch; }
-      .settings-header .btn { justify-content: center; width: 100%; }
-      .modal-footer { flex-direction: column-reverse; }
-      .modal-footer .btn { width: 100%; justify-content: center; }
+      .page-header-actions, .page-header-actions .btn { width: 100%; }
+      .profile-form-row { flex-direction: column; }
+      .profile-form-row .btn { width: 100%; }
+      .modal-footer { flex-direction: column-reverse; align-items: stretch; }
+      .modal-footer .btn { width: 100%; }
     }
   </style>
 </head>
@@ -145,14 +94,21 @@
 
   <div class="main">
     <header class="topbar">
-      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+      </button>
       <span class="topbar-title">Settings</span>
       <div class="topbar-search">
-        <span>&#x1F50D;</span>
-        <input type="text" placeholder="Search settings..." />
+        <span aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </span>
+        <input type="text" placeholder="Search settings..." aria-label="Search settings" />
       </div>
       <div class="topbar-actions">
-        <button type="button" class="icon-btn">&#x1F514;<span class="dot"></span></button>
+        <button type="button" class="icon-btn" aria-label="Notifications" title="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+          <span class="dot"></span>
+        </button>
         <div class="topbar-user-pill">
           <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
           <div class="topbar-user-info">
@@ -164,46 +120,73 @@
     </header>
 
     <main class="content">
-      <div class="settings-header">
+      <div class="page-header">
         <div>
           <h1>Settings</h1>
-          <p>Manage admin and staff access.</p>
+          <p>Manage your profile, appearance and who can sign in to this console.</p>
         </div>
-        <button type="button" id="add-user-btn" class="btn btn-primary" onclick="openAddUserModal()" style="display:none;">+ Add User</button>
+        <div class="page-header-actions">
+          <button type="button" id="add-user-btn" class="btn btn-primary" onclick="openAddUserModal()" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+            Add User
+          </button>
+        </div>
       </div>
 
-      <!-- My Profile (visible to all, edit name) -->
-      <section class="settings-panel" style="margin-bottom:20px;">
-        <div class="settings-panel-header">
-          <h2>My Profile</h2>
-        </div>
-        <div style="padding:20px;display:flex;flex-direction:column;gap:16px;">
-          <div style="display:flex;align-items:center;gap:16px;">
-            <div id="profile-avatar" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;">SA</div>
-            <div style="flex:1;">
-              <div style="font-size:15px;font-weight:600;color:var(--text-primary);" id="profile-name-display">—</div>
-              <div style="font-size:12px;color:var(--text-muted);margin-top:2px;" id="profile-role-display">—</div>
-              <div style="font-size:12px;color:var(--blue);margin-top:1px;" id="profile-mobile-display">—</div>
+      <div class="settings-grid">
+        <!-- My Profile (visible to all, edit name) -->
+        <section class="card">
+          <div class="card-header">
+            <h3>My Profile</h3>
+          </div>
+          <div class="card-body profile-body">
+            <div class="profile-id">
+              <div class="avatar avatar-lg" id="profile-avatar">SA</div>
+              <div class="profile-meta">
+                <div class="profile-name" id="profile-name-display">—</div>
+                <div class="profile-sub">
+                  <span class="badge badge-gray" id="profile-role-display">—</span>
+                  <span class="profile-email" id="profile-mobile-display">—</span>
+                </div>
+              </div>
+            </div>
+            <div class="profile-form">
+              <div class="form-group">
+                <label for="profile-name-input">Display name</label>
+                <div class="profile-form-row">
+                  <input type="text" id="profile-name-input" placeholder="Enter your name" autocomplete="name" />
+                  <button type="button" class="btn btn-primary" onclick="saveProfileName()">Save Name</button>
+                </div>
+              </div>
+              <div id="profile-save-msg" class="profile-msg" role="status" aria-live="polite"></div>
             </div>
           </div>
-          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-            <div style="flex:1;min-width:200px;">
-              <label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Display Name</label>
-              <input type="text" id="profile-name-input" placeholder="Enter your name"
-                style="width:100%;height:40px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;padding:0 12px;outline:none;box-sizing:border-box;"
-                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'" />
-            </div>
-            <button type="button" class="btn btn-primary" onclick="saveProfileName()" style="height:40px;white-space:nowrap;">Save Name</button>
+        </section>
+
+        <!-- Appearance (this device) -->
+        <section class="card">
+          <div class="card-header">
+            <h3>Appearance</h3>
           </div>
-          <div id="profile-save-msg" style="font-size:12px;min-height:16px;"></div>
-        </div>
-      </section>
+          <div class="card-body">
+            <p class="appearance-lead">Choose how the console looks on this device.</p>
+            <div class="segmented" id="theme-seg" role="radiogroup" aria-label="Theme">
+              <button type="button" role="radio" data-mode="light" aria-checked="false">Light</button>
+              <button type="button" role="radio" data-mode="dark" aria-checked="false">Dark</button>
+              <button type="button" role="radio" data-mode="system" aria-checked="false">System</button>
+            </div>
+          </div>
+        </section>
+      </div>
 
       <!-- Users panel (Admin only) -->
-      <section class="settings-panel" id="users-panel">
-        <div class="settings-panel-header">
-          <h2>Users</h2>
-          <span class="count-badge" id="settings-user-count">0 users</span>
+      <section class="card" id="users-panel">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3>Users</h3>
+            <span class="card-sub">People who can sign in to this console</span>
+          </div>
+          <span class="badge badge-gray" id="settings-user-count">0 users</span>
         </div>
         <div class="table-wrap" id="settings-users-table-wrap" style="display:none;">
           <table>
@@ -212,23 +195,29 @@
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
-                <th id="actions-th" style="display:none;">Actions</th>
+                <th id="actions-th" class="th-actions" style="display:none;">Actions</th>
               </tr>
             </thead>
             <tbody id="settings-users-body"></tbody>
           </table>
         </div>
-        <div class="settings-empty" id="settings-empty">Loading...</div>
+        <div id="settings-empty" aria-live="polite">
+          <div class="skel-row"><span class="skeleton skeleton-circle"></span><span class="skeleton skeleton-line" style="width:22%"></span><span class="skeleton skeleton-line" style="width:30%"></span><span class="skeleton skeleton-line" style="width:10%"></span></div>
+          <div class="skel-row"><span class="skeleton skeleton-circle"></span><span class="skeleton skeleton-line" style="width:18%"></span><span class="skeleton skeleton-line" style="width:34%"></span><span class="skeleton skeleton-line" style="width:10%"></span></div>
+          <div class="skel-row"><span class="skeleton skeleton-circle"></span><span class="skeleton skeleton-line" style="width:26%"></span><span class="skeleton skeleton-line" style="width:28%"></span><span class="skeleton skeleton-line" style="width:10%"></span></div>
+        </div>
       </section>
     </main>
   </div>
 
   <!-- Add / Edit Modal -->
   <div class="modal-overlay" id="user-modal" onclick="closeOnOverlay(event)">
-    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box modal-sm" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-header">
         <h2 id="modal-title">Add User</h2>
-        <button type="button" class="modal-close" onclick="closeModal()" title="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="closeModal()" title="Close" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -245,6 +234,7 @@
             <option value="1">Super Admin</option>
             <option value="2" selected>Staff</option>
           </select>
+          <div class="form-hint">Super Admins can add, edit and remove users and manage videos.</div>
         </div>
         <div class="field-error" id="modal-error"></div>
       </div>
@@ -257,13 +247,19 @@
 
   <!-- Confirm Delete Modal -->
   <div class="modal-overlay" id="delete-modal" onclick="closeDeleteOnOverlay(event)">
-    <div class="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-box modal-sm" role="dialog" aria-modal="true" aria-labelledby="delete-title">
       <div class="modal-header">
-        <h2>Delete User</h2>
-        <button type="button" class="modal-close" onclick="closeDeleteModal()" title="Close">&times;</button>
+        <h2 id="delete-title">Delete user</h2>
+        <button type="button" class="modal-close" onclick="closeDeleteModal()" title="Close" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
       </div>
       <div class="modal-body">
-        <p style="color:var(--text-secondary);font-size:14px;">Are you sure you want to delete <strong id="delete-email" style="color:var(--text-primary);"></strong>?</p>
+        <span class="confirm-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        </span>
+        <p class="confirm-text">Are you sure you want to delete <strong id="delete-email"></strong>? They will no longer be able to sign in to this console.</p>
+        <div class="field-error" id="delete-error"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
@@ -283,6 +279,13 @@
     let editingEmail = null;
     let deletingEmail = null;
 
+    const ICON = {
+      edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>',
+      trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+      users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="26" height="26"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg>',
+      alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="26" height="26"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>'
+    };
+
     // Show Add button and Actions column only for role_id=1
     if (isAdmin) {
       document.getElementById('add-user-btn').style.display = 'inline-flex';
@@ -300,6 +303,44 @@
       };
     }
 
+    function initials(name, email) {
+      const src = (name || email || '?').trim();
+      const parts = src.split(/[\s@._-]+/).filter(Boolean).slice(0, 2);
+      return (parts.map(function (w) { return w[0]; }).join('') || '?').toUpperCase();
+    }
+
+    // Loading / empty / error states of the users list (text goes through textContent)
+    function showUsersState(kind, message, withRetry) {
+      const box = document.getElementById('settings-empty');
+      document.getElementById('settings-users-table-wrap').style.display = 'none';
+      box.style.display = 'block';
+      box.textContent = '';
+      const wrap = document.createElement('div');
+      wrap.className = 'state-box';
+      const state = document.createElement('div');
+      state.className = 'empty-state';
+      const icon = document.createElement('div');
+      icon.className = 'empty-icon';
+      icon.innerHTML = kind === 'error' ? ICON.alert : ICON.users;
+      const title = document.createElement('h3');
+      title.textContent = kind === 'error' ? 'Could not load users' : 'No users yet';
+      const text = document.createElement('p');
+      text.textContent = message;
+      state.appendChild(icon);
+      state.appendChild(title);
+      state.appendChild(text);
+      if (withRetry) {
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'btn btn-ghost btn-sm';
+        retry.textContent = 'Try again';
+        retry.addEventListener('click', function () { loadUsers(); });
+        state.appendChild(retry);
+      }
+      wrap.appendChild(state);
+      box.appendChild(wrap);
+    }
+
     async function loadUsers() {
       try {
         const res = await fetch(API_BASE + '/auth/gen-admin-users', { headers: getHeaders() });
@@ -307,9 +348,11 @@
         if (data.success) {
           users = data.users;
           renderUsers();
+        } else {
+          showUsersState('error', data.detail || data.message || 'The server did not return the user list.', true);
         }
       } catch (e) {
-        document.getElementById('settings-empty').textContent = 'Failed to load users.';
+        showUsersState('error', 'Check your connection and try again.', true);
       }
     }
 
@@ -320,10 +363,8 @@
       document.getElementById('settings-user-count').textContent = users.length + ' user' + (users.length === 1 ? '' : 's');
 
       if (!users.length) {
-        wrap.style.display = 'none';
-        empty.style.display = 'flex';
-        empty.textContent = 'No users added yet.';
         tbody.innerHTML = '';
+        showUsersState('empty', 'Add a user to give them access to this console.', false);
         return;
       }
 
@@ -331,21 +372,43 @@
       empty.style.display = 'none';
 
       tbody.innerHTML = '';
+      const me = (adminId || '').toLowerCase();
       users.forEach(function(u) {
         const tr = document.createElement('tr');
 
         const tdName = document.createElement('td');
-        tdName.textContent = u.name || u.user_name || '—';
+        const cell = document.createElement('div');
+        cell.className = 'user-cell';
+        const av = document.createElement('span');
+        av.className = 'avatar avatar-sm';
+        av.textContent = initials(u.name || u.user_name, u.email);
+        const nm = document.createElement('span');
+        const nmText = u.name || u.user_name;
+        nm.className = 'user-name' + (nmText ? '' : ' is-empty');
+        nm.textContent = nmText || 'No name';
+        nm.title = nmText || '';
+        cell.appendChild(av);
+        cell.appendChild(nm);
+        if (me && (u.email || '').toLowerCase() === me) {
+          const you = document.createElement('span');
+          you.className = 'badge badge-gray';
+          you.textContent = 'You';
+          cell.appendChild(you);
+        }
+        tdName.appendChild(cell);
         tr.appendChild(tdName);
 
-        const tdPhone = document.createElement('td');
-        tdPhone.className = 'td-primary';
-        tdPhone.textContent = u.email;
-        tr.appendChild(tdPhone);
+        const tdEmail = document.createElement('td');
+        const em = document.createElement('div');
+        em.className = 'email-cell';
+        em.textContent = u.email;
+        em.title = u.email;
+        tdEmail.appendChild(em);
+        tr.appendChild(tdEmail);
 
         const tdRole = document.createElement('td');
         const badge = document.createElement('span');
-        badge.className = u.role_id === 1 ? 'badge badge-blue' : 'badge badge-green';
+        badge.className = u.role_id === 1 ? 'badge badge-purple' : 'badge badge-gray';
         badge.textContent = u.role_id === 1 ? 'Super Admin' : 'Staff';
         tdRole.appendChild(badge);
         tr.appendChild(tdRole);
@@ -356,15 +419,19 @@
           actionWrap.className = 'action-btns';
 
           const editBtn = document.createElement('button');
-          editBtn.className = 'btn-icon';
+          editBtn.type = 'button';
+          editBtn.className = 'btn btn-ghost btn-sm btn-icon';
           editBtn.title = 'Edit';
-          editBtn.innerHTML = '&#9998;';
+          editBtn.setAttribute('aria-label', 'Edit ' + u.email);
+          editBtn.innerHTML = ICON.edit;
           editBtn.addEventListener('click', function() { openEditModal(u.email); });
 
           const delBtn = document.createElement('button');
-          delBtn.className = 'btn-icon danger';
+          delBtn.type = 'button';
+          delBtn.className = 'btn btn-ghost btn-sm btn-icon btn-icon-danger';
           delBtn.title = 'Delete';
-          delBtn.innerHTML = '&#x1F5D1;';
+          delBtn.setAttribute('aria-label', 'Delete ' + u.email);
+          delBtn.innerHTML = ICON.trash;
           delBtn.addEventListener('click', function() { openDeleteModal(u.email); });
 
           actionWrap.appendChild(editBtn);
@@ -484,7 +551,7 @@
     async function saveProfileName() {
       var name = document.getElementById('profile-name-input').value.trim();
       var msg = document.getElementById('profile-save-msg');
-      if (!name) { msg.textContent = 'Name cannot be empty.'; msg.style.color = 'var(--red)'; return; }
+      if (!name) { msg.textContent = 'Name cannot be empty.'; msg.style.color = 'var(--danger)'; return; }
       var email = localStorage.getItem('admin_email');
       try {
         var res = await fetch(API_BASE + '/gen-dashboard/me', {
@@ -494,8 +561,8 @@
         });
         var data = await res.json();
         if (data.success) {
-          msg.textContent = '\u2713 Name updated successfully.';
-          msg.style.color = 'var(--green)';
+          msg.textContent = '✓ Name updated successfully.';
+          msg.style.color = 'var(--success)';
           // Update cache and UI
           var cached = localStorage.getItem('gen_admin_profile');
           if (cached) {
@@ -508,11 +575,11 @@
           document.getElementById('profile-avatar').textContent = name.trim().split(/\s+/).map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
         } else {
           msg.textContent = data.detail || 'Failed to update.';
-          msg.style.color = 'var(--red)';
+          msg.style.color = 'var(--danger)';
         }
       } catch(e) {
         msg.textContent = 'Network error. Try again.';
-        msg.style.color = 'var(--red)';
+        msg.style.color = 'var(--danger)';
       }
       setTimeout(function(){ msg.textContent = ''; }, 3000);
     }
@@ -521,13 +588,36 @@
     document.addEventListener('profileLoaded', function(e) {
       var p = e.detail;
       document.getElementById('profile-name-display').textContent = p.name;
-      document.getElementById('profile-role-display').textContent = p.role;
+      var roleEl = document.getElementById('profile-role-display');
+      roleEl.textContent = p.role;
+      roleEl.className = p.role === 'Staff' ? 'badge badge-gray' : 'badge badge-purple';
       document.getElementById('profile-mobile-display').textContent = p.email;
       document.getElementById('profile-name-input').value = p.name;
       document.getElementById('profile-avatar').textContent = p.name.trim().split(/\s+/).map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
       // Hide users panel for Staff
       document.getElementById('users-panel').style.display = p.role === 'Staff' ? 'none' : '';
     });
+
+    // Appearance: light / dark / system (theme.js)
+    (function () {
+      var seg = document.getElementById('theme-seg');
+      function paint() {
+        var mode = window.ClockynTheme ? window.ClockynTheme.get() : 'system';
+        seg.querySelectorAll('button').forEach(function (b) {
+          var on = b.getAttribute('data-mode') === mode;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+      }
+      seg.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-mode]');
+        if (!b || !window.ClockynTheme) return;
+        window.ClockynTheme.set(b.getAttribute('data-mode'));
+        paint();
+      });
+      document.addEventListener('clockyn-theme', paint); // also fires when the topbar toggle is used
+      paint();
+    })();
 
     function toggleSidebar() {
       document.querySelector('.sidebar').classList.toggle('open');
@@ -546,6 +636,7 @@
     function openDeleteModal(email) {
       deletingEmail = email;
       document.getElementById('delete-email').textContent = email;
+      document.getElementById('delete-error').textContent = '';
       document.getElementById('delete-modal').classList.add('open');
     }
 
@@ -561,6 +652,8 @@
     async function confirmDelete() {
       if (!deletingEmail) return;
       const delBtn = document.querySelector('#delete-modal .btn-danger');
+      const errEl = document.getElementById('delete-error');
+      errEl.textContent = '';
       delBtn.disabled = true;
       delBtn.textContent = 'Deleting...';
       try {
@@ -570,14 +663,14 @@
         });
         const data = await res.json();
         if (!data.success) {
-          alert(data.detail || data.message || 'Failed to delete user.');
+          errEl.textContent = data.detail || data.message || 'Failed to delete user.';
           return;
         }
         users = users.filter(u => u.email !== deletingEmail);
         renderUsers();
         closeDeleteModal();
       } catch (err) {
-        alert('Network error. Please try again.');
+        errEl.textContent = 'Network error. Please try again.';
       } finally {
         delBtn.disabled = false;
         delBtn.textContent = 'Delete';

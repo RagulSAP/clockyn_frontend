@@ -8,98 +8,124 @@
   <script src="../js/theme.js"></script>
   <link rel="stylesheet" href="../css/dashboard.css" />
   <style>
-    /* ── Compact overrides ── */
-    .content { padding: 20px 24px; }
+    /* ── Icons ── */
+    .ic { width: 18px; height: 18px; flex-shrink: 0; display: block; }
+    .ic-sm { width: 15px; height: 15px; }
+    .ic-lg { width: 22px; height: 22px; }
 
-    .page-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 18px; flex-wrap: wrap; gap: 8px;
+    /* ── Page header ── */
+    .page-date {
+      display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px;
+      border-radius: var(--radius-pill); background: var(--surface); border: 1px solid var(--border);
+      color: var(--text-secondary); font-size: 12.5px; font-weight: 500; white-space: nowrap;
+      box-shadow: inset 0 1px 0 var(--highlight);
     }
-    .page-header-left h1 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
-    .page-header-left p  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .page-header-right   { display: flex; align-items: center; gap: 8px; }
-    .page-date { font-size: 11px; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; white-space: nowrap; }
+    .page-date .ic { color: var(--text-muted); }
 
-    /* ── Compact stat cards ── */
-    .stats-grid { gap: 12px; margin-bottom: 16px; }
-    .stat-card  { padding: 14px 16px; gap: 8px; border-left: 3px solid transparent; }
-    .stat-card.blue-accent   { border-left-color: var(--blue); }
-    .stat-card.green-accent  { border-left-color: var(--green); }
-    .stat-card.orange-accent { border-left-color: var(--orange); }
-    .stat-card.purple-accent { border-left-color: var(--purple); }
-    .stat-card-header .label { font-size: 11px; }
-    .stat-icon { width: 30px; height: 30px; font-size: 14px; border-radius: 7px; }
-    .stat-value { font-size: 22px; }
-    .stat-footer { font-size: 11px; }
-
-    /* ── Compact analytics row ── */
-    .analytics-row { gap: 14px; margin-bottom: 16px; }
-    .chart-card { padding: 16px; gap: 14px; }
-    .chart-card-title { font-size: 13px; }
-    .bar-chart-wrap { height: 170px; }
-    .donut-container { width: 120px; height: 120px; }
-    .donut-svg { width: 120px; height: 120px; }
-    .donut-center-val { font-size: 22px; }
-    .donut-legend { gap: 10px; }
-    .donut-legend-item { gap: 8px; }
-    .donut-legend-name { font-size: 12px; }
-    .donut-legend-count { font-size: 16px; }
-
-    /* ── Compact cards & tables ── */
-    .card { margin-bottom: 14px !important; }
-    .card-header { padding: 10px 16px; }
-    .card-header h3 { font-size: 13px; }
-    thead th { padding: 8px 14px; font-size: 10px; }
-    tbody td { padding: 8px 14px; font-size: 12px; }
-
-    /* ── Sidebar compact logo ── */
-    .sidebar-logo { padding: 12px 16px; flex-direction: row; align-items: center; gap: 10px; justify-content: flex-start; }
-    .sidebar-logo-img { width: 36px; height: 36px; border-radius: 8px; }
-    .sidebar-logo-name { font-size: 14px; font-weight: 700; }
-
-    /* ── Quick stats bar ── */
-    .quick-bar {
-      display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px;
+    /* ── Stat tiles (whole tile is a link) ── */
+    .stat-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    a.stat-tile { position: relative; text-decoration: none; color: inherit; gap: 4px; }
+    a.stat-tile:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md), inset 0 1px 0 var(--highlight); transform: translateY(-1px); }
+    a.stat-tile:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 2px; }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+    .stat-chip {
+      width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--surface-muted); color: var(--text-secondary);
+      transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
     }
-    .quick-tile {
-      background: var(--bg-secondary); border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px 16px; cursor: pointer; transition: border-color 0.2s;
-      display: flex; flex-direction: column; gap: 4px;
-      position: relative; overflow: hidden;
+    a.stat-tile:hover .stat-chip { background: var(--primary); color: var(--on-primary); }
+    .stat-tile .stat-val { font-variant-numeric: tabular-nums; }
+    .stat-go {
+      position: absolute; right: 16px; bottom: 16px; color: var(--text-muted); opacity: 0; transform: translate(-3px, 3px);
+      transition: opacity var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease);
     }
-    .quick-tile::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      border-radius: 10px 10px 0 0;
-    }
-    .quick-tile.t-blue::before   { background: var(--blue); }
-    .quick-tile.t-green::before  { background: var(--green); }
-    .quick-tile.t-orange::before { background: var(--orange); }
-    .quick-tile.t-purple::before { background: var(--purple); }
-    .quick-tile:hover { border-color: var(--blue); }
-    .qt-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
-    .qt-value { font-size: 24px; font-weight: 800; color: var(--text-primary); line-height: 1; letter-spacing: -.02em; }
-    .qt-sub   { font-size: 11px; color: var(--text-muted); }
-    .qt-icon  { position: absolute; top: 10px; right: 12px; font-size: 18px; opacity: 0.35; }
+    a.stat-tile:hover .stat-go, a.stat-tile:focus-visible .stat-go { opacity: 1; transform: none; }
 
-    /* ── Active orgs cards ── */
-    .active-orgs-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 14px 16px;
-    }
+    /* ── Section rhythm ── */
+    .content > .card, .content > .dash-split, .content > .analytics-row { margin-bottom: 24px; }
+    .dash-split { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+    @media (min-width: 901px) { .analytics-row { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); } }
+    @media (max-width: 1100px) { .dash-split { grid-template-columns: minmax(0, 1fr); } }
+    .badge:empty { display: none; }
+    .card-header h3 { display: inline-flex; align-items: center; gap: 10px; }
+    .card-note { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 0 rgba(var(--success-rgb), .45); animation: dash-pulse 2s ease-out infinite; }
+    @keyframes dash-pulse { 0% { box-shadow: 0 0 0 0 rgba(var(--success-rgb), .45); } 70%, 100% { box-shadow: 0 0 0 7px rgba(var(--success-rgb), 0); } }
+
+    /* ── Active organizations ── */
+    .active-orgs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; padding: 16px 20px 20px; }
     .active-org-chip {
-      background: var(--bg-tertiary); border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;
-      cursor: pointer; transition: border-color 0.15s, background 0.15s;
-      text-decoration: none;
+      display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 14px; text-decoration: none;
+      background: var(--surface-muted); border: 1px solid transparent; border-radius: var(--radius-sm);
+      transition: background-color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease);
     }
-    .active-org-chip:hover { border-color: var(--green); background: rgba(76,175,80,0.05); }
-    .aoc-name  { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .aoc-meta  { display: flex; align-items: center; justify-content: space-between; }
-    .aoc-staff { font-size: 11px; color: var(--green); font-weight: 600; }
-    .aoc-time  { font-size: 10px; color: var(--text-muted); }
+    .active-org-chip:hover { background: var(--surface-hover); border-color: var(--border-strong); transform: translateY(-1px); }
+    .active-org-chip:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 2px; }
+    .aoc-avatar, .org-avatar {
+      width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary);
+      font-size: 12.5px; font-weight: 700; letter-spacing: .02em; box-shadow: inset 0 1px 0 var(--highlight);
+    }
+    .aoc-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+    .aoc-name { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .aoc-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .aoc-staff { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--success); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .aoc-staff::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .aoc-time { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-    /* ── Orgs table compact ── */
-    .td-org-name { font-weight: 600; font-size: 12px; color: var(--text-primary); }
-    .td-org-id   { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+    /* ── Revenue chart + donut tweaks (shared chart classes do the rest) ── */
+    .bar-chart-y span, .bar-label { font-variant-numeric: tabular-nums; }
+    .bar-col:last-child .bar-label { color: var(--text); font-weight: 600; }
+    .bar-skel { flex: 1; border-radius: 8px 8px 3px 3px; align-self: flex-end; }
+    .donut-legend-count { color: var(--text); font-variant-numeric: tabular-nums; }
+    .donut-legend-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .donut-legend-meta { font-variant-numeric: tabular-nums; }
+
+    /* ── Recent organizations table ── */
+    .org-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .org-avatar { width: 32px; height: 32px; border-radius: 9px; font-size: 11.5px; }
+    .dash-split thead th { padding: 12px 14px; }
+    .dash-split tbody td { padding: 12px 14px; }
+    .org-name { font-weight: 600; color: var(--text); max-width: 190px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.nowrap { white-space: nowrap; }
+    td.muted { color: var(--text-muted); }
+    tr.row-link { cursor: pointer; }
+    tr.row-link:focus-visible { outline: 2px solid var(--text-muted); outline-offset: -2px; }
+    tr.row-link:hover .org-name { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-strong); }
+
+    /* ── Subscription plans list ── */
+    .plans-list { padding: 8px 20px 16px; }
+    .plan-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .plan-row:last-child { border-bottom: none; }
+    .pl-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+    .pl-info { flex: 1; min-width: 0; }
+    .pl-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .pl-name { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pl-count { font-size: 17px; font-weight: 700; letter-spacing: -.3px; color: var(--text); font-variant-numeric: tabular-nums; }
+    .pl-meta { font-size: 12px; color: var(--text-muted); margin-top: 1px; font-variant-numeric: tabular-nums; }
+    .plans-list .progress { margin-top: 8px; height: 5px; }
+
+    /* ── Loading / empty / error ── */
+    .state-pad { padding: 8px 20px 20px; }
+    .state-pad .empty-state { padding: 36px 16px; }
+    .skel-chip { height: 62px; border-radius: var(--radius-sm); }
+    .skel-row { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    .skel-row:last-child { border-bottom: none; }
+
+    @media (max-width: 640px) {
+      .col-plan, .col-exp { display: none; }
+      .active-org-chip { padding: 10px 12px; }
+    }
+    @media (max-width: 900px) {
+      .stat-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .page-header-actions { width: 100%; }
+      .active-orgs-grid { padding: 14px 16px 16px; }
+      .org-name { max-width: 160px; }
+      .plans-list { padding: 4px 16px 12px; }
+    }
   </style>
 </head>
 <body>
@@ -113,15 +139,22 @@
 
   <div class="main">
     <header class="topbar">
-      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+      </button>
       <span class="topbar-title">Dashboard</span>
       <div class="topbar-search">
-        <span>🔍</span>
-        <input type="text" placeholder="Search orgs, users..." />
+        <span aria-hidden="true"><svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></span>
+        <input type="text" placeholder="Search orgs, users..." aria-label="Search organizations and users" />
       </div>
       <div class="topbar-actions">
-        <button class="icon-btn">🔔<span class="dot"></span></button>
-        <button class="icon-btn" onclick="loadDashboard()" title="Refresh">🔄</button>
+        <button class="icon-btn" aria-label="Notifications" title="Notifications">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+          <span class="dot"></span>
+        </button>
+        <button class="icon-btn" id="refresh-btn-top" onclick="loadDashboard()" title="Refresh" aria-label="Refresh dashboard">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        </button>
         <div class="topbar-user-pill">
           <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
           <div class="topbar-user-info">
@@ -136,54 +169,75 @@
 
       <!-- Page header -->
       <div class="page-header">
-        <div class="page-header-left">
+        <div>
           <h1>Admin Overview</h1>
           <p>Live metrics across all organizations</p>
         </div>
-        <div class="page-header-right">
-          <div class="page-date" id="page-date-label">—</div>
-          <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↻ Refresh</button>
+        <div class="page-header-actions">
+          <div class="page-date">
+            <svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+            <span id="page-date-label">—</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="refresh-btn" onclick="loadDashboard()">
+            <svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            Refresh
+          </button>
         </div>
       </div>
 
       <!-- Quick stat tiles -->
-      <div class="quick-bar">
-        <div class="quick-tile t-blue" onclick="window.location.href='organizations.html'" style="cursor:pointer;">
-          <div class="qt-icon">🏢</div>
-          <div class="qt-label">Organizations</div>
-          <div class="qt-value" id="stat-total-orgs">—</div>
-          <div class="qt-sub">Total registered</div>
-        </div>
-        <div class="quick-tile t-green" onclick="window.location.href='users.html'" style="cursor:pointer;">
-          <div class="qt-icon">👥</div>
-          <div class="qt-label">Users</div>
-          <div class="qt-value" id="stat-total-users">—</div>
-          <div class="qt-sub">Active across orgs</div>
-        </div>
-        <div class="quick-tile t-orange" onclick="window.location.href='payments.html'" style="cursor:pointer;">
-          <div class="qt-icon">💰</div>
-          <div class="qt-label">Revenue (Month)</div>
-          <div class="qt-value" id="stat-revenue">—</div>
-          <div class="qt-sub">Verified payments</div>
-        </div>
-        <div class="quick-tile t-purple" onclick="window.location.href='subscriptions.html'" style="cursor:pointer;">
-          <div class="qt-icon">📋</div>
-          <div class="qt-label">Active Plans</div>
-          <div class="qt-value" id="stat-active-subs">—</div>
-          <div class="qt-sub">Live subscriptions</div>
-        </div>
+      <div class="stat-grid cols-4">
+        <a class="stat-tile" href="organizations.html">
+          <div class="stat-top">
+            <span class="stat-label">Organizations</span>
+            <span class="stat-chip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 6h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M8 6h.01"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><rect x="4" y="2" width="16" height="20" rx="2"/></svg></span>
+          </div>
+          <div class="stat-val" id="stat-total-orgs">—</div>
+          <div class="stat-sub">Total registered</div>
+          <span class="stat-go" aria-hidden="true"><svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
+        </a>
+        <a class="stat-tile" href="users.html">
+          <div class="stat-top">
+            <span class="stat-label">Users</span>
+            <span class="stat-chip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg></span>
+          </div>
+          <div class="stat-val" id="stat-total-users">—</div>
+          <div class="stat-sub">Active across orgs</div>
+          <span class="stat-go" aria-hidden="true"><svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
+        </a>
+        <a class="stat-tile" href="payments.html">
+          <div class="stat-top">
+            <span class="stat-label">Revenue (Month)</span>
+            <span class="stat-chip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span>
+          </div>
+          <div class="stat-val" id="stat-revenue">—</div>
+          <div class="stat-sub">Verified payments</div>
+          <span class="stat-go" aria-hidden="true"><svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
+        </a>
+        <a class="stat-tile" href="subscriptions.html">
+          <div class="stat-top">
+            <span class="stat-label">Active Plans</span>
+            <span class="stat-chip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span>
+          </div>
+          <div class="stat-val" id="stat-active-subs">—</div>
+          <div class="stat-sub">Live subscriptions</div>
+          <span class="stat-go" aria-hidden="true"><svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
+        </a>
       </div>
 
       <!-- Active Orgs Today (card grid) -->
-      <div class="card">
+      <section class="card" aria-labelledby="active-title">
         <div class="card-header">
-          <h3>Active Today <span id="active-orgs-count" class="badge badge-green" style="margin-left:6px;"></span></h3>
-          <span style="font-size:11px;color:var(--text-muted);">Orgs with punch activity right now</span>
+          <h3 id="active-title">Active Today <span id="active-orgs-count" class="badge badge-green"></span></h3>
+          <span class="card-note"><span class="live-dot" aria-hidden="true"></span>Orgs with punch activity right now</span>
         </div>
         <div id="active-orgs-container">
-          <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">Loading...</div>
+          <div class="active-orgs-grid" aria-busy="true">
+            <div class="skeleton skel-chip"></div><div class="skeleton skel-chip"></div><div class="skeleton skel-chip"></div><div class="skeleton skel-chip"></div>
+            <div class="skeleton skel-chip"></div><div class="skeleton skel-chip"></div><div class="skeleton skel-chip"></div><div class="skeleton skel-chip"></div>
+          </div>
         </div>
-      </div>
+      </section>
 
       <!-- Analytics Row: Bar Chart + Donut -->
       <div class="analytics-row">
@@ -194,7 +248,7 @@
               <div class="chart-card-title">Monthly Revenue</div>
               <div class="chart-card-sub" id="revenue-total">Loading...</div>
             </div>
-            <div class="chart-tabs">
+            <div class="chart-tabs" role="group" aria-label="Revenue period">
               <button class="chart-tab active" id="tab-6m" onclick="switchRevenueTab(6)">6M</button>
               <button class="chart-tab" id="tab-12m" onclick="switchRevenueTab(12)">1Y</button>
             </div>
@@ -205,8 +259,9 @@
               <span id="y-mid"></span>
               <span>₹0</span>
             </div>
-            <div class="bar-chart" id="revenue-chart">
-              <div class="bar-chart-loading">Loading...</div>
+            <div class="bar-chart" id="revenue-chart" aria-busy="true">
+              <div class="skeleton bar-skel" style="height:46%"></div><div class="skeleton bar-skel" style="height:62%"></div><div class="skeleton bar-skel" style="height:54%"></div>
+              <div class="skeleton bar-skel" style="height:78%"></div><div class="skeleton bar-skel" style="height:68%"></div><div class="skeleton bar-skel" style="height:90%"></div>
             </div>
           </div>
         </div>
@@ -220,16 +275,18 @@
           </div>
           <div class="donut-section">
             <div class="donut-container">
-              <svg viewBox="0 0 42 42" class="donut-svg" id="donut-svg">
-                <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#21262d" stroke-width="4"/>
+              <svg viewBox="0 0 42 42" class="donut-svg" id="donut-svg" role="img" aria-label="Active subscriptions by plan">
+                <circle cx="21" cy="21" r="15.9155" fill="none" stroke-width="4"/>
               </svg>
               <div class="donut-center">
                 <div class="donut-center-val" id="donut-center-val">—</div>
                 <div class="donut-center-lbl">Total</div>
               </div>
             </div>
-            <div class="donut-legend" id="donut-legend">
-              <div class="bar-chart-loading">Loading...</div>
+            <div class="donut-legend" id="donut-legend" aria-busy="true">
+              <div class="skeleton skel-line" style="height:34px"></div>
+              <div class="skeleton skel-line" style="height:34px"></div>
+              <div class="skeleton skel-line" style="height:34px"></div>
             </div>
           </div>
         </div>
@@ -237,35 +294,37 @@
       </div>
 
       <!-- Two-column lower row -->
-      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px;">
+      <div class="dash-split">
 
         <!-- Recent Organizations -->
-        <div class="card" style="margin-bottom:0 !important;">
+        <section class="card" aria-labelledby="recent-title">
           <div class="card-header">
-            <h3>Recent Organizations</h3>
-            <button class="btn btn-ghost btn-sm" id="orgs-view-all-btn" onclick="toggleViewAll('orgs')">View All</button>
+            <h3 id="recent-title">Recent Organizations</h3>
+            <button class="btn btn-ghost btn-sm" id="orgs-view-all-btn" onclick="toggleViewAll('orgs')" aria-expanded="false">View All</button>
           </div>
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>Organization</th><th>Plan</th><th>Users</th><th>Status</th><th>Expires</th></tr>
+                <tr><th>Organization</th><th class="col-plan">Plan</th><th class="num">Users</th><th>Status</th><th class="col-exp">Expires</th></tr>
               </thead>
               <tbody id="orgs-table-body">
-                <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">Loading...</td></tr>
+                <tr><td colspan="5" style="padding:0"><div class="skel-row"><div class="skeleton skeleton-circle" style="width:32px;height:32px"></div><div class="skeleton skel-line" style="width:40%"></div><div class="skeleton skel-line" style="width:18%"></div></div><div class="skel-row"><div class="skeleton skeleton-circle" style="width:32px;height:32px"></div><div class="skeleton skel-line" style="width:34%"></div><div class="skeleton skel-line" style="width:22%"></div></div><div class="skel-row"><div class="skeleton skeleton-circle" style="width:32px;height:32px"></div><div class="skeleton skel-line" style="width:46%"></div><div class="skeleton skel-line" style="width:16%"></div></div></td></tr>
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
 
         <!-- Plan donut legend / plan cards -->
-        <div class="card" style="margin-bottom:0 !important;">
+        <section class="card" aria-labelledby="plans-title">
           <div class="card-header">
-            <h3>Subscription Plans</h3>
+            <h3 id="plans-title">Subscription Plans</h3>
           </div>
-          <div style="padding:12px 16px;" id="plans-grid">
-            <div style="color:var(--text-muted);font-size:12px;padding:8px 0;">Loading...</div>
+          <div class="plans-list" id="plans-grid" aria-busy="true">
+            <div class="skeleton skel-line" style="height:46px;margin:12px 0"></div>
+            <div class="skeleton skel-line" style="height:46px;margin:12px 0"></div>
+            <div class="skeleton skel-line" style="height:46px;margin:12px 0"></div>
           </div>
-        </div>
+        </section>
 
       </div>
 
@@ -281,6 +340,20 @@
     let allRevenueData = [];
     let revenueMonths = 6;
 
+    /* Lucide icon paths (same icon set as the Clockyn app) for markup built in JS */
+    const ICON = {
+      alert:   '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+      inbox:   '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+      activity:'<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>'
+    };
+    function svg(name, cls) {
+      return '<svg class="ic ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[name] + '</svg>';
+    }
+
+    /* Semantic tones for the plan palette: theme-aware through CSS variables, no hex */
+    const TONES = ['info', 'success', 'warning', 'purple', 'cyan'];
+    function tone(i) { return 'var(--' + TONES[i % TONES.length] + ')'; }
+
     // Date label
     (function() {
       var d = new Date();
@@ -294,13 +367,32 @@
       return '₹' + amount.toFixed(0);
     }
 
+    var STATUS_BADGE = { ACTIVE:'badge-green', FREE_TRIAL:'badge-blue', INACTIVE:'badge-gray', EXPIRED:'badge-red', PAID:'badge-green', FAILED:'badge-red', CREATED:'badge-orange', PENDING:'badge-orange' };
+    var STATUS_LABEL = { ACTIVE:'Active', FREE_TRIAL:'Free trial', INACTIVE:'Inactive', EXPIRED:'Expired', PAID:'Paid', FAILED:'Failed', CREATED:'Created', PENDING:'Pending' };
     function statusBadge(status) {
-      var map = { ACTIVE:'badge-green', FREE_TRIAL:'badge-blue', INACTIVE:'badge-gray', EXPIRED:'badge-red', PAID:'badge-green', FAILED:'badge-red', CREATED:'badge-orange', PENDING:'badge-orange' };
-      return '<span class="badge ' + (map[status] || 'badge-gray') + '">' + status + '</span>';
+      return '<span class="badge badge-dot ' + (STATUS_BADGE[status] || 'badge-gray') + '">' + escHtml(STATUS_LABEL[status] || status || '—') + '</span>';
     }
 
     function escHtml(s) {
-      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function initials(name) {
+      var parts = String(name || '?').trim().split(/\s+/);
+      return ((parts[0] || '?').charAt(0) + (parts[1] ? parts[1].charAt(0) : '')).toUpperCase();
+    }
+
+    function fmtDate(s) {
+      var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ''));
+      if (!m) return s || '—';
+      return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function emptyBlock(icon, title, text, retry) {
+      return '<div class="empty-state"><div class="empty-icon">' + svg(icon, 'ic-lg') + '</div><h3>' + escHtml(title) + '</h3>'
+        + (text ? '<p>' + escHtml(text) + '</p>' : '')
+        + (retry ? '<button class="btn btn-ghost btn-sm" onclick="' + retry + '()" style="margin-top:8px">Try again</button>' : '')
+        + '</div>';
     }
 
     /* ── Stats ── */
@@ -324,6 +416,7 @@
 
     function renderRevenueChart() {
       var chart = document.getElementById('revenue-chart');
+      chart.removeAttribute('aria-busy');
       var data  = allRevenueData.slice(-revenueMonths);
       if (!data.length) {
         chart.innerHTML = '<div class="bar-chart-loading">No revenue data</div>';
@@ -340,9 +433,9 @@
         var h   = Math.max((d.revenue / max) * 100, 4);
         var cls = isLast ? 'bar-inner bar-green' : 'bar-inner bar-blue';
         return '<div class="bar-col">'
-          + '<div class="bar-tooltip">' + d.month + ': ₹' + d.revenue.toLocaleString() + '</div>'
+          + '<div class="bar-tooltip">' + escHtml(d.month) + ': ₹' + d.revenue.toLocaleString('en-IN') + '</div>'
           + '<div class="bar-outer"><div class="' + cls + '" style="height:' + h + '%"></div></div>'
-          + '<div class="bar-label">' + d.month + '</div>'
+          + '<div class="bar-label">' + escHtml(d.month) + '</div>'
           + '</div>';
       }).join('');
     }
@@ -351,20 +444,27 @@
       try {
         allRevenueData = await fetch(API_BASE + '/gen-dashboard/monthly-revenue').then(r => r.json());
         renderRevenueChart();
-      } catch(e) { console.error('Revenue failed', e); }
+      } catch(e) {
+        console.error('Revenue failed', e);
+        var chart = document.getElementById('revenue-chart');
+        chart.removeAttribute('aria-busy');
+        chart.innerHTML = '<div class="bar-chart-loading">Couldn’t load revenue. <a href="#" onclick="loadMonthlyRevenue();return false;">Try again</a></div>';
+        document.getElementById('revenue-total').textContent = '—';
+      }
     }
 
     /* ── Plan Breakdown ── */
     async function loadPlanBreakdown() {
+      var legend = document.getElementById('donut-legend');
+      var svgEl  = document.getElementById('donut-svg');
+      var grid   = document.getElementById('plans-grid');
       try {
-        var plans  = await fetch(API_BASE + '/gen-dashboard/plan-breakdown').then(r => r.json());
-        var colors = ['#58a6ff','#4caf50','#ff9800','#ab7ae0','#26c6da'];
-        var legend = document.getElementById('donut-legend');
-        var svg    = document.getElementById('donut-svg');
-        var grid   = document.getElementById('plans-grid');
+        var plans = await fetch(API_BASE + '/gen-dashboard/plan-breakdown').then(r => r.json());
+        legend.removeAttribute('aria-busy'); grid.removeAttribute('aria-busy');
 
         if (!plans.length) {
-          legend.innerHTML = grid.innerHTML = '<div style="color:var(--text-muted)">No plans</div>';
+          legend.innerHTML = '<div class="bar-chart-loading">No plans</div>';
+          grid.innerHTML = '<div class="state-pad">' + emptyBlock('inbox', 'No plans yet', 'Plans appear here once organizations subscribe.') + '</div>';
           return;
         }
 
@@ -373,45 +473,45 @@
         document.getElementById('donut-total-label').textContent = total + ' active';
 
         var r = 15.9155, circ = 2 * Math.PI * r, offset = 25;
+        var gap = plans.length > 1 ? 0.9 : 0;
         var segs = plans.map(function(p, i) {
           var pct  = (p.active_count / total) * 100;
-          var dash = (pct / 100) * circ;
-          var gap  = circ - dash;
+          var arc  = (pct / 100) * circ;
+          var dash = Math.max(arc - gap, 0.01);
           var dashOffset = ((100 - offset) / 100) * circ;
           offset += pct;
           return '<circle cx="21" cy="21" r="' + r + '" fill="none"'
-            + ' stroke="' + colors[i] + '" stroke-width="4"'
-            + ' stroke-dasharray="' + dash.toFixed(2) + ' ' + gap.toFixed(2) + '"'
-            + ' stroke-dashoffset="' + dashOffset.toFixed(2) + '"'
-            + ' stroke-linecap="round"/>';
+            + ' style="stroke:' + tone(i) + '" stroke-width="4"'
+            + ' stroke-dasharray="' + dash.toFixed(2) + ' ' + (circ - dash).toFixed(2) + '"'
+            + ' stroke-dashoffset="' + dashOffset.toFixed(2) + '"/>';
         }).join('');
-        svg.innerHTML = '<circle cx="21" cy="21" r="' + r + '" fill="none" stroke="#21262d" stroke-width="4"/>' + segs;
+        svgEl.innerHTML = '<circle cx="21" cy="21" r="' + r + '" fill="none" stroke-width="4"/>' + segs;
 
         legend.innerHTML = plans.map(function(p, i) {
           return '<div class="donut-legend-item">'
-            + '<div class="donut-legend-dot" style="background:' + colors[i] + '"></div>'
-            + '<div class="donut-legend-info"><span class="donut-legend-name">' + escHtml(p.plan_name) + '</span>'
-            + '<span class="donut-legend-meta">₹' + p.plan_amount.toLocaleString() + '/' + p.plan_month + 'mo</span></div>'
-            + '<div class="donut-legend-count" style="color:' + colors[i] + '">' + p.active_count + '</div>'
+            + '<div class="donut-legend-dot" style="background:' + tone(i) + '"></div>'
+            + '<div class="donut-legend-info"><span class="donut-legend-name" title="' + escHtml(p.plan_name) + '">' + escHtml(p.plan_name) + '</span>'
+            + '<span class="donut-legend-meta">₹' + p.plan_amount.toLocaleString('en-IN') + '/' + p.plan_month + 'mo</span></div>'
+            + '<div class="donut-legend-count">' + p.active_count + '</div>'
             + '</div>';
         }).join('');
 
         grid.innerHTML = plans.map(function(p, i) {
           var pct = Math.round((p.active_count / total) * 100);
-          return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);">'
-            + '<div style="width:8px;height:8px;border-radius:50%;background:' + colors[i] + ';flex-shrink:0;"></div>'
-            + '<div style="flex:1;min-width:0;">'
-            +   '<div style="font-size:12px;font-weight:600;color:var(--text-primary);">' + escHtml(p.plan_name) + '</div>'
-            +   '<div style="font-size:10px;color:var(--text-muted);">₹' + p.plan_amount.toLocaleString() + ' · ' + p.plan_month + ' mo</div>'
-            +   '<div style="margin-top:4px;height:3px;background:var(--bg-tertiary);border-radius:2px;">'
-            +     '<div style="height:100%;width:' + pct + '%;background:' + colors[i] + ';border-radius:2px;transition:width .4s;"></div>'
-            +   '</div>'
+          return '<div class="plan-row">'
+            + '<span class="pl-dot" style="background:' + tone(i) + '"></span>'
+            + '<div class="pl-info">'
+            +   '<div class="pl-top"><span class="pl-name" title="' + escHtml(p.plan_name) + '">' + escHtml(p.plan_name) + '</span><span class="pl-count">' + p.active_count + '</span></div>'
+            +   '<div class="pl-meta">₹' + p.plan_amount.toLocaleString('en-IN') + ' · ' + p.plan_month + ' mo · ' + pct + '%</div>'
+            +   '<div class="progress"><div class="progress-fill" style="width:' + pct + '%;background:' + tone(i) + '"></div></div>'
             + '</div>'
-            + '<div style="font-size:16px;font-weight:800;color:' + colors[i] + ';min-width:24px;text-align:right;">' + p.active_count + '</div>'
             + '</div>';
         }).join('');
       } catch(e) {
         console.error('Plan breakdown failed', e);
+        legend.removeAttribute('aria-busy'); grid.removeAttribute('aria-busy');
+        legend.innerHTML = '<div class="bar-chart-loading">Couldn’t load plans. <a href="#" onclick="loadPlanBreakdown();return false;">Try again</a></div>';
+        grid.innerHTML = '<div class="state-pad">' + emptyBlock('alert', 'Couldn’t load plans', 'Check your connection and try again.', 'loadPlanBreakdown') + '</div>';
       }
     }
 
@@ -420,19 +520,30 @@
       var tbody = document.getElementById('orgs-table-body');
       var rows  = viewAllState.orgs ? orgsData : orgsData.slice(0, PAGE);
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">No organizations found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:0">' + emptyBlock('inbox', 'No organizations found', 'New organizations will show up here.') + '</td></tr>';
         return;
       }
       tbody.innerHTML = rows.map(function(r) {
-        return '<tr style="cursor:pointer;" onclick="window.location.href=\'org_analytics.html?org_id=' + encodeURIComponent(r.org_id || '') + '&org_name=' + encodeURIComponent(r.org_name || '') + '\'">'
-          + '<td><div class="td-org-name">' + escHtml(r.org_name) + '</div></td>'
-          + '<td>' + (r.plan_name ? '<span class="badge badge-blue">' + escHtml(r.plan_name) + '</span>' : '<span style="color:var(--text-muted);font-size:11px;">—</span>') + '</td>'
-          + '<td style="font-size:12px;">' + r.user_count + '</td>'
+        var href = 'org_analytics.html?org_id=' + encodeURIComponent(r.org_id || '') + '&org_name=' + encodeURIComponent(r.org_name || '');
+        return '<tr class="row-link" tabindex="0" data-href="' + escHtml(href) + '">'
+          + '<td><div class="org-cell"><span class="org-avatar" aria-hidden="true">' + escHtml(initials(r.org_name)) + '</span><span class="org-name" title="' + escHtml(r.org_name) + '">' + escHtml(r.org_name) + '</span></div></td>'
+          + '<td class="col-plan">' + (r.plan_name ? '<span class="badge badge-gray">' + escHtml(r.plan_name) + '</span>' : '<span class="muted">—</span>') + '</td>'
+          + '<td class="num">' + escHtml(r.user_count) + '</td>'
           + '<td>' + statusBadge(r.sub_status) + '</td>'
-          + '<td style="font-size:11px;color:var(--text-muted);">' + (r.end_date || '—') + '</td>'
+          + '<td class="nowrap muted col-exp">' + escHtml(fmtDate(r.end_date)) + '</td>'
           + '</tr>';
       }).join('');
     }
+
+    document.getElementById('orgs-table-body').addEventListener('click', function(e) {
+      var tr = e.target.closest('tr[data-href]');
+      if (tr) window.location.href = tr.getAttribute('data-href');
+    });
+    document.getElementById('orgs-table-body').addEventListener('keydown', function(e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var tr = e.target.closest('tr[data-href]');
+      if (tr) { e.preventDefault(); window.location.href = tr.getAttribute('data-href'); }
+    });
 
     async function loadRecentOrgs() {
       try {
@@ -441,45 +552,63 @@
         orgsData.push.apply(orgsData, rows);
         renderOrgs();
         document.getElementById('orgs-view-all-btn').style.display = orgsData.length <= PAGE ? 'none' : '';
-      } catch(e) { console.error('Orgs failed', e); }
+      } catch(e) {
+        console.error('Orgs failed', e);
+        document.getElementById('orgs-table-body').innerHTML = '<tr><td colspan="5" style="padding:0">' + emptyBlock('alert', 'Couldn’t load organizations', 'Check your connection and try again.', 'loadRecentOrgs') + '</td></tr>';
+      }
     }
 
     function toggleViewAll(type) {
       viewAllState[type] = !viewAllState[type];
       if (type === 'orgs') {
         renderOrgs();
-        document.getElementById('orgs-view-all-btn').textContent = viewAllState.orgs ? 'Show Less' : 'View All';
+        var btn = document.getElementById('orgs-view-all-btn');
+        btn.textContent = viewAllState.orgs ? 'Show Less' : 'View All';
+        btn.setAttribute('aria-expanded', viewAllState.orgs ? 'true' : 'false');
       }
     }
 
     /* ── Active Orgs Today (chip grid) ── */
     async function loadActiveOrgs() {
+      var container = document.getElementById('active-orgs-container');
       try {
         var res  = await fetch(API_BASE + '/gen-dashboard/active-orgs');
         var json = await res.json();
         var orgs = json.data || [];
         document.getElementById('active-orgs-count').textContent = orgs.length + (orgs.length === 1 ? ' org' : ' orgs');
-        var container = document.getElementById('active-orgs-container');
         if (!orgs.length) {
-          container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">No punch activity today yet</div>';
+          container.innerHTML = '<div class="state-pad">' + emptyBlock('activity', 'No punch activity today yet', 'Organizations appear here as soon as someone punches in.') + '</div>';
           return;
         }
         container.innerHTML = '<div class="active-orgs-grid">'
           + orgs.map(function(o) {
-              return '<a class="active-org-chip" href="org_analytics.html?org_id=' + encodeURIComponent(o.org_id) + '&org_name=' + encodeURIComponent(o.org_name) + '">'
-                + '<div class="aoc-name">' + escHtml(o.org_name) + '</div>'
-                + '<div class="aoc-meta">'
-                +   '<span class="aoc-staff">↑ ' + o.active_count + ' staff</span>'
-                +   '<span class="aoc-time">' + (o.last_punch_time || '') + '</span>'
-                + '</div>'
+              var href = 'org_analytics.html?org_id=' + encodeURIComponent(o.org_id) + '&org_name=' + encodeURIComponent(o.org_name);
+              return '<a class="active-org-chip" href="' + escHtml(href) + '" title="' + escHtml(o.org_name) + '">'
+                + '<span class="aoc-avatar" aria-hidden="true">' + escHtml(initials(o.org_name)) + '</span>'
+                + '<span class="aoc-body">'
+                +   '<span class="aoc-name">' + escHtml(o.org_name) + '</span>'
+                +   '<span class="aoc-meta">'
+                +     '<span class="aoc-staff">' + escHtml(o.active_count) + ' staff</span>'
+                +     '<span class="aoc-time">' + escHtml(o.last_punch_time || '') + '</span>'
+                +   '</span>'
+                + '</span>'
                 + '</a>';
             }).join('')
           + '</div>';
-      } catch(e) { console.error('Active orgs error', e); }
+      } catch(e) {
+        console.error('Active orgs error', e);
+        container.innerHTML = '<div class="state-pad">' + emptyBlock('alert', 'Couldn’t load active organizations', 'Check your connection and try again.', 'loadActiveOrgs') + '</div>';
+      }
     }
 
     async function loadDashboard() {
-      await Promise.all([loadStats(), loadMonthlyRevenue(), loadRecentOrgs(), loadPlanBreakdown(), loadActiveOrgs()]);
+      var btns = [document.getElementById('refresh-btn'), document.getElementById('refresh-btn-top')];
+      btns.forEach(function(b) { if (b) { b.disabled = true; b.classList.add('is-loading'); } });
+      try {
+        await Promise.all([loadStats(), loadMonthlyRevenue(), loadRecentOrgs(), loadPlanBreakdown(), loadActiveOrgs()]);
+      } finally {
+        btns.forEach(function(b) { if (b) { b.disabled = false; b.classList.remove('is-loading'); } });
+      }
     }
 
     function handleLogout() {

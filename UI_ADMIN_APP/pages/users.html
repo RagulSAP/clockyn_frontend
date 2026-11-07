@@ -11,144 +11,121 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
-    .page-topbar { display:flex; align-items:center; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
-    .page-topbar h1 { font-size:20px; font-weight:700; color:var(--text-primary); flex:1; }
-    .search-box {
-      display:flex; align-items:center; gap:8px;
-      background:var(--bg-tertiary); border:1px solid var(--border);
-      border-radius:var(--radius-sm); padding:7px 12px; width:260px;
-    }
-    .search-box input { background:none; border:none; outline:none; color:var(--text-primary); font-size:13px; width:100%; }
-    .search-box input::placeholder { color:var(--text-muted); }
-    .filter-select {
-      background:var(--bg-tertiary); border:1px solid var(--border);
-      border-radius:var(--radius-sm); padding:7px 12px;
-      color:var(--text-secondary); font-size:13px; cursor:pointer; outline:none;
-    }
-    .summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
-    .summary-card {
-      background:var(--bg-secondary); border:1px solid var(--border);
-      border-radius:var(--radius-md); padding:18px 20px;
-      display:flex; align-items:center; gap:16px;
-    }
-    .summary-icon {
-      width:44px; height:44px; border-radius:var(--radius-sm);
-      display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
-    }
-    .summary-icon.blue   { background:rgba(88,166,255,0.15); }
-    .summary-icon.green  { background:rgba(76,175,80,0.15); }
-    .summary-icon.orange { background:rgba(255,152,0,0.15); }
-    .summary-icon.purple { background:rgba(167,139,250,0.15); }
-    .summary-info { display:flex; flex-direction:column; gap:3px; }
-    .summary-val  { font-size:24px; font-weight:700; color:var(--text-primary); line-height:1; }
-    .summary-lbl  { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
-    .table-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
-    .table-card-header {
-      padding:16px 20px; border-bottom:1px solid var(--border);
-      display:flex; align-items:center; justify-content:space-between;
-    }
-    .table-card-header h3 { font-size:14px; font-weight:600; color:var(--text-primary); }
-    .count-badge { background:rgba(88,166,255,0.15); color:var(--blue); font-size:12px; font-weight:600; padding:2px 10px; border-radius:20px; }
-    .user-cell { display:flex; align-items:center; gap:10px; }
-    .user-avatar {
-      width:34px; height:34px; border-radius:50%; flex-shrink:0;
-      display:flex; align-items:center; justify-content:center;
-      font-size:13px; font-weight:700; color:#fff;
-    }
-    .user-name-text {
-      font-weight:600; color:var(--text-primary); font-size:13px;
-      cursor:pointer; transition:color .15s;
-    }
-    .user-name-text:hover { color:var(--blue); }
-    .user-empid     { font-size:11px; color:var(--text-muted); margin-top:1px; }
-    .contact-cell   { display:flex; flex-direction:column; gap:2px; }
-    .contact-email  { font-size:12px; color:var(--text-secondary); }
-    .contact-phone  { font-size:11px; color:var(--text-muted); }
-    .role-badge-admin    { background:rgba(88,166,255,0.15);  color:var(--blue);   padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
-    .role-badge-manager  { background:rgba(255,152,0,0.15);   color:var(--orange); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
-    .role-badge-employee { background:rgba(76,175,80,0.15);   color:var(--green);  padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
-    .status-active   { background:rgba(76,175,80,0.15);  color:var(--green); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
-    .status-inactive { background:rgba(239,68,68,0.15);  color:var(--red);   padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
-    .empty-row td { text-align:center; color:var(--text-muted); padding:40px !important; }
-    @media(max-width:1100px){ .summary-grid{ grid-template-columns:repeat(2,1fr); } }
+    /* ── icons (Lucide, inline) ── */
+    .ico { width: 18px; height: 18px; flex: none; display: block; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .ico-sm { width: 15px; height: 15px; }
+    .topbar-search > span { display: inline-flex; filter: none; opacity: 0.6; }
+    .topbar-search > span .ico { width: 16px; height: 16px; }
 
-    /* Punch-in photo avatar */
-    .user-avatar img {
-      width:100%; height:100%; border-radius:50%; object-fit:cover; display:block;
-    }
-    .user-avatar.has-photo.admin-view {
-      cursor:pointer; transition:opacity .2s, box-shadow .2s;
-    }
-    .user-avatar.has-photo.admin-view:hover {
-      opacity:.82; box-shadow:0 0 0 2px var(--blue);
-    }
-    /* Shimmer loading placeholder */
-    .avatar-shimmer {
-      width:34px; height:34px; border-radius:50%; flex-shrink:0;
-      background:linear-gradient(90deg,var(--bg-tertiary) 25%,var(--border) 50%,var(--bg-tertiary) 75%);
-      background-size:200% 100%; animation:shimmer 1.2s infinite;
-    }
-    @keyframes shimmer { to { background-position:-200% 0; } }
+    /* ── KPI tiles ── */
+    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .kpis .stat-tile { position: relative; }
+    .kpis .stat-val { font-variant-numeric: tabular-nums; }
+    .kpis .stat-label { padding-right: 40px; }
+    .stat-ico { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; background: var(--surface-muted); color: var(--text-secondary); }
+    .stat-ico.tone-success { background: var(--success-soft); color: var(--success); }
+    .stat-ico.tone-info { background: var(--info-soft); color: var(--info); }
+    .stat-ico.tone-purple { background: var(--purple-soft); color: var(--purple); }
 
-    /* Punch attendance modal */
-    #punch-photo-modal {
-      display:none; position:fixed; inset:0;
-      background:rgba(0,0,0,.7); z-index:2000;
-      align-items:center; justify-content:center; padding:16px;
+    /* ── Deletion requests row ── */
+    .request-row { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding: 14px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm), inset 0 1px 0 var(--highlight); color: inherit; text-decoration: none; transition: border-color var(--motion-fast) var(--ease), background-color var(--motion-fast) var(--ease); }
+    .request-row:hover { border-color: var(--border-strong); background: var(--surface-elevated); }
+    .request-row:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+    .request-ico { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; background: var(--danger-soft); color: var(--danger); flex-shrink: 0; }
+    .request-text { flex: 1; min-width: 0; }
+    .request-text h3 { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; color: var(--text); }
+    .request-text p { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+    .request-chev { color: var(--text-muted); }
+
+    /* ── Table card + toolbar ── */
+    .table-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    .filter-select { height: 36px; min-height: 36px; padding: 0 12px; font-size: 13px; color: var(--text-secondary); border-radius: var(--radius-sm); max-width: 100%; }
+    .card-title { display: flex; align-items: center; gap: 10px; }
+
+    table.data { table-layout: fixed; min-width: 900px; }
+    table.data td { overflow: hidden; }
+    th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .nowrap { white-space: nowrap; }
+    .muted { color: var(--text-muted); }
+    .trunc { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .user-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; cursor: pointer; border: 0; font-family: inherit; transition: transform var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease); }
+    .user-avatar:hover { box-shadow: 0 0 0 3px var(--ring); }
+    .user-avatar:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+    .av-0 { background: var(--info-soft); color: var(--info); }
+    .av-1 { background: var(--success-soft); color: var(--success); }
+    .av-2 { background: var(--warning-soft); color: var(--warning); }
+    .av-3 { background: var(--purple-soft); color: var(--purple); }
+    .av-4 { background: var(--cyan-soft); color: var(--cyan); }
+    .av-5 { background: var(--surface-muted); color: var(--text-secondary); }
+    .user-name-text { display: block; max-width: 100%; background: none; border: 0; padding: 0; font-family: inherit; font-weight: 600; font-size: 13.5px; color: var(--text); text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-name-text:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .user-name-text:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 4px; }
+    .user-empid { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+    .contact-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .contact-email { font-size: 12.5px; color: var(--text-secondary); }
+    .contact-phone { font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .org-main { font-size: 13px; color: var(--text); font-weight: 500; }
+
+    .act-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 30px; height: 30px; padding: 0 7px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background-color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease); }
+    .act-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .act-btn.del:hover:not(:disabled) { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
+    .act-label { display: none; }
+
+    tbody tr.state-row:hover { background: none; }
+    .state-row td { padding: 0; }
+    .sk-stack { display: grid; gap: 18px; padding: 24px 20px; }
+    .sk-stack .skeleton-line { height: 14px; }
+    .state-row .empty-state { padding: 48px 24px; }
+    .empty-state .empty-icon .ico { width: 24px; height: 24px; }
+
+    /* ── Attendance modal ── */
+    .att-modal { display: flex; flex-direction: column; overflow: hidden; max-height: min(88vh, 820px); }
+    .att-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+    .range-bar { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; flex-shrink: 0; }
+    .range-bar .form-group { margin: 0; }
+    .range-bar input[type="date"] { width: 160px; }
+    .att-body { overflow-y: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding-right: 2px; }
+    .att-day-card { background: var(--surface-muted); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 16px; }
+    .att-day-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .att-day-date { font-size: 13.5px; font-weight: 700; color: var(--text); }
+    .att-photos { display: flex; gap: 16px; flex-wrap: wrap; }
+    .att-photo-block { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .att-photo-img { width: 104px; height: 104px; object-fit: cover; border-radius: var(--radius-sm); border: 2px solid var(--border); cursor: pointer; background: var(--surface); transition: border-color var(--motion-fast) var(--ease); }
+    .att-photo-img:hover { border-color: var(--text-muted); }
+    .att-photo-label { font-size: 10.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; }
+    .att-photo-time { font-size: 12.5px; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .no-photo { width: 104px; height: 104px; border-radius: var(--radius-sm); border: 2px dashed var(--border-strong); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px; text-align: center; }
+    .att-state { padding: 8px 0; }
+    .att-state .empty-state { padding: 36px 16px; }
+
+    /* phones: every row becomes a compact two-column card (no sideways scrolling to reach a value or an action) */
+    @media (max-width: 700px) {
+      table.data { table-layout: auto; min-width: 0; }
+      table.data thead { display: none; }
+      table.data, table.data tbody { display: block; width: 100%; }
+      table.data tbody tr:not(.state-row) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 16px; padding: 16px; border-bottom: 1px solid var(--border); }
+      table.data tbody tr.state-row { display: block; padding: 0; }
+      table.data td { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; padding: 0; border: 0; text-align: left; overflow: visible; }
+      table.data td::before { content: attr(data-label); font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); }
+      table.data td[data-label=""]::before { display: none; }
+      table.data td.c-main, table.data td.c-actions { grid-column: 1 / -1; }
+      table.data td.c-main { flex-direction: row; align-items: center; }
+      table.data td.c-main .user-cell { width: 100%; }
+      table.data td.c-actions { flex-direction: row; justify-content: flex-end; padding-top: 12px; border-top: 1px dashed var(--border); }
+      table.data td .contact-cell { align-items: flex-start; text-align: left; width: 100%; }
+      table.data .state-row td { display: block; padding: 0; }
+      .act-btn { padding: 0 12px; }
+      .act-label { display: inline; }
+      .range-bar input[type="date"] { width: 100%; }
+      .range-bar .form-group { flex: 1 1 140px; }
     }
-    #punch-photo-modal.open { display:flex; }
-    .ppm-box {
-      background:var(--bg-secondary); border:1px solid var(--border);
-      border-radius:var(--radius-md); width:100%; max-width:460px;
-      padding:24px; position:relative;
+    @media (max-width: 900px) {
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .table-toolbar { padding: 12px 16px; }
+      .table-toolbar .filter-select { flex: 1 1 140px; }
     }
-    .ppm-close {
-      position:absolute; top:14px; right:16px;
-      background:none; border:none; color:var(--text-muted);
-      font-size:20px; cursor:pointer; line-height:1;
-    }
-    .ppm-close:hover { color:var(--text-primary); }
-    .ppm-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; padding-right:28px; }
-    .ppm-avatar {
-      width:48px; height:48px; border-radius:50%; flex-shrink:0;
-      display:flex; align-items:center; justify-content:center;
-      font-size:16px; font-weight:700; color:#fff; overflow:hidden;
-    }
-    .ppm-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-    .ppm-title { font-size:15px; font-weight:700; color:var(--text-primary); }
-    .ppm-subtitle { font-size:12px; color:var(--text-muted); margin-top:2px; }
-    .ppm-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
-    .ppm-card {
-      background:var(--bg-tertiary); border:1px solid var(--border);
-      border-radius:var(--radius-sm); padding:14px;
-    }
-    .ppm-card-label { font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:6px; }
-    .ppm-card-time  { font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:8px; }
-    .ppm-card-photo { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:6px; background:var(--bg-secondary); display:block; }
-    .ppm-card-nophoto {
-      width:100%; aspect-ratio:1/1; border-radius:6px;
-      background:var(--bg-secondary); display:flex;
-      align-items:center; justify-content:center;
-      font-size:11px; color:var(--text-muted);
-    }
-    .ppm-in  .ppm-card-label { color:#4caf50; }
-    .ppm-out .ppm-card-label { color:#ff9800; }
-    .ppm-loading { text-align:center; padding:32px; color:var(--text-muted); font-size:13px; }
-    .ppm-error   { text-align:center; padding:24px; color:#ef4444; font-size:13px; }
-    /* Attendance range modal */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:2000; align-items:center; justify-content:center; }
-    .modal-overlay.open { display:flex; }
-    .modal { background:var(--bg-secondary); border:1px solid var(--border); border-radius:16px; padding:28px; width:100%; }
-    .modal-title { font-size:18px; font-weight:600; color:var(--text-primary); }
-    .att-day-card { background:var(--bg-tertiary); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
-    .att-day-date { font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:10px; }
-    .att-photos { display:flex; gap:16px; flex-wrap:wrap; }
-    .att-photo-block { display:flex; flex-direction:column; align-items:center; gap:6px; }
-    .att-photo-img { width:100px; height:100px; object-fit:cover; border-radius:8px; border:2px solid var(--border); cursor:pointer; }
-    .att-photo-img:hover { border-color:var(--blue); }
-    .att-photo-label { font-size:11px; color:var(--text-muted); font-weight:600; }
-    .att-photo-time { font-size:12px; color:var(--text-primary); font-weight:600; }
-    .no-photo { width:100px; height:100px; border-radius:8px; border:2px dashed var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:11px; }
   </style>
 </head>
 <body>
@@ -160,15 +137,15 @@
 
   <div class="main">
     <header class="topbar">
-      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <button class="hamburger-btn" type="button" onclick="toggleSidebar()" title="Menu" aria-label="Open menu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button>
       <span class="topbar-title">Users</span>
       <div class="topbar-search">
-        <span>🔍</span>
-        <input type="text" id="search-input" placeholder="Search name, email, phone, org, dept..." oninput="applyFilters()" />
+        <span aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></span>
+        <input type="text" id="search-input" placeholder="Search name, email, phone, org, dept..." aria-label="Search users" oninput="applyFilters()" />
       </div>
       <div class="topbar-actions">
-        <button type="button" class="icon-btn">🔔<span class="dot"></span></button>
-        <button type="button" class="icon-btn" onclick="loadUsers()" title="Refresh">🔄</button>
+        <button type="button" class="icon-btn" aria-label="Notifications"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg><span class="dot"></span></button>
+        <button type="button" class="icon-btn" onclick="loadUsers()" title="Refresh" aria-label="Refresh"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
         <div class="topbar-user-pill">
           <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
           <div class="topbar-user-info">
@@ -181,102 +158,98 @@
 
     <div class="content">
 
-      <div class="page-topbar">
-        <h1>All Users</h1>
-
-        <select class="filter-select" id="role-filter" onchange="applyFilters()">
-          <option value="">All Roles</option>
-          <option value="1">Admin</option>
-          <option value="2">Manager</option>
-          <option value="3">Employee</option>
-        </select>
-        <select class="filter-select" id="status-filter" onchange="applyFilters()">
-          <option value="">All Status</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-        </select>
-<div class="export-wrap">
-          <button class="btn btn-ghost btn-sm" onclick="toggleExportMenu('user-export-menu')">⬇ Export ▾</button>
-          <div class="export-menu" id="user-export-menu">
-            <button onclick="doExportExcel()">📊 Export Excel</button>
-            <button onclick="doExportPDF()">📄 Export PDF</button>
-          </div>
+      <div class="page-header">
+        <div>
+          <h1>Users</h1>
+          <p>Managers and employees across every organization.</p>
         </div>
-      </div>
-
-      <!-- Deletion Requests Card (top) -->
-      <div class="table-card" style="margin-bottom:24px;cursor:pointer;" onclick="window.location.href='delete_account.html'">
-        <div class="table-card-header" style="border-bottom:none;">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <div style="width:40px;height:40px;border-radius:10px;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;font-size:20px;">🗑️</div>
-            <div>
-              <h3 style="margin:0;">Account Deletion Requests</h3>
-              <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Pending requests from app users</div>
+        <div class="page-header-actions">
+          <div class="export-wrap">
+            <button type="button" class="btn btn-ghost" onclick="toggleExportMenu('user-export-menu')"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>Export<svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+            <div class="export-menu" id="user-export-menu">
+              <button type="button" onclick="doExportExcel()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>Export Excel</button>
+              <button type="button" onclick="doExportPDF()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Export PDF</button>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span id="del-req-count" style="background:rgba(239,68,68,0.15);color:var(--red);font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;">— requests</span>
-            <span style="color:var(--text-muted);font-size:18px;">›</span>
-          </div>
         </div>
       </div>
 
+      <!-- Deletion Requests -->
+      <a class="request-row" href="delete_account.html">
+        <span class="request-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+        <div class="request-text">
+          <h3>Account deletion requests</h3>
+          <p>Pending requests from app users</p>
+        </div>
+        <span class="badge badge-red" id="del-req-count">— requests</span>
+        <svg class="ico request-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </a>
+
       <!-- Summary Cards -->
-      <div class="summary-grid">
-        <div class="summary-card">
-          <div class="summary-icon blue">👥</div>
-          <div class="summary-info">
-            <div class="summary-val" id="s-total">—</div>
-            <div class="summary-lbl">Total Users</div>
-          </div>
+      <div class="stat-grid kpis">
+        <div class="stat-tile">
+          <span class="stat-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg></span>
+          <div class="stat-label">Total users</div>
+          <div class="stat-val" id="s-total">—</div>
+          <div class="stat-sub">Across all roles</div>
         </div>
-        <div class="summary-card">
-          <div class="summary-icon blue">🛡️</div>
-          <div class="summary-info">
-            <div class="summary-val" id="s-admin" style="color:var(--blue)">—</div>
-            <div class="summary-lbl">Admins</div>
-          </div>
+        <div class="stat-tile">
+          <span class="stat-ico tone-info" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <div class="stat-label">Admins</div>
+          <div class="stat-val" id="s-admin">—</div>
+          <div class="stat-sub">Organization owners</div>
         </div>
-        <div class="summary-card">
-          <div class="summary-icon orange">👔</div>
-          <div class="summary-info">
-            <div class="summary-val" id="s-manager" style="color:var(--orange)">—</div>
-            <div class="summary-lbl">Managers</div>
-          </div>
+        <div class="stat-tile">
+          <span class="stat-ico tone-purple" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></span>
+          <div class="stat-label">Managers</div>
+          <div class="stat-val" id="s-manager">—</div>
+          <div class="stat-sub">Team leads</div>
         </div>
-        <div class="summary-card">
-          <div class="summary-icon green">🧑‍💼</div>
-          <div class="summary-info">
-            <div class="summary-val" id="s-employee" style="color:var(--green)">—</div>
-            <div class="summary-lbl">Employees</div>
-          </div>
+        <div class="stat-tile">
+          <span class="stat-ico tone-success" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg></span>
+          <div class="stat-label">Employees</div>
+          <div class="stat-val" id="s-employee">—</div>
+          <div class="stat-sub">Staff members</div>
         </div>
       </div>
 
       <!-- Users Table -->
-      <div class="table-card">
-        <div class="table-card-header">
-          <h3>Users</h3>
-          <span class="count-badge" id="table-count">0 users</span>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <h3>All users</h3>
+            <span class="badge" id="table-count">0 users</span>
+          </div>
+        </div>
+        <div class="table-toolbar">
+          <select class="filter-select" id="role-filter" onchange="applyFilters()" aria-label="Filter by role">
+            <option value="">All roles</option>
+            <option value="1">Admin</option>
+            <option value="2">Manager</option>
+            <option value="3">Employee</option>
+          </select>
+          <select class="filter-select" id="status-filter" onchange="applyFilters()" aria-label="Filter by status">
+            <option value="">All status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
         </div>
         <div class="table-wrap">
-          <table>
+          <table class="data">
             <thead>
               <tr>
-                <th>User</th>
-                <th>Contact</th>
-                <th>Organization</th>
-                <th>Department</th>
-                <th>Branch</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Joined</th>
-                <th>Today's Status</th>
-                <th>Actions</th>
+                <th style="width:21%">User</th>
+                <th style="width:18%">Contact</th>
+                <th style="width:18%">Organization</th>
+                <th style="width:9%">Role</th>
+                <th style="width:9%">Status</th>
+                <th style="width:11%">Today</th>
+                <th style="width:11%">Joined</th>
+                <th class="num" style="width:96px">Actions</th>
               </tr>
             </thead>
             <tbody id="users-tbody">
-              <tr class="empty-row"><td colspan="10">Loading...</td></tr>
+              <tr class="state-row"><td colspan="8"><div class="sk-stack"><div class="skeleton skeleton-line" style="width:100%"></div><div class="skeleton skeleton-line" style="width:92%"></div><div class="skeleton skeleton-line" style="width:96%"></div><div class="skeleton skeleton-line" style="width:88%"></div><div class="skeleton skeleton-line" style="width:94%"></div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -287,27 +260,27 @@
 
   <!-- Attendance Range Modal -->
   <div class="modal-overlay" id="att-range-modal">
-    <div class="modal" style="max-width:700px;width:96vw;max-height:90vh;display:flex;flex-direction:column;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-shrink:0;">
+    <div class="modal-box modal-lg att-modal" role="dialog" aria-modal="true" aria-labelledby="att-modal-name">
+      <div class="modal-header">
         <div>
-          <div class="modal-title" style="margin-bottom:4px;" id="att-modal-name">Attendance</div>
-          <div style="font-size:12px;color:var(--text-muted);" id="att-modal-days-label"></div>
+          <h2 id="att-modal-name">Attendance</h2>
+          <div class="att-sub" id="att-modal-days-label"></div>
         </div>
-        <button onclick="closeAttModal()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px 8px;">&#x2715;</button>
+        <button type="button" class="modal-close" onclick="closeAttModal()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       </div>
-      <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;flex-shrink:0;">
-        <div>
-          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">From</label>
-          <input type="date" id="att-from-date" class="search-input" style="width:150px;" />
+      <div class="range-bar">
+        <div class="form-group">
+          <label for="att-from-date">From</label>
+          <input type="date" id="att-from-date" />
         </div>
-        <div>
-          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">To</label>
-          <input type="date" id="att-to-date" class="search-input" style="width:150px;" />
+        <div class="form-group">
+          <label for="att-to-date">To</label>
+          <input type="date" id="att-to-date" />
         </div>
-        <button class="btn btn-primary btn-sm" onclick="applyAttRange()">Apply</button>
+        <button type="button" class="btn btn-primary" onclick="applyAttRange()">Apply</button>
       </div>
-      <div id="att-modal-body" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:12px;">
-        <div style="text-align:center;color:var(--text-muted);padding:32px;">Select a date range and click Apply</div>
+      <div id="att-modal-body" class="att-body">
+        <div class="att-state"><div class="empty-state"><h3>Pick a date range</h3><p>Select a date range and click Apply.</p></div></div>
       </div>
     </div>
   </div>
@@ -318,6 +291,20 @@
   <script>
     let allUsers = [];
     let filteredUsers = [];
+
+    /* Lucide icon paths (same icon set as the Clockyn app) for markup built in JS */
+    const ICONS = {
+      trash: '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+      users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
+      alert: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+      calendar: '<path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M8 13h.01"/><path d="M12 13h.01"/><path d="M16 13h.01"/><path d="M8 17h.01"/><path d="M12 17h.01"/><path d="M16 17h.01"/>'
+    };
+    function ico(name, cls) {
+      return '<svg class="ico ico-sm' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>';
+    }
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
 
     const USER_COLS = [
       { key: 'name',        label: 'Name' },
@@ -335,12 +322,12 @@
     function doExportExcel() { exportExcel(filteredUsers, USER_COLS, 'Clockyn_Users_' + new Date().toISOString().slice(0,10)); }
     function doExportPDF()   { exportPDF(filteredUsers, USER_COLS, 'Clockyn_Users_' + new Date().toISOString().slice(0,10), 'Clockyn — Users'); }
 
-    const avatarColors = ['#58a6ff','#4caf50','#ff9800','#a78bfa','#22d3ee','#ef4444','#f59e0b'];
-
+    /* avatars use theme-aware tinted classes (.av-0 ... .av-5) instead of fixed hex colours */
     function avatarColor(name) {
       var code = 0;
+      name = name || '';
       for (var i = 0; i < name.length; i++) code += name.charCodeAt(i);
-      return avatarColors[code % avatarColors.length];
+      return 'av-' + (code % 6);
     }
 
     function initials(name) {
@@ -348,18 +335,32 @@
     }
 
     function roleBadge(roleId, roleName) {
-      var cls = roleId === 1 ? 'role-badge-admin' : roleId === 2 ? 'role-badge-manager' : 'role-badge-employee';
-      return '<span class="' + cls + '">' + roleName + '</span>';
+      var cls = roleId === 1 ? 'badge-blue' : roleId === 2 ? 'badge-purple' : 'badge-gray';
+      return '<span class="badge ' + cls + '">' + esc(roleName) + '</span>';
     }
 
     function statusBadge(status) {
       return status === 'Active'
-        ? '<span class="status-active">Active</span>'
-        : '<span class="status-inactive">Inactive</span>';
+        ? '<span class="badge badge-green badge-dot">Active</span>'
+        : '<span class="badge badge-gray badge-dot">Inactive</span>';
     }
 
     function avatarHTML(r) {
-      return '<div class="user-avatar admin-view" style="background:' + avatarColor(r.name) + ';cursor:pointer;" onclick="openAttModal(\'' + r.user_id + '\')">' + initials(r.name) + '</div>';
+      return '<button type="button" class="user-avatar admin-view ' + avatarColor(r.name) + '" aria-label="View attendance of ' + esc(r.name) + '" onclick="openAttModal(\'' + esc(r.user_id) + '\')">' + esc(initials(r.name)) + '</button>';
+    }
+
+    function stateRow(html) {
+      return '<tr class="state-row"><td colspan="8">' + html + '</td></tr>';
+    }
+    function emptyState(title, text, iconName, retry) {
+      return stateRow('<div class="empty-state"><div class="empty-icon">' + ico(iconName) + '</div><h3>' + esc(title) + '</h3>'
+        + (text ? '<p>' + esc(text) + '</p>' : '')
+        + (retry ? '<button type="button" class="btn btn-ghost btn-sm" onclick="loadUsers()" style="margin-top:8px;">Try again</button>' : '')
+        + '</div>');
+    }
+    function skeletonStack(extraClass) {
+      var w = [100, 92, 96, 88, 94];
+      return '<div class="sk-stack">' + w.map(function(p){ return '<div class="skeleton skeleton-line" style="width:' + p + '%"></div>'; }).join('') + '</div>';
     }
 
     function renderTable(rows) {
@@ -368,31 +369,31 @@
       var displayRows = rows.filter(function(r) { return r.role_id !== 1; });
       document.getElementById('table-count').textContent = displayRows.length + ' user' + (displayRows.length !== 1 ? 's' : '');
       if (!displayRows.length) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No users found</td></tr>';
+        tbody.innerHTML = emptyState('No users found', 'Try changing the filters or the search.', 'users');
         return;
       }
       tbody.innerHTML = displayRows.map(function(r) {
         var todayStatus = r.punch_in_today
-          ? '<span class="badge badge-green">In ' + (r.punch_in_today||'') + '</span>'
-          : (r.punch_in_today === undefined ? '<span style="color:var(--text-muted);">—</span>' : '<span class="badge badge-gray">Absent</span>');
+          ? '<span class="badge badge-green">In ' + esc(r.punch_in_today) + '</span>'
+          : (r.punch_in_today === undefined ? '<span class="muted">—</span>' : '<span class="badge badge-gray">Absent</span>');
+        var sub = [r.dept_name, r.branch_name].filter(function(v){ return v && v !== '—'; }).map(esc).join(' · ');
         return '<tr>'
-          + '<td><div class="user-cell">'
+          + '<td data-label="" class="c-main"><div class="user-cell">'
           +   avatarHTML(r)
-          +   '<div><div class="user-name-text" onclick="openAttModal(\'' + r.user_id + '\')">' + r.name + '</div>'
-          +   '<div class="user-empid">ID: ' + r.emp_id + '</div></div>'
+          +   '<div style="min-width:0;"><button type="button" class="user-name-text" title="' + esc(r.name) + '" onclick="openAttModal(\'' + esc(r.user_id) + '\')">' + esc(r.name) + '</button>'
+          +   '<div class="user-empid trunc">ID: ' + esc(r.emp_id) + '</div></div>'
           + '</div></td>'
-          + '<td><div class="contact-cell">'
-          +   '<span class="contact-email">' + r.email + '</span>'
-          +   '<span class="contact-phone">' + r.mobile + '</span>'
+          + '<td data-label="Contact"><div class="contact-cell">'
+          +   '<span class="contact-email trunc" title="' + esc(r.email) + '">' + esc(r.email) + '</span>'
+          +   '<span class="contact-phone">' + esc(r.mobile) + '</span>'
           + '</div></td>'
-          + '<td style="color:var(--text-secondary);font-size:13px;">' + r.org_name + '</td>'
-          + '<td style="color:var(--text-muted);font-size:12px;">' + r.dept_name + '</td>'
-          + '<td style="color:var(--text-muted);font-size:12px;">' + r.branch_name + '</td>'
-          + '<td>' + roleBadge(r.role_id, r.role_name) + '</td>'
-          + '<td>' + statusBadge(r.status) + '</td>'
-          + '<td style="color:var(--text-muted);font-size:12px;">' + r.joined + '</td>'
-          + '<td>' + todayStatus + '</td>'
-          + '<td><button onclick="deleteUser(\''+r.user_id+'\')" style="background:none;border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:4px 9px;font-size:12px;color:var(--red);cursor:pointer;" onmouseover="this.style.background=\'rgba(239,68,68,.12)\'" onmouseout="this.style.background=\'none\'">Delete</button></td>'
+          + '<td data-label="Organization"><div class="contact-cell"><span class="org-main trunc" title="' + esc(r.org_name) + '">' + esc(r.org_name) + '</span>'
+          +   (sub ? '<span class="contact-phone trunc" title="' + sub + '">' + sub + '</span>' : '') + '</div></td>'
+          + '<td data-label="Role">' + roleBadge(r.role_id, r.role_name) + '</td>'
+          + '<td data-label="Status">' + statusBadge(r.status) + '</td>'
+          + '<td data-label="Today">' + todayStatus + '</td>'
+          + '<td data-label="Joined" class="nowrap muted">' + esc(r.joined) + '</td>'
+          + '<td data-label="" class="num c-actions"><button type="button" class="act-btn del" title="Delete user" aria-label="Delete user" onclick="deleteUser(\'' + esc(r.user_id) + '\')">' + ico('trash') + '<span class="act-label">Delete</span></button></td>'
           + '</tr>';
       }).join('');
     }
@@ -449,23 +450,16 @@
       }
     }
 
-    function fmtTime(val) {
-      if (!val) return '—';
-      return val;  // backend returns pre-formatted IST string e.g. "15 Jan 2025, 09:00 AM"
-    }
-
-    function photoCard(label, time, photoUrl, colorClass) {
-      var photoHtml = photoUrl
-        ? '<img class="ppm-card-photo" src="' + photoUrl + '" loading="lazy" onerror="this.outerHTML=\'<div class=ppm-card-nophoto>No photo</div>\'" />'
-        : '<div class="ppm-card-nophoto">No photo</div>';
-      return '<div class="ppm-card ' + colorClass + '">'
-        + '<div class="ppm-card-label">' + label + '</div>'
-        + '<div class="ppm-card-time">' + fmtTime(time) + '</div>'
-        + photoHtml
-        + '</div>';
-    }
-
     var currentAttUserId = null;
+
+    function attState(inner) { return '<div class="att-state">' + inner + '</div>'; }
+    function attMessage(title, text, iconName) {
+      return attState('<div class="empty-state"><div class="empty-icon">' + ico(iconName) + '</div><h3>' + esc(title) + '</h3>' + (text ? '<p>' + esc(text) + '</p>' : '') + '</div>');
+    }
+    function attLoading() {
+      return '<div class="att-day-card"><div class="skeleton skeleton-line" style="width:40%;margin-bottom:14px"></div><div style="display:flex;gap:16px"><div class="skeleton" style="width:104px;height:104px;border-radius:10px"></div><div class="skeleton" style="width:104px;height:104px;border-radius:10px"></div></div></div>'
+        + '<div class="att-day-card"><div class="skeleton skeleton-line" style="width:34%;margin-bottom:14px"></div><div style="display:flex;gap:16px"><div class="skeleton" style="width:104px;height:104px;border-radius:10px"></div><div class="skeleton" style="width:104px;height:104px;border-radius:10px"></div></div></div>';
+    }
 
     function openAttModal(userId) {
       var user = allUsers.find(function(u) { return String(u.user_id) === String(userId); });
@@ -473,7 +467,7 @@
       currentAttUserId = userId;
       document.getElementById('att-modal-name').textContent = userName || 'Attendance';
       document.getElementById('att-modal-days-label').textContent = '';
-      document.getElementById('att-modal-body').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;">Loading...</div>';
+      document.getElementById('att-modal-body').innerHTML = attLoading();
       // Pre-fill last 5 days
       var today = new Date();
       var from  = new Date(today); from.setDate(today.getDate() - 4);
@@ -497,7 +491,7 @@
       var fromDate = document.getElementById('att-from-date').value;
       var toDate   = document.getElementById('att-to-date').value;
       if (!fromDate || !toDate) return;
-      document.getElementById('att-modal-body').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;">Loading...</div>';
+      document.getElementById('att-modal-body').innerHTML = attLoading();
       try {
         var url = API_BASE + '/gen-dashboard/users/' + currentAttUserId + '/attendance-range?from_date=' + fromDate + '&to_date=' + toDate;
         var res  = await fetch(url);
@@ -505,23 +499,23 @@
         var days = json.data || [];
         document.getElementById('att-modal-days-label').textContent = (json.total_days || 0) + ' day(s) with attendance from ' + fromDate + ' to ' + toDate;
         if (!days.length) {
-          document.getElementById('att-modal-body').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;">No attendance records in selected range</div>';
+          document.getElementById('att-modal-body').innerHTML = attMessage('No attendance records', 'Nothing was recorded in the selected range.', 'calendar');
           return;
         }
         document.getElementById('att-modal-body').innerHTML = days.map(function(d) {
-          var inPhoto  = d.punch_in_photo  ? '<img src="'+d.punch_in_photo+'"  class="att-photo-img" onclick="window.open(this.src)" />' : '<div class="no-photo">No photo</div>';
-          var outPhoto = d.punch_out_photo ? '<img src="'+d.punch_out_photo+'" class="att-photo-img" onclick="window.open(this.src)" />' : '<div class="no-photo">No photo</div>';
+          var inPhoto  = d.punch_in_photo  ? '<img src="' + esc(d.punch_in_photo)  + '" alt="Punch in photo" class="att-photo-img" onclick="window.open(this.src)" onerror="this.outerHTML=\'<div class=no-photo>Unavailable</div>\'" />' : '<div class="no-photo">No photo</div>';
+          var outPhoto = d.punch_out_photo ? '<img src="' + esc(d.punch_out_photo) + '" alt="Punch out photo" class="att-photo-img" onclick="window.open(this.src)" onerror="this.outerHTML=\'<div class=no-photo>Unavailable</div>\'" />' : '<div class="no-photo">No photo</div>';
           var dateLabel = new Date(d.date+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'2-digit',month:'short',year:'numeric'});
           return '<div class="att-day-card">'
-            + '<div class="att-day-date">'+dateLabel+(d.work_hours?' &nbsp;&middot;&nbsp; '+d.work_hours+'h worked':'')+'</div>'
+            + '<div class="att-day-head"><div class="att-day-date">' + esc(dateLabel) + '</div>' + (d.work_hours ? '<span class="badge badge-green">' + esc(d.work_hours) + 'h worked</span>' : '') + '</div>'
             + '<div class="att-photos">'
-            + '<div class="att-photo-block">'+inPhoto+'<div class="att-photo-label">Punch In</div><div class="att-photo-time">'+(d.punch_in_time||'\u2014')+'</div></div>'
-            + '<div class="att-photo-block">'+outPhoto+'<div class="att-photo-label">Punch Out</div><div class="att-photo-time">'+(d.punch_out_time||'\u2014')+'</div></div>'
+            + '<div class="att-photo-block">' + inPhoto + '<div class="att-photo-label">Punch in</div><div class="att-photo-time">' + esc(d.punch_in_time || '—') + '</div></div>'
+            + '<div class="att-photo-block">' + outPhoto + '<div class="att-photo-label">Punch out</div><div class="att-photo-time">' + esc(d.punch_out_time || '—') + '</div></div>'
             + '</div>'
             + '</div>';
         }).join('');
       } catch(e) {
-        document.getElementById('att-modal-body').innerHTML = '<div style="text-align:center;color:var(--red);padding:32px;">Failed to load attendance</div>';
+        document.getElementById('att-modal-body').innerHTML = attMessage('Failed to load attendance', 'Check your connection and try Apply again.', 'alert');
       }
     }
 
@@ -535,7 +529,7 @@
 
     async function loadUsers() {
       var tbody = document.getElementById('users-tbody');
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Loading...</td></tr>';
+      tbody.innerHTML = stateRow(skeletonStack());
       document.getElementById('search-input').value = '';
       document.getElementById('role-filter').value = '';
       document.getElementById('status-filter').value = '';
@@ -544,14 +538,14 @@
         var res = await fetch(API_BASE + '/gen-dashboard/users', { cache: 'no-store' });
         if (!res.ok) {
           var err = await res.json().catch(function(){ return {}; });
-          tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Error: ' + (err.detail || res.status) + '</td></tr>';
+          tbody.innerHTML = emptyState('Couldn’t load users', 'Error: ' + (err.detail || res.status), 'alert', true);
           return;
         }
         allUsers = await res.json();
         updateStats(allUsers);
         applyFilters();
       } catch(e) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Failed to connect to server.</td></tr>';
+        tbody.innerHTML = emptyState('Couldn’t reach the server', 'Check your connection and try again.', 'alert', true);
       } finally {
         document.querySelectorAll('[onclick="loadUsers()"]').forEach(function(b){ b.disabled = false; });
       }

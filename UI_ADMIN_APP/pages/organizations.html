@@ -11,123 +11,123 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
-    .org-topbar { display:flex; align-items:center; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
-    .org-topbar h1 { font-size:20px; font-weight:700; color:var(--text-primary); flex:1; }
-    .org-search {
-      display:flex; align-items:center; gap:8px;
-      background:var(--bg-tertiary); border:1px solid var(--border);
-      border-radius:var(--radius-sm); padding:7px 12px; width:240px;
+    /* ── icons (Lucide, inline) ── */
+    .ico { width: 18px; height: 18px; flex: none; display: block; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .ico-sm { width: 15px; height: 15px; }
+    .topbar-search > span { display: inline-flex; filter: none; opacity: 0.6; }
+    .topbar-search > span .ico { width: 16px; height: 16px; }
+
+    /* ── KPI tiles ── */
+    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .kpis .stat-tile { position: relative; }
+    .kpis .stat-val { font-variant-numeric: tabular-nums; }
+    .kpis .stat-label { padding-right: 40px; }
+    .stat-ico { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; background: var(--surface-muted); color: var(--text-secondary); }
+    .stat-ico.tone-success { background: var(--success-soft); color: var(--success); }
+    .stat-ico.tone-info { background: var(--info-soft); color: var(--info); }
+    .stat-ico.tone-purple { background: var(--purple-soft); color: var(--purple); }
+
+    /* ── Table card + toolbar ── */
+    .table-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    .table-toolbar .grow { flex: 1; }
+    .filter-select { height: 36px; min-height: 36px; padding: 0 12px; font-size: 13px; color: var(--text-secondary); border-radius: var(--radius-sm); max-width: 100%; }
+    .filter-select.sort-select { min-width: 220px; }
+    .filter-select.sort-select.active { border-color: var(--text); color: var(--text); box-shadow: 0 0 0 3px var(--ring); }
+    .card-title { display: flex; align-items: center; gap: 10px; }
+
+    table.data { table-layout: fixed; min-width: 900px; }
+    table.data td { overflow: hidden; }
+    th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .nowrap { white-space: nowrap; }
+    .muted { color: var(--text-muted); }
+    .trunc { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    tbody tr.row-link { cursor: pointer; }
+    tbody tr.row-link:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+
+    .org-name-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .org-avatar { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; letter-spacing: 0.3px; color: var(--text); background: var(--surface-muted); border: 1px solid var(--border); }
+    .org-name-text { font-weight: 600; color: var(--text); font-size: 13.5px; }
+    .org-id-text { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+    .contact-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .contact-email { font-size: 12.5px; color: var(--text-secondary); }
+    .contact-phone { font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .expiring { color: var(--warning); font-weight: 600; }
+
+    .loc-main { font-size: 13px; color: var(--text-secondary); }
+    .actions-cell { display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
+    .act-label { display: none; }
+    .act-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 30px; height: 30px; padding: 0 7px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background-color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease); }
+    .act-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .act-btn.toggle-inactive:hover:not(:disabled) { background: var(--warning-soft); border-color: transparent; color: var(--warning); }
+    .act-btn.toggle-active:hover:not(:disabled) { background: var(--success-soft); border-color: transparent; color: var(--success); }
+    .act-btn.del:hover:not(:disabled) { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
+
+    /* loading / empty / error states inside the table */
+    tbody tr.state-row:hover { background: none; }
+    .state-row td { padding: 0; }
+    .sk-stack { display: grid; gap: 18px; padding: 24px 20px; }
+    .sk-stack .skeleton-line { height: 14px; }
+    .state-row .empty-state { padding: 48px 24px; }
+    .state-row .empty-icon .ico { width: 24px; height: 24px; }
+
+    /* ── Modals (shared system + page extras) ── */
+    .modal-body .form-group { margin-bottom: 0; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .section-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); margin: 4px 0 -4px; }
+    .modal-lead { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+    .modal-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--danger-soft); color: var(--danger); margin-bottom: 14px; }
+    .modal-icon .ico { width: 20px; height: 20px; }
+    .otp-row { display: flex; gap: 8px; }
+    .otp-row input { flex: 1; min-width: 0; }
+    .otp-row .btn { flex-shrink: 0; }
+    .verified-line { display: none; margin-top: 8px; }
+    .form-row input { flex: 1; min-width: 0; }
+    .btn-add-item { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 36px; margin-top: 8px; background: none; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); color: var(--text-secondary); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease), background-color var(--motion-fast) var(--ease); }
+    .btn-add-item:hover { border-color: var(--text-muted); color: var(--text); background: var(--surface-muted); }
+    .details-toggle { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; color: var(--text-secondary); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .details-toggle:hover { color: var(--text); }
+    .details-toggle::after { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg) translateY(-2px); transition: transform var(--motion-fast) var(--ease); }
+    .details-toggle.open::after { transform: rotate(-135deg) translateY(-2px); }
+    .extra-fields { display: none; }
+    .extra-fields.open { display: grid; gap: 16px; }
+    .logo-upload-row { display: flex; align-items: center; gap: 16px; }
+    .logo-preview { width: 72px; height: 72px; border-radius: var(--radius-md); flex-shrink: 0; background: var(--surface-muted); border: 1.5px dashed var(--border-strong); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: border-color var(--motion-fast) var(--ease), background-color var(--motion-fast) var(--ease); }
+    .logo-preview:hover { border-color: var(--text-muted); background: var(--surface-hover); }
+    .logo-preview .ico { width: 26px; height: 26px; }
+    .logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .logo-preview.has-logo { border-style: solid; border-color: var(--border); }
+    .logo-upload-info { flex: 1; min-width: 0; }
+    .logo-upload-info strong { font-size: 14px; color: var(--text); display: block; margin-bottom: 2px; }
+    .logo-upload-info span { font-size: 12.5px; color: var(--text-muted); }
+
+    /* phones: every row becomes a compact two-column card (no sideways scrolling to reach a value or an action) */
+    @media (max-width: 700px) {
+      table.data { table-layout: auto; min-width: 0; }
+      table.data thead { display: none; }
+      table.data, table.data tbody { display: block; width: 100%; }
+      table.data tbody tr:not(.state-row) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 16px; padding: 16px; border-bottom: 1px solid var(--border); }
+      table.data tbody tr.state-row { display: block; padding: 0; }
+      table.data td { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; padding: 0; border: 0; text-align: left; overflow: visible; }
+      table.data td::before { content: attr(data-label); font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); }
+      table.data td[data-label=""]::before { display: none; }
+      table.data td.c-main, table.data td.c-actions { grid-column: 1 / -1; }
+      table.data td.c-main { flex-direction: row; align-items: center; }
+      table.data td.c-main .org-name-cell { width: 100%; }
+      table.data td.c-actions { flex-direction: row; justify-content: flex-end; padding-top: 12px; border-top: 1px dashed var(--border); }
+      table.data td.num { text-align: left; }
+      table.data td .contact-cell { align-items: flex-start; text-align: left; width: 100%; }
+      table.data .state-row td { display: block; padding: 0; }
+      .act-btn { padding: 0 12px; }
+      .act-label { display: inline; }
     }
-    .org-search input { background:none; border:none; outline:none; color:var(--text-primary); font-size:13px; width:100%; }
-    .org-search input::placeholder { color:var(--text-muted); }
-    .filter-select {
-      background:var(--bg-tertiary); border:1px solid var(--border);
-      border-radius:var(--radius-sm); padding:7px 12px;
-      color:var(--text-secondary); font-size:13px; cursor:pointer; outline:none;
+
+    @media (max-width: 900px) {
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .table-toolbar { padding: 12px 16px; }
+      .table-toolbar .filter-select { flex: 1 1 140px; }
+      .filter-select.sort-select { min-width: 0; flex-basis: 100%; }
     }
-    .sort-select { min-width:250px; transition:border-color .15s, box-shadow .15s, color .15s; }
-    .sort-select.active {
-      border-color:var(--blue);
-      color:var(--text-primary);
-      box-shadow:0 0 0 3px rgba(88,166,255,0.12);
-    }
-    .org-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
-    .org-stat {
-      background:var(--bg-secondary); border:1px solid var(--border);
-      border-radius:var(--radius-md); padding:18px 20px;
-      display:flex; flex-direction:column; gap:6px;
-    }
-    .org-stat-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
-    .org-stat-val { font-size:26px; font-weight:700; color:var(--text-primary); }
-    .org-stat-sub { font-size:12px; color:var(--text-muted); }
-    .table-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
-    /* Modal */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center; }
-    .modal-overlay.open { display:flex; }
-    .modal-box { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); width:100%; max-width:520px; max-height:90vh; overflow-y:auto; padding:28px 28px 24px; }
-    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
-    .modal-header h2 { font-size:16px; font-weight:700; color:var(--text-primary); }
-    .modal-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; line-height:1; }
-    .modal-close:hover { color:var(--text-primary); }
-    .form-group { margin-bottom:14px; }
-    .form-group label { display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:5px; }
-    .form-group input, .form-group textarea { width:100%; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text-primary); font-size:13px; outline:none; box-sizing:border-box; }
-    .form-group input:focus, .form-group textarea:focus { border-color:var(--blue); }
-    .form-group textarea { resize:vertical; min-height:64px; }
-    .form-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
-    .form-row input { flex:1; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text-primary); font-size:13px; outline:none; box-sizing:border-box; }
-    .form-row input:focus { border-color:var(--blue); }
-    .btn-remove { background:none; border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-muted); padding:6px 10px; cursor:pointer; font-size:16px; line-height:1; }
-    .btn-remove:hover { border-color:var(--red); color:var(--red); }
-    .btn-add-item { background:none; border:1px dashed var(--border); border-radius:var(--radius-sm); color:var(--blue); padding:6px 12px; cursor:pointer; font-size:12px; width:100%; margin-bottom:14px; }
-    .btn-add-item:hover { border-color:var(--blue); }
-    .details-toggle { background:none; border:none; color:var(--blue); font-size:12px; cursor:pointer; padding:0; margin-bottom:14px; }
-    .extra-fields { display:none; }
-    .extra-fields.open { display:block; }
-    .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
-    .otp-row { display:flex; gap:8px; }
-    .otp-row input { flex:1; }
-    .btn-otp { background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-secondary); padding:8px 12px; cursor:pointer; font-size:12px; white-space:nowrap; }
-    .btn-otp:hover:not(:disabled) { border-color:var(--blue); color:var(--blue); }
-    .btn-otp:disabled { opacity:0.5; cursor:not-allowed; }
-    .verified-badge { background:#4CAF50; color:#fff; border-radius:var(--radius-sm); padding:8px 12px; font-size:13px; font-weight:700; }
-    .field-error { font-size:11px; color:var(--red,#f85149); margin-top:3px; }
-    .logo-upload-row { display:flex; align-items:center; gap:16px; margin-bottom:18px; }
-    .logo-preview {
-      width:72px; height:72px; border-radius:14px; flex-shrink:0;
-      background:var(--bg-tertiary); border:2px dashed var(--border);
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer; overflow:hidden; font-size:26px;
-      transition:border-color .2s;
-    }
-    .logo-preview:hover { border-color:var(--blue); }
-    .logo-preview img { width:100%; height:100%; object-fit:cover; }
-    .logo-preview.has-logo { border-style:solid; border-color:var(--border); }
-    .logo-upload-info { flex:1; }
-    .logo-upload-info strong { font-size:13px; color:var(--text-primary); display:block; margin-bottom:3px; }
-    .logo-upload-info span { font-size:11px; color:var(--text-muted); }
-    .table-card-header {
-      padding:16px 20px; border-bottom:1px solid var(--border);
-      display:flex; align-items:center; justify-content:space-between;
-    }
-    .table-card-header h3 { font-size:14px; font-weight:600; color:var(--text-primary); }
-    .count-badge {
-      background:rgba(88,166,255,0.15); color:var(--blue);
-      font-size:12px; font-weight:600; padding:2px 10px; border-radius:20px;
-    }
-    .empty-row td { text-align:center; color:var(--text-muted); padding:40px !important; }
-    .action-btn { background:none; border:1px solid var(--border); border-radius:6px; padding:4px 9px; font-size:12px; cursor:pointer; transition:all .15s; }
-    .action-btn.edit  { color:var(--blue);  border-color:rgba(88,166,255,.3); }
-    .action-btn.edit:hover  { background:rgba(88,166,255,.12); border-color:var(--blue); }
-    .action-btn.toggle-active { color:var(--green); border-color:rgba(76,175,80,.3); }
-    .action-btn.toggle-active:hover { background:rgba(76,175,80,.12); border-color:var(--green); }
-    .action-btn.toggle-inactive { color:var(--orange,#FF9800); border-color:rgba(255,152,0,.3); }
-    .action-btn.toggle-inactive:hover { background:rgba(255,152,0,.12); border-color:var(--orange,#FF9800); }
-    .action-btn.del   { color:var(--red);   border-color:rgba(239,68,68,.3); }
-    .action-btn.del:hover   { background:rgba(239,68,68,.12);  border-color:var(--red); }
-    .actions-cell { display:flex; gap:6px; align-items:center; }
-    .org-name-cell { display:flex; align-items:center; gap:10px; }
-    .org-avatar {
-      width:32px; height:32px; border-radius:8px;
-      background:linear-gradient(135deg,var(--blue),var(--purple));
-      display:flex; align-items:center; justify-content:center;
-      font-size:13px; font-weight:700; color:#fff; flex-shrink:0;
-    }
-    .org-name-text { font-weight:600; color:var(--text-primary); font-size:13px; }
-    .org-id-text { font-size:11px; color:var(--text-muted); margin-top:1px; }
-    .contact-cell { display:flex; flex-direction:column; gap:2px; }
-    .contact-email { font-size:12px; color:var(--text-secondary); }
-    .contact-phone { font-size:11px; color:var(--text-muted); }
-    #orgs-tbody tr { animation:org-row-in .18s ease both; }
-    @keyframes org-row-in {
-      from { opacity:.45; transform:translateY(3px); }
-      to { opacity:1; transform:translateY(0); }
-    }
-    @media(max-width:1100px){ .org-stats{ grid-template-columns:repeat(2,1fr); } }
-    @media(max-width:700px){
-      .org-stats{ grid-template-columns:1fr 1fr; }
-      .org-search, .filter-select, .sort-select { width:100%; }
-    }
+    @media (max-width: 520px) { .form-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -139,15 +139,15 @@
 
   <div class="main">
     <header class="topbar">
-      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <button class="hamburger-btn" type="button" onclick="toggleSidebar()" title="Menu" aria-label="Open menu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button>
       <span class="topbar-title">Organizations</span>
       <div class="topbar-search">
-        <span>🔍</span>
-        <input type="text" id="search-input" placeholder="Search by name, email, phone, state, district..." oninput="applyFilters()" />
+        <span aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></span>
+        <input type="text" id="search-input" placeholder="Search by name, email, phone, state, district..." aria-label="Search organizations" oninput="applyFilters()" />
       </div>
       <div class="topbar-actions">
-        <button type="button" class="icon-btn">🔔<span class="dot"></span></button>
-        <button type="button" class="icon-btn" onclick="loadOrgs()" title="Refresh">🔄</button>
+        <button type="button" class="icon-btn" aria-label="Notifications"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg><span class="dot"></span></button>
+        <button type="button" class="icon-btn" onclick="loadOrgs()" title="Refresh" aria-label="Refresh"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
         <div class="topbar-user-pill">
           <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
           <div class="topbar-user-info">
@@ -160,90 +160,98 @@
 
     <div class="content">
 
-      <div class="org-topbar">
-        <h1>All Organizations</h1>
-
-        <select class="filter-select" id="status-filter" onchange="applyFilters()">
-          <option value="">All Status</option>
-          <option value="ACTIVE">Active</option>
-          <option value="FREE_TRIAL">Free Trial</option>
-          <option value="INACTIVE">Inactive</option>
-          <option value="EXPIRED">Expired</option>
-        </select>
-        <select class="filter-select" id="state-filter" onchange="onStateFilterChange()">
-          <option value="">All States</option>
-        </select>
-        <select class="filter-select" id="district-filter" onchange="applyFilters()">
-          <option value="">All Districts</option>
-        </select>
-        <select class="filter-select sort-select" id="sort-by" onchange="applyFilters()">
-          <option value="">Sort By: Latest Joined</option>
-          <option value="attendance">Active Employee Punch In / Punch Out Count</option>
-          <option value="employees">Employee Count (Highest to Lowest)</option>
-          <option value="free_trial">Free Trial Count</option>
-          <option value="active">Active Count</option>
-          <option value="expired">Expired Count</option>
-        </select>
-        <button type="button" class="btn btn-primary btn-sm" onclick="openAddOrgModal()">+ Add</button>
-        <div class="export-wrap">
-          <button class="btn btn-ghost btn-sm" onclick="toggleExportMenu('org-export-menu')">⬇ Export ▾</button>
-          <div class="export-menu" id="org-export-menu">
-            <button onclick="doExportExcel()">📊 Export Excel</button>
-            <button onclick="doExportPDF()">📄 Export PDF</button>
+      <div class="page-header">
+        <div>
+          <h1>Organizations</h1>
+          <p>Every company registered on Clockyn, with plan, status and headcount.</p>
+        </div>
+        <div class="page-header-actions">
+          <div class="export-wrap">
+            <button type="button" class="btn btn-ghost" onclick="toggleExportMenu('org-export-menu')"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>Export<svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+            <div class="export-menu" id="org-export-menu">
+              <button type="button" onclick="doExportExcel()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>Export Excel</button>
+              <button type="button" onclick="doExportPDF()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Export PDF</button>
+            </div>
           </div>
+          <button type="button" class="btn btn-primary" onclick="openAddOrgModal()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add organization</button>
         </div>
       </div>
 
       <!-- Summary Stats -->
-      <div class="org-stats">
-        <div class="org-stat">
-          <div class="org-stat-label">Total Organizations</div>
-          <div class="org-stat-val" id="s-total">—</div>
-          <div class="org-stat-sub">All registered</div>
+      <div class="stat-grid kpis">
+        <div class="stat-tile">
+          <span class="stat-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 6h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M8 6h.01"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><rect x="4" y="2" width="16" height="20" rx="2"/></svg></span>
+          <div class="stat-label">Total organizations</div>
+          <div class="stat-val" id="s-total">—</div>
+          <div class="stat-sub">All registered</div>
         </div>
-        <div class="org-stat">
-          <div class="org-stat-label">Active Plans</div>
-          <div class="org-stat-val" id="s-active" style="color:var(--green)">—</div>
-          <div class="org-stat-sub">Paid subscriptions</div>
+        <div class="stat-tile">
+          <span class="stat-ico tone-success" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg></span>
+          <div class="stat-label">Active plans</div>
+          <div class="stat-val" id="s-active">—</div>
+          <div class="stat-sub">Paid subscriptions</div>
         </div>
-        <div class="org-stat">
-          <div class="org-stat-label">Free Trial</div>
-          <div class="org-stat-val" id="s-trial" style="color:var(--blue)">—</div>
-          <div class="org-stat-sub">Trial period</div>
+        <div class="stat-tile">
+          <span class="stat-ico tone-info" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+          <div class="stat-label">Free trial</div>
+          <div class="stat-val" id="s-trial">—</div>
+          <div class="stat-sub">Trial period</div>
         </div>
-        <div class="org-stat">
-          <div class="org-stat-label">Total Employees</div>
-          <div class="org-stat-val" id="s-emp" style="color:var(--purple)">—</div>
-          <div class="org-stat-sub">Across all orgs</div>
+        <div class="stat-tile">
+          <span class="stat-ico tone-purple" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg></span>
+          <div class="stat-label">Total employees</div>
+          <div class="stat-val" id="s-emp">—</div>
+          <div class="stat-sub">Across all organizations</div>
         </div>
       </div>
 
       <!-- Organizations Table -->
-      <div class="table-card">
-        <div class="table-card-header">
-          <h3>Organizations</h3>
-          <span class="count-badge" id="table-count">0 orgs</span>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <h3>All organizations</h3>
+            <span class="badge" id="table-count">0 orgs</span>
+          </div>
+        </div>
+        <div class="table-toolbar">
+          <select class="filter-select" id="status-filter" onchange="applyFilters()" aria-label="Filter by status">
+            <option value="">All status</option>
+            <option value="ACTIVE">Active</option>
+            <option value="FREE_TRIAL">Free Trial</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="EXPIRED">Expired</option>
+          </select>
+          <select class="filter-select" id="state-filter" onchange="onStateFilterChange()" aria-label="Filter by state">
+            <option value="">All states</option>
+          </select>
+          <select class="filter-select" id="district-filter" onchange="applyFilters()" aria-label="Filter by district">
+            <option value="">All districts</option>
+          </select>
+          <select class="filter-select sort-select" id="sort-by" onchange="applyFilters()" aria-label="Sort organizations">
+            <option value="">Sort by: Latest joined</option>
+            <option value="attendance">Active Employee Punch In / Punch Out Count</option>
+            <option value="employees">Employee Count (Highest to Lowest)</option>
+            <option value="free_trial">Free Trial Count</option>
+            <option value="active">Active Count</option>
+            <option value="expired">Expired Count</option>
+          </select>
         </div>
         <div class="table-wrap">
-          <table>
+          <table class="data">
             <thead>
               <tr>
-                <th>Organization</th>
-                <th>Contact</th>
-                <th>State</th>
-                <th>District</th>
-                <th>Pincode</th>
-                <th>Plan</th>
-                <th>Status</th>
-                <th>Employees</th>
-                <th>Joined</th>
-                <th>Plan Start</th>
-                <th>Plan Expires</th>
-                <th>Actions</th>
+                <th style="width:23%">Organization</th>
+                <th style="width:19%">Contact</th>
+                <th style="width:15%">Location</th>
+                <th style="width:10%">Plan</th>
+                <th style="width:10%">Status</th>
+                <th class="num" style="width:8%">Staff</th>
+                <th style="width:11%">Plan period</th>
+                <th class="num" style="width:112px">Actions</th>
               </tr>
             </thead>
             <tbody id="orgs-tbody">
-              <tr class="empty-row"><td colspan="12">Loading...</td></tr>
+              <tr class="state-row"><td colspan="8"><div class="sk-stack"><div class="skeleton skeleton-line" style="width:100%"></div><div class="skeleton skeleton-line" style="width:92%"></div><div class="skeleton skeleton-line" style="width:96%"></div><div class="skeleton skeleton-line" style="width:88%"></div><div class="skeleton skeleton-line" style="width:94%"></div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -256,156 +264,174 @@
   <div class="modal-overlay" id="edit-org-modal">
     <div class="modal-box">
       <div class="modal-header">
-        <h2>✏️ Edit Organization</h2>
-        <button type="button" class="modal-close" onclick="closeEditModal()">✕</button>
+        <h2>Edit organization</h2>
+        <button type="button" class="modal-close" onclick="closeEditModal()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       </div>
       <input type="hidden" id="e-org-id" />
-      <div class="form-group"><label>Company Name *</label><input type="text" id="e-org-name" placeholder="Company Name" /></div>
-      <div class="form-group"><label>Company Address *</label><textarea id="e-address" placeholder="Company Address"></textarea></div>
-      <div class="form-group"><label>State</label><input type="text" id="e-state" placeholder="State" /></div>
-      <div class="form-group"><label>District</label><input type="text" id="e-district" placeholder="District" /></div>
-      <div class="form-group"><label>Pincode</label><input type="text" id="e-pincode" placeholder="Pincode" maxlength="6" /></div>
-      <div class="form-group"><label>GST Number</label><input type="text" id="e-gst" placeholder="GST Number" maxlength="15" /></div>
-      <div class="form-group"><label>Mobile Number</label><input type="text" id="e-mobile" placeholder="Mobile" maxlength="10" /></div>
-      <div class="form-group"><label>Email</label><input type="email" id="e-email" placeholder="Email" /></div>
-      <div class="field-error" id="e-form-error" style="margin-top:8px;"></div>
+      <div class="modal-body">
+        <div class="form-group"><label for="e-org-name">Company name *</label><input type="text" id="e-org-name" placeholder="Company name" /></div>
+        <div class="form-group"><label for="e-address">Company address *</label><textarea id="e-address" placeholder="Company address"></textarea></div>
+        <div class="form-grid">
+          <div class="form-group"><label for="e-state">State</label><input type="text" id="e-state" placeholder="State" /></div>
+          <div class="form-group"><label for="e-district">District</label><input type="text" id="e-district" placeholder="District" /></div>
+          <div class="form-group"><label for="e-pincode">Pincode</label><input type="text" id="e-pincode" placeholder="Pincode" maxlength="6" /></div>
+          <div class="form-group"><label for="e-gst">GST number</label><input type="text" id="e-gst" placeholder="GST number" maxlength="15" /></div>
+          <div class="form-group"><label for="e-mobile">Mobile number</label><input type="text" id="e-mobile" placeholder="Mobile" maxlength="10" /></div>
+          <div class="form-group"><label for="e-email">Email</label><input type="email" id="e-email" placeholder="Email" /></div>
+        </div>
+        <div class="field-error" id="e-form-error"></div>
+      </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="closeEditModal()">Cancel</button>
-        <button type="button" class="btn btn-primary btn-sm" id="btn-save-org" onclick="submitEditOrg()">Save Changes</button>
+        <button type="button" class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btn-save-org" onclick="submitEditOrg()">Save Changes</button>
       </div>
     </div>
   </div>
 
   <!-- Add Organization Modal -->
   <div class="modal-overlay" id="add-org-modal">
-    <div class="modal-box">
+    <div class="modal-box modal-lg">
       <div class="modal-header">
-        <h2>🏢 Register Organization</h2>
-        <button type="button" class="modal-close" onclick="closeAddOrgModal()">✕</button>
+        <h2>Register organization</h2>
+        <button type="button" class="modal-close" onclick="closeAddOrgModal()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       </div>
 
-      <!-- Logo Upload -->
-      <input type="file" id="f-logo" accept="image/*" style="display:none" onchange="previewLogo(event)" />
-      <div class="logo-upload-row">
-        <div class="logo-preview" id="logo-preview" onclick="document.getElementById('f-logo').click()">
-          <span id="logo-placeholder">🏢</span>
-          <img id="logo-img" src="" style="display:none" />
+      <div class="modal-body">
+        <!-- Logo Upload -->
+        <input type="file" id="f-logo" accept="image/*" style="display:none" onchange="previewLogo(event)" />
+        <div class="logo-upload-row">
+          <div class="logo-preview" id="logo-preview" onclick="document.getElementById('f-logo').click()" role="button" tabindex="0" aria-label="Upload company logo">
+            <span id="logo-placeholder"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/></svg></span>
+            <img id="logo-img" src="" alt="" style="display:none" />
+          </div>
+          <div class="logo-upload-info">
+            <strong>Company logo</strong>
+            <span id="logo-hint">Click to upload logo (optional)</span>
+          </div>
         </div>
-        <div class="logo-upload-info">
-          <strong>Company Logo</strong>
-          <span id="logo-hint">Click to upload logo (optional)</span>
-        </div>
-      </div>
 
-      <div class="form-group">
-        <label>Company Name *</label>
-        <input type="text" id="f-org-name" placeholder="Company Name" />
-      </div>
-      <div class="form-group">
-        <label>Company Address *</label>
-        <textarea id="f-address" placeholder="Company Address"></textarea>
-      </div>
-      <div class="form-group">
-        <label>State</label>
-        <input type="text" id="f-state" placeholder="State" />
-      </div>
-      <div class="form-group">
-        <label>District</label>
-        <input type="text" id="f-district" placeholder="District" />
-      </div>
-      <div class="form-group">
-        <label>Pincode</label>
-        <input type="text" id="f-pincode" placeholder="Pincode" maxlength="6" />
-      </div>
-      <div class="form-group">
-        <label>GST Number</label>
-        <input type="text" id="f-gst" placeholder="GST Number" maxlength="15" />
-      </div>
-
-      <!-- Mobile -->
-      <div class="form-group">
-        <label>Mobile Number *</label>
-        <div class="otp-row" id="mobile-input-row">
-          <input type="text" id="f-mobile" placeholder="10-digit mobile" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')" />
-          <button type="button" class="btn-otp" id="btn-mobile-otp" onclick="sendOTP('mobile')">Get OTP</button>
+        <div class="section-label">Company</div>
+        <div class="form-group">
+          <label for="f-org-name">Company name *</label>
+          <input type="text" id="f-org-name" placeholder="Company name" />
         </div>
-        <div id="mobile-otp-row" style="display:none;margin-top:8px;" class="otp-row">
-          <input type="text" id="f-mobile-otp" placeholder="Enter 6-digit OTP" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')" />
-          <button type="button" class="btn-otp" onclick="verifyOTP('mobile')">Verify</button>
+        <div class="form-group">
+          <label for="f-address">Company address *</label>
+          <textarea id="f-address" placeholder="Company address"></textarea>
         </div>
-        <div id="mobile-verified-badge" style="display:none;margin-top:6px;"><span class="verified-badge">✓ Verified</span></div>
-        <div class="field-error" id="mobile-error"></div>
-      </div>
-
-      <!-- Email -->
-      <div class="form-group">
-        <label>Email ID *</label>
-        <div class="otp-row" id="email-input-row">
-          <input type="email" id="f-email" placeholder="Email address" />
-          <button type="button" class="btn-otp" id="btn-email-otp" onclick="sendOTP('email')">Get OTP</button>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="f-state">State</label>
+            <input type="text" id="f-state" placeholder="State" />
+          </div>
+          <div class="form-group">
+            <label for="f-district">District</label>
+            <input type="text" id="f-district" placeholder="District" />
+          </div>
+          <div class="form-group">
+            <label for="f-pincode">Pincode</label>
+            <input type="text" id="f-pincode" placeholder="Pincode" maxlength="6" />
+          </div>
+          <div class="form-group">
+            <label for="f-gst">GST number</label>
+            <input type="text" id="f-gst" placeholder="GST number" maxlength="15" />
+          </div>
         </div>
-        <div id="email-otp-row" style="display:none;margin-top:8px;" class="otp-row">
-          <input type="text" id="f-email-otp" placeholder="Enter 6-digit OTP" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')" />
-          <button type="button" class="btn-otp" onclick="verifyOTP('email')">Verify</button>
+
+        <div class="section-label">Contact (verified by OTP)</div>
+        <div class="form-grid">
+          <!-- Mobile -->
+          <div class="form-group">
+            <label for="f-mobile">Mobile number *</label>
+            <div class="otp-row" id="mobile-input-row">
+              <input type="text" id="f-mobile" placeholder="10-digit mobile" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')" />
+              <button type="button" class="btn btn-ghost" id="btn-mobile-otp" onclick="sendOTP('mobile')">Get OTP</button>
+            </div>
+            <div id="mobile-otp-row" style="display:none;margin-top:8px;" class="otp-row">
+              <input type="text" id="f-mobile-otp" placeholder="Enter 6-digit OTP" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')" />
+              <button type="button" class="btn btn-ghost" onclick="verifyOTP('mobile')">Verify</button>
+            </div>
+            <div id="mobile-verified-badge" class="verified-line"><span class="badge badge-green badge-dot">Verified</span></div>
+            <div class="field-error" id="mobile-error"></div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label for="f-email">Email ID *</label>
+            <div class="otp-row" id="email-input-row">
+              <input type="email" id="f-email" placeholder="Email address" />
+              <button type="button" class="btn btn-ghost" id="btn-email-otp" onclick="sendOTP('email')">Get OTP</button>
+            </div>
+            <div id="email-otp-row" style="display:none;margin-top:8px;" class="otp-row">
+              <input type="text" id="f-email-otp" placeholder="Enter 6-digit OTP" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')" />
+              <button type="button" class="btn btn-ghost" onclick="verifyOTP('email')">Verify</button>
+            </div>
+            <div id="email-verified-badge" class="verified-line"><span class="badge badge-green badge-dot">Verified</span></div>
+            <div class="field-error" id="email-error"></div>
+          </div>
         </div>
-        <div id="email-verified-badge" style="display:none;margin-top:6px;"><span class="verified-badge">✓ Verified</span></div>
-        <div class="field-error" id="email-error"></div>
-      </div>
 
-      <!-- Branches -->
-      <div class="form-group">
-        <label>Branches *</label>
-        <div id="branches-list">
-          <div class="form-row"><input type="text" placeholder="Branch 1" /></div>
+        <div class="section-label">Structure</div>
+        <div class="form-grid">
+          <!-- Branches -->
+          <div class="form-group">
+            <label>Branches *</label>
+            <div id="branches-list">
+              <div class="form-row"><input type="text" placeholder="Branch 1" /></div>
+            </div>
+            <button type="button" class="btn-add-item" onclick="addListItem('branches-list','Branch')"><svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add branch</button>
+          </div>
+
+          <!-- Departments -->
+          <div class="form-group">
+            <label>Departments</label>
+            <div id="departments-list">
+              <div class="form-row"><input type="text" placeholder="Department 1" /></div>
+            </div>
+            <button type="button" class="btn-add-item" onclick="addListItem('departments-list','Department')"><svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add department</button>
+          </div>
         </div>
-      </div>
-      <button type="button" class="btn-add-item" onclick="addListItem('branches-list','Branch')">+ Add Branch</button>
 
-      <!-- Departments -->
-      <div class="form-group">
-        <label>Departments</label>
-        <div id="departments-list">
-          <div class="form-row"><input type="text" placeholder="Department 1" /></div>
+        <!-- Extra fields toggle -->
+        <div><button type="button" class="details-toggle" id="extra-toggle" onclick="toggleExtra()">Add more details</button></div>
+        <div class="extra-fields" id="extra-fields">
+          <div class="form-grid">
+            <div class="form-group"><label for="f-pan">PAN number</label><input type="text" id="f-pan" placeholder="ABCDE1234F" maxlength="10" oninput="this.value=this.value.toUpperCase()" /></div>
+            <div class="form-group"><label for="f-website">Company website</label><input type="text" id="f-website" placeholder="https://example.com" /></div>
+            <div class="form-group"><label for="f-cin">CIN number</label><input type="text" id="f-cin" placeholder="CIN number" maxlength="21" oninput="this.value=this.value.toUpperCase()" /></div>
+            <div class="form-group"><label for="f-tan">TAN number</label><input type="text" id="f-tan" placeholder="ABCD12345E" maxlength="10" oninput="this.value=this.value.toUpperCase()" /></div>
+            <div class="form-group"><label for="f-msme">MSME number</label><input type="text" id="f-msme" placeholder="MSME number" /></div>
+            <div class="form-group"><label for="f-biz-cat">Business category</label><input type="text" id="f-biz-cat" placeholder="Business category" /></div>
+          </div>
         </div>
-      </div>
-      <button type="button" class="btn-add-item" onclick="addListItem('departments-list','Department')">+ Add Department</button>
 
-      <!-- Extra fields toggle -->
-      <button type="button" class="details-toggle" id="extra-toggle" onclick="toggleExtra()">▶ Add More Details</button>
-      <div class="extra-fields" id="extra-fields">
-        <div class="form-group"><label>PAN Number</label><input type="text" id="f-pan" placeholder="ABCDE1234F" maxlength="10" oninput="this.value=this.value.toUpperCase()" /></div>
-        <div class="form-group"><label>Company Website</label><input type="text" id="f-website" placeholder="https://example.com" /></div>
-        <div class="form-group"><label>CIN Number</label><input type="text" id="f-cin" placeholder="CIN Number" maxlength="21" oninput="this.value=this.value.toUpperCase()" /></div>
-        <div class="form-group"><label>TAN Number</label><input type="text" id="f-tan" placeholder="ABCD12345E" maxlength="10" oninput="this.value=this.value.toUpperCase()" /></div>
-        <div class="form-group"><label>MSME Number</label><input type="text" id="f-msme" placeholder="MSME Number" /></div>
-        <div class="form-group"><label>Business Category</label><input type="text" id="f-biz-cat" placeholder="Business Category" /></div>
+        <div class="field-error" id="form-error"></div>
       </div>
-
-      <div class="field-error" id="form-error" style="margin-top:8px;"></div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="closeAddOrgModal()">Cancel</button>
-        <button type="button" class="btn btn-primary btn-sm" id="btn-register-org" onclick="submitAddOrg()">Register Organization</button>
+        <button type="button" class="btn btn-ghost" onclick="closeAddOrgModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btn-register-org" onclick="submitAddOrg()">Register Organization</button>
       </div>
     </div>
   </div>
 
   <!-- Delete OTP Modal -->
   <div class="modal-overlay" id="delete-otp-modal">
-    <div class="modal-box" style="max-width:380px;">
+    <div class="modal-box modal-sm">
+      <div class="modal-icon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
       <div class="modal-header">
-        <h2>🗑️ Confirm Delete</h2>
-        <button type="button" class="modal-close" onclick="closeDeleteModal()">✕</button>
+        <h2>Confirm delete</h2>
+        <button type="button" class="modal-close" onclick="closeDeleteModal()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       </div>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">An OTP has been sent to your registered email address. Enter it below to confirm deletion.</p>
-      <div class="form-group">
-        <label>Enter OTP</label>
+      <p class="modal-lead">An OTP has been sent to your registered email address. Enter it below to confirm deletion. This cannot be undone.</p>
+      <div class="form-group" style="margin-top:16px;">
+        <label for="del-otp-input">Enter OTP</label>
         <input type="text" id="del-otp-input" placeholder="6-digit OTP" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
       </div>
-      <div class="field-error" id="del-otp-error" style="margin-bottom:8px;"></div>
+      <div class="field-error" id="del-otp-error"></div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="closeDeleteModal()">Cancel</button>
-        <button type="button" class="btn btn-sm" id="btn-confirm-delete" onclick="confirmDelete()" style="background:#ef4444;color:#fff;border:none;border-radius:var(--radius-sm);padding:7px 16px;cursor:pointer;font-size:13px;">Delete</button>
+        <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete" onclick="confirmDelete()">Delete</button>
       </div>
     </div>
   </div>
@@ -417,6 +443,22 @@
     let allOrgs = [];
     let filteredOrgs = [];
     let currentSort = '';
+
+    /* Lucide icon paths (same icon set as the Clockyn app) for markup built in JS */
+    const ICONS = {
+      power: '<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>',
+      check: '<circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/>',
+      trash: '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+      x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+      building: '<path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 6h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M8 6h.01"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><rect x="4" y="2" width="16" height="20" rx="2"/>',
+      alert: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>'
+    };
+    function ico(name, cls) {
+      return '<svg class="ico ico-sm' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>';
+    }
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
 
     const ORG_COLS = [
       { key: 'org_name',  label: 'Organization' },
@@ -436,6 +478,10 @@
     function doExportExcel() { exportExcel(filteredOrgs, ORG_COLS, 'Clockyn_Organizations_' + new Date().toISOString().slice(0,10)); }
     function doExportPDF()   { exportPDF(filteredOrgs, ORG_COLS, 'Clockyn_Organizations_' + new Date().toISOString().slice(0,10), 'Clockyn — Organizations'); }
     let mobileVerified = false, emailVerified = false;
+
+    const ADD_LABEL = 'Add more details', HIDE_LABEL = 'Hide additional details';
+    const BRANCH_ROW = '<div class="form-row"><input type="text" placeholder="Branch 1" /></div>';
+    const DEPT_ROW = '<div class="form-row"><input type="text" placeholder="Department 1" /></div>';
 
     function openAddOrgModal() {
       document.getElementById('add-org-modal').classList.add('open');
@@ -465,10 +511,10 @@
       document.getElementById('mobile-error').textContent = '';
       document.getElementById('email-error').textContent = '';
       document.getElementById('form-error').textContent = '';
-      document.getElementById('branches-list').innerHTML = '<div class="form-row"><input type="text" placeholder="Branch 1" /></div>';
-      document.getElementById('departments-list').innerHTML = '<div class="form-row"><input type="text" placeholder="Department 1" /></div>';
+      document.getElementById('branches-list').innerHTML = BRANCH_ROW;
+      document.getElementById('departments-list').innerHTML = DEPT_ROW;
       var ef = document.getElementById('extra-fields'); ef.classList.remove('open');
-      document.getElementById('extra-toggle').textContent = '▶ Add More Details';
+      var tg = document.getElementById('extra-toggle'); tg.classList.remove('open'); tg.textContent = ADD_LABEL;
     }
 
     function addListItem(listId, label) {
@@ -476,14 +522,16 @@
       var count = list.children.length + 1;
       var row = document.createElement('div'); row.className = 'form-row';
       row.innerHTML = '<input type="text" placeholder="' + label + ' ' + count + '" />'
-        + '<button class="btn-remove" onclick="this.parentElement.remove()">−</button>';
+        + '<button type="button" class="btn btn-ghost btn-icon" aria-label="Remove" onclick="this.parentElement.remove()">' + ico('x') + '</button>';
       list.appendChild(row);
     }
 
     function toggleExtra() {
       var ef = document.getElementById('extra-fields');
       var open = ef.classList.toggle('open');
-      document.getElementById('extra-toggle').textContent = open ? '▲ Hide Additional Details' : '▶ Add More Details';
+      var tg = document.getElementById('extra-toggle');
+      tg.classList.toggle('open', open);
+      tg.textContent = open ? HIDE_LABEL : ADD_LABEL;
     }
 
     async function sendOTP(type) {
@@ -645,54 +693,72 @@
     function statusBadge(status, row) {
       // If FREE_TRIAL but free_trial_end has passed and payment is unpaid → show Expired
       if (getDisplayStatus(row) === 'EXPIRED') {
-        return '<span class="badge badge-red">Expired</span>';
+        return '<span class="badge badge-red badge-dot">Expired</span>';
       }
       const map = {
         ACTIVE: 'badge-green', FREE_TRIAL: 'badge-blue',
         INACTIVE: 'badge-gray', EXPIRED: 'badge-red',
       };
       const label = { ACTIVE: 'Active', FREE_TRIAL: 'Free Trial', INACTIVE: 'Inactive', EXPIRED: 'Expired' };
-      return '<span class="badge ' + (map[status] || 'badge-gray') + '">' + (label[status] || status) + '</span>';
+      return '<span class="badge badge-dot ' + (map[status] || 'badge-gray') + '">' + esc(label[status] || status) + '</span>';
     }
 
     function initials(name) {
       return name ? name.split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase() : '??';
     }
 
+    function stateRow(html) {
+      return '<tr class="state-row"><td colspan="8">' + html + '</td></tr>';
+    }
+    function emptyState(title, text, iconName, retry) {
+      return stateRow('<div class="empty-state"><div class="empty-icon">' + ico(iconName) + '</div><h3>' + esc(title) + '</h3>'
+        + (text ? '<p>' + esc(text) + '</p>' : '')
+        + (retry ? '<button type="button" class="btn btn-ghost btn-sm" onclick="loadOrgs()" style="margin-top:8px;">Try again</button>' : '')
+        + '</div>');
+    }
+    function loadingRows() {
+      var w = [100, 92, 96, 88, 94];
+      return stateRow('<div class="sk-stack">' + w.map(function(p){ return '<div class="skeleton skeleton-line" style="width:' + p + '%"></div>'; }).join('') + '</div>');
+    }
+
     function renderTable(rows) {
       const tbody = document.getElementById('orgs-tbody');
       document.getElementById('table-count').textContent = rows.length + ' org' + (rows.length !== 1 ? 's' : '');
       if (!rows.length) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="12">No organizations found</td></tr>';
+        tbody.innerHTML = emptyState('No organizations found', 'Try changing the filters or the search.', 'building');
         return;
       }
       tbody.innerHTML = rows.map(function(r) {
         var isDeleted = r.org_status === 2;
         var isActive  = r.org_status === 1;
+        var id = esc(r.org_id);
         var toggleBtn = isDeleted ? '' : (isActive
-          ? '<button class="action-btn toggle-inactive" onclick="toggleOrgStatus(event,\'' + r.org_id + '\',false)">Deactivate</button>'
-          : '<button class="action-btn toggle-active" onclick="toggleOrgStatus(event,\'' + r.org_id + '\',true)">Activate</button>');
-        var deleteBtn = isDeleted ? '' : '<button class="action-btn del" onclick="deleteOrg(event,\'' + r.org_id + '\')" >Delete</button>';
-        return '<tr style="cursor:pointer;" onclick="window.location.href=\'org_analytics.html?org_id=' + r.org_id + '&org_name=' + encodeURIComponent(r.org_name) + '\'">'
-          + '<td><div class="org-name-cell">'
-          +   '<div class="org-avatar">' + initials(r.org_name) + '</div>'
-          +   '<div><div class="org-name-text">' + r.org_name + '</div>'
-          +   '<div class="org-id-text">' + r.org_id.substring(0,8) + '...</div></div>'
+          ? '<button type="button" class="act-btn toggle-inactive" title="Deactivate" aria-label="Deactivate organization" onclick="toggleOrgStatus(event,\'' + id + '\',false)">' + ico('power') + '<span class="act-label">Deactivate</span></button>'
+          : '<button type="button" class="act-btn toggle-active" title="Activate" aria-label="Activate organization" onclick="toggleOrgStatus(event,\'' + id + '\',true)">' + ico('check') + '<span class="act-label">Activate</span></button>');
+        var deleteBtn = isDeleted ? '' : '<button type="button" class="act-btn del" title="Delete" aria-label="Delete organization" onclick="deleteOrg(event,\'' + id + '\')">' + ico('trash') + '<span class="act-label">Delete</span></button>';
+        var hasEnd = r.end_date && r.end_date !== '—';
+        var hasStart = r.start_date && r.start_date !== '—';
+        var endCell = hasEnd
+          ? (isExpiringSoon(r.end_date) ? '<span class="expiring nowrap" title="Expires within 30 days">' + esc(r.end_date) + '</span>' : '<span class="nowrap">' + esc(r.end_date) + '</span>')
+          : '<span class="muted">—</span>';
+        var joined = r.joined && r.joined !== '—' ? 'Joined ' + esc(r.joined) : '';
+        var where = [r.state, r.pincode].filter(Boolean).map(esc).join(' · ');
+        return '<tr class="row-link" onclick="window.location.href=\'org_analytics.html?org_id=' + id + '&org_name=' + encodeURIComponent(r.org_name) + '\'">'
+          + '<td data-label="" class="c-main"><div class="org-name-cell">'
+          +   '<div class="org-avatar">' + esc(initials(r.org_name)) + '</div>'
+          +   '<div style="min-width:0;"><div class="org-name-text trunc" title="' + esc(r.org_name) + '">' + esc(r.org_name) + '</div>'
+          +   '<div class="org-id-text trunc" title="ID ' + id + '">' + (joined || esc(String(r.org_id).substring(0,8)) + '…') + '</div></div>'
           + '</div></td>'
-          + '<td><div class="contact-cell">'
-          +   '<span class="contact-email">' + r.email + '</span>'
-          +   '<span class="contact-phone">' + r.mobile + '</span>'
+          + '<td data-label="Contact"><div class="contact-cell">'
+          +   '<span class="contact-email trunc" title="' + esc(r.email) + '">' + esc(r.email) + '</span>'
+          +   '<span class="contact-phone">' + esc(r.mobile) + '</span>'
           + '</div></td>'
-          + '<td>' + (r.state || '—') + '</td>'
-          + '<td>' + (r.district || '—') + '</td>'
-          + '<td>' + (r.pincode || '—') + '</td>'
-          + '<td>' + (r.plan_name ? '<span class="badge badge-blue">' + r.plan_name + '</span>' : '—') + '</td>'
-          + '<td>' + statusBadge(r.sub_status, r) + '</td>'
-          + '<td style="font-weight:600;color:var(--text-primary)">' + r.emp_count + '</td>'
-          + '<td>' + r.joined + '</td>'
-          + '<td>' + r.start_date + '</td>'
-          + '<td>' + (r.end_date !== '—' ? '<span style="color:' + (isExpiringSoon(r.end_date) ? 'var(--orange)' : 'var(--text-secondary)') + '">' + r.end_date + '</span>' : '—') + '</td>'
-          + '<td onclick="event.stopPropagation()"><div class="actions-cell">'
+          + '<td data-label="Location"><div class="contact-cell"><span class="loc-main trunc" title="' + esc(r.district) + '">' + (esc(r.district) || '—') + '</span>' + (where ? '<span class="contact-phone trunc" title="' + where + '">' + where + '</span>' : '') + '</div></td>'
+          + '<td data-label="Plan">' + (r.plan_name ? '<span class="badge">' + esc(r.plan_name) + '</span>' : '<span class="muted">—</span>') + '</td>'
+          + '<td data-label="Status">' + statusBadge(r.sub_status, r) + '</td>'
+          + '<td data-label="Employees" class="num td-primary">' + esc(r.emp_count) + '</td>'
+          + '<td data-label="Plan period"><div class="contact-cell">' + endCell + (hasEnd && hasStart ? '<span class="contact-phone nowrap">from ' + esc(r.start_date) + '</span>' : '') + '</div></td>'
+          + '<td data-label="" class="num c-actions" onclick="event.stopPropagation()"><div class="actions-cell">'
           +   toggleBtn + deleteBtn
           + '</div></td>'
           + '</tr>';
@@ -752,7 +818,7 @@
       if (!confirm('Are you sure you want to ' + action + ' this organization?')) return;
       var changedBy = localStorage.getItem('admin_email');
       if (!changedBy) { alert('Session expired. Please login again.'); window.location.href = 'login.html'; return; }
-      var btn = e.target;
+      var btn = e.currentTarget || e.target.closest('button'); // the click may land on the icon inside the button
       btn.disabled = true;
       try {
         var res = await fetch(API_BASE + '/gen-dashboard/organizations/' + orgId + '/' + action, {
@@ -844,7 +910,7 @@
     }
 
     function isExpiringSoon(dateStr) {
-      if (!dateStr || dateStr === '\u2014') return false;
+      if (!dateStr || dateStr === '—') return false;
       var d = new Date(dateStr);
       var diff = (d - new Date()) / (1000 * 60 * 60 * 24);
       return diff >= 0 && diff <= 30;
@@ -905,8 +971,8 @@
     function populateStateFilter() {
       var states = [...new Set(allOrgs.map(function(o){ return (o.state || '').trim(); }).filter(Boolean))].sort();
       var sel = document.getElementById('state-filter');
-      sel.innerHTML = '<option value="">All States</option>'
-        + states.map(function(s){ return '<option value="' + s.toLowerCase() + '">' + s + '</option>'; }).join('');
+      sel.innerHTML = '<option value="">All states</option>'
+        + states.map(function(s){ return '<option value="' + esc(s.toLowerCase()) + '">' + esc(s) + '</option>'; }).join('');
     }
 
     function populateDistrictFilter(stateFilter) {
@@ -915,8 +981,8 @@
         : allOrgs;
       var districts = [...new Set(orgs.map(function(o){ return (o.district || '').trim(); }).filter(Boolean))].sort();
       var sel = document.getElementById('district-filter');
-      sel.innerHTML = '<option value="">All Districts</option>'
-        + districts.map(function(d){ return '<option value="' + d.toLowerCase() + '">' + d + '</option>'; }).join('');
+      sel.innerHTML = '<option value="">All districts</option>'
+        + districts.map(function(d){ return '<option value="' + esc(d.toLowerCase()) + '">' + esc(d) + '</option>'; }).join('');
     }
 
     function onStateFilterChange() {
@@ -935,7 +1001,7 @@
 
     async function loadOrgs() {
       const tbody = document.getElementById('orgs-tbody');
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="12">Loading...</td></tr>';
+      tbody.innerHTML = loadingRows();
       document.getElementById('search-input').value = '';
       document.getElementById('status-filter').value = '';
       document.getElementById('state-filter').value = '';
@@ -947,7 +1013,7 @@
         const res = await fetch(API_BASE + '/gen-dashboard/organizations', { cache: 'no-store' });
         if (!res.ok) {
           const err = await res.json().catch(function(){ return {}; });
-          tbody.innerHTML = '<tr class="empty-row"><td colspan="12">Error: ' + (err.detail || res.status) + '</td></tr>';
+          tbody.innerHTML = emptyState('Couldn’t load organizations', 'Error: ' + (err.detail || res.status), 'alert', true);
           return;
         }
         const rows = await res.json();
@@ -957,7 +1023,7 @@
         populateDistrictFilter('');
         applyFilters();
       } catch(e) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="12">Failed to connect to server.</td></tr>';
+        tbody.innerHTML = emptyState('Couldn’t reach the server', 'Check your connection and try again.', 'alert', true);
       } finally {
         document.querySelectorAll('[onclick="loadOrgs()"]').forEach(function(b){ b.disabled = false; });
       }

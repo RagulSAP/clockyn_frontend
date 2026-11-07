@@ -8,219 +8,191 @@
   <script src="../js/theme.js"></script>
   <link rel="stylesheet" href="../css/dashboard.css" />
   <style>
-    .back-btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: var(--bg-tertiary); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 6px 14px;
-      color: var(--text-secondary); font-size: 13px; cursor: pointer;
-      text-decoration: none; margin-bottom: 20px;
-    }
-    .back-btn:hover { color: var(--text-primary); border-color: var(--blue); }
+    /* ── Icons ── */
+    .ic { width: 18px; height: 18px; flex-shrink: 0; display: block; }
+    .ic-sm { width: 15px; height: 15px; }
+    .ic-lg { width: 22px; height: 22px; }
 
-    .filter-bar {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;
+    /* ── Back link + header ── */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 10px; margin-bottom: 18px;
+      border-radius: var(--radius-pill); background: var(--surface); border: 1px solid var(--border);
+      color: var(--text-secondary); font-size: 13px; font-weight: 600; text-decoration: none;
+      box-shadow: inset 0 1px 0 var(--highlight);
+      transition: background-color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
     }
-    .filter-bar label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-    .day-btn {
-      padding: 6px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
-      background: var(--bg-tertiary); border: 1px solid var(--border);
-      color: var(--text-muted); cursor: pointer; transition: all 0.15s;
-    }
-    .day-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
-    .day-btn:hover:not(.active) { border-color: var(--blue); color: var(--blue); }
+    .back-link:hover { background: var(--surface-muted); border-color: var(--border-strong); color: var(--text); }
+    .back-link:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 2px; }
+    .page-header h1 { overflow-wrap: anywhere; }
+    .content > .card, .content > .stat-grid, .content > .toolbar { margin-bottom: 24px; }
+    .content > .toolbar { margin-bottom: 16px; }
+    .badge:empty { display: none; }
 
-    /* Bar chart */
-    .chart-wrap { display: flex; gap: 10px; height: 220px; align-items: stretch; }
-    .chart-y {
-      display: flex; flex-direction: column; justify-content: space-between;
-      align-items: flex-end; padding-bottom: 24px; min-width: 36px;
+    /* ── Organization details ── */
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .info-field { background: var(--surface-muted); border-radius: var(--radius-sm); padding: 12px 14px; min-width: 0; }
+    .info-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); margin-bottom: 5px; }
+    .info-value { font-size: 14px; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: space-between; gap: 8px; overflow-wrap: anywhere; min-height: 22px; }
+    .info-value > span:first-child { min-width: 0; }
+    .copy-btn {
+      width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; border: none; background: none; cursor: pointer;
+      color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; opacity: .75;
+      transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease), opacity var(--motion-fast) var(--ease);
     }
-    .chart-y span { font-size: 10px; color: var(--text-muted); }
-    .bar-area {
-      flex: 1; display: flex; align-items: flex-end; gap: 6px;
-      position: relative; padding-bottom: 0;
-    }
-    .bar-area::before {
-      content: ''; position: absolute; inset: 0 0 24px 0;
-      background: repeating-linear-gradient(to bottom, transparent, transparent calc(33.33% - 1px), rgba(48,54,61,0.6) calc(33.33% - 1px), rgba(48,54,61,0.6) 33.33%);
-      pointer-events: none;
-    }
-    .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; position: relative; }
-    .bar-group:hover .bar-tip { opacity: 1; transform: translateX(-50%) translateY(-4px); }
-    .bar-tip {
-      position: absolute; bottom: calc(100% - 20px); left: 50%;
-      transform: translateX(-50%) translateY(0);
-      background: #2d333b; border: 1px solid #444c56;
-      color: var(--text-primary); font-size: 11px; font-weight: 600;
-      padding: 5px 9px; border-radius: 7px; white-space: nowrap;
-      pointer-events: none; opacity: 0; transition: opacity 0.15s, transform 0.15s; z-index: 10;
-    }
-    .bars { width: 100%; display: flex; gap: 2px; align-items: flex-end; height: calc(100% - 24px); }
-    .b-present { flex: 1; border-radius: 4px 4px 2px 2px; background: linear-gradient(180deg,#56d364,#1a7f37); min-height: 3px; transition: height 0.5s cubic-bezier(.4,0,.2,1); }
-    .b-absent  { flex: 1; border-radius: 4px 4px 2px 2px; background: linear-gradient(180deg,#f85149,#8b1a1a); min-height: 3px; transition: height 0.5s cubic-bezier(.4,0,.2,1); }
-    .bar-lbl { font-size: 10px; color: var(--text-muted); height: 24px; line-height: 24px; text-align: center; width: 100%; }
+    .info-field:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: var(--surface-hover); color: var(--text); }
+    .skel-field { height: 62px; border-radius: var(--radius-sm); }
 
-    .chart-legend { display: flex; gap: 16px; margin-top: 12px; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+    /* ── Stat tiles ── */
+    .stat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+    .stat-chip {
+      width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--surface-muted); color: var(--text-secondary);
+    }
+    .stat-chip.good { background: var(--success-soft); color: var(--success); }
+    .stat-tile .stat-val { font-variant-numeric: tabular-nums; }
 
-    /* Timeline attendance strip */
-    .timeline-wrap { display: flex; flex-direction: column; gap: 6px; }
-    .timeline-row { display: flex; align-items: center; gap: 10px; }
-    .tl-date {
-      width: 72px; flex-shrink: 0;
-      font-size: 11px; color: var(--text-muted); text-align: right;
-    }
-    .tl-date strong { display: block; font-size: 12px; color: var(--text-secondary); }
-    .tl-bar-bg {
-      flex: 1; height: 22px; background: var(--bg-tertiary);
-      border-radius: 6px; overflow: hidden; position: relative;
-      border: 1px solid var(--border);
-    }
-    .tl-bar-fill {
-      height: 100%; border-radius: 6px;
-      transition: width 0.6s cubic-bezier(.4,0,.2,1);
-      position: relative;
-    }
-    .tl-bar-label {
-      position: absolute; right: 8px; top: 50%;
-      transform: translateY(-50%);
-      font-size: 11px; font-weight: 700; color: #fff;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-      white-space: nowrap;
-    }
-    .tl-count {
-      width: 52px; flex-shrink: 0;
-      font-size: 12px; font-weight: 700; color: var(--text-primary); text-align: left;
-    }
-    .tl-pct {
-      width: 38px; flex-shrink: 0;
-      font-size: 11px; color: var(--text-muted); text-align: right;
-    }
-    .tl-day-header {
-      display: flex; align-items: center; gap: 10px;
-      padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 4px;
-    }
-    .tl-day-header span { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .tl-day-header span:first-child { width: 72px; text-align: right; }
-    .tl-day-header span:last-child  { width: 38px; text-align: right; }
-    .info-field { background:var(--bg-tertiary); border:1px solid var(--border); border-radius:8px; padding:10px 14px; }
-    .info-label { font-size:10px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
-    .info-value { font-size:13px; color:var(--text-primary); font-weight:600; display:flex; align-items:center; gap:6px; word-break:break-all; }
-    .copy-btn { background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:12px; padding:2px 4px; border-radius:4px; flex-shrink:0; }
-    .copy-btn:hover { color:var(--blue); background:var(--bg-hover); }
+    /* ── Period toolbar ── */
+    .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .micro-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); }
 
-    /* Clickable timeline rows */
-    .timeline-row { cursor: pointer; border-radius: 6px; transition: background 0.12s; }
-    .timeline-row:hover { background: var(--bg-hover); }
-    .bar-group { cursor: pointer; }
+    /* ── Legend ── */
+    .legend { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .legend-item { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+    .dot-present { background: var(--success); }
+    .dot-absent { background: rgba(var(--danger-rgb), .38); }
+    .dot-success { background: var(--success); }
+    .dot-info { background: var(--info); }
+    .dot-warning { background: var(--warning); }
+    .dot-danger { background: var(--danger); }
 
-    /* Day attendance modal */
-    .day-modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.72); backdrop-filter: blur(5px);
-      z-index: 1000; align-items: flex-start; justify-content: center;
-      padding: 24px 16px; overflow-y: auto;
+    /* ── Present vs absent bars (scaffold comes from the shared bar-chart classes) ── */
+    .bar-chart-wrap { height: 230px; }
+    .bar-chart-y span, .bar-label { font-variant-numeric: tabular-nums; }
+    .bar-col[data-date] { cursor: pointer; border-radius: var(--radius-xs); }
+    .bar-col[data-date]:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 2px; }
+    .bar-pair { gap: 3px; }
+    .bar-pair .bar-inner { flex: 1; width: auto; }
+    .bar-present { background: var(--success); }
+    .bar-absent { background: rgba(var(--danger-rgb), .34); }
+    .bar-col:hover .bar-present { filter: brightness(1.08); }
+    .bar-col:hover .bar-absent { background: rgba(var(--danger-rgb), .5); }
+    .bar-tooltip small { display: block; font-weight: 500; opacity: .7; margin-top: 2px; }
+    .bar-skel { flex: 1; border-radius: 8px 8px 3px 3px; align-self: flex-end; }
+
+    /* ── Attendance timeline ── */
+    .timeline-head, .timeline-row { display: grid; grid-template-columns: 76px minmax(0, 1fr) 68px 44px; align-items: center; gap: 12px; }
+    .timeline-head { padding: 0 8px 10px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+    .timeline-head span { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); }
+    .timeline-head span:first-child, .timeline-head span:nth-child(3), .timeline-head span:last-child { text-align: right; }
+    .timeline-wrap { display: flex; flex-direction: column; gap: 2px; }
+    .timeline-row { padding: 5px 8px; border-radius: var(--radius-sm); cursor: pointer; transition: background-color var(--motion-fast) var(--ease); }
+    .timeline-row:hover { background: var(--row-hover); }
+    .timeline-row:focus-visible { outline: 2px solid var(--text-muted); outline-offset: -2px; }
+    .tl-date { font-size: 11px; color: var(--text-muted); text-align: right; line-height: 1.25; }
+    .tl-date strong { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+    .tl-date.today strong { color: var(--text); }
+    .tl-date.today strong::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; vertical-align: middle; }
+    .tl-bar-bg { height: 24px; background: var(--surface-muted); border-radius: 8px; overflow: hidden; }
+    .tl-bar-fill { height: 100%; border-radius: 8px; position: relative; transition: width .6s var(--ease); }
+    .tl-bar-label { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 11.5px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    /* soft tinted fill + a crisp end cap: the colour keeps its meaning without a wall of saturated bars */
+    .tone-success { background: rgba(var(--success-rgb), .20); color: var(--success); box-shadow: inset -3px 0 0 var(--success); }
+    .tone-info    { background: rgba(var(--info-rgb), .20);    color: var(--info);    box-shadow: inset -3px 0 0 var(--info); }
+    .tone-warning { background: rgba(var(--warning-rgb), .22); color: var(--warning); box-shadow: inset -3px 0 0 var(--warning); }
+    .tone-danger  { background: rgba(var(--danger-rgb), .20);  color: var(--danger);  box-shadow: inset -3px 0 0 var(--danger); }
+    .tl-count { font-size: 12.5px; font-weight: 600; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+    .tl-count.c-success { color: var(--success); }
+    .tl-count.c-info { color: var(--info); }
+    .tl-count.c-warning { color: var(--warning); }
+    .tl-pct { font-size: 11.5px; color: var(--text-muted); text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* ── Employees ── */
+    .table-search { width: 230px; max-width: 100%; border-radius: var(--radius-pill); }
+    .emp-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .emp-avatar {
+      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+      background: var(--surface-muted); color: var(--text-secondary); font-size: 12px; font-weight: 700;
     }
-    .day-modal-overlay.open { display: flex; }
-    .day-modal {
-      background: var(--bg-secondary); border: 1px solid var(--border);
-      border-radius: 16px; width: 100%; max-width: 960px;
-      display: flex; flex-direction: column;
-      margin: auto;
-    }
-    .day-modal-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 22px; border-bottom: 1px solid var(--border); flex-shrink: 0;
-    }
-    .day-modal-close {
-      background: var(--bg-tertiary); border: 1px solid var(--border);
-      color: var(--text-muted); font-size: 16px; width: 32px; height: 32px;
-      border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: color 0.12s, border-color 0.12s;
-    }
-    .day-modal-close:hover { color: var(--text-primary); border-color: var(--blue); }
-    .day-modal-body { padding: 18px 22px; overflow-y: auto; }
-    .day-summary-bar {
-      display: flex; gap: 14px; margin-bottom: 18px; flex-wrap: wrap;
-    }
+    .emp-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+    .emp-sub { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+    td.nowrap { white-space: nowrap; }
+    td.tnum { font-variant-numeric: tabular-nums; }
+
+    /* ── States ── */
+    .state-pad { padding: 8px 20px 20px; }
+    .state-pad .empty-state, td .empty-state { padding: 36px 16px; }
+    .skel-row { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    .skel-row:last-child { border-bottom: none; }
+
+    /* ── Day attendance modal (shared modal system) ── */
+    .day-modal { max-width: 960px; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+    .day-modal .modal-header { margin: 0; padding: 18px 22px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .day-modal-body { padding: 20px 22px 24px; overflow-y: auto; display: block; }
+    .day-summary-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
     .day-summary-chip {
-      display: flex; align-items: center; gap: 6px;
-      background: var(--bg-tertiary); border: 1px solid var(--border);
-      border-radius: 8px; padding: 6px 12px; font-size: 12px;
+      display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 10px; border-radius: var(--radius-pill);
+      background: var(--surface-muted); font-size: 12.5px; color: var(--text-secondary);
     }
-    .day-summary-chip strong { font-size: 16px; font-weight: 800; }
+    .day-summary-chip strong { font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .day-summary-chip .ic { color: var(--text-muted); }
+    .day-summary-chip.good .ic, .day-summary-chip.good strong { color: var(--success); }
+    .day-summary-chip.bad .ic, .day-summary-chip.bad strong { color: var(--danger); }
 
-    /* Punch cards grid */
-    .punch-cards-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;
-    }
-    .punch-card {
-      background: var(--bg-tertiary); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden;
-    }
-    .punch-card-head {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px; border-bottom: 1px solid var(--border);
-    }
-    .punch-avatar {
-      width: 34px; height: 34px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0;
-    }
-    .punch-card-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-    .punch-card-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-    .punch-card-photos {
-      display: flex; gap: 0;
-    }
-    .punch-photo-col {
-      flex: 1; padding: 10px; text-align: center; border-right: 1px solid var(--border);
-    }
-    .punch-photo-col:last-child { border-right: none; }
-    .punch-photo-type {
-      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
-      color: var(--text-muted); margin-bottom: 6px;
-    }
-    .punch-photo-img {
-      width: 100%; aspect-ratio: 1/1; object-fit: cover;
-      border-radius: 8px; background: var(--bg-secondary); display: block;
-      cursor: pointer; transition: transform 0.15s;
-    }
-    .punch-photo-img:hover { transform: scale(1.03); }
-    .punch-photo-placeholder {
-      width: 100%; aspect-ratio: 1/1; border-radius: 8px;
-      background: var(--bg-secondary); display: flex; align-items: center;
-      justify-content: center; font-size: 28px; color: var(--text-muted);
-    }
-    .punch-photo-time {
-      font-size: 11px; font-weight: 700; margin-top: 5px;
-      color: var(--text-primary);
-    }
-    .punch-photo-time.absent { color: var(--text-muted); font-style: italic; }
+    .punch-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .punch-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: inset 0 1px 0 var(--highlight); }
+    .punch-card-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    .punch-avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; }
+    .punch-card-name { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .punch-card-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .punch-hours { font-size: 11.5px; font-weight: 600; color: var(--success); background: var(--success-soft); padding: 2px 9px; border-radius: var(--radius-pill); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .punch-card-photos { display: grid; grid-template-columns: 1fr 1fr; }
+    .punch-photo-col { padding: 12px; text-align: center; min-width: 0; }
+    .punch-photo-col + .punch-photo-col { border-left: 1px solid var(--border); }
+    .punch-photo-type { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); margin-bottom: 8px; }
+    .punch-photo-type::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .punch-photo-type.in { color: var(--success); }
+    .punch-photo-type.out { color: var(--info); }
+    .punch-photo-img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: var(--radius-sm); background: var(--surface-muted); display: block; cursor: zoom-in; transition: transform var(--motion-fast) var(--ease); }
+    .punch-photo-img:hover { transform: scale(1.02); }
+    .punch-photo-img:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 2px; }
+    .punch-photo-placeholder { width: 100%; aspect-ratio: 1 / 1; border-radius: var(--radius-sm); background: var(--surface-muted); display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+    .punch-photo-time { font-size: 12.5px; font-weight: 600; margin-top: 8px; color: var(--text); font-variant-numeric: tabular-nums; }
+    .punch-photo-time.absent { color: var(--text-muted); font-weight: 500; }
 
-    /* Absent section */
-    .absent-section { margin-top: 16px; }
-    .absent-section-title {
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .06em; color: var(--text-muted);
-      margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+    .absent-section { margin-top: 22px; }
+    .absent-section-title { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+    .absent-section-title em { font-style: normal; font-weight: 500; text-transform: none; letter-spacing: 0; }
+    .absent-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .absent-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 9px; border-radius: var(--radius-pill); font-size: 12.5px; color: var(--text-secondary); background: var(--danger-soft); }
+    .absent-chip .ic { color: var(--danger); }
+
+    /* ── Photo lightbox (always dark, like the app's photo viewer) ── */
+    .lightbox { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.92); z-index: 2000; align-items: center; justify-content: center; cursor: zoom-out; }
+    .lightbox.open { display: flex; animation: ck-fade var(--motion-base) var(--ease) both; }
+    .lightbox img { max-width: 92vw; max-height: 88vh; border-radius: var(--radius-md); object-fit: contain; }
+    .lightbox-close {
+      position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.12); color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
     }
-    .absent-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-    .absent-chip {
-      background: rgba(248,81,73,0.08); border: 1px solid rgba(248,81,73,0.25);
-      border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--text-secondary);
-      display: flex; align-items: center; gap: 5px;
+    .lightbox-close:hover { background: rgba(255, 255, 255, 0.22); }
+
+    @media (max-width: 640px) {
+      .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .info-field { padding: 10px 12px; }
+      .tl-bar-label .lbl-long { display: none; }
     }
 
-    /* Lightbox */
-    .lightbox {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.92); z-index: 2000;
-      align-items: center; justify-content: center;
-      cursor: zoom-out;
+    @media (max-width: 900px) {
+      .timeline-head, .timeline-row { grid-template-columns: 60px minmax(0, 1fr) 58px 36px; gap: 8px; }
+      .table-search { width: 100%; }
+      .day-modal { max-height: 92vh; border-radius: var(--radius-lg) var(--radius-lg) var(--radius-md) var(--radius-md); }
+      .day-modal-body { padding: 16px; }
+      .emp-name, .emp-sub { max-width: 150px; }
+      .state-pad { padding: 4px 16px 16px; }
     }
-    .lightbox.open { display: flex; }
-    .lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 10px; object-fit: contain; }
   </style>
 </head>
 <body>
@@ -230,137 +202,175 @@
 
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
+  <div id="toast" style="position:fixed;bottom:24px;right:24px;background:#16a34a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:opacity 0.25s,transform 0.25s;pointer-events:none;"></div>
+
   <!-- Day attendance modal -->
-  <div class="day-modal-overlay" id="day-modal-overlay" onclick="handleDayModalOverlayClick(event)">
-    <div class="day-modal" id="day-modal">
-      <div class="day-modal-header">
+  <div class="modal-overlay" id="day-modal-overlay" onclick="handleDayModalOverlayClick(event)">
+    <div class="modal-box modal-lg day-modal" id="day-modal" role="dialog" aria-modal="true" aria-labelledby="day-modal-title">
+      <div class="modal-header">
         <div>
-          <div id="day-modal-title" style="font-size:16px;font-weight:700;color:var(--text-primary);">Attendance Photos</div>
-          <div id="day-modal-sub" style="font-size:12px;color:var(--text-muted);margin-top:3px;"></div>
+          <h3 id="day-modal-title">Attendance Photos</h3>
+          <div id="day-modal-sub" style="font-size:12.5px;color:var(--text-muted);margin-top:3px;"></div>
         </div>
-        <button class="day-modal-close" onclick="closeDayModal()">✕</button>
+        <button class="modal-close" onclick="closeDayModal()" aria-label="Close">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
       </div>
       <div class="day-modal-body" id="day-modal-body">
-        <div style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</div>
+        <div class="empty-state"><h3>Loading…</h3></div>
       </div>
     </div>
   </div>
 
   <!-- Photo lightbox -->
   <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <img id="lightbox-img" src="" alt="" />
+    <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close photo">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+    <img id="lightbox-img" src="" alt="Punch photo" />
   </div>
 
   <div class="main">
     <header class="topbar">
-      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+      </button>
       <span class="topbar-title" id="topbar-title">Org Analytics</span>
-      <div class="topbar-actions">
-        <button class="icon-btn" onclick="loadAll()" title="Refresh">🔄</button>
-        <div class="avatar" style="cursor:pointer;">SA</div>
+      <div class="topbar-actions" style="margin-left:auto;">
+        <button class="icon-btn" onclick="loadAll()" title="Refresh" aria-label="Refresh analytics">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        </button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
       </div>
     </header>
 
     <div class="content">
-      <a class="back-btn" href="organizations.html">← Back to Organizations</a>
+      <a class="back-link" href="organizations.html">
+        <svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Back to Organizations
+      </a>
 
-      <div class="page-header" style="margin-bottom:16px;">
-        <h1 id="org-title">Loading...</h1>
-        <p id="org-subtitle" style="color:var(--text-muted);font-size:13px;"></p>
+      <div class="page-header">
+        <div>
+          <h1 id="org-title">Loading...</h1>
+          <p id="org-subtitle"></p>
+        </div>
       </div>
 
       <!-- Org Info Card -->
-      <div class="card" id="org-info-card" style="margin-bottom:20px;padding:20px 24px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-          <h3 style="margin:0;font-size:16px;color:var(--text-primary);">Organization Details</h3>
+      <section class="card" id="org-info-card" aria-labelledby="org-details-title">
+        <div class="card-header">
+          <h3 id="org-details-title">Organization Details</h3>
           <span id="org-status-badge" class="badge"></span>
         </div>
-        <div id="org-info-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
-          <div style="color:var(--text-muted);font-size:13px;">Loading...</div>
+        <div class="card-body">
+          <div id="org-info-grid" class="info-grid" aria-busy="true">
+            <div class="skeleton skel-field"></div><div class="skeleton skel-field"></div><div class="skeleton skel-field"></div><div class="skeleton skel-field"></div>
+            <div class="skeleton skel-field"></div><div class="skeleton skel-field"></div><div class="skeleton skel-field"></div><div class="skeleton skel-field"></div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Stat Cards -->
-      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px;">
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">Total Employees</span><div class="stat-icon blue">👥</div></div>
-          <div class="stat-value" id="s-total">—</div>
-          <div class="stat-footer">Active staff</div>
+      <!-- Stat tiles -->
+      <div class="stat-grid">
+        <div class="stat-tile">
+          <div class="stat-top">
+            <span class="stat-label">Total Employees</span>
+            <span class="stat-chip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg></span>
+          </div>
+          <div class="stat-val" id="s-total">—</div>
+          <div class="stat-sub">Active staff</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">Present Today</span><div class="stat-icon green">✅</div></div>
-          <div class="stat-value" id="s-today">—</div>
-          <div class="stat-footer" id="s-today-pct">—</div>
+        <div class="stat-tile">
+          <div class="stat-top">
+            <span class="stat-label">Present Today</span>
+            <span class="stat-chip good"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 11 2 2 4-4"/><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+          </div>
+          <div class="stat-val" id="s-today">—</div>
+          <div class="stat-sub" id="s-today-pct">—</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">Avg Attendance</span><div class="stat-icon orange">📊</div></div>
-          <div class="stat-value" id="s-avg">—</div>
-          <div class="stat-footer" id="s-avg-label">over selected period</div>
+        <div class="stat-tile">
+          <div class="stat-top">
+            <span class="stat-label">Avg Attendance</span>
+            <span class="stat-chip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+          </div>
+          <div class="stat-val" id="s-avg">—</div>
+          <div class="stat-sub" id="s-avg-label">over selected period</div>
         </div>
       </div>
 
       <!-- Shared Period Filter -->
-      <div class="card" style="margin-bottom:24px;padding:14px 20px;">
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-          <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Period:</span>
-          <button class="day-btn active" onclick="setPeriod(7)"  id="btn-7">Last 7 Days</button>
-          <button class="day-btn"        onclick="setPeriod(14)" id="btn-14">Last 14 Days</button>
-          <button class="day-btn"        onclick="setPeriod(30)" id="btn-30">Last 30 Days</button>
-
+      <div class="toolbar">
+        <span class="micro-label">Period</span>
+        <div class="segmented" role="group" aria-label="Period">
+          <button class="active" onclick="setPeriod(7)"  id="btn-7">Last 7 Days</button>
+          <button onclick="setPeriod(14)" id="btn-14">Last 14 Days</button>
+          <button onclick="setPeriod(30)" id="btn-30">Last 30 Days</button>
         </div>
       </div>
 
       <!-- Bar Chart -->
-      <div class="card" style="margin-bottom:24px;">
+      <section class="card" aria-labelledby="chart-title">
         <div class="card-header">
           <h3 id="chart-title">Total Employees vs Active (Present) Employees — Last 7 Days</h3>
+          <div class="legend">
+            <span class="legend-item"><span class="legend-dot dot-present"></span>Present</span>
+            <span class="legend-item"><span class="legend-dot dot-absent"></span>Absent</span>
+          </div>
         </div>
         <div class="card-body">
-          <div class="chart-wrap">
-            <div class="chart-y">
+          <div class="bar-chart-wrap">
+            <div class="bar-chart-y">
               <span id="y-top">—</span>
               <span id="y-mid">—</span>
               <span>0</span>
             </div>
-            <div class="bar-area" id="bar-area">
-              <div style="margin:auto;color:var(--text-muted);font-size:13px;">Loading...</div>
+            <div class="bar-chart" id="bar-area" aria-busy="true">
+              <div class="skeleton bar-skel" style="height:40%"></div><div class="skeleton bar-skel" style="height:62%"></div><div class="skeleton bar-skel" style="height:52%"></div>
+              <div class="skeleton bar-skel" style="height:74%"></div><div class="skeleton bar-skel" style="height:58%"></div><div class="skeleton bar-skel" style="height:80%"></div><div class="skeleton bar-skel" style="height:66%"></div>
             </div>
           </div>
-          <div class="chart-legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#56d364;"></div> Present</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#f85149;"></div> Absent</div>
-          </div>
         </div>
-      </div>
+      </section>
 
       <!-- Attendance Timeline Strip -->
-      <div class="card" style="margin-bottom:24px;">
+      <section class="card" aria-labelledby="tl-title">
         <div class="card-header">
           <h3 id="tl-title">Attendance Timeline — Last 7 Days</h3>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);"><div style="width:10px;height:10px;border-radius:3px;background:linear-gradient(90deg,#1a7f37,#56d364);"></div> High</div>
-            <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);"><div style="width:10px;height:10px;border-radius:3px;background:linear-gradient(90deg,#9a3412,#f97316);"></div> Low</div>
+          <div class="legend" aria-label="Attendance rate colours">
+            <span class="legend-item"><span class="legend-dot dot-success"></span>80%+</span>
+            <span class="legend-item"><span class="legend-dot dot-info"></span>60–79%</span>
+            <span class="legend-item"><span class="legend-dot dot-warning"></span>40–59%</span>
+            <span class="legend-item"><span class="legend-dot dot-danger"></span>Under 40%</span>
           </div>
         </div>
         <div class="card-body" style="max-height:520px;overflow-y:auto;">
-          <div class="tl-day-header">
+          <div class="timeline-head">
             <span>Date</span>
-            <span style="flex:1;">Attendance</span>
+            <span>Attendance</span>
             <span>Present</span>
             <span>Rate</span>
           </div>
-          <div class="timeline-wrap" id="timeline-wrap">
-            <div style="color:var(--text-muted);font-size:13px;">Loading...</div>
+          <div class="timeline-wrap" id="timeline-wrap" aria-busy="true">
+            <div class="skeleton skel-line" style="height:26px;margin:4px 0"></div>
+            <div class="skeleton skel-line" style="height:26px;margin:4px 0"></div>
+            <div class="skeleton skel-line" style="height:26px;margin:4px 0"></div>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- Employee List -->
-      <div class="card" style="margin-bottom:24px;">
+      <section class="card" aria-labelledby="emp-title">
         <div class="card-header">
-          <h3>Employees <span id="emp-count-badge" class="badge badge-blue" style="margin-left:8px;"></span></h3>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="search" id="emp-search" placeholder="Search employees..." class="search-input" style="width:200px;" oninput="filterEmployees()" />
+          <h3 id="emp-title">Employees <span id="emp-count-badge" class="badge badge-gray"></span></h3>
+          <div class="card-actions">
+            <input type="search" id="emp-search" placeholder="Search employees..." class="table-search" aria-label="Search employees" oninput="filterEmployees()" />
           </div>
         </div>
         <div class="table-wrap">
@@ -369,11 +379,11 @@
               <th>Name</th><th>Emp ID</th><th>Role</th><th>Department</th><th>Branch</th><th>Mobile</th><th>Today In</th><th>Today Out</th><th>Status</th>
             </tr></thead>
             <tbody id="emp-table-body">
-              <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:24px;">Loading...</td></tr>
+              <tr><td colspan="9" style="padding:0"><div class="skel-row"><div class="skeleton skeleton-circle" style="width:34px;height:34px"></div><div class="skeleton skel-line" style="width:30%"></div><div class="skeleton skel-line" style="width:14%"></div></div><div class="skel-row"><div class="skeleton skeleton-circle" style="width:34px;height:34px"></div><div class="skeleton skel-line" style="width:36%"></div><div class="skeleton skel-line" style="width:12%"></div></div><div class="skel-row"><div class="skeleton skeleton-circle" style="width:34px;height:34px"></div><div class="skeleton skel-line" style="width:26%"></div><div class="skeleton skel-line" style="width:16%"></div></div></td></tr>
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
     </div>
   </div>
@@ -390,6 +400,47 @@
     document.getElementById('org-title').textContent    = ORG_NAME;
     document.getElementById('topbar-title').textContent = ORG_NAME + ' — Analytics';
 
+    /* Lucide icon paths (same icon set as the Clockyn app) for markup built in JS */
+    const ICON = {
+      copy:      '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+      check:     '<path d="M20 6 9 17l-5-5"/>',
+      x:         '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+      camera:    '<path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/>',
+      userCheck: '<path d="m16 11 2 2 4-4"/><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',
+      userX:     '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/>',
+      users:     '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
+      alert:     '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+      inbox:     '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+      calendar:  '<path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/>'
+    };
+    function svg(name, cls) {
+      return '<svg class="ic ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[name] + '</svg>';
+    }
+
+    function escHtml(s) {
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function emptyBlock(icon, title, text, retry) {
+      return '<div class="empty-state"><div class="empty-icon">' + svg(icon, 'ic-lg') + '</div><h3>' + escHtml(title) + '</h3>'
+        + (text ? '<p>' + escHtml(text) + '</p>' : '')
+        + (retry ? '<button class="btn btn-ghost btn-sm" onclick="' + retry + '()" style="margin-top:8px">Try again</button>' : '')
+        + '</div>';
+    }
+
+    /* Keyboard support for the clickable chart columns and timeline rows */
+    function onActivate(container, selector, handler) {
+      container.addEventListener('click', function(e) {
+        var el = e.target.closest(selector);
+        if (el && container.contains(el)) handler(el);
+      });
+      container.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var el = e.target.closest(selector);
+        if (el && container.contains(el)) { e.preventDefault(); handler(el); }
+      });
+    }
+
     function setPeriod(d) {
       selectedDays = d;
       [7,14,30].forEach(function(n) {
@@ -400,19 +451,21 @@
       if (analyticsData) { renderChart(analyticsData); renderTimeline(analyticsData); }
     }
 
+    /* Attendance-rate tone: semantic tokens (success / info / warning / danger) */
     function barColor(pct) {
-      if (pct >= 0.80) return 'linear-gradient(90deg,#1a7f37,#56d364)';
-      if (pct >= 0.60) return 'linear-gradient(90deg,#1a5fa8,#58a6ff)';
-      if (pct >= 0.40) return 'linear-gradient(90deg,#9a6700,#f0b429)';
-      return 'linear-gradient(90deg,#9a3412,#f97316)';
+      if (pct >= 0.80) return 'success';
+      if (pct >= 0.60) return 'info';
+      if (pct >= 0.40) return 'warning';
+      return 'danger';
     }
 
     function renderChart(data) {
       const total   = data.total_employees || 1;
       const days    = data.daily_attendance.slice(-selectedDays);
       const barArea = document.getElementById('bar-area');
+      barArea.removeAttribute('aria-busy');
       if (!days.length) {
-        barArea.innerHTML = '<div style="margin:auto;color:var(--text-muted);font-size:13px;">No attendance data for this period</div>';
+        barArea.innerHTML = '<div class="bar-chart-loading">No attendance data for this period</div>';
         document.getElementById('y-top').textContent = '0';
         document.getElementById('y-mid').textContent = '0';
         document.getElementById('s-avg').textContent = '0';
@@ -427,10 +480,10 @@
         const pPct = Math.max((d.present / total) * 100, 2);
         const aPct = Math.max((d.absent  / total) * 100, 2);
         const label = d.date.slice(5);
-        return '<div class="bar-group" onclick="openDayModal(\'' + d.date + '\',\'' + label + '\')" title="View punch photos for ' + d.date + '">'
-          + '<div class="bar-tip">' + d.date + '<br>Present: ' + d.present + ' &middot; Click to view photos</div>'
-          + '<div class="bars"><div class="b-present" style="height:' + pPct + '%"></div><div class="b-absent" style="height:' + aPct + '%"></div></div>'
-          + '<div class="bar-lbl">' + label + '</div>'
+        return '<div class="bar-col" role="button" tabindex="0" data-date="' + escHtml(d.date) + '" data-label="' + escHtml(label) + '" title="View punch photos for ' + escHtml(d.date) + '" aria-label="' + escHtml(d.date) + ': ' + d.present + ' present, view punch photos">'
+          + '<div class="bar-tooltip">' + escHtml(d.date) + '<br>Present: ' + d.present + ' &middot; Absent: ' + d.absent + '<small>Click to view photos</small></div>'
+          + '<div class="bar-outer bar-pair"><div class="bar-inner bar-present" style="height:' + pPct + '%"></div><div class="bar-inner bar-absent" style="height:' + aPct + '%"></div></div>'
+          + '<div class="bar-label">' + escHtml(label) + '</div>'
           + '</div>';
       }).join('');
     }
@@ -451,28 +504,34 @@
         rows.push({ date: key, label: dow + ' ' + d.getDate() + ' ' + mon, present: map[key] || 0 });
       }
       const wrap = document.getElementById('timeline-wrap');
+      wrap.removeAttribute('aria-busy');
       wrap.innerHTML = rows.map(function(r) {
         const pct      = r.present / total;
         const widthPct = Math.max(pct * 100, r.present > 0 ? 2 : 0);
-        const color    = barColor(pct);
+        const tone     = barColor(pct);
         const pctStr   = Math.round(pct * 100) + '%';
         const isToday  = r.date === todayKey;
         const parts    = r.label.split(' ');
-        const countColor = pct >= 0.8 ? 'var(--green)' : pct >= 0.5 ? 'var(--blue)' : pct > 0 ? 'var(--orange)' : 'var(--text-muted)';
-        return '<div class="timeline-row" onclick="openDayModal(\'' + r.date + '\',\'' + r.label + '\')" title="View punch photos for ' + r.label + '">'
-          + '<div class="tl-date"' + (isToday ? ' style="color:var(--blue);"' : '') + '>'
-          +   '<strong>' + parts[0] + '</strong>' + parts.slice(1).join(' ')
-          + '</div>'
+        const countCls = r.present === 0 ? '' : (tone === 'danger' ? '' : ' c-' + tone);
+        return '<div class="timeline-row" role="button" tabindex="0" data-date="' + escHtml(r.date) + '" data-label="' + escHtml(r.label) + '" title="View punch photos for ' + escHtml(r.label) + '">'
+          + '<div class="tl-date' + (isToday ? ' today' : '') + '"><strong>' + escHtml(parts[0]) + '</strong>' + escHtml(parts.slice(1).join(' ')) + '</div>'
           + '<div class="tl-bar-bg">'
-          +   '<div class="tl-bar-fill" style="width:' + widthPct + '%;background:' + color + ';">'
-          +     (r.present > 0 ? '<span class="tl-bar-label">' + r.present + ' present</span>' : '')
+          +   '<div class="tl-bar-fill tone-' + tone + '" style="width:' + widthPct + '%">'
+          +     (widthPct >= 18 ? '<span class="tl-bar-label">' + r.present + '<span class="lbl-long"> present</span></span>' : '')
           +   '</div>'
           + '</div>'
-          + '<div class="tl-count" style="color:' + countColor + '">' + r.present + ' / ' + total + '</div>'
+          + '<div class="tl-count' + countCls + '">' + r.present + ' / ' + total + '</div>'
           + '<div class="tl-pct">' + (r.present > 0 ? pctStr : '—') + '</div>'
           + '</div>';
       }).join('');
     }
+
+    onActivate(document.getElementById('bar-area'), '.bar-col[data-date]', function(el) {
+      openDayModal(el.getAttribute('data-date'), el.getAttribute('data-label'));
+    });
+    onActivate(document.getElementById('timeline-wrap'), '.timeline-row[data-date]', function(el) {
+      openDayModal(el.getAttribute('data-date'), el.getAttribute('data-label'));
+    });
 
     async function loadAll() {
       if (!ORG_ID) { document.getElementById('org-title').textContent = 'Invalid organization'; return; }
@@ -491,23 +550,37 @@
         renderChart(data);
         renderTimeline(data);
       } catch(e) {
-        document.getElementById('bar-area').innerHTML = '<div style="margin:auto;color:var(--red);">Failed to load analytics</div>';
+        console.error('analytics error', e);
+        const barArea = document.getElementById('bar-area');
+        barArea.removeAttribute('aria-busy');
+        barArea.innerHTML = '<div class="bar-chart-loading" style="color:var(--danger)">Failed to load analytics. <a href="#" onclick="loadAll();return false;">Try again</a></div>';
+        const wrap = document.getElementById('timeline-wrap');
+        wrap.removeAttribute('aria-busy');
+        wrap.innerHTML = emptyBlock('alert', 'Couldn’t load the timeline', 'Check your connection and try again.', 'loadAll');
       }
     }
 
     let empData = [];
 
+    var SUB_BADGE = { ACTIVE:'badge-green', FREE_TRIAL:'badge-blue', INACTIVE:'badge-gray', EXPIRED:'badge-red' };
+    var SUB_LABEL = { ACTIVE:'Active', FREE_TRIAL:'Free trial', INACTIVE:'Inactive', EXPIRED:'Expired' };
+
     async function loadOrgInfo() {
       if (!ORG_ID) return;
+      const grid = document.getElementById('org-info-grid');
       try {
         const res = await fetch(API_BASE + '/gen-dashboard/org/' + ORG_ID + '/info');
         const json = await res.json();
-        if (!json.success || !json.data) return;
+        if (!json.success || !json.data) {
+          grid.removeAttribute('aria-busy');
+          grid.innerHTML = '<div style="grid-column:1/-1">' + emptyBlock('inbox', 'No organization details', 'We could not find details for this organization.') + '</div>';
+          return;
+        }
         const d = json.data;
         const statusMap = {1:'Active', 0:'Inactive', 2:'Deleted'};
         const badgeClasses = {1:'badge-green', 0:'badge-red', 2:'badge-red'};
         document.getElementById('org-status-badge').textContent = statusMap[d.status] || d.status || '--';
-        document.getElementById('org-status-badge').className = 'badge ' + (badgeClasses[d.status] || 'badge-blue');
+        document.getElementById('org-status-badge').className = 'badge badge-dot ' + (badgeClasses[d.status] || 'badge-blue');
         const fields = [
           {label:'Org ID',      value: d.org_id,       copy:true},
           {label:'Org Name',    value: d.org_name,      copy:true},
@@ -520,22 +593,32 @@
           {label:'District',    value: d.district || '--', copy:false},
           {label:'Pincode',     value: d.pincode || '--', copy:false},
           {label:'Plan',        value: d.plan_name || 'No Plan', copy:false},
-          {label:'Sub Status',  value: d.sub_status || '--', copy:false},
+          {label:'Sub Status',  value: d.sub_status || '--', copy:false, badge:true},
           {label:'Valid Till',  value: d.end_date ? new Date(d.end_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '--', copy:false},
           {label:'Staff Limit', value: d.staff_limit || '--', copy:false},
         ];
-        document.getElementById('org-info-grid').innerHTML = fields.map(function(f) {
+        grid.removeAttribute('aria-busy');
+        grid.innerHTML = fields.map(function(f) {
+          var shown = escHtml(f.value || '--');
+          var inner = f.badge && SUB_BADGE[f.value]
+            ? '<span class="badge badge-dot ' + SUB_BADGE[f.value] + '">' + escHtml(SUB_LABEL[f.value]) + '</span>'
+            : '<span title="' + shown + '">' + shown + '</span>';
           var copyBtn = f.copy && f.value && f.value !== '--'
-            ? '<button class="copy-btn" onclick="copyToClipboard(\''+escHtml(f.value)+'\')" title="Copy">&#x29C9;</button>'
+            ? '<button class="copy-btn" data-copy="' + escHtml(f.value) + '" title="Copy" aria-label="Copy ' + escHtml(f.label) + '">' + svg('copy', 'ic-sm') + '</button>'
             : '';
-          return '<div class="info-field"><div class="info-label">'+f.label+'</div><div class="info-value"><span>'+escHtml(f.value || '--')+'</span>'+copyBtn+'</div></div>';
+          return '<div class="info-field"><div class="info-label">' + escHtml(f.label) + '</div><div class="info-value">' + inner + copyBtn + '</div></div>';
         }).join('');
-      } catch(e) { console.error('org info error', e); }
+      } catch(e) {
+        console.error('org info error', e);
+        grid.removeAttribute('aria-busy');
+        grid.innerHTML = '<div style="grid-column:1/-1">' + emptyBlock('alert', 'Couldn’t load details', 'Check your connection and try again.', 'loadOrgInfo') + '</div>';
+      }
     }
 
-    function escHtml(s) {
-      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+    document.getElementById('org-info-grid').addEventListener('click', function(e) {
+      var btn = e.target.closest('.copy-btn[data-copy]');
+      if (btn) copyToClipboard(btn.getAttribute('data-copy'));
+    });
 
     function copyToClipboard(text) {
       navigator.clipboard.writeText(text).then(function() {
@@ -548,11 +631,12 @@
     }
 
     function showToast(msg) {
-      var t = document.createElement('div');
+      var t = document.getElementById('toast');
       t.textContent = msg;
-      t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#238636;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;animation:fadeIn .2s';
-      document.body.appendChild(t);
-      setTimeout(function(){ document.body.removeChild(t); }, 2000);
+      t.style.opacity = '1';
+      t.style.transform = 'translateY(0)';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(function() { t.style.opacity = '0'; t.style.transform = 'translateY(10px)'; }, 2000);
     }
 
     async function loadOrgEmployees() {
@@ -564,11 +648,19 @@
         empData = json.data || [];
         document.getElementById('emp-count-badge').textContent = empData.length + ' employees';
         renderEmployees();
-      } catch(e) { console.error('emp load error', e); }
+      } catch(e) {
+        console.error('emp load error', e);
+        document.getElementById('emp-table-body').innerHTML = '<tr><td colspan="9" style="padding:0">' + emptyBlock('alert', 'Couldn’t load employees', 'Check your connection and try again.', 'loadOrgEmployees') + '</td></tr>';
+      }
     }
 
     function filterEmployees() {
       renderEmployees();
+    }
+
+    function initials(name) {
+      var parts = String(name || '?').trim().split(/\s+/);
+      return ((parts[0] || '?').charAt(0) + (parts[1] ? parts[1].charAt(0) : '')).toUpperCase();
     }
 
     function renderEmployees() {
@@ -578,20 +670,20 @@
       });
       var tbody = document.getElementById('emp-table-body');
       if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:24px;">No employees found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="padding:0">' + emptyBlock('inbox', 'No employees found', q ? 'Try a different search.' : 'Employees will appear here once they are added.') + '</td></tr>';
         return;
       }
       tbody.innerHTML = filtered.map(function(e) {
-        var statusBadge = e.status == 1 ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-red">Inactive</span>';
+        var statusBadge = e.status == 1 ? '<span class="badge badge-dot badge-green">Active</span>' : '<span class="badge badge-dot badge-red">Inactive</span>';
         var inBadge  = e.punch_in_today  ? '<span class="badge badge-green">'+escHtml(e.punch_in_today)+'</span>'  : '<span class="badge badge-gray">—</span>';
         var outBadge = e.punch_out_today ? '<span class="badge badge-blue">'+escHtml(e.punch_out_today)+'</span>' : '<span class="badge badge-gray">—</span>';
         return '<tr>'
-          + '<td><div style="font-weight:600;color:var(--text-primary);">'+escHtml(e.name)+'</div><div style="font-size:11px;color:var(--text-muted);">'+escHtml(e.email||'')+'</div></td>'
-          + '<td>'+escHtml(e.emp_id||'—')+'</td>'
-          + '<td><span class="badge '+(e.role_id==2?'badge-purple':'badge-blue')+'">'+escHtml(e.role_name||'—')+'</span></td>'
-          + '<td>'+escHtml(e.dept_name||'—')+'</td>'
-          + '<td>'+escHtml(e.branch_name||'—')+'</td>'
-          + '<td>'+escHtml(e.mobile_number||'—')+'</td>'
+          + '<td><div class="emp-cell"><span class="emp-avatar" aria-hidden="true">'+escHtml(initials(e.name))+'</span><div style="min-width:0"><div class="emp-name" title="'+escHtml(e.name)+'">'+escHtml(e.name)+'</div><div class="emp-sub" title="'+escHtml(e.email||'')+'">'+escHtml(e.email||'')+'</div></div></div></td>'
+          + '<td class="nowrap tnum">'+escHtml(e.emp_id||'—')+'</td>'
+          + '<td><span class="badge '+(e.role_id==2?'badge-purple':'badge-gray')+'">'+escHtml(e.role_name||'—')+'</span></td>'
+          + '<td class="nowrap">'+escHtml(e.dept_name||'—')+'</td>'
+          + '<td class="nowrap">'+escHtml(e.branch_name||'—')+'</td>'
+          + '<td class="nowrap tnum">'+escHtml(e.mobile_number||'—')+'</td>'
           + '<td>'+inBadge+'</td>'
           + '<td>'+outBadge+'</td>'
           + '<td>'+statusBadge+'</td>'
@@ -600,17 +692,13 @@
     }
 
     /* ── Day attendance modal ── */
-    const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
+    const AVATAR_TONES = ['info','purple','success','warning','danger','accent'];
 
-    function avatarColor(name) {
+    function avatarStyle(name) {
       var code = 0;
       for (var i = 0; i < (name||'').length; i++) code += name.charCodeAt(i);
-      return AVATAR_COLORS[code % AVATAR_COLORS.length];
-    }
-
-    function initials(name) {
-      var parts = (name||'?').split(' ');
-      return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+      var t = AVATAR_TONES[code % AVATAR_TONES.length];
+      return 'background:rgba(var(--' + t + '-rgb), .14);color:var(--' + t + ')';
     }
 
     async function openDayModal(date, label) {
@@ -618,7 +706,7 @@
       var body    = document.getElementById('day-modal-body');
       document.getElementById('day-modal-title').textContent = 'Attendance · ' + label;
       document.getElementById('day-modal-sub').textContent   = date;
-      body.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-muted);font-size:14px;">⏳ Loading attendance photos…</div>';
+      body.innerHTML = '<div class="punch-cards-grid" aria-busy="true"><div class="skeleton" style="height:230px;border-radius:var(--radius-md)"></div><div class="skeleton" style="height:230px;border-radius:var(--radius-md)"></div><div class="skeleton" style="height:230px;border-radius:var(--radius-md)"></div></div>';
       overlay.classList.add('open');
       try {
         var res  = await fetch(API_BASE + '/gen-dashboard/org/' + ORG_ID + '/attendance/' + date);
@@ -626,7 +714,7 @@
         if (!json.success) throw new Error('Failed');
         renderDayModal(json.data, date);
       } catch(e) {
-        body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);">Failed to load attendance data</div>';
+        body.innerHTML = emptyBlock('alert', 'Failed to load attendance data', 'Check your connection and try again.');
       }
     }
 
@@ -640,42 +728,41 @@
 
       /* Summary chips */
       html += '<div class="day-summary-bar">'
-        + '<div class="day-summary-chip"><span>✅</span><strong style="color:var(--green);">' + present.length + '</strong> Present</div>'
-        + '<div class="day-summary-chip"><span>❌</span><strong style="color:var(--red);">'   + absent.length  + '</strong> Absent</div>'
-        + '<div class="day-summary-chip"><span>👥</span><strong>' + data.length + '</strong> Total</div>'
+        + '<div class="day-summary-chip good">' + svg('userCheck', 'ic-sm') + '<strong>' + present.length + '</strong> Present</div>'
+        + '<div class="day-summary-chip bad">'  + svg('userX', 'ic-sm')     + '<strong>' + absent.length  + '</strong> Absent</div>'
+        + '<div class="day-summary-chip">'      + svg('users', 'ic-sm')     + '<strong>' + data.length    + '</strong> Total</div>'
         + '</div>';
 
       /* Present employees — punch photo cards */
       if (present.length) {
         html += '<div class="punch-cards-grid">';
         html += present.map(function(e) {
-          var color = avatarColor(e.name);
           var inPhoto  = e.punch_in_photo
-            ? '<img class="punch-photo-img" src="'+escHtml(e.punch_in_photo)+'" alt="In" onclick="openLightbox(\''+escHtml(e.punch_in_photo)+'\')" />'
-            : '<div class="punch-photo-placeholder">🤳</div>';
+            ? '<img class="punch-photo-img" src="'+escHtml(e.punch_in_photo)+'" data-full="'+escHtml(e.punch_in_photo)+'" alt="Punch in photo of '+escHtml(e.name)+'" role="button" tabindex="0" />'
+            : '<div class="punch-photo-placeholder">' + svg('camera', 'ic-lg') + '</div>';
           var outPhoto = e.punch_out_photo
-            ? '<img class="punch-photo-img" src="'+escHtml(e.punch_out_photo)+'" alt="Out" onclick="openLightbox(\''+escHtml(e.punch_out_photo)+'\')" />'
-            : '<div class="punch-photo-placeholder">🚶</div>';
+            ? '<img class="punch-photo-img" src="'+escHtml(e.punch_out_photo)+'" data-full="'+escHtml(e.punch_out_photo)+'" alt="Punch out photo of '+escHtml(e.name)+'" role="button" tabindex="0" />'
+            : '<div class="punch-photo-placeholder">' + svg('camera', 'ic-lg') + '</div>';
           var inTime   = e.punch_in_time  ? e.punch_in_time  : '—';
           var outTime  = e.punch_out_time ? e.punch_out_time : 'Not out yet';
           var wh       = e.work_hours ? Math.round(e.work_hours * 10) / 10 + 'h' : '';
           return '<div class="punch-card">'
             + '<div class="punch-card-head">'
-            +   '<div class="punch-avatar" style="background:'+color+'">'+initials(e.name)+'</div>'
+            +   '<div class="punch-avatar" style="'+avatarStyle(e.name)+'">'+escHtml(initials(e.name))+'</div>'
             +   '<div style="flex:1;min-width:0;">'
-            +     '<div class="punch-card-name">'+escHtml(e.name)+'</div>'
+            +     '<div class="punch-card-name" title="'+escHtml(e.name)+'">'+escHtml(e.name)+'</div>'
             +     '<div class="punch-card-meta">'+escHtml(e.role_name)+(e.dept_name && e.dept_name!=='—'?' &middot; '+escHtml(e.dept_name):'')+'</div>'
             +   '</div>'
-            +   (wh ? '<div style="font-size:11px;font-weight:700;color:var(--green);">'+wh+'</div>' : '')
+            +   (wh ? '<div class="punch-hours">'+escHtml(wh)+'</div>' : '')
             + '</div>'
             + '<div class="punch-card-photos">'
             +   '<div class="punch-photo-col">'
-            +     '<div class="punch-photo-type" style="color:var(--green);">🟢 IN</div>'
+            +     '<div class="punch-photo-type in">In</div>'
             +     inPhoto
             +     '<div class="punch-photo-time">'+escHtml(inTime)+'</div>'
             +   '</div>'
             +   '<div class="punch-photo-col">'
-            +     '<div class="punch-photo-type" style="color:var(--blue);">🔵 OUT</div>'
+            +     '<div class="punch-photo-type out">Out</div>'
             +     outPhoto
             +     '<div class="punch-photo-time '+(e.punch_out_photo?'':'absent')+'">'+escHtml(outTime)+'</div>'
             +   '</div>'
@@ -684,22 +771,26 @@
         }).join('');
         html += '</div>';
       } else {
-        html += '<div style="text-align:center;padding:32px;color:var(--text-muted);">No attendance recorded for this day</div>';
+        html += emptyBlock('calendar', 'No attendance recorded for this day', '');
       }
 
       /* Absent employees — compact chip list */
       if (absent.length) {
         html += '<div class="absent-section">'
-          + '<div class="absent-section-title"><span>Absent</span><span style="font-weight:400;text-transform:none;letter-spacing:0;">'+absent.length+' employees</span></div>'
+          + '<div class="absent-section-title"><span>Absent</span><em>'+absent.length+' employees</em></div>'
           + '<div class="absent-chips">'
           + absent.map(function(e){
-              return '<div class="absent-chip">❌ '+escHtml(e.name)+'</div>';
+              return '<div class="absent-chip">' + svg('x', 'ic-sm') + escHtml(e.name)+'</div>';
             }).join('')
           + '</div></div>';
       }
 
       body.innerHTML = html;
     }
+
+    onActivate(document.getElementById('day-modal-body'), '.punch-photo-img[data-full]', function(el) {
+      openLightbox(el.getAttribute('data-full'));
+    });
 
     function closeDayModal() {
       document.getElementById('day-modal-overlay').classList.remove('open');
@@ -718,14 +809,17 @@
       document.getElementById('lightbox').classList.remove('open');
     }
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') { closeDayModal(); closeLightbox(); }
+      if (e.key !== 'Escape') return;
+      /* the photo viewer sits on top of the modal: close it first, then the modal */
+      if (document.getElementById('lightbox').classList.contains('open')) closeLightbox();
+      else closeDayModal();
     });
 
     function handleLogout() {
       if (confirm('Are you sure you want to logout?')) logout();
     }
 
-    loadOrgInfo(); loadOrgEmployees(); setPeriod(7); loadAll();
+    setPeriod(7); loadAll();
 
     function toggleSidebar() {
       document.querySelector('.sidebar').classList.toggle('open');

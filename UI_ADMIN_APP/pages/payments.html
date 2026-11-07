@@ -11,51 +11,88 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
+    .ic { display: block; flex-shrink: 0; }
+    .topbar-search > span { display: inline-flex; }
+
+    /* Summary tiles: icon chip + label / value / caption (6 across on desktop, 3 on tablet, 2 on phones) */
+    .stat-grid.cols-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (min-width: 720px)  { .stat-grid.cols-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (min-width: 1100px) { .stat-grid.cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+    .stat-tile { position: relative; }
+    .stat-tile .stat-val { font-variant-numeric: tabular-nums; font-size: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .st-icon {
+      position: absolute; top: 16px; right: 16px; width: 30px; height: 30px; border-radius: var(--radius-sm);
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--surface-muted); color: var(--text-muted);
+    }
+    .st-icon.success { background: var(--success-soft); color: var(--success); }
+    .st-icon.warning { background: var(--warning-soft); color: var(--warning); }
+    .st-icon.danger  { background: var(--danger-soft);  color: var(--danger); }
+    .st-icon.info    { background: var(--info-soft);    color: var(--info); }
+    /* six tiles across: the chip sits above the label instead of beside it, so long labels never run into it */
+    .stat-grid.cols-6 .st-icon { position: static; margin-bottom: 8px; }
+
+    /* Bulk invoice download */
     .bulk-invoice-bar {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      background: var(--bg-secondary); border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+      padding: 16px 20px; margin-bottom: 20px;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 var(--highlight);
     }
-    .bulk-invoice-bar .bi-label {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 13px; font-weight: 600; color: var(--text-primary); margin-right: 4px;
+    .bi-head { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1 1 320px; }
+    .bi-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-sm); flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--primary-soft); color: var(--text-secondary);
     }
-    .bulk-invoice-bar label { font-size: 12px; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
-    .bulk-invoice-bar input[type="date"] {
-      background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px;
-      padding: 7px 10px; color: var(--text-primary); font-size: 13px; outline: none;
-    }
-    .bulk-invoice-bar input[type="date"]:focus { border-color: var(--blue); }
-    .bi-hint { font-size: 11px; color: var(--text-muted); margin-left: auto; }
-    #bi-download-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .bi-title { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; color: var(--text); }
+    .bi-hint { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+    .bi-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .bi-controls label { font-size: 12px; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+    .bi-controls input[type="date"] { padding: 6px 10px; min-height: 36px; font-size: 13px; }
+    .bi-controls .sep { color: var(--text-muted); }
 
     /* Progress modal */
-    .bi-modal-overlay {
-      display: none; position: fixed; inset: 0; z-index: 1000;
-      background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
-      align-items: center; justify-content: center;
+    .bi-modal { text-align: center; padding: 28px 24px; }
+    .bi-state {
+      width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 14px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--primary-soft); color: var(--text-secondary);
     }
-    .bi-modal-overlay.open { display: flex; }
-    .bi-modal {
-      background: var(--bg-secondary); border: 1px solid var(--border);
-      border-radius: 14px; padding: 28px; width: 100%; max-width: 380px;
-      text-align: center;
+    .bi-state.ok   { background: var(--success-soft); color: var(--success); }
+    .bi-state.fail { background: var(--danger-soft);  color: var(--danger); }
+    .bi-modal-title { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; color: var(--text); margin-bottom: 6px; }
+    .bi-modal-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; min-height: 18px; overflow-wrap: anywhere; }
+    .bi-modal .progress { height: 8px; margin-top: 0; }
+    .bi-modal .progress-fill.done  { background: var(--success); }
+    .bi-modal .progress-fill.error { background: var(--danger); }
+    .bi-progress-pct { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-top: 10px; font-variant-numeric: tabular-nums; }
+    .bi-modal-close-btn { margin-top: 18px; }
+
+    /* The topbar search is hidden on phones: this in-content copy keeps search available there */
+    .m-search {
+      display: none; align-items: center; gap: 10px; flex: 1 1 100%; height: 42px; padding: 0 14px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted);
+      transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
     }
-    .bi-modal-icon { font-size: 30px; margin-bottom: 12px; }
-    .bi-modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-    .bi-modal-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; min-height: 16px; }
-    .bi-progress-track {
-      height: 8px; background: var(--bg-tertiary); border-radius: 5px; overflow: hidden;
-      border: 1px solid var(--border); margin-bottom: 10px;
-    }
-    .bi-progress-fill {
-      height: 100%; border-radius: 5px; width: 0%;
-      background: linear-gradient(90deg, #1a7f37, #56d364);
-      transition: width 0.4s ease;
-    }
-    .bi-progress-fill.error { background: linear-gradient(90deg, #8b1a1a, #f85149); }
-    .bi-progress-pct { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
-    .bi-modal-close-btn { margin-top: 16px; }
+    .m-search:focus-within { border-color: var(--text-muted); box-shadow: 0 0 0 3px var(--ring); }
+    .m-search input { background: none; border: none; outline: none; box-shadow: none; padding: 0; min-height: 0; width: 100%; font-size: 14px; color: var(--text); }
+    .m-search input::placeholder { color: var(--text-muted); }
+    /* the shared topbar search now stays visible on phones, so the in-page copy is not shown */
+
+    /* Table */
+    .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .toolbar select { width: auto; min-width: 150px; }
+    .toolbar .count { font-size: 12.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .cell-clip { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pay-id { font-family: var(--font-mono); font-size: 12px; color: var(--text); letter-spacing: -0.2px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.amount { font-weight: 700; color: var(--text); }
+    td.when { color: var(--text-muted); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    tr.state-row:hover { background: none; }
+    tr.state-row td { padding: 8px 18px; }
+    .empty-icon.is-error { background: var(--danger-soft); color: var(--danger); }
+    .skeleton-line.s-1 { width: 70%; } .skeleton-line.s-2 { width: 85%; } .skeleton-line.s-3 { width: 50%; } .skeleton-line.s-4 { width: 40%; }
   </style>
 </head>
 <body>
@@ -67,14 +104,14 @@
 
   <div class="main">
     <header class="topbar">
-      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">&#x2630;</button>
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button>
       <span class="topbar-title">Payments</span>
       <div class="topbar-search">
-        <span>&#x1F50D;</span>
-        <input type="text" id="search-input" placeholder="Search payment ID, org, plan..." oninput="applyFilters()" />
+        <span><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></span>
+        <input type="text" id="search-input" placeholder="Search payment ID, org, plan..." aria-label="Search payments" oninput="applyFilters()" />
       </div>
       <div class="topbar-actions">
-        <button class="icon-btn" onclick="loadPayments()" title="Refresh">&#x1F504;</button>
+        <button class="icon-btn" onclick="loadPayments()" title="Refresh" aria-label="Refresh payments"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
         <div class="topbar-user-pill">
           <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
           <div class="topbar-user-info">
@@ -87,44 +124,66 @@
 
     <div class="content">
 
-      <!-- 6 Summary Cards -->
-      <div class="stats-grid" style="grid-template-columns:repeat(6,1fr);margin-bottom:20px;">
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">Total Payments</span><div class="stat-icon blue">&#x1F4B3;</div></div>
-          <div class="stat-value" id="s-total">&mdash;</div>
-          <div class="stat-footer">All transactions</div>
+      <div class="page-header">
+        <div>
+          <h1>Payments</h1>
+          <p>Transactions, revenue and invoice downloads across every organization.</p>
         </div>
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">Total Revenue</span><div class="stat-icon green">&#x1F4B0;</div></div>
-          <div class="stat-value" id="s-revenue">&mdash;</div>
-          <div class="stat-footer">Paid only</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">Pending</span><div class="stat-icon orange">&#x23F3;</div></div>
-          <div class="stat-value" id="s-pending">&mdash;</div>
-          <div class="stat-footer">Awaiting + expired trials</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">Failed</span><div class="stat-icon red">&#x274C;</div></div>
-          <div class="stat-value" id="s-failed">&mdash;</div>
-          <div class="stat-footer">Failed transactions</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">Success Rate</span><div class="stat-icon green">&#x2705;</div></div>
-          <div class="stat-value" id="s-rate">&mdash;</div>
-          <div class="stat-footer">Paid / Total</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-header"><span class="label">Free Trial</span><div class="stat-icon blue">&#x1F193;</div></div>
-          <div class="stat-value" id="s-free">&mdash;</div>
-          <div class="stat-footer">Trial orgs</div>
+        <div class="page-header-actions">
+          <button class="btn btn-ghost btn-sm" onclick="loadPayments()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Refresh</button>
+          <div class="export-wrap">
+            <button class="btn btn-ghost btn-sm" onclick="toggleExportMenu('export-menu')" aria-haspopup="true"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg> Export <svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button>
+            <div class="export-menu" id="export-menu">
+              <button onclick="doExportExcel()"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg> Export Excel</button>
+              <button onclick="doExportPDF()"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg> Export PDF</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Charts Row -->
-      <div class="analytics-row" style="margin-bottom:24px;">
+      <!-- Summary tiles -->
+      <div class="stat-grid cols-6">
+        <div class="stat-tile">
+          <span class="st-icon info"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/><path d="M6 14h2"/></svg></span>
+          <div class="stat-label">Total Payments</div>
+          <div class="stat-val" id="s-total">&mdash;</div>
+          <div class="stat-sub">All transactions</div>
+        </div>
+        <div class="stat-tile">
+          <span class="st-icon success"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></span>
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-val" id="s-revenue">&mdash;</div>
+          <div class="stat-sub">Paid only</div>
+        </div>
+        <div class="stat-tile">
+          <span class="st-icon warning"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg></span>
+          <div class="stat-label">Pending</div>
+          <div class="stat-val" id="s-pending">&mdash;</div>
+          <div class="stat-sub">Awaiting + expired trials</div>
+        </div>
+        <div class="stat-tile">
+          <span class="st-icon danger"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div class="stat-label">Failed</div>
+          <div class="stat-val" id="s-failed">&mdash;</div>
+          <div class="stat-sub">Failed transactions</div>
+        </div>
+        <div class="stat-tile">
+          <span class="st-icon success"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/></svg></span>
+          <div class="stat-label">Success Rate</div>
+          <div class="stat-val" id="s-rate">&mdash;</div>
+          <div class="stat-sub">Paid / Total</div>
+        </div>
+        <div class="stat-tile">
+          <span class="st-icon info"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/></svg></span>
+          <div class="stat-label">Free Trial</div>
+          <div class="stat-val" id="s-free">&mdash;</div>
+          <div class="stat-sub">Trial orgs</div>
+        </div>
+      </div>
 
-        <!-- Monthly Revenue Bar Chart -->
+      <!-- Charts -->
+      <div class="analytics-row">
+
         <div class="chart-card">
           <div class="chart-card-header">
             <div>
@@ -148,7 +207,6 @@
           </div>
         </div>
 
-        <!-- Status Donut -->
         <div class="chart-card">
           <div class="chart-card-header">
             <div>
@@ -159,7 +217,7 @@
           <div class="donut-section">
             <div class="donut-container">
               <svg viewBox="0 0 42 42" class="donut-svg" id="pay-donut-svg">
-                <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#21262d" stroke-width="4"/>
+                <circle cx="21" cy="21" r="15.9155" fill="none" stroke-width="4"/>
               </svg>
               <div class="donut-center">
                 <div class="donut-center-val" id="pay-donut-val">&mdash;</div>
@@ -174,12 +232,12 @@
 
       </div>
 
-      <!-- Date Range Filter -->
+      <!-- Date range filter -->
       <div class="date-filter-bar">
-        <label>From</label>
+        <label for="date-from">From</label>
         <input type="date" id="date-from" onchange="applyFilters()" />
         <span class="date-sep">&rarr;</span>
-        <label>To</label>
+        <label for="date-to">To</label>
         <input type="date" id="date-to" onchange="applyFilters()" />
         <div class="date-quick-btns">
           <button class="date-quick-btn" onclick="setQuick(7,this)">Last 7D</button>
@@ -190,57 +248,55 @@
         </div>
       </div>
 
-      <!-- Bulk Invoice Download -->
-      <div class="bulk-invoice-bar">
-        <div class="bi-label">&#x1F4E6; Bulk Invoice Download</div>
-        <label>From</label>
-        <input type="date" id="bi-from-date" onchange="updateBulkInvoiceBtn()" />
-        <span class="date-sep">&rarr;</span>
-        <label>To</label>
-        <input type="date" id="bi-to-date" onchange="updateBulkInvoiceBtn()" />
-        <button class="btn btn-primary btn-sm" id="bi-download-btn" onclick="downloadBulkInvoices()" disabled>&#x2B07; Download Invoices (ZIP)</button>
-        <span class="bi-hint">Includes all invoice PDFs + one consolidated Excel summary for audit</span>
-      </div>
+      <!-- Bulk invoice download -->
+      <section class="bulk-invoice-bar" aria-label="Bulk invoice download">
+        <div class="bi-head">
+          <span class="bi-icon"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg></span>
+          <div>
+            <div class="bi-title">Bulk invoice download</div>
+            <div class="bi-hint">All invoice PDFs plus one consolidated Excel summary, zipped for audit.</div>
+          </div>
+        </div>
+        <div class="bi-controls">
+          <label for="bi-from-date">From</label>
+          <input type="date" id="bi-from-date" onchange="updateBulkInvoiceBtn()" />
+          <span class="sep">&rarr;</span>
+          <label for="bi-to-date">To</label>
+          <input type="date" id="bi-to-date" onchange="updateBulkInvoiceBtn()" />
+          <button class="btn btn-primary btn-sm" id="bi-download-btn" onclick="downloadBulkInvoices()" disabled><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg> Download ZIP</button>
+        </div>
+      </section>
 
-      <!-- Bulk Invoice Progress Modal -->
-      <div class="bi-modal-overlay" id="bi-modal-overlay">
-        <div class="bi-modal">
-          <div class="bi-modal-icon" id="bi-modal-icon">&#x1F4E6;</div>
+      <!-- Bulk invoice progress modal -->
+      <div class="modal-overlay" id="bi-modal-overlay">
+        <div class="modal-box modal-sm bi-modal" role="dialog" aria-modal="true" aria-labelledby="bi-modal-title">
+          <div class="bi-state" id="bi-modal-icon"><svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg></div>
           <div class="bi-modal-title" id="bi-modal-title">Preparing your invoices&hellip;</div>
           <div class="bi-modal-sub" id="bi-modal-sub">Generating invoice PDFs, this can take a few moments</div>
-          <div class="bi-progress-track"><div class="bi-progress-fill" id="bi-progress-fill"></div></div>
+          <div class="progress"><div class="progress-fill" id="bi-progress-fill" style="width:0%"></div></div>
           <div class="bi-progress-pct" id="bi-progress-pct">0%</div>
           <button class="btn btn-ghost btn-sm bi-modal-close-btn" id="bi-modal-close-btn" style="display:none;" onclick="closeBulkInvoiceModal()">Close</button>
         </div>
       </div>
 
-      <!-- Filters + Export Row -->
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
-        <select id="status-filter" onchange="applyFilters()" style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text-secondary);font-size:13px;outline:none;">
+      <!-- Filters -->
+      <div class="toolbar">
+        <div class="m-search"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg><input type="text" id="search-input-m" placeholder="Search payment ID, org, plan..." aria-label="Search payments" oninput="syncSearch(this)" /></div>
+        <select id="status-filter" onchange="applyFilters()" aria-label="Filter by status">
           <option value="">All Status</option>
           <option value="PAID">Paid</option>
           <option value="PENDING">Pending</option>
           <option value="FAILED">Failed</option>
           <option value="CREATED">Created</option>
         </select>
-        <button class="btn btn-ghost btn-sm" onclick="loadPayments()">&#x1F504; Refresh</button>
-        <span style="font-size:12px;color:var(--text-muted);" id="filter-count"></span>
-        <div style="margin-left:auto;">
-          <div class="export-wrap">
-            <button class="btn btn-ghost btn-sm" onclick="toggleExportMenu('export-menu')">&#x2B07; Export &#x25BE;</button>
-            <div class="export-menu" id="export-menu">
-              <button onclick="doExportExcel()">&#x1F4CA; Export Excel</button>
-              <button onclick="doExportPDF()">&#x1F4C4; Export PDF</button>
-            </div>
-          </div>
-        </div>
+        <span class="count" id="filter-count"></span>
       </div>
 
-      <!-- Payments Table -->
+      <!-- Payments table -->
       <div class="card">
         <div class="card-header">
           <h3>Payment Transactions</h3>
-          <span class="count-badge" id="table-count" style="background:rgba(88,166,255,0.15);color:var(--blue);font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;">0</span>
+          <span class="badge badge-gray" id="table-count">0</span>
         </div>
         <div class="table-wrap">
           <table>
@@ -249,13 +305,13 @@
                 <th>Payment ID</th>
                 <th>Organization</th>
                 <th>Plan</th>
-                <th>Amount</th>
+                <th class="num">Amount</th>
                 <th>Status</th>
                 <th>Date</th>
               </tr>
             </thead>
             <tbody id="payments-tbody">
-              <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">Loading...</td></tr>
+              <tr class="state-row"><td colspan="6"><div class="empty-state"><p>Loading...</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -275,6 +331,14 @@
     var freeTrialCount = 0;
     var expiredTrialCount = 0;
 
+    var ICON = {
+      inbox: '<svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
+      alert: '<svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>',
+      pkg:   '<svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg>',
+      ok:    '<svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg>',
+      fail:  '<svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>'
+    };
+
     var COLS = [
       { key: 'payment_id', label: 'Payment ID' },
       { key: 'org_name',   label: 'Organization' },
@@ -286,9 +350,16 @@
 
     var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function inr(v) { return '₹' + Number(v || 0).toLocaleString('en-IN'); }
+
     function statusBadge(s) {
       var map = { PAID:'badge-green', FAILED:'badge-red', PENDING:'badge-orange', CREATED:'badge-orange' };
-      return '<span class="badge ' + (map[s] || 'badge-gray') + '">' + s + '</span>';
+      var label = String(s || '').charAt(0) + String(s || '').slice(1).toLowerCase();
+      return '<span class="badge badge-dot ' + (map[s] || 'badge-gray') + '">' + esc(label) + '</span>';
     }
 
     function toISODate(d) {
@@ -297,9 +368,30 @@
     }
 
     function fmtMoney(v) {
-      if (v >= 100000) return 'Rs' + (v / 100000).toFixed(1) + 'L';
-      if (v >= 1000)   return 'Rs' + (v / 1000).toFixed(1) + 'K';
-      return 'Rs' + v;
+      if (v >= 100000) return '₹' + (v / 100000).toFixed(1) + 'L';
+      if (v >= 1000)   return '₹' + (v / 1000).toFixed(1) + 'K';
+      return '₹' + v;
+    }
+
+    /* ── Table states ── */
+    function skeletonRows(n) {
+      var widths = ['s-1', 's-2', 's-3', 's-4', 's-1', 's-3'], out = '';
+      for (var i = 0; i < n; i++) {
+        out += '<tr class="state-row">' + widths.map(function(w) { return '<td><div class="skeleton skeleton-line ' + w + '"></div></td>'; }).join('') + '</tr>';
+      }
+      return out;
+    }
+
+    function stateRow(kind, title, text) {
+      var retry = kind === 'error' ? '<button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="loadPayments()">Try again</button>' : '';
+      return '<tr class="state-row"><td colspan="6"><div class="empty-state">'
+        + '<div class="empty-icon' + (kind === 'error' ? ' is-error' : '') + '">' + (kind === 'error' ? ICON.alert : ICON.inbox) + '</div>'
+        + '<h3>' + esc(title) + '</h3><p>' + esc(text) + '</p>' + retry + '</div></td></tr>';
+    }
+
+    function syncSearch(el) {
+      document.getElementById('search-input').value = el.value;
+      applyFilters();
     }
 
     function setQuick(days, btn) {
@@ -342,17 +434,17 @@
       document.getElementById('table-count').textContent = rows.length + ' records';
       document.getElementById('filter-count').textContent = rows.length + ' of ' + allPayments.length + ' payments';
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">No payments found</td></tr>';
+        tbody.innerHTML = stateRow('empty', 'No payments found', 'Try a different search, status or date range.');
         return;
       }
       tbody.innerHTML = rows.map(function(r) {
         return '<tr>'
-          + '<td class="td-primary" style="font-size:12px;font-family:monospace;">' + r.payment_id + '</td>'
-          + '<td>' + r.org_name + '</td>'
-          + '<td>' + (r.plan_name && r.plan_name !== '-' ? '<span class="badge badge-blue">' + r.plan_name + '</span>' : '&mdash;') + '</td>'
-          + '<td style="font-weight:600;color:var(--text-primary);">&#x20B9;' + Number(r.amount).toLocaleString() + '</td>'
+          + '<td><div class="pay-id td-primary" title="' + esc(r.payment_id) + '">' + esc(r.payment_id) + '</div></td>'
+          + '<td><div class="cell-clip" title="' + esc(r.org_name) + '">' + esc(r.org_name) + '</div></td>'
+          + '<td>' + (r.plan_name && r.plan_name !== '-' ? '<span class="badge badge-gray">' + esc(r.plan_name) + '</span>' : '<span style="color:var(--text-muted)">&mdash;</span>') + '</td>'
+          + '<td class="num amount">' + inr(r.amount) + '</td>'
           + '<td>' + statusBadge(r.status) + '</td>'
-          + '<td style="color:var(--text-muted);font-size:12px;">' + r.date + '</td>'
+          + '<td class="when">' + esc(r.date) + '</td>'
           + '</tr>';
       }).join('');
     }
@@ -365,7 +457,7 @@
       var revenue = paid.reduce(function(s, r) { return s + Number(r.amount); }, 0);
       var rate    = rows.length ? Math.round((paid.length / rows.length) * 100) : 0;
       document.getElementById('s-total').textContent   = rows.length;
-      document.getElementById('s-revenue').innerHTML = '&#x20B9;' + revenue.toLocaleString();
+      document.getElementById('s-revenue').innerHTML = '&#x20B9;' + revenue.toLocaleString('en-IN');
       document.getElementById('s-pending').textContent = pendingCount;
       document.getElementById('s-failed').textContent  = failed.length;
       document.getElementById('s-rate').textContent    = rate + '%';
@@ -420,7 +512,7 @@
       var total = slots.reduce(function(s, m) { return s + m.revenue; }, 0);
       var subLabel = (fromVal || toVal) ? (fromVal + ' → ' + (toVal || 'today')) : 'last ' + payTabMonths + ' months';
 
-      document.getElementById('chart-revenue-sub').innerHTML = '&#x20B9;' + total.toLocaleString() + ' &mdash; ' + subLabel;
+      document.getElementById('chart-revenue-sub').innerHTML = '&#x20B9;' + total.toLocaleString('en-IN') + ' &mdash; ' + esc(subLabel);
       document.getElementById('py-top').textContent = fmtMoney(max);
       document.getElementById('py-mid').textContent = fmtMoney(Math.round(max / 2));
 
@@ -428,9 +520,9 @@
         var h   = m.revenue > 0 ? Math.max((m.revenue / max) * 100, 4) : 0;
         var cls = i === slots.length - 1 ? 'bar-inner bar-green' : 'bar-inner bar-blue';
         return '<div class="bar-col">'
-          + '<div class="bar-tooltip">' + m.label + ': &#x20B9;' + m.revenue.toLocaleString() + '</div>'
+          + '<div class="bar-tooltip">' + esc(m.label) + ': &#x20B9;' + m.revenue.toLocaleString('en-IN') + '</div>'
           + '<div class="bar-outer"><div class="' + cls + '" style="height:' + h + '%"></div></div>'
-          + '<div class="bar-label">' + m.label + '</div>'
+          + '<div class="bar-label">' + esc(m.label) + '</div>'
           + '</div>';
       }).join('');
     }
@@ -438,9 +530,9 @@
     /* ── Status Donut ── */
     function renderDonut(rows) {
       var groups = [
-        { label: 'Paid',    status: 'PAID',    color: '#4caf50' },
-        { label: 'Failed',  status: 'FAILED',  color: '#ef4444' },
-        { label: 'Pending', status: 'CREATED', color: '#ff9800' },
+        { label: 'Paid',    status: 'PAID',    color: 'var(--success)' },
+        { label: 'Failed',  status: 'FAILED',  color: 'var(--danger)' },
+        { label: 'Pending', status: 'CREATED', color: 'var(--warning)' },
       ];
       var counts = groups.map(function(g) {
         return { label: g.label, color: g.color, count: rows.filter(function(r) { return r.status === g.status; }).length };
@@ -453,12 +545,12 @@
         var pct = (g.count / total) * 100, dash = (pct / 100) * circ, gap = circ - dash;
         var off = ((100 - offset) / 100) * circ;
         offset += pct;
-        return '<circle cx="21" cy="21" r="' + rv + '" fill="none" stroke="' + g.color + '" stroke-width="4"'
+        return '<circle cx="21" cy="21" r="' + rv + '" fill="none" style="stroke:' + g.color + '" stroke-width="4"'
           + ' stroke-dasharray="' + dash.toFixed(2) + ' ' + gap.toFixed(2) + '"'
           + ' stroke-dashoffset="' + off.toFixed(2) + '" stroke-linecap="round"/>';
       }).join('');
       document.getElementById('pay-donut-svg').innerHTML =
-        '<circle cx="21" cy="21" r="' + rv + '" fill="none" stroke="#21262d" stroke-width="4"/>' + segs;
+        '<circle cx="21" cy="21" r="' + rv + '" fill="none" stroke-width="4"/>' + segs;
       document.getElementById('pay-donut-legend').innerHTML = counts.map(function(g) {
         var pct = Math.round((g.count / total) * 100);
         return '<div class="donut-legend-item">'
@@ -482,14 +574,21 @@
       document.getElementById('bi-download-btn').disabled = !(from && to);
     }
 
+    function setBulkInvoiceState(kind) {
+      var el = document.getElementById('bi-modal-icon');
+      el.className = 'bi-state' + (kind === 'ok' ? ' ok' : kind === 'fail' ? ' fail' : '');
+      el.innerHTML = kind === 'ok' ? ICON.ok : kind === 'fail' ? ICON.fail : ICON.pkg;
+    }
+
     function openBulkInvoiceModal() {
-      document.getElementById('bi-modal-icon').textContent = '📦';
+      setBulkInvoiceState('work');
       document.getElementById('bi-modal-title').textContent = 'Preparing your invoices…';
       document.getElementById('bi-modal-sub').textContent = 'Generating invoice PDFs, this can take a few moments';
       document.getElementById('bi-modal-close-btn').style.display = 'none';
       var fill = document.getElementById('bi-progress-fill');
       fill.style.width = '0%';
       fill.classList.remove('error');
+      fill.classList.remove('done');
       document.getElementById('bi-progress-pct').textContent = '0%';
       document.getElementById('bi-modal-overlay').classList.add('open');
 
@@ -509,12 +608,13 @@
       fill.style.width = '100%';
       document.getElementById('bi-progress-pct').textContent = '100%';
       if (success) {
-        document.getElementById('bi-modal-icon').textContent = '✅';
+        fill.classList.add('done');
+        setBulkInvoiceState('ok');
         document.getElementById('bi-modal-title').textContent = 'Download ready!';
         document.getElementById('bi-modal-sub').textContent = message || 'Your ZIP file has been downloaded.';
       } else {
         fill.classList.add('error');
-        document.getElementById('bi-modal-icon').textContent = '❌';
+        setBulkInvoiceState('fail');
         document.getElementById('bi-modal-title').textContent = 'Download failed';
         document.getElementById('bi-modal-sub').textContent = message || 'Something went wrong. Please try again.';
       }
@@ -529,7 +629,7 @@
     async function downloadBulkInvoices() {
       var from = document.getElementById('bi-from-date').value;
       var to   = document.getElementById('bi-to-date').value;
-      if (!from || !to) { showToast ? showToast('Please select both From and To dates', false) : alert('Please select both From and To dates'); return; }
+      if (!from || !to) { alert('Please select both From and To dates'); return; }
       if (from > to) { alert('"From" date must be before "To" date'); return; }
 
       openBulkInvoiceModal();
@@ -542,7 +642,7 @@
           return;
         }
         var blob = await res.blob();
-        var filename = 'punchapp_invoices_' + from + '_to_' + to + '.zip';
+        var filename = 'clockyn_invoices_' + from + '_to_' + to + '.zip';
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url; a.download = filename;
@@ -555,9 +655,9 @@
     }
 
     async function loadPayments() {
-      document.getElementById('payments-tbody').innerHTML =
-        '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">Loading...</td></tr>';
+      document.getElementById('payments-tbody').innerHTML = skeletonRows(6);
       document.getElementById('search-input').value = '';
+      document.getElementById('search-input-m').value = '';
       document.getElementById('status-filter').value = '';
       document.getElementById('date-from').value = '';
       document.getElementById('date-to').value = '';
@@ -575,10 +675,13 @@
         renderTable(filtered);
         updateStats(filtered);
       } catch(e) {
-        document.getElementById('payments-tbody').innerHTML =
-          '<tr><td colspan="6" style="text-align:center;color:var(--red);padding:40px;">Failed to load payments</td></tr>';
+        document.getElementById('payments-tbody').innerHTML = stateRow('error', 'Failed to load payments', 'Check your connection and try again.');
       }
     }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.getElementById('bi-modal-close-btn').style.display !== 'none') closeBulkInvoiceModal();
+    });
 
     function handleLogout() { if (confirm('Are you sure you want to logout?')) logout(); }
     function toggleSidebar() {
