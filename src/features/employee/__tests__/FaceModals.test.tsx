@@ -78,12 +78,12 @@ describe('FaceRecognitionModal', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('flags a face mismatch as "Sent for admin review"', async () => {
+  it('shows an accepted punch as a normal punch even when the server flags a face mismatch (no admin review any more)', async () => {
     punch.mockResolvedValueOnce(result({ success: true, time: '18:00', faceMismatch: true }));
     await renderRecognition({ action: 'punch_out' });
     await capture();
     expect(await screen.findByText('Punched Out!')).toBeTruthy();
-    expect(screen.getByText('Sent for admin review')).toBeTruthy();
+    expect(screen.queryByText('Sent for admin review')).toBeNull();
   });
 
   it('a "no face" failure restores the camera with a hint and sends NO second request', async () => {
@@ -95,33 +95,23 @@ describe('FaceRecognitionModal', () => {
     expect(onSuccess).not.toHaveBeenCalled();
   });
 
-  it('any other failure is retried once with force_accept and shown as sent for admin review (v1 fallback, deferred policy)', async () => {
-    punch.mockResolvedValueOnce(result({ message: 'Face not recognized' })).mockResolvedValueOnce(result({ success: true, time: '09:20' }));
+  it('a photo that does not match asks to try again, sends NO second request and no admin review', async () => {
+    punch.mockResolvedValueOnce(result({ code: 'no_match', message: 'Face not recognized' }));
     const { onSuccess } = await renderRecognition();
     await capture();
-    expect(await screen.findByText('Sent for admin review')).toBeTruthy();
-    expect(punch).toHaveBeenCalledTimes(2);
-    expect(punch.mock.calls[1][0]).toMatchObject({ forceAccept: true });
-    expect(onSuccess).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not claim success when the forced retry fails and the server did not record the punch', async () => {
-    punch.mockResolvedValueOnce(result({ message: 'Face not recognized' })).mockResolvedValueOnce(result({ message: 'Maximum 2 punch-in sessions allowed per day.' }));
-    const verifyApplied = jest.fn(async () => false);
-    const { onSuccess } = await renderRecognition({ verifyApplied });
-    await capture();
-    expect(await screen.findByText('Maximum 2 punch-in sessions allowed per day.')).toBeTruthy();
-    expect(screen.queryByText('Punched In!')).toBeNull();
+    expect(await screen.findByText('Photo is not matching — please try again')).toBeTruthy();
+    expect(punch).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Sent for admin review')).toBeNull();
     expect(onSuccess).not.toHaveBeenCalled();
-    expect(verifyApplied).toHaveBeenCalledWith('punch_in');
   });
 
-  it('accepts a failed forced response when the server nevertheless shows the punch as applied', async () => {
-    punch.mockResolvedValueOnce(result({ message: 'Database error' })).mockResolvedValueOnce(result({ message: 'Already punched in. Please punch out first.' }));
-    const { onSuccess } = await renderRecognition({ verifyApplied: async () => true });
+  it('any other failure shows the server message and sends NO second request', async () => {
+    punch.mockResolvedValueOnce(result({ message: 'Maximum 3 punch-in session(s) allowed per day.' }));
+    const { onSuccess } = await renderRecognition();
     await capture();
-    expect(await screen.findByText('Sent for admin review')).toBeTruthy();
-    expect(onSuccess).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText('Maximum 3 punch-in session(s) allowed per day.')).toBeTruthy();
+    expect(punch).toHaveBeenCalledTimes(1);
+    expect(onSuccess).not.toHaveBeenCalled();
   });
 
   it('shows the holiday result and does not call onSuccess', async () => {

@@ -213,6 +213,7 @@ export const queryKeys = {
   support: {
     all: (userId: Scope) => ['support', s(userId)] as const,
     subjects: () => ['support', '', 'subjects'] as const,
+    videos: () => ['support', '', 'videos'] as const,
     requests: (userId: Scope) => ['support', s(userId), 'requests'] as const,
   },
   system: {

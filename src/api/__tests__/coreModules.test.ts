@@ -143,14 +143,16 @@ describe('requests', () => {
 });
 
 describe('face', () => {
-  it('check-location posts a form-encoded body', async () => {
+  it('check-location posts multipart form data (URLSearchParams has no Content-Type on React Native)', async () => {
     mockApi.post.mockResolvedValue({ success: false, message: 'You are 250m away' });
     const res = await face.checkPunchLocation({ userId: 'u', latitude: 12.5, longitude: 77.5 });
     expect(res).toEqual({ allowed: false, message: 'You are 250m away' });
     const [path, body] = mockApi.post.mock.calls[0];
     expect(path).toBe('/face/check-location');
-    expect(body).toBeInstanceOf(URLSearchParams);
-    expect((body as URLSearchParams).toString()).toBe('user_id=u&latitude=12.5&longitude=77.5');
+    expect(body).toBeInstanceOf(FormData);
+    expect((body as FormData).get('user_id')).toBe('u');
+    expect((body as FormData).get('latitude')).toBe('12.5');
+    expect((body as FormData).get('longitude')).toBe('77.5');
   });
 
   it('punch uploads the face with the v1 field names and force_accept only when asked', async () => {

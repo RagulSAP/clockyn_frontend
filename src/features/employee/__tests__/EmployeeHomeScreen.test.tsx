@@ -2,7 +2,7 @@
 import React from 'react';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 
-import { attendanceApi, authApi, employeeApi, faceApi, requestsApi, shiftsApi, staffApi } from '@/api';
+import { attendanceApi, authApi, companyApi, employeeApi, faceApi, requestsApi, shiftsApi, staffApi } from '@/api';
 import { getPermissionDetail, requestPermission } from '@/lib/platform/permissions';
 import { getCurrentPosition } from '@/lib/platform/location';
 
@@ -17,6 +17,7 @@ jest.mock('@/components/layout', () => require('./harness').layoutMock());
 jest.mock('@/api', () => ({
   attendanceApi: { getToday: jest.fn() },
   authApi: { getOrgLogoUrl: jest.fn() },
+  companyApi: { getCompanyDetails: jest.fn() },
   employeeApi: { getPersonalDetails: jest.fn(), getTodayBirthdays: jest.fn() },
   faceApi: { isFaceRegistered: jest.fn(), checkPunchLocation: jest.fn(), punch: jest.fn(), registerFace: jest.fn(), saveProfilePhoto: jest.fn() },
   requestsApi: { listEmployeeRequests: jest.fn(), getRequestCalendar: jest.fn() },
@@ -56,8 +57,9 @@ jest.mock('expo-camera', () => {
 
 const granted = { status: 'granted', canAskAgain: true };
 
-function arrange(over: { face?: boolean; today?: object; permission?: object; position?: 'ok' | 'fail'; outside?: boolean } = {}) {
+function arrange(over: { face?: boolean; today?: object; permission?: object; position?: 'ok' | 'fail'; outside?: boolean; maxSessions?: number } = {}) {
   m(authApi.getOrgLogoUrl).mockResolvedValue(null);
+  m(companyApi.getCompanyDetails).mockResolvedValue({ maxSessionsPerDay: over.maxSessions });
   m(faceApi.isFaceRegistered).mockResolvedValue(over.face ?? true);
   m(staffApi.getStaff).mockResolvedValue({ name: 'Asha Rao', shiftId: 4, isFieldStaff: false });
   m(shiftsApi.getShift).mockResolvedValue({ id: 4, name: 'General', startTime: '09:00', endTime: '18:00' });
@@ -111,12 +113,18 @@ describe('EmployeeHomeScreen', () => {
     expect(screen.getByText('Checked in')).toBeTruthy();
   });
 
-  it('locks the button with LIMIT REACHED after two completed sessions', async () => {
-    arrange({ today: { isPunchedIn: false, punchIn: '09:00', punchOut: '18:00', sessions: [{ punchIn: '09:00', punchOut: '13:00' }, { punchIn: '14:00', punchOut: '18:00' }], punchCount: 2 } });
+  it('locks the button with LIMIT REACHED after three completed sessions (the default limit)', async () => {
+    arrange({ today: { isPunchedIn: false, punchIn: '09:00', punchOut: '18:00', sessions: [{ punchIn: '09:00', punchOut: '11:00' }, { punchIn: '12:00', punchOut: '14:00' }, { punchIn: '15:00', punchOut: '18:00' }], punchCount: 3 } });
     await renderScreen(<EmployeeHomeScreen />);
     expect(await screen.findByText('LIMIT REACHED')).toBeTruthy();
     expect(screen.getByText('COMPLETE')).toBeTruthy();
     expect(screen.getByTestId('punch-button').props.accessibilityState.disabled).toBe(true);
+  });
+
+  it("uses the organisation's configured session limit from the company settings", async () => {
+    arrange({ maxSessions: 2, today: { isPunchedIn: false, punchIn: '09:00', punchOut: '18:00', sessions: [{ punchIn: '09:00', punchOut: '13:00' }, { punchIn: '14:00', punchOut: '18:00' }], punchCount: 2 } });
+    await renderScreen(<EmployeeHomeScreen />);
+    expect(await screen.findByText('LIMIT REACHED')).toBeTruthy();
   });
 
   it('asks to set up the face when none is registered and opens the registration camera', async () => {

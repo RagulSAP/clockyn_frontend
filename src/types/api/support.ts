@@ -49,3 +49,10 @@ export interface TicketReplyInput {
   /** Always false for customer-side replies. */
   isAdmin?: boolean;
 }
+
+/** A Video Hub guide video (`GET /support/videos`); `url` is a presigned S3 link that expires after a few hours. */
+export interface SupportVideo {
+  id: string;
+  name: string;
+  url: string;
+}

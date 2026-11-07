@@ -8,7 +8,7 @@ import { breakpoints } from '@/theme/tokens';
 import type { IconName } from '@/components/ui';
 
 export type ShellVariant = 'admin' | 'staff';
-export type ShellTabKey = 'home' | 'crm' | 'chat' | 'settings';
+export type ShellTabKey = 'home' | 'crm' | 'chat' | 'settings' | 'support';
 
 export type ShellTab = {
   key: ShellTabKey;
@@ -59,6 +59,7 @@ const adminTabs: readonly ShellTab[] = [
       routes.admin.devices,
     ],
   },
+  { key: 'support', label: 'Support', icon: 'life-buoy', route: routes.admin.help, within: [] },
 ];
 
 const staffTabs: readonly ShellTab[] = [
@@ -72,6 +73,7 @@ const staffTabs: readonly ShellTab[] = [
   { key: 'crm', label: 'CRM', icon: 'briefcase', route: routes.staff.crm, within: [] },
   { key: 'chat', label: 'Chat', icon: 'chat', route: routes.staff.chat, within: [] },
   { key: 'settings', label: 'Settings', icon: 'settings', route: routes.staff.settings, within: [routes.staff.permissions, routes.staff.more] },
+  { key: 'support', label: 'Support', icon: 'life-buoy', route: routes.staff.help, within: [] },
 ];
 
 export const SHELL_TABS: Record<ShellVariant, readonly ShellTab[]> = { admin: adminTabs, staff: staffTabs };

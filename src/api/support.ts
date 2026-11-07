@@ -8,6 +8,7 @@ import { api } from '@/lib/api/client';
 import type {
   SubmitTicketInput,
   SupportSubject,
+  SupportVideo,
   SupportTicket,
   TicketReply,
   TicketReplyInput,
@@ -63,6 +64,14 @@ export function mapSupportTicket(input: unknown): SupportTicket {
 export async function listSupportSubjects(): Promise<SupportSubject[]> {
   const body = await api.get<unknown>('/support/subjects');
   return listOf(body).map((r) => ({ id: str(r.sub_id), name: str(r.sub_name) }));
+}
+
+/** `GET /support/videos` — the Video Hub: active guide videos only (the server hides status 0) with presigned playback URLs. */
+export async function listSupportVideos(): Promise<SupportVideo[]> {
+  const body = await api.get<unknown>('/support/videos');
+  return listOf(body)
+    .map((r) => ({ id: str(r.id), name: str(r.name).trim(), url: str(r.url) }))
+    .filter((v) => v.name !== '' && /^https?:\/\//i.test(v.url));
 }
 
 /** `GET /support/requests/{orgId}` — the organisation's tickets with their reply threads. */

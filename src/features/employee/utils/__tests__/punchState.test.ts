@@ -3,14 +3,18 @@ import { badgeLabel, countPendingRequests, derivePunchState, punchButtonState, s
 const registered = { isFaceRegistered: true, isPunchedIn: false, punchIn: undefined, punchOut: undefined, punchCount: 0 };
 
 describe('derivePunchState', () => {
-  it('locks the button after two completed sessions', () => {
-    expect(derivePunchState({ ...registered, punchCount: 2, punchIn: '09:00', punchOut: '18:00' })).toEqual({ isMaxSessionsReached: true, isDone: true });
+  it('locks the button after three completed sessions (the default limit)', () => {
+    expect(derivePunchState({ ...registered, punchCount: 3, punchIn: '09:00', punchOut: '18:00' })).toEqual({ isMaxSessionsReached: true, isDone: true });
+  });
+  it('locks at the limit configured for the organisation', () => {
+    expect(derivePunchState({ ...registered, punchCount: 2, punchIn: '09:00', punchOut: '18:00', maxSessionsPerDay: 2 })).toEqual({ isMaxSessionsReached: true, isDone: true });
+    expect(derivePunchState({ ...registered, punchCount: 3, punchIn: '09:00', punchOut: '18:00', maxSessionsPerDay: 5 })).toEqual({ isMaxSessionsReached: false, isDone: true });
   });
   it('keeps the button active after ONE completed session', () => {
     expect(derivePunchState({ ...registered, punchCount: 1, punchIn: '09:00', punchOut: '13:00' })).toEqual({ isMaxSessionsReached: false, isDone: true });
   });
-  it('stays enabled for PUNCH OUT during the second session and is never "done" while punched in', () => {
-    expect(derivePunchState({ ...registered, isPunchedIn: true, punchCount: 2, punchIn: '09:00', punchOut: '13:00' })).toEqual({ isMaxSessionsReached: false, isDone: false });
+  it('stays enabled for PUNCH OUT during the last session and is never "done" while punched in', () => {
+    expect(derivePunchState({ ...registered, isPunchedIn: true, punchCount: 3, punchIn: '09:00', punchOut: '13:00' })).toEqual({ isMaxSessionsReached: false, isDone: false });
   });
 });
 
@@ -27,7 +31,7 @@ describe('punchButtonState', () => {
   const idle = { ...registered, isChecking: false };
   it('first match wins: setup, limit, punch out, punch in', () => {
     expect(punchButtonState({ ...idle, isFaceRegistered: false })).toMatchObject({ key: 'setup', label: 'SETUP FACE', stateLabel: 'Setup Required', disabled: false });
-    expect(punchButtonState({ ...idle, punchCount: 2 })).toMatchObject({ key: 'limit', label: 'LIMIT REACHED', stateLabel: 'Max Sessions Reached', disabled: true });
+    expect(punchButtonState({ ...idle, punchCount: 3 })).toMatchObject({ key: 'limit', label: 'LIMIT REACHED', stateLabel: 'Max Sessions Reached', disabled: true });
     expect(punchButtonState({ ...idle, isPunchedIn: true })).toMatchObject({ key: 'punch-out', label: 'PUNCH OUT', tone: 'danger' });
     expect(punchButtonState(idle)).toMatchObject({ key: 'punch-in', label: 'PUNCH IN', tone: 'success', disabled: false });
   });

@@ -1,6 +1,6 @@
 import { api } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/errors';
-import { listSupportSubjects, listTickets, mapSupportTicket, mapTicketStatus, replyToTicket, submitTicket } from '../support';
+import { listSupportSubjects, listSupportVideos, listTickets, mapSupportTicket, mapTicketStatus, replyToTicket, submitTicket } from '../support';
 import {
   addHoliday,
   addHolidayDates,
@@ -60,6 +60,19 @@ describe('support', () => {
     mocked.get.mockResolvedValueOnce([{ id: 1, client_msg: 'm' }]);
     expect(await listTickets('org')).toHaveLength(1);
     expect(mocked.get).toHaveBeenLastCalledWith('/support/requests/org');
+  });
+
+  it('lists the Video Hub videos and drops entries without a name or an http(s) link', async () => {
+    mocked.get.mockResolvedValueOnce([
+      { id: 1, name: ' Getting started ', url: 'https://bucket.s3.amazonaws.com/guide/a.mp4?X-Amz-Signature=1' },
+      { id: 2, name: '', url: 'https://x/b.mp4' },
+      { id: 3, name: 'No link', url: '' },
+      { id: 4, name: 'Bad scheme', url: 'javascript:alert(1)' },
+    ]);
+    expect(await listSupportVideos()).toEqual([
+      { id: '1', name: 'Getting started', url: 'https://bucket.s3.amazonaws.com/guide/a.mp4?X-Amz-Signature=1' },
+    ]);
+    expect(mocked.get).toHaveBeenLastCalledWith('/support/videos');
   });
 
   it('submitTicket without a photo posts form data', async () => {

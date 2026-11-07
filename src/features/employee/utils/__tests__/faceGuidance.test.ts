@@ -19,7 +19,7 @@ describe('guidance messages', () => {
     expect(faceGuidance({ code: 'no_face', reason: 'too_dark' })).toMatch(/too dark/);
     expect(faceGuidance({ code: 'image_unreadable', reason: 'too_blurry' })).toMatch(/steady/);
     expect(faceGuidance({ code: 'no_face' })).toMatch(/fill the oval/);
-    expect(faceGuidance({ code: 'no_match' })).toMatch(/not recognised/);
+    expect(faceGuidance({ code: 'no_match' })).toMatch(/not matching/);
     expect(faceGuidance({ code: 'max_sessions' })).toBeUndefined();
     expect(noFaceText({})).toMatch(/fill the oval/);
     expect(noFaceText({ reason: 'too_small' })).toMatch(/closer/);
