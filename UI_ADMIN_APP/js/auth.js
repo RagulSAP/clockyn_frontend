@@ -98,6 +98,63 @@ function logout() {
   window.location.href = 'login.html';
 }
 
+/* Logout confirmation: one shared modal for every page (replaces the browser's confirm() box). */
+function showLogoutModal() {
+  var opener = document.activeElement;
+  if (typeof window.closeSidebar === 'function') window.closeSidebar();
+  var ov = document.getElementById('logout-modal');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.className = 'modal-overlay';
+    ov.id = 'logout-modal';
+    ov.innerHTML =
+      '<div class="modal-box modal-sm logout-modal" role="alertdialog" aria-modal="true" aria-labelledby="logout-title" aria-describedby="logout-desc">' +
+        '<div class="logout-modal-body">' +
+          '<div class="logout-modal-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg></div>' +
+          '<h2 id="logout-title">Log out of Clockyn?</h2>' +
+          '<p id="logout-desc">You will need to sign in again with a code sent to your email.</p>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+          '<button type="button" class="btn btn-ghost" id="logout-cancel">Stay signed in</button>' +
+          '<button type="button" class="btn btn-danger" id="logout-confirm">Log out</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+  }
+  var cancel = document.getElementById('logout-cancel');
+  var confirmBtn = document.getElementById('logout-confirm');
+  confirmBtn.disabled = false;
+  confirmBtn.textContent = 'Log out';
+
+  function close() {
+    ov.classList.remove('open');
+    document.removeEventListener('keydown', onKey, true);
+    ov.removeEventListener('mousedown', onBackdrop);
+    cancel.onclick = null; confirmBtn.onclick = null;
+    if (opener && typeof opener.focus === 'function' && document.contains(opener)) opener.focus();
+  }
+  function onKey(e) {
+    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key === 'Tab') {                                  /* keep focus inside the dialog */
+      var first = cancel, last = confirmBtn;
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
+  function onBackdrop(e) { if (e.target === ov) close(); }
+
+  cancel.onclick = close;
+  confirmBtn.onclick = function () {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Logging out...';
+    logout();
+  };
+  document.addEventListener('keydown', onKey, true);
+  ov.addEventListener('mousedown', onBackdrop);
+  ov.classList.add('open');
+  cancel.focus();                                           /* safe default for a destructive action */
+}
+
 function checkSession() {
   const adminId = localStorage.getItem('gen_admin_id');
   if (!adminId) return logout();

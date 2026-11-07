@@ -683,7 +683,7 @@
       if (e.key === 'Escape' && document.getElementById('bi-modal-close-btn').style.display !== 'none') closeBulkInvoiceModal();
     });
 
-    function handleLogout() { if (confirm('Are you sure you want to logout?')) logout(); }
+    function handleLogout() { showLogoutModal(); }
     function toggleSidebar() {
       document.querySelector('.sidebar').classList.toggle('open');
       document.getElementById('sidebar-overlay').classList.toggle('open');

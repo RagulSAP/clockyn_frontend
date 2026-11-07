@@ -815,9 +815,7 @@
       else closeDayModal();
     });
 
-    function handleLogout() {
-      if (confirm('Are you sure you want to logout?')) logout();
-    }
+    function handleLogout() { showLogoutModal(); }
 
     setPeriod(7); loadAll();
 

@@ -114,7 +114,8 @@
       var t = e.target;
       if (!t || !t.closest) return;
       if (t.closest('#sidebar-logout')) {
-        if (typeof window.handleLogout === 'function') window.handleLogout();
+        if (typeof window.showLogoutModal === 'function') window.showLogoutModal();
+        else if (typeof window.handleLogout === 'function') window.handleLogout();
         else if (typeof window.logout === 'function') window.logout();
         return;
       }

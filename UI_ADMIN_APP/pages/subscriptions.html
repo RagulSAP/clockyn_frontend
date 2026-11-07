@@ -467,7 +467,7 @@
       await Promise.all([loadStats(), loadPlanBreakdown(), loadOrgSubscriptions()]);
     }
 
-    function handleLogout() { if (confirm('Logout?')) logout(); }
+    function handleLogout() { showLogoutModal(); }
     loadPage();
 
     function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open'); }

@@ -629,9 +629,7 @@
       document.getElementById('sidebar-overlay').classList.remove('open');
     }
 
-    function handleLogout() {
-      if (confirm('Are you sure you want to logout?')) logout();
-    }
+    function handleLogout() { showLogoutModal(); }
 
     function openDeleteModal(email) {
       deletingEmail = email;
