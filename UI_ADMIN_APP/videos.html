@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Video Hub</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    .page-head { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+    .page-head-text { flex:1; min-width:200px; }
+    .page-head h1 { font-size:20px; font-weight:700; color:var(--text-primary); }
+    .page-head p { font-size:12px; color:var(--text-muted); margin-top:2px; }
+    .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+    .stat-tile { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px 20px; display:flex; flex-direction:column; gap:6px; }
+    .stat-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
+    .stat-val { font-size:26px; font-weight:700; color:var(--text-primary); }
+    .table-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
+    .table-card-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .table-card-header h3 { font-size:14px; font-weight:600; color:var(--text-primary); }
+    .count-badge { background:rgba(88,166,255,0.15); color:var(--blue); font-size:12px; font-weight:600; padding:2px 10px; border-radius:20px; }
+    .empty-row td { text-align:center; color:var(--text-muted); padding:40px !important; }
+    .video-name { font-weight:600; color:var(--text-primary); font-size:13px; }
+    .video-path { font-size:11px; color:var(--text-muted); margin-top:2px; word-break:break-all; }
+    .actions-cell { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+    .action-btn { background:none; border:1px solid var(--border); border-radius:6px; padding:4px 9px; font-size:12px; cursor:pointer; transition:all .15s; color:var(--text-secondary); }
+    .action-btn:disabled { opacity:0.4; cursor:not-allowed; }
+    .action-btn.edit  { color:var(--blue); border-color:rgba(88,166,255,.3); }
+    .action-btn.edit:hover:not(:disabled) { background:rgba(88,166,255,.12); border-color:var(--blue); }
+    .action-btn.on  { color:var(--green); border-color:rgba(76,175,80,.3); }
+    .action-btn.on:hover:not(:disabled) { background:rgba(76,175,80,.12); border-color:var(--green); }
+    .action-btn.off { color:var(--orange,#FF9800); border-color:rgba(255,152,0,.3); }
+    .action-btn.off:hover:not(:disabled) { background:rgba(255,152,0,.12); border-color:var(--orange,#FF9800); }
+    .action-btn.del { color:var(--red); border-color:rgba(239,68,68,.3); }
+    .action-btn.del:hover:not(:disabled) { background:rgba(239,68,68,.12); border-color:var(--red); }
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center; padding:18px; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); width:100%; max-width:480px; max-height:90vh; overflow-y:auto; padding:24px 24px 20px; }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+    .modal-header h2 { font-size:16px; font-weight:700; color:var(--text-primary); }
+    .modal-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; line-height:1; }
+    .modal-close:hover { color:var(--text-primary); }
+    .form-group { margin-bottom:14px; }
+    .form-group label { display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:5px; }
+    .form-group input[type="text"] { width:100%; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text-primary); font-size:13px; outline:none; box-sizing:border-box; }
+    .form-group input[type="text"]:focus { border-color:var(--blue); }
+    .form-group input[type="file"] { width:100%; color:var(--text-secondary); font-size:12px; }
+    .form-hint { font-size:11px; color:var(--text-muted); margin-top:4px; }
+    .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+    .field-error { font-size:12px; color:var(--red,#f85149); min-height:16px; margin-top:6px; }
+    .progress-wrap { display:none; margin-top:6px; }
+    .progress-wrap.show { display:block; }
+    .progress-track { height:8px; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+    .progress-bar { height:100%; width:0; background:var(--blue); transition:width .15s; }
+    .progress-text { font-size:11px; color:var(--text-muted); margin-top:4px; }
+    @media(max-width:900px){ .stat-row{ grid-template-columns:repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
+      <div class="sidebar-logo-name">Clockyn</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" href="dashboard.html" onclick="closeSidebar()"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a class="nav-item" href="organizations.html" onclick="closeSidebar()"><span class="nav-icon">🏢</span> Organizations</a>
+      <a class="nav-item" href="users.html" onclick="closeSidebar()"><span class="nav-icon">👥</span> Users</a>
+      <a class="nav-item" href="subscriptions.html" onclick="closeSidebar()"><span class="nav-icon">📋</span> Subscriptions</a>
+      <a class="nav-item" href="payments.html" onclick="closeSidebar()"><span class="nav-icon">💳</span> Payments</a>
+      <a class="nav-item" href="coupons.html" onclick="closeSidebar()"><span class="nav-icon">🎯</span> Coupons</a>
+      <a class="nav-item" href="suggestions.html" onclick="closeSidebar()"><span class="nav-icon">💡</span> Suggestions <span class="nav-suggestion-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;"></span></a>
+      <a class="nav-item" href="tickets.html" onclick="closeSidebar()"><span class="nav-icon">🎫</span> Ticketing &amp; Bugs</a>
+      <a class="nav-item active" href="videos.html" onclick="closeSidebar()"><span class="nav-icon">🎬</span> Video Hub</a>
+      <a class="nav-item" href="video_views.html" onclick="closeSidebar()"><span class="nav-icon">📈</span> Video Views</a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#activity" onclick="closeSidebar()"><span class="nav-icon">🕐</span> Activity Logs</a>
+      <a class="nav-item" href="settings.html" onclick="closeSidebar()"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar" id="sidebar-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-user-name">Super Admin</div>
+        <div class="user-mobile" id="sidebar-user-mobile"></div>
+        <div class="user-role" id="sidebar-user-role">System Administrator</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div id="toast" style="position:fixed;bottom:24px;right:24px;background:#16a34a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:opacity 0.25s,transform 0.25s;pointer-events:none;"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <span class="topbar-title">Video Hub</span>
+      <div class="topbar-search">
+        <span>🔍</span>
+        <input type="text" id="search-input" placeholder="Search videos..." oninput="renderTable()" />
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="icon-btn" onclick="loadVideos()" title="Refresh">🔄</button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-head">
+        <div class="page-head-text">
+          <h1>Video Hub</h1>
+          <p>Guide videos shown in the app's Support tab</p>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="loadVideos()">↻ Refresh</button>
+        <button type="button" class="btn btn-primary btn-sm" id="upload-btn" style="display:none;" onclick="openUploadModal()">+ Upload Video</button>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-tile"><div class="stat-label">Total Videos</div><div class="stat-val" id="s-total">—</div></div>
+        <div class="stat-tile"><div class="stat-label">Active</div><div class="stat-val" id="s-active" style="color:var(--green)">—</div></div>
+        <div class="stat-tile"><div class="stat-label">Inactive</div><div class="stat-val" id="s-inactive" style="color:var(--text-muted)">—</div></div>
+        <div class="stat-tile"><div class="stat-label">Total Views</div><div class="stat-val" id="s-views" style="color:var(--purple)">—</div></div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-card-header">
+          <h3>Videos</h3>
+          <span class="count-badge" id="table-count">0 videos</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Video</th>
+                <th>Status</th>
+                <th>Views</th>
+                <th>Added</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="videos-tbody">
+              <tr class="empty-row"><td colspan="5">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Upload modal -->
+  <div class="modal-overlay" id="upload-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>🎬 Upload Video</h2>
+        <button type="button" class="modal-close" onclick="closeUploadModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label for="u-name">Video name *</label>
+        <input type="text" id="u-name" maxlength="150" placeholder="e.g. How to mark attendance" />
+      </div>
+      <div class="form-group">
+        <label for="u-file">Video file *</label>
+        <input type="file" id="u-file" accept="video/*" />
+        <div class="form-hint">MP4 recommended. Maximum 500 MB.</div>
+      </div>
+      <div class="progress-wrap" id="u-progress-wrap">
+        <div class="progress-track"><div class="progress-bar" id="u-progress-bar"></div></div>
+        <div class="progress-text" id="u-progress-text">0%</div>
+      </div>
+      <div class="field-error" id="u-error"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" id="u-cancel" onclick="closeUploadModal()">Cancel</button>
+        <button type="button" class="btn btn-primary btn-sm" id="u-submit" onclick="submitUpload()">Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit modal -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>✏️ Edit Video</h2>
+        <button type="button" class="modal-close" onclick="closeEditModal()">✕</button>
+      </div>
+      <input type="hidden" id="e-id" />
+      <div class="form-group">
+        <label for="e-name">Video name *</label>
+        <input type="text" id="e-name" maxlength="150" />
+      </div>
+      <div class="field-error" id="e-error"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeEditModal()">Cancel</button>
+        <button type="button" class="btn btn-primary btn-sm" id="e-submit" onclick="submitEdit()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    var MAX_BYTES = 500 * 1024 * 1024;
+    var adminEmail = localStorage.getItem('admin_email') || '';
+    var isSuper = localStorage.getItem('gen_admin_role') === '1';
+    var videos = [];
+    var uploading = false;
+
+    if (isSuper) document.getElementById('upload-btn').style.display = '';
+
+    function escHtml(s) {
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function formatIST(iso) {
+      if (!iso) return '—';
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function showToast(msg, ok) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = ok === false ? '#dc2626' : '#16a34a';
+      t.style.opacity = '1';
+      t.style.transform = 'translateY(0)';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(function () { t.style.opacity = '0'; t.style.transform = 'translateY(10px)'; }, 3000);
+    }
+
+    async function call(method, path, body) {
+      var res = await fetch(API_BASE + path, {
+        method: method,
+        headers: { 'Content-Type': 'application/json', 'x-admin-id': adminEmail },
+        body: body === undefined ? undefined : JSON.stringify(body)
+      });
+      var data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
+      if (!res.ok) {
+        var detail = data && typeof data.detail === 'string' ? data.detail : '';
+        throw new Error(detail || ('Request failed (' + res.status + ')'));
+      }
+      return data;
+    }
+
+    function renderStats() {
+      var active = videos.filter(function (v) { return Number(v.status) === 1; }).length;
+      document.getElementById('s-total').textContent = videos.length;
+      document.getElementById('s-active').textContent = active;
+      document.getElementById('s-inactive').textContent = videos.length - active;
+      document.getElementById('s-views').textContent = videos.reduce(function (s, v) { return s + (Number(v.view_count) || 0); }, 0).toLocaleString();
+    }
+
+    function renderTable() {
+      var tbody = document.getElementById('videos-tbody');
+      var q = document.getElementById('search-input').value.trim().toLowerCase();
+      var rows = videos.filter(function (v) { return !q || String(v.video_name || '').toLowerCase().includes(q); });
+      document.getElementById('table-count').textContent = rows.length + ' video' + (rows.length === 1 ? '' : 's');
+      if (!rows.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">' + (videos.length ? 'No videos match your search.' : 'No videos yet. Upload your first guide video.') + '</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(function (v) {
+        var active = Number(v.status) === 1;
+        var id = escHtml(v.id);
+        var actions = '<button class="action-btn edit" data-act="preview" data-id="' + id + '"' + (v.url ? '' : ' disabled') + '>Preview</button>';
+        if (isSuper) {
+          actions += '<button class="action-btn ' + (active ? 'off' : 'on') + '" data-act="toggle" data-id="' + id + '">' + (active ? 'Deactivate' : 'Activate') + '</button>'
+                   + '<button class="action-btn edit" data-act="edit" data-id="' + id + '">Edit</button>'
+                   + '<button class="action-btn del" data-act="delete" data-id="' + id + '">Delete</button>';
+        }
+        return '<tr>'
+          + '<td><div class="video-name">' + escHtml(v.video_name) + '</div><div class="video-path">' + escHtml(v.s3_path) + '</div></td>'
+          + '<td>' + (active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-gray">Inactive</span>') + '</td>'
+          + '<td style="font-weight:600;color:var(--text-primary)">' + (Number(v.view_count) || 0) + '</td>'
+          + '<td style="font-size:12px;color:var(--text-secondary)">' + escHtml(formatIST(v.created_at)) + '</td>'
+          + '<td><div class="actions-cell">' + actions + '</div></td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    function findVideo(id) {
+      return videos.find(function (v) { return String(v.id) === String(id); });
+    }
+
+    document.getElementById('videos-tbody').addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-act]');
+      if (!btn || btn.disabled) return;
+      var v = findVideo(btn.getAttribute('data-id'));
+      if (!v) return;
+      var act = btn.getAttribute('data-act');
+      if (act === 'preview') { if (v.url) window.open(v.url, '_blank', 'noopener'); }
+      else if (act === 'toggle') toggleStatus(v, btn);
+      else if (act === 'edit') openEditModal(v);
+      else if (act === 'delete') deleteVideo(v, btn);
+    });
+
+    async function loadVideos() {
+      var tbody = document.getElementById('videos-tbody');
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Loading...</td></tr>';
+      try {
+        var data = await call('GET', '/gen-dashboard/support-videos');
+        videos = Array.isArray(data) ? data : [];
+        renderStats();
+        renderTable();
+      } catch (e) {
+        videos = [];
+        renderStats();
+        document.getElementById('table-count').textContent = '0 videos';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Failed to load videos: ' + escHtml(e.message) + '</td></tr>';
+      }
+    }
+
+    async function toggleStatus(v, btn) {
+      var next = Number(v.status) === 1 ? 0 : 1;
+      btn.disabled = true;
+      try {
+        await call('PUT', '/gen-dashboard/support-videos/' + encodeURIComponent(v.id), { status: next });
+        v.status = next;
+        renderStats();
+        renderTable();
+        showToast(next === 1 ? 'Video activated' : 'Video deactivated');
+      } catch (e) {
+        btn.disabled = false;
+        showToast(e.message, false);
+      }
+    }
+
+    async function deleteVideo(v, btn) {
+      if (!confirm('Delete "' + v.video_name + '"? The video file will be removed from storage. This cannot be undone.')) return;
+      btn.disabled = true;
+      try {
+        await call('DELETE', '/gen-dashboard/support-videos/' + encodeURIComponent(v.id));
+        videos = videos.filter(function (x) { return x !== v; });
+        renderStats();
+        renderTable();
+        showToast('Video deleted');
+      } catch (e) {
+        btn.disabled = false;
+        showToast(e.message, false);
+      }
+    }
+
+    /* ── Edit (rename) ── */
+    function openEditModal(v) {
+      document.getElementById('e-id').value = v.id;
+      document.getElementById('e-name').value = v.video_name || '';
+      document.getElementById('e-error').textContent = '';
+      document.getElementById('edit-modal').classList.add('open');
+    }
+    function closeEditModal() { document.getElementById('edit-modal').classList.remove('open'); }
+
+    async function submitEdit() {
+      var id = document.getElementById('e-id').value;
+      var name = document.getElementById('e-name').value.trim();
+      var errEl = document.getElementById('e-error');
+      var btn = document.getElementById('e-submit');
+      errEl.textContent = '';
+      if (!name) { errEl.textContent = 'Video name is required.'; return; }
+      btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        await call('PUT', '/gen-dashboard/support-videos/' + encodeURIComponent(id), { video_name: name });
+        var v = findVideo(id);
+        if (v) v.video_name = name;
+        renderTable();
+        closeEditModal();
+        showToast('Video renamed');
+      } catch (e) {
+        errEl.textContent = e.message;
+      } finally {
+        btn.disabled = false; btn.textContent = 'Save Changes';
+      }
+    }
+
+    /* ── Upload ── */
+    function setProgress(pct) {
+      document.getElementById('u-progress-bar').style.width = pct + '%';
+      document.getElementById('u-progress-text').textContent = pct + '%';
+    }
+
+    function openUploadModal() {
+      document.getElementById('u-name').value = '';
+      document.getElementById('u-file').value = '';
+      document.getElementById('u-error').textContent = '';
+      document.getElementById('u-progress-wrap').classList.remove('show');
+      setProgress(0);
+      document.getElementById('upload-modal').classList.add('open');
+    }
+    function closeUploadModal() {
+      if (uploading) return;
+      document.getElementById('upload-modal').classList.remove('open');
+    }
+
+    function putToS3(url, file, contentType) {
+      return new Promise(function (resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('PUT', url);
+        xhr.setRequestHeader('Content-Type', contentType);
+        xhr.upload.onprogress = function (e) {
+          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
+        };
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error('storage'));
+        };
+        xhr.onerror = function () { reject(new Error('storage')); };
+        xhr.onabort = function () { reject(new Error('storage')); };
+        xhr.send(file);
+      });
+    }
+
+    async function submitUpload() {
+      if (uploading) return;
+      var name = document.getElementById('u-name').value.trim();
+      var file = document.getElementById('u-file').files[0];
+      var errEl = document.getElementById('u-error');
+      var btn = document.getElementById('u-submit');
+      errEl.textContent = '';
+      if (!name) { errEl.textContent = 'Video name is required.'; return; }
+      if (!file) { errEl.textContent = 'Choose a video file.'; return; }
+      if (!file.type || file.type.indexOf('video/') !== 0) { errEl.textContent = 'Only video files can be uploaded.'; return; }
+      if (file.size > MAX_BYTES) { errEl.textContent = 'This file is larger than 500 MB. Please compress it and try again.'; return; }
+
+      uploading = true;
+      btn.disabled = true; btn.textContent = 'Uploading...';
+      document.getElementById('u-cancel').disabled = true;
+      document.getElementById('u-progress-wrap').classList.add('show');
+      setProgress(0);
+      try {
+        var slot = await call('POST', '/gen-dashboard/support-videos/upload-url', { filename: file.name, content_type: file.type });
+        try {
+          await putToS3(slot.upload_url, file, slot.content_type || file.type);
+        } catch (e) {
+          throw new Error('Upload to storage failed. Check your connection and the bucket CORS settings (PUT from this site must be allowed).');
+        }
+        setProgress(100);
+        await call('POST', '/gen-dashboard/support-videos', { video_name: name, s3_path: slot.s3_path });
+        uploading = false;
+        closeUploadModal();
+        showToast('Video uploaded');
+        loadVideos();
+      } catch (e) {
+        errEl.textContent = e.message;
+      } finally {
+        uploading = false;
+        btn.disabled = false; btn.textContent = 'Upload';
+        document.getElementById('u-cancel').disabled = false;
+      }
+    }
+
+    window.addEventListener('beforeunload', function (e) {
+      if (uploading) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) logout();
+    }
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+
+    loadVideos();
+  </script>
+
+</body>
+</html>

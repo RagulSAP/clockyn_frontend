@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 
+import { supportApi } from '@/api';
 import { Screen } from '@/components/layout';
 import { Card, EmptyState, ErrorState, ListItem, Reveal, SkeletonList } from '@/components/ui';
 import { getErrorMessage } from '@/lib/api/errors';
+import { useSession } from '@/store/auth';
 import type { SupportVideo } from '@/types/api/support';
 import { radii } from '@/theme';
 
@@ -13,6 +15,7 @@ import { useSupportVideos } from '../hooks/useSupportVideos';
 /** Video Hub: the active guide videos (the server only returns status = 1); a tap plays one full screen. */
 export default function VideoHubScreen() {
   const videos = useSupportVideos();
+  const session = useSession();
   const [selected, setSelected] = useState<SupportVideo | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -22,6 +25,14 @@ export default function VideoHubScreen() {
       await videos.refetch();
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const play = (video: SupportVideo) => {
+    setSelected(video);
+    // Best effort: a failed tracking call must never get in the way of watching the video.
+    if (session?.userId && session.orgId) {
+      void supportApi.recordVideoView(video.id, { userId: session.userId, orgId: session.orgId }).catch(() => undefined);
     }
   };
 
@@ -44,7 +55,7 @@ export default function VideoHubScreen() {
                   key={video.id}
                   icon="play"
                   title={video.name}
-                  onPress={() => setSelected(video)}
+                  onPress={() => play(video)}
                   divider={i < list.length - 1}
                   testID={`video-${video.id}`}
                 />

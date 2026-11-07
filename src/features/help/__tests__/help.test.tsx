@@ -22,8 +22,12 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 const mockListVideos = jest.fn();
+const mockRecordView = jest.fn();
 jest.mock('@/api', () => ({
-  supportApi: { listSupportVideos: (...a: unknown[]) => mockListVideos(...a) },
+  supportApi: {
+    listSupportVideos: (...a: unknown[]) => mockListVideos(...a),
+    recordVideoView: (...a: unknown[]) => mockRecordView(...a),
+  },
 }));
 
 jest.mock('expo-video', () => {
@@ -39,6 +43,7 @@ const video = (id: string, name: string): SupportVideo => ({ id, name, url: `htt
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockRecordView.mockResolvedValue(undefined);
   signInTestAdmin();
 });
 
@@ -85,6 +90,21 @@ describe('VideoHubScreen', () => {
     expect(screen.getByTestId('video-view')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('video-player-close'));
     await waitFor(() => expect(screen.queryByTestId('video-player')).toBeNull());
+  });
+
+  it('records which user of which organisation opened the video', async () => {
+    mockListVideos.mockResolvedValue([video('7', 'Mark attendance')]);
+    await renderScreen(<VideoHubScreen />);
+    await fireEvent.press(await screen.findByTestId('video-7'));
+    expect(mockRecordView).toHaveBeenCalledWith('7', { userId: 'user-1', orgId: 'org-1' });
+  });
+
+  it('still plays the video when the view cannot be recorded', async () => {
+    mockRecordView.mockRejectedValue(new Error('offline'));
+    mockListVideos.mockResolvedValue([video('7', 'Mark attendance')]);
+    await renderScreen(<VideoHubScreen />);
+    await fireEvent.press(await screen.findByTestId('video-7'));
+    expect(await screen.findByTestId('video-player')).toBeTruthy();
   });
 
   it('shows an empty state when there are no active videos', async () => {

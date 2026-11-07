@@ -1,6 +1,6 @@
 import { api } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/errors';
-import { listSupportSubjects, listSupportVideos, listTickets, mapSupportTicket, mapTicketStatus, replyToTicket, submitTicket } from '../support';
+import { listSupportSubjects, listSupportVideos, listTickets, recordVideoView, mapSupportTicket, mapTicketStatus, replyToTicket, submitTicket } from '../support';
 import {
   addHoliday,
   addHolidayDates,
@@ -73,6 +73,12 @@ describe('support', () => {
       { id: '1', name: 'Getting started', url: 'https://bucket.s3.amazonaws.com/guide/a.mp4?X-Amz-Signature=1' },
     ]);
     expect(mocked.get).toHaveBeenLastCalledWith('/support/videos');
+  });
+
+  it('records a video view with the user and organisation ids', async () => {
+    mocked.post.mockResolvedValue({ success: true });
+    await recordVideoView('7', { userId: 'u1', orgId: 'org1' });
+    expect(mocked.post).toHaveBeenCalledWith('/support/videos/7/view', { user_id: 'u1', org_id: 'org1' });
   });
 
   it('submitTicket without a photo posts form data', async () => {

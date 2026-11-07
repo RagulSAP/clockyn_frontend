@@ -74,6 +74,11 @@ export async function listSupportVideos(): Promise<SupportVideo[]> {
     .filter((v) => v.name !== '' && /^https?:\/\//i.test(v.url));
 }
 
+/** `POST /support/videos/{id}/view` `{user_id, org_id}` — tells the server a guide video was opened (operators see it on their Video Views page). */
+export async function recordVideoView(videoId: string, input: { userId: string; orgId: string }): Promise<void> {
+  await api.post<unknown>(`/support/videos/${seg(requireId(videoId, 'videoId'))}/view`, { user_id: input.userId, org_id: input.orgId });
+}
+
 /** `GET /support/requests/{orgId}` — the organisation's tickets with their reply threads. */
 export async function listTickets(orgId: string): Promise<SupportTicket[]> {
   const body = await api.get<unknown>(`/support/requests/${seg(requireId(orgId, 'orgId'))}`);

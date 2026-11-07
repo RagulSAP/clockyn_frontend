@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Video Views</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    .page-head { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+    .page-head-text { flex:1; min-width:200px; }
+    .page-head h1 { font-size:20px; font-weight:700; color:var(--text-primary); }
+    .page-head p { font-size:12px; color:var(--text-muted); margin-top:2px; }
+    .filter-select { background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 12px; color:var(--text-secondary); font-size:13px; cursor:pointer; outline:none; max-width:260px; }
+    .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+    .stat-tile { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px 20px; display:flex; flex-direction:column; gap:6px; min-width:0; }
+    .stat-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
+    .stat-val { font-size:26px; font-weight:700; color:var(--text-primary); }
+    .stat-val.small { font-size:15px; line-height:1.3; word-break:break-word; }
+    .stat-sub { font-size:12px; color:var(--text-muted); }
+    .table-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
+    .table-card-header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .count-badge { background:rgba(88,166,255,0.15); color:var(--blue); font-size:12px; font-weight:600; padding:2px 10px; border-radius:20px; }
+    .empty-row td { text-align:center; color:var(--text-muted); padding:40px !important; }
+    .cell-main { font-weight:600; color:var(--text-primary); font-size:13px; }
+    .cell-sub { font-size:11px; color:var(--text-muted); margin-top:2px; word-break:break-word; }
+    .role-badge-admin    { background:rgba(88,166,255,0.15); color:var(--blue);   padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .role-badge-manager  { background:rgba(255,152,0,0.15);  color:var(--orange); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .role-badge-employee { background:rgba(76,175,80,0.15);  color:var(--green);  padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    tr.clickable { cursor:pointer; }
+    tr.clickable:hover td { background:var(--bg-tertiary); }
+    .hidden { display:none; }
+    @media(max-width:900px){ .stat-row{ grid-template-columns:repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
+      <div class="sidebar-logo-name">Clockyn</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" href="dashboard.html" onclick="closeSidebar()"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a class="nav-item" href="organizations.html" onclick="closeSidebar()"><span class="nav-icon">🏢</span> Organizations</a>
+      <a class="nav-item" href="users.html" onclick="closeSidebar()"><span class="nav-icon">👥</span> Users</a>
+      <a class="nav-item" href="subscriptions.html" onclick="closeSidebar()"><span class="nav-icon">📋</span> Subscriptions</a>
+      <a class="nav-item" href="payments.html" onclick="closeSidebar()"><span class="nav-icon">💳</span> Payments</a>
+      <a class="nav-item" href="coupons.html" onclick="closeSidebar()"><span class="nav-icon">🎯</span> Coupons</a>
+      <a class="nav-item" href="suggestions.html" onclick="closeSidebar()"><span class="nav-icon">💡</span> Suggestions <span class="nav-suggestion-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;"></span></a>
+      <a class="nav-item" href="tickets.html" onclick="closeSidebar()"><span class="nav-icon">🎫</span> Ticketing &amp; Bugs</a>
+      <a class="nav-item" href="videos.html" onclick="closeSidebar()"><span class="nav-icon">🎬</span> Video Hub</a>
+      <a class="nav-item active" href="video_views.html" onclick="closeSidebar()"><span class="nav-icon">📈</span> Video Views</a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#activity" onclick="closeSidebar()"><span class="nav-icon">🕐</span> Activity Logs</a>
+      <a class="nav-item" href="settings.html" onclick="closeSidebar()"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar" id="sidebar-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-user-name">Super Admin</div>
+        <div class="user-mobile" id="sidebar-user-mobile"></div>
+        <div class="user-role" id="sidebar-user-role">System Administrator</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+      <span class="topbar-title">Video Views</span>
+      <div class="topbar-search">
+        <span>🔍</span>
+        <input type="text" id="search-input" placeholder="Search org, user, email, mobile..." oninput="applyFilters()" />
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="icon-btn" onclick="loadViews()" title="Refresh">🔄</button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-head">
+        <div class="page-head-text">
+          <h1>Video Views</h1>
+          <p>Which organizations and users opened which guide video</p>
+        </div>
+        <select class="filter-select" id="video-filter" onchange="applyFilters()">
+          <option value="">All videos</option>
+        </select>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="loadViews()">↻ Refresh</button>
+        <div class="export-wrap">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="toggleExportMenu('views-export-menu')">⬇ Export ▾</button>
+          <div class="export-menu" id="views-export-menu">
+            <button type="button" onclick="doExportExcel()">📊 Export Excel</button>
+            <button type="button" onclick="doExportPDF()">📄 Export PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-tile"><div class="stat-label">Total Views</div><div class="stat-val" id="s-views">—</div></div>
+        <div class="stat-tile"><div class="stat-label">Unique Users</div><div class="stat-val" id="s-users" style="color:var(--green)">—</div></div>
+        <div class="stat-tile"><div class="stat-label">Unique Organizations</div><div class="stat-val" id="s-orgs" style="color:var(--blue)">—</div></div>
+        <div class="stat-tile">
+          <div class="stat-label">Most Watched Video</div>
+          <div class="stat-val small" id="s-top">—</div>
+          <div class="stat-sub" id="s-top-sub"></div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-card-header">
+          <div class="chart-tabs">
+            <button type="button" class="chart-tab active" id="tab-activity" onclick="switchTab('activity')">Activity</button>
+            <button type="button" class="chart-tab" id="tab-orgs" onclick="switchTab('orgs')">By Organization</button>
+          </div>
+          <span class="count-badge" id="table-count">0 rows</span>
+        </div>
+
+        <div class="table-wrap" id="activity-wrap">
+          <table>
+            <thead>
+              <tr><th>Time (IST)</th><th>Video</th><th>Organization</th><th>User</th><th>Role</th></tr>
+            </thead>
+            <tbody id="activity-tbody">
+              <tr class="empty-row"><td colspan="5">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-wrap hidden" id="orgs-wrap">
+          <table>
+            <thead>
+              <tr><th>Organization</th><th>Views</th><th>Users</th><th>Videos watched</th><th>Last viewed (IST)</th></tr>
+            </thead>
+            <tbody id="orgs-tbody">
+              <tr class="empty-row"><td colspan="5">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script src="export.js"></script>
+  <script>
+    var adminEmail = localStorage.getItem('admin_email') || '';
+    var allRows = [];
+    var filtered = [];
+    var orgGroups = [];
+    var activeTab = 'activity';
+    var loadFailed = '';
+
+    var ROLE_LABEL = { 1: 'Admin', 2: 'Manager', 3: 'Staff' };
+    var ROLE_CLASS = { 1: 'role-badge-admin', 2: 'role-badge-manager', 3: 'role-badge-employee' };
+
+    function escHtml(s) {
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function formatIST(iso) {
+      if (!iso) return '—';
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function orgLabel(r) { return r.org_name || 'Unknown organization'; }
+    function userLabel(r) { return r.user_name || r.user_email || r.user_mobile || 'Unknown user'; }
+    function userKey(r) { return r.user_id || r.user_email || r.user_mobile || ('row-' + r.id); }
+    function orgKey(r) { return r.org_id || r.org_name || 'unknown'; }
+    function videoKey(r) { return r.video_id != null ? String(r.video_id) : (r.video_name || ''); }
+
+    async function call(path) {
+      var res = await fetch(API_BASE + path, { headers: { 'Content-Type': 'application/json', 'x-admin-id': adminEmail }, cache: 'no-store' });
+      var data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
+      if (!res.ok) {
+        var detail = data && typeof data.detail === 'string' ? data.detail : '';
+        throw new Error(detail || ('Request failed (' + res.status + ')'));
+      }
+      return data;
+    }
+
+    function populateVideoFilter() {
+      var sel = document.getElementById('video-filter');
+      var current = sel.value;
+      var seen = {};
+      var opts = [];
+      allRows.forEach(function (r) {
+        var k = videoKey(r);
+        if (!k || seen[k]) return;
+        seen[k] = true;
+        opts.push({ key: k, name: r.video_name || ('Video ' + k) });
+      });
+      opts.sort(function (a, b) { return a.name.localeCompare(b.name); });
+      sel.innerHTML = '<option value="">All videos</option>' + opts.map(function (o) {
+        return '<option value="' + escHtml(o.key) + '">' + escHtml(o.name) + '</option>';
+      }).join('');
+      sel.value = seen[current] ? current : '';
+    }
+
+    function applyFilters() {
+      var q = document.getElementById('search-input').value.trim().toLowerCase();
+      var vid = document.getElementById('video-filter').value;
+      filtered = allRows.filter(function (r) {
+        if (vid && videoKey(r) !== vid) return false;
+        if (!q) return true;
+        return [r.org_name, r.user_name, r.user_email, r.user_mobile].some(function (f) {
+          return String(f || '').toLowerCase().includes(q);
+        });
+      });
+      buildOrgGroups();
+      renderStats();
+      renderActivity();
+      renderOrgs();
+      updateCount();
+    }
+
+    function buildOrgGroups() {
+      var map = {};
+      filtered.forEach(function (r) {
+        var k = orgKey(r);
+        var g = map[k];
+        if (!g) {
+          g = map[k] = { name: orgLabel(r), known: !!r.org_name, views: 0, users: {}, videos: {}, last: null };
+        }
+        g.views += 1;
+        g.users[userKey(r)] = true;
+        g.videos[r.video_name || ('Video ' + videoKey(r))] = true;
+        var t = new Date(r.viewed_at).getTime();
+        if (!isNaN(t) && (g.last === null || t > g.last)) g.last = t;
+      });
+      orgGroups = Object.keys(map).map(function (k) {
+        var g = map[k];
+        return {
+          name: g.name,
+          known: g.known,
+          views: g.views,
+          users: Object.keys(g.users).length,
+          videos: Object.keys(g.videos).sort(),
+          last: g.last
+        };
+      }).sort(function (a, b) { return b.views - a.views || a.name.localeCompare(b.name); });
+    }
+
+    function renderStats() {
+      var users = {}, orgs = {}, perVideo = {};
+      filtered.forEach(function (r) {
+        users[userKey(r)] = true;
+        orgs[orgKey(r)] = true;
+        var n = r.video_name || ('Video ' + videoKey(r));
+        perVideo[n] = (perVideo[n] || 0) + 1;
+      });
+      document.getElementById('s-views').textContent = filtered.length.toLocaleString();
+      document.getElementById('s-users').textContent = Object.keys(users).length.toLocaleString();
+      document.getElementById('s-orgs').textContent = Object.keys(orgs).length.toLocaleString();
+      var top = null;
+      Object.keys(perVideo).forEach(function (n) { if (top === null || perVideo[n] > perVideo[top]) top = n; });
+      document.getElementById('s-top').textContent = top === null ? '—' : top;
+      document.getElementById('s-top-sub').textContent = top === null ? '' : perVideo[top] + ' view' + (perVideo[top] === 1 ? '' : 's');
+    }
+
+    function emptyMessage() {
+      if (loadFailed) return 'Failed to load video views: ' + escHtml(loadFailed);
+      return allRows.length ? 'No views match your filters.' : 'No video views yet.';
+    }
+
+    function renderActivity() {
+      var tbody = document.getElementById('activity-tbody');
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">' + emptyMessage() + '</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(function (r) {
+        var sub = [r.user_email, r.user_mobile].filter(Boolean).map(escHtml).join(' · ');
+        return '<tr>'
+          + '<td style="font-size:12px;color:var(--text-secondary);white-space:nowrap">' + escHtml(formatIST(r.viewed_at)) + '</td>'
+          + '<td><div class="cell-main">' + escHtml(r.video_name || ('Video ' + videoKey(r))) + '</div></td>'
+          + '<td>' + escHtml(orgLabel(r)) + '</td>'
+          + '<td><div class="cell-main">' + escHtml(userLabel(r)) + '</div>' + (sub ? '<div class="cell-sub">' + sub + '</div>' : '') + '</td>'
+          + '<td>' + (ROLE_LABEL[r.role_id] ? '<span class="' + ROLE_CLASS[r.role_id] + '">' + ROLE_LABEL[r.role_id] + '</span>' : '—') + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    function renderOrgs() {
+      var tbody = document.getElementById('orgs-tbody');
+      if (!orgGroups.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">' + emptyMessage() + '</td></tr>';
+        return;
+      }
+      tbody.innerHTML = orgGroups.map(function (g, i) {
+        return '<tr' + (g.known ? ' class="clickable" data-i="' + i + '" title="Show this organization\'s activity"' : '') + '>'
+          + '<td><div class="cell-main">' + escHtml(g.name) + '</div></td>'
+          + '<td style="font-weight:600;color:var(--text-primary)">' + g.views + '</td>'
+          + '<td>' + g.users + '</td>'
+          + '<td><div class="cell-main">' + g.videos.length + '</div><div class="cell-sub">' + g.videos.map(escHtml).join(', ') + '</div></td>'
+          + '<td style="font-size:12px;color:var(--text-secondary);white-space:nowrap">' + (g.last === null ? '—' : escHtml(formatIST(new Date(g.last).toISOString()))) + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    document.getElementById('orgs-tbody').addEventListener('click', function (e) {
+      var tr = e.target.closest('tr[data-i]');
+      if (!tr) return;
+      var g = orgGroups[Number(tr.getAttribute('data-i'))];
+      if (!g) return;
+      document.getElementById('search-input').value = g.name;
+      switchTab('activity');
+      applyFilters();
+    });
+
+    function updateCount() {
+      var n = activeTab === 'activity' ? filtered.length : orgGroups.length;
+      var noun = activeTab === 'activity' ? 'view' : 'organization';
+      document.getElementById('table-count').textContent = n + ' ' + noun + (n === 1 ? '' : 's');
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.getElementById('tab-activity').classList.toggle('active', tab === 'activity');
+      document.getElementById('tab-orgs').classList.toggle('active', tab === 'orgs');
+      document.getElementById('activity-wrap').classList.toggle('hidden', tab !== 'activity');
+      document.getElementById('orgs-wrap').classList.toggle('hidden', tab !== 'orgs');
+      updateCount();
+    }
+
+    async function loadViews() {
+      loadFailed = '';
+      document.getElementById('activity-tbody').innerHTML = '<tr class="empty-row"><td colspan="5">Loading...</td></tr>';
+      document.getElementById('orgs-tbody').innerHTML = '<tr class="empty-row"><td colspan="5">Loading...</td></tr>';
+      try {
+        var data = await call('/gen-dashboard/support-video-views?limit=2000');
+        allRows = Array.isArray(data) ? data : [];
+      } catch (e) {
+        allRows = [];
+        loadFailed = e.message;
+      }
+      populateVideoFilter();
+      applyFilters();
+    }
+
+    /* ── Export (what the active tab shows) ── */
+    var ACTIVITY_COLS = [
+      { key: 'time', label: 'Time (IST)' },
+      { key: 'video', label: 'Video' },
+      { key: 'org', label: 'Organization' },
+      { key: 'user', label: 'User' },
+      { key: 'email', label: 'Email' },
+      { key: 'mobile', label: 'Mobile' },
+      { key: 'role', label: 'Role' }
+    ];
+    var ORG_COLS = [
+      { key: 'org', label: 'Organization' },
+      { key: 'views', label: 'Views' },
+      { key: 'users', label: 'Users' },
+      { key: 'videoCount', label: 'Videos watched' },
+      { key: 'videos', label: 'Video names' },
+      { key: 'last', label: 'Last viewed (IST)' }
+    ];
+
+    function activityExportRows() {
+      return filtered.map(function (r) {
+        return {
+          time: formatIST(r.viewed_at),
+          video: r.video_name || ('Video ' + videoKey(r)),
+          org: orgLabel(r),
+          user: userLabel(r),
+          email: r.user_email || '—',
+          mobile: r.user_mobile || '—',
+          role: ROLE_LABEL[r.role_id] || '—'
+        };
+      });
+    }
+    function orgExportRows() {
+      return orgGroups.map(function (g) {
+        return {
+          org: g.name,
+          views: g.views,
+          users: g.users,
+          videoCount: g.videos.length,
+          videos: g.videos.join(', '),
+          last: g.last === null ? '—' : formatIST(new Date(g.last).toISOString())
+        };
+      });
+    }
+
+    function today() { return new Date().toISOString().slice(0, 10); }
+
+    function doExportExcel() {
+      if (activeTab === 'activity') exportExcel(activityExportRows(), ACTIVITY_COLS, 'Clockyn_Video_Views_' + today());
+      else exportExcel(orgExportRows(), ORG_COLS, 'Clockyn_Video_Views_By_Org_' + today());
+    }
+    function doExportPDF() {
+      if (activeTab === 'activity') exportPDF(activityExportRows(), ACTIVITY_COLS, 'Clockyn_Video_Views_' + today(), 'Clockyn — Video Views');
+      else exportPDF(orgExportRows(), ORG_COLS, 'Clockyn_Video_Views_By_Org_' + today(), 'Clockyn — Video Views by Organization');
+    }
+
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) logout();
+    }
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+
+    loadViews();
+  </script>
+
+</body>
+</html>
