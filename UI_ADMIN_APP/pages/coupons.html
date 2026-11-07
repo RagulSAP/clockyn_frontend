@@ -4,42 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Clockyn — Coupons</title>
-  <link rel="stylesheet" href="dashboard.css" />
+  <meta name="color-scheme" content="light dark" />
+  <script src="../js/theme.js"></script>
+  <link rel="stylesheet" href="../css/dashboard.css" />
 </head>
 <body>
 
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
-      <div class="sidebar-logo-name">Clockyn</div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Overview</div>
-      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
-      <div class="nav-section-label">Management</div>
-      <a class="nav-item" href="organizations.html"><span class="nav-icon">🏢</span> Organizations</a>
-      <a class="nav-item" href="users.html"><span class="nav-icon">👥</span> Users</a>
-      <a class="nav-item" href="subscriptions.html"><span class="nav-icon">📋</span> Subscriptions</a>
-      <a class="nav-item" href="#payments"><span class="nav-icon">💳</span> Payments</a>
-      <a class="nav-item active" href="coupons.html"><span class="nav-icon">🎯</span> Coupons</a>
-      <a class="nav-item" href="suggestions.html"><span class="nav-icon">💡</span> Suggestions <span class="nav-suggestion-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;"></span></a>
-      <a class="nav-item" href="tickets.html"><span class="nav-icon">🎫</span> Ticketing &amp; Bugs</a>
-      <a class="nav-item" href="videos.html"><span class="nav-icon">🎬</span> Video Hub</a>
-      <a class="nav-item" href="video_views.html"><span class="nav-icon">📈</span> Video Views</a>
-      <div class="nav-section-label">System</div>
-      <a class="nav-item" href="#activity"><span class="nav-icon">🕐</span> Activity Logs</a>
-      <a class="nav-item" href="settings.html"><span class="nav-icon">⚙️</span> Settings</a>
-    </nav>
-    <div class="sidebar-footer">
-      <div class="avatar" id="sidebar-avatar">SA</div>
-      <div class="user-info">
-        <div class="user-name" id="sidebar-user-name">Super Admin</div>
-        <div class="user-mobile" id="sidebar-user-mobile"></div>
-        <div class="user-role" id="sidebar-user-role">System Administrator</div>
-      </div>
-      <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
-    </div>
-  </aside>
+  <aside class="sidebar" id="app-sidebar" data-active="coupons"></aside>
+  <script src="../js/layout.js"></script>
 
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -187,8 +159,8 @@
     .form-error { font-size: 12px; color: var(--red); padding: 6px 10px; background: rgba(239,68,68,0.1); border-radius: 6px; }
   </style>
 
-  <script src="config.js"></script>
-  <script src="auth.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
   <script>
     let allCoupons = [];
 

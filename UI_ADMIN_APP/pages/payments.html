@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Clockyn &mdash; Payments</title>
-  <link rel="stylesheet" href="dashboard.css" />
+  <meta name="color-scheme" content="light dark" />
+  <script src="../js/theme.js"></script>
+  <link rel="stylesheet" href="../css/dashboard.css" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -58,38 +60,8 @@
 </head>
 <body>
 
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <img src="clockyn-logo.png" alt="" class="sidebar-logo-img" />
-      <div class="sidebar-logo-name">Clockyn</div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Overview</div>
-      <a class="nav-item" href="dashboard.html"><span class="nav-icon">&#x1F4CA;</span> Dashboard</a>
-      <div class="nav-section-label">Management</div>
-      <a class="nav-item" href="organizations.html"><span class="nav-icon">&#x1F3E2;</span> Organizations</a>
-      <a class="nav-item" href="users.html"><span class="nav-icon">&#x1F465;</span> Users</a>
-      <a class="nav-item" href="subscriptions.html"><span class="nav-icon">&#x1F4CB;</span> Subscriptions</a>
-      <a class="nav-item active" href="payments.html"><span class="nav-icon">&#x1F4B3;</span> Payments</a>
-      <a class="nav-item" href="coupons.html"><span class="nav-icon">&#x1F3AF;</span> Coupons</a>
-      <a class="nav-item" href="suggestions.html"><span class="nav-icon">&#x1F4A1;</span> Suggestions <span class="nav-suggestion-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;"></span></a>
-      <a class="nav-item" href="tickets.html"><span class="nav-icon">&#x1F3AB;</span> Ticketing &amp; Bugs</a>
-      <a class="nav-item" href="videos.html"><span class="nav-icon">&#x1F3AC;</span> Video Hub</a>
-      <a class="nav-item" href="video_views.html"><span class="nav-icon">&#x1F4C8;</span> Video Views</a>
-      <div class="nav-section-label">System</div>
-      <a class="nav-item" href="#activity"><span class="nav-icon">&#x1F550;</span> Activity Logs</a>
-      <a class="nav-item" href="settings.html"><span class="nav-icon">&#x2699;&#xFE0F;</span> Settings</a>
-    </nav>
-    <div class="sidebar-footer">
-      <div class="avatar" id="sidebar-avatar">SA</div>
-      <div class="user-info">
-        <div class="user-name" id="sidebar-user-name">Super Admin</div>
-        <div class="user-mobile" id="sidebar-user-mobile"></div>
-        <div class="user-role" id="sidebar-user-role">System Administrator</div>
-      </div>
-      <button class="logout-btn" onclick="handleLogout()" title="Logout">&#x23FB;</button>
-    </div>
-  </aside>
+  <aside class="sidebar" id="app-sidebar" data-active="payments"></aside>
+  <script src="../js/layout.js"></script>
 
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -292,9 +264,9 @@
     </div>
   </div>
 
-  <script src="config.js"></script>
-  <script src="auth.js"></script>
-  <script src="export.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/export.js"></script>
   <script>
     var allPayments  = [];
     var allOrgs      = [];

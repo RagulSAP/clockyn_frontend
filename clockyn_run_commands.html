@@ -427,7 +427,7 @@ aws ecs run-task --cluster default --launch-type FARGATE --task-definition $cfg.
     <ol>
       <li>Open <code>https://YOUR-SERVICE-ADDRESS/health</code> (should say ok) and <code>/ready</code> (ok means the database is reachable).</li>
       <li>Open <code>/auth/config</code>. It should show <code>"user_auth": "email"</code>.</li>
-      <li>In the app, set <code>EXPO_PUBLIC_API_BASE_URL=https://YOUR-SERVICE-ADDRESS</code> (section 3 for local testing, the Expo build tab for EAS builds). In the admin web app, set <code>API_BASE</code> in <code>UI_ADMIN_APP\config.js</code> to the same address (it may still point at the old App Runner address).</li>
+      <li>In the app, set <code>EXPO_PUBLIC_API_BASE_URL=https://YOUR-SERVICE-ADDRESS</code> (section 3 for local testing, the Expo build tab for EAS builds). In the admin web app, set <code>API_BASE</code> in <code>UI_ADMIN_APP\js\config.js</code> to the same address (it may still point at the old App Runner address).</li>
       <li>Razorpay webhook: <code>https://YOUR-SERVICE-ADDRESS/webhook/razorpay</code>, with the same secret as <code>RAZORPAY_WEBHOOK_SECRET</code>.</li>
     </ol>
     <div class="box warn"><strong>Your own domain (optional).</strong> The Express address is already HTTPS, so no GoDaddy record is needed for the app to work. Pointing something like <code>api.your-domain.com</code> at it is not covered by the Express Mode documentation I checked, so it is not in this guide. If you want it, ask and we will set it up (a certificate, a rule on the Express load balancer, and a CNAME at GoDaddy) and test it together.</div>
@@ -520,7 +520,8 @@ CREATE INDEX IF NOT EXISTS idx_support_video_view_viewed_at ON clockyn_dev.suppo
     <h3>Step 5: Run the admin web app on your PC</h3>
     <div class="cmd"><pre>cd C:\POC\clockyn_frontend\UI_ADMIN_APP
 python -m http.server 5500</pre><button class="copy">Copy</button></div>
-    <p>Open <code>http://localhost:5500/login.html</code> and sign in with your email. The API address is the first line of <code>config.js</code>: set <code>API_BASE</code> to your Express address (or <code>http://localhost:8080</code> for a local backend).</p>
+    <p>Folder layout of <code>UI_ADMIN_APP</code>: <code>pages\</code> (all screens), <code>css\</code>, <code>js\</code> (<code>config.js</code>, <code>auth.js</code>, <code>theme.js</code>, <code>export.js</code>), <code>assets\images\</code>, and an <code>index.html</code> that opens the login page. Run the server from the <code>UI_ADMIN_APP</code> folder so those paths resolve.</p>
+    <p>Open <code>http://localhost:5500/</code> (it opens <code>pages/login.html</code>) and sign in with your email. The API address is the first line of <code>js\config.js</code>: set <code>API_BASE</code> to your Express address (or <code>http://localhost:8080</code> for a local backend).</p>
 
     <h3>Step 6: Upload and manage videos</h3>
     <ol>
@@ -627,7 +628,7 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
       <tr><td>After an update, settings or secrets disappeared</td><td>Send the complete <code>primary.json</code> every time (image, environment and secrets), not just the image.</td></tr>
       <tr><td>Chat disconnects every minute</td><td>Set the load balancer idle timeout to 300 seconds (Express tab, Step 6) and re-check it after a release.</td></tr>
       <tr><td>Video upload: "Upload to storage failed"</td><td>The S3 bucket CORS does not allow your site. The origin must match exactly (for local use <code>http://localhost:*</code>) and <code>PUT</code> must be allowed (Video Hub tab, Step 3). Open the page from <code>http://localhost:...</code>, not as a file.</td></tr>
-      <tr><td>Admin pages show a CORS error or "Failed to load"</td><td>If <code>CORS_ALLOWED_ORIGINS</code> is set on the backend, add the admin site's exact origin including the port. Also check <code>API_BASE</code> in <code>UI_ADMIN_APP\config.js</code>.</td></tr>
+      <tr><td>Admin pages show a CORS error or "Failed to load"</td><td>If <code>CORS_ALLOWED_ORIGINS</code> is set on the backend, add the admin site's exact origin including the port. Also check <code>API_BASE</code> in <code>UI_ADMIN_APP\js\config.js</code>.</td></tr>
       <tr><td>Video upload or delete answers "Only role_id=1 admins can perform this action"</td><td>Only a super admin can manage videos. The operator row needs <code>role_id = 1</code> and their email filled in.</td></tr>
       <tr><td>A video does not open in the app</td><td>Install the new development build (it adds the video player). Also check the video is Active and its file exists in S3 under <code>guide_videos/</code>.</td></tr>
       <tr><td>EAS build: no project id / wrong project</td><td>Set <code>EAS_PROJECT_ID</code> (Step 2 and 3) for the environment you build.</td></tr>
