@@ -72,7 +72,8 @@
     <div class="tabs" role="tablist" aria-label="Sections">
       <button class="tab" role="tab" id="btn-run" data-tab="run" aria-controls="tab-run" aria-selected="false">Run commands</button>
       <button class="tab" role="tab" id="btn-rekognition" data-tab="rekognition" aria-controls="tab-rekognition" aria-selected="false">AWS Rekognition</button>
-      <button class="tab" role="tab" id="btn-ecs" data-tab="ecs" aria-controls="tab-ecs" aria-selected="false">ECS deploy</button>
+      <button class="tab" role="tab" id="btn-ecs" data-tab="ecs" aria-controls="tab-ecs" aria-selected="false">Deploy (Express Mode)</button>
+      <button class="tab" role="tab" id="btn-videos" data-tab="videos" aria-controls="tab-videos" aria-selected="false">Video Hub</button>
       <button class="tab" role="tab" id="btn-eas" data-tab="eas" aria-controls="tab-eas" aria-selected="false">Expo build</button>
       <button class="tab" role="tab" id="btn-trouble" data-tab="trouble" aria-controls="tab-trouble" aria-selected="false">Troubleshooting</button>
     </div>
@@ -81,7 +82,7 @@
 </header>
 <main class="wrap">
   <h1>How to run it, set up AWS and deploy</h1>
-  <p class="sub">Commands for Windows PowerShell. Click <b>Copy</b> on any block. Paths assume <code>C:\POC\pa&#95;frontend\Clockyn</code> (app) and <code>C:\POC\pa&#95;backend\Clockyn</code> (backend). Written 2026-11-03.</p>
+  <p class="sub">Commands for Windows PowerShell. Click <b>Copy</b> on any block. Paths assume <code>C:\POC\clockyn_frontend</code> (app) and <code>C:\POC\clockyn_backend</code> (backend). Written 2026-11-03, updated 2026-11-07 (ECS Express Mode deploy, Video Hub).</p>
   <div class="panel" role="tabpanel" id="tab-run" aria-labelledby="btn-run" hidden>
   <nav class="pills">
     <a href="#quick">Quick reference</a>
@@ -109,13 +110,13 @@
     <h2>1. App with the built-in test backend <span class="tag">no setup, works offline</span></h2>
     <p>Fastest way to see the app. The test backend keeps demo data in memory; restarting it resets everything.</p>
     <h3>First time only</h3>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;frontend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_frontend
 npm install</pre><button class="copy">Copy</button></div>
     <h3>Terminal 1: test backend</h3>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;frontend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_frontend
 npm run e2e:mock</pre><button class="copy">Copy</button></div>
     <h3>Terminal 2: the app on the web</h3>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;frontend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_frontend
 $env:EXPO_PUBLIC_API_BASE_URL = "http://localhost:8787"
 npx expo start --web</pre><button class="copy">Copy</button></div>
     <p>Open <code>http://localhost:8081</code>. Choose <b>Admin</b> or <b>Employee</b>, enter a demo mobile number, press Get OTP, enter <code>123456</code>. The face punch accepts any photo here.</p>
@@ -125,7 +126,7 @@ npx expo start --web</pre><button class="copy">Copy</button></div>
     <h2>2. The real backend <span class="tag">local, against your database</span></h2>
     <div class="box warn"><strong>Not tested on this PC.</strong> The face-recognition libraries could not be installed in the environment used so far, so the real backend has not been started here. If a step fails, copy the error and send it over.</div>
     <h3>First time: create the environment and install packages</h3>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;backend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_backend
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt</pre><button class="copy">Copy</button></div>
@@ -150,7 +151,7 @@ FACE_BACKEND=mock      # local development without AWS (any photo with a face pa
 # Photos are also stored in S3: S3_BUCKET_NAME, AWS_S3_REGION and (locally) AWS credentials</pre><button class="copy">Copy</button></div>
     <p>For <b>email sign-in</b> (what you will use on AWS) set <code>USER_AUTH=email</code>, plus <code>EMAIL_USER</code> (an SES-verified sender) and AWS credentials. Leave <code>REQUIRE_AUTH</code> off until everything else is tested.</p>
     <h3>Start it</h3>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;backend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_backend
 .\.venv\Scripts\Activate.ps1
 $env:PGSSLMODE = "require"
 uvicorn app:app --host 0.0.0.0 --port 8080</pre><button class="copy">Copy</button></div>
@@ -159,7 +160,7 @@ uvicorn app:app --host 0.0.0.0 --port 8080</pre><button class="copy">Copy</butto
   </section>
   <section id="frontend-real">
     <h2>3. App with the real backend</h2>
-    <p>Create <code>C:\POC\pa&#95;frontend\Clockyn\.env</code> (copy <code>.env.example</code>) and set one line:</p>
+    <p>Create <code>C:\POC\clockyn_frontend\.env</code> (copy <code>.env.example</code>) and set one line:</p>
     <table>
       <tr><th>App runs on</th><th><code>EXPO_PUBLIC_API_BASE_URL</code></th></tr>
       <tr><td>Web browser</td><td><code>http://localhost:8080</code></td></tr>
@@ -167,7 +168,7 @@ uvicorn app:app --host 0.0.0.0 --port 8080</pre><button class="copy">Copy</butto
       <tr><td>iOS simulator</td><td><code>http://localhost:8080</code></td></tr>
       <tr><td>Real phone on the same Wi-Fi</td><td><code>http://YOUR-PC-WIFI-IP:8080</code> (run <code>ipconfig</code>, use the IPv4 address of the Wi-Fi adapter; allow port 8080 in the Windows firewall)</td></tr>
     </table>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;frontend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_frontend
 npx expo start --web -c</pre><button class="copy">Copy</button></div>
     <p>The <code>-c</code> clears the cache. The value is built into the bundle, so you must restart after changing <code>.env</code>.</p>
     <div class="box warn"><strong>No .env file means the legacy backend.</strong> The built-in default address is the old deployed backend, so always set this line when you mean to test the new one.</div>
@@ -176,7 +177,7 @@ npx expo start --web -c</pre><button class="copy">Copy</button></div>
     <h2>4. Database (schema <code>clockyn_dev</code>)</h2>
     <div class="box danger"><strong>Rules.</strong> The database also holds live legacy schemas. Clockyn work happens only in <code>clockyn_dev</code> (and temporary <code>clockyn_dev_test_*</code> schemas that tests create and drop). Do not create or drop databases, and do not touch any other schema.</div>
     <h3>Check what the migration runner would do (changes nothing)</h3>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;backend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_backend
 .\.venv\Scripts\Activate.ps1
 $env:PGSSLMODE = "require"
 python migrate.py --all --dry-run</pre><button class="copy">Copy</button></div>
@@ -201,13 +202,13 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA clockyn_dev GRANT ALL ON TABLES, SEQUENCES TO
   <section id="tests">
     <h2>5. Tests <span class="tag">optional</span></h2>
     <h3>App: everything except browser tests (type-check, lint, unit tests, brand check)</h3>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;frontend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_frontend
 npm run verify</pre><button class="copy">Copy</button></div>
     <h3>App: browser tests against the test backend (about 18 minutes)</h3>
     <div class="cmd"><pre>npm run e2e:build
 npm run e2e -- --project desktop</pre><button class="copy">Copy</button></div>
     <h3>Backend: tests that need no database</h3>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;backend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_backend
 .\.venv\Scripts\Activate.ps1
 pip install pytest pytest-asyncio httpx tzdata pglast
 python -m pytest tests -q --ignore=tests/test_wages_shifts.py --ignore=tests/test_attendance_rule_overtime_salary.py --ignore=tests/test_sql_live.py</pre><button class="copy">Copy</button></div>
@@ -220,7 +221,7 @@ python -m pytest tests/test_wages_shifts.py tests/test_attendance_rule_overtime_
     <h2>6. Phone or emulator</h2>
     <div class="box warn"><strong>Expo Go version.</strong> This app needs Expo SDK 58, and the app stores only offer Expo Go for SDK 57. So Expo Go usually cannot open it. Use a <b>development build</b> (Expo build tab) instead.</div>
     <h3>With a development build installed on the phone</h3>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;frontend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_frontend
 npx expo start --dev-client -c</pre><button class="copy">Copy</button></div>
     <p>Open the installed Clockyn dev app and scan the QR code. Set <code>EXPO_PUBLIC_API_BASE_URL</code> to your PC address in <code>.env</code> (section 3), or to the HTTPS backend address.</p>
     <p>A more detailed checklist, including a manual on-device test script, is in <code>docs/RUNNING_ON_DEVICES.md</code>.</p>
@@ -243,9 +244,9 @@ npx expo start --dev-client -c</pre><button class="copy">Copy</button></div>
       "Action": ["rekognition:DetectFaces"], "Resource": "*" }
   ]
 }</pre><button class="copy">Copy</button></div></li>
-      <li><b>Attach it</b> to whoever runs the backend: on AWS, the App Runner <b>instance role</b> or the ECS <b>task role</b> (the one that has the S3 and SES permissions); on your PC, the IAM user or role your AWS CLI uses (<code>aws configure</code>).</li>
+      <li><b>Attach it</b> to whoever runs the backend: on AWS, the <b>task role</b> of the Express service (<code>clockynBackendTaskRole</code>, the one that has the S3 and SES permissions); on your PC, the IAM user or role your AWS CLI uses (<code>aws configure</code>).</li>
       <li><b>Create the face collection</b> (once; needs an admin user who may create collections):
-        <div class="cmd"><pre>cd C:\POC\pa&#95;backend\Clockyn
+        <div class="cmd"><pre>cd C:\POC\clockyn_backend
 .\.venv\Scripts\Activate.ps1
 python scripts/rekognition_setup.py create</pre><button class="copy">Copy</button></div>
         <p>Or with the AWS CLI: <code>aws rekognition create-collection --collection-id clockyn-faces-dev --region ap-south-1</code>. Use a separate collection for production, for example <code>clockyn-faces-prod</code>.</p></li>
@@ -261,20 +262,20 @@ python scripts/rekognition_setup.py create</pre><button class="copy">Copy</butto
   </div>
   <div class="panel" role="tabpanel" id="tab-ecs" aria-labelledby="btn-ecs" hidden>
   <section id="ecs">
-    <h2>Deploy the backend on AWS ECS (Fargate) with ECR <span class="tag">replaces App Runner</span></h2>
-    <p><b>Your DNS is at GoDaddy</b>, so wherever the steps mention DNS, you add records in GoDaddy (Steps 6 and 9). You will run the backend as a container on <b>ECS Fargate</b> (no servers to manage), pulled from <b>ECR</b>, behind an <b>Application Load Balancer</b> that gives you the HTTPS address the app needs. Use the same region as your database (<code>ap-south-1</code>). Replace <code>YOUR_ACCOUNT_ID</code> with your 12-digit AWS account number everywhere.</p>
-    <div class="box warn"><strong>Run exactly ONE task for now.</strong> The live chat sockets, the rate limits and a few caches live in the memory of each container. With two or more tasks, a chat event could land on a different container than the person it is for. Keep <b>Desired tasks = 1</b> until the live updates are moved to a shared service.</div>
-    <div class="box warn"><strong>Not tested end to end.</strong> The Dockerfile has not been built on this PC, so watch the first build and tell me about any error. The steps below are the standard ECS setup for this container.</div>
+    <h2>Deploy the backend with Amazon ECS Express Mode <span class="tag">replaces App Runner and hand-built ECS</span></h2>
+    <p>Express Mode runs the backend container on <b>ECS Fargate</b> and creates the rest for you: an internet-facing <b>Application Load Balancer</b> (shared by up to 25 Express services), the target group, the security group, <b>HTTPS</b> on an address like <code>https://&lt;service-name&gt;.ecs.ap-south-1.on.aws</code>, CPU-based auto scaling, CloudWatch logging, and canary releases with an automatic rollback alarm on 5XX errors. You only provide the container image and IAM roles. Use the same region as your database (<code>ap-south-1</code>) and replace <code>YOUR_ACCOUNT_ID</code> with your 12-digit AWS account number.</p>
+    <div class="box ok"><strong>Much less to set up than plain ECS.</strong> There is no cluster or task definition to write, no load balancer, target group or certificate to build, and no GoDaddy record is needed to get an HTTPS address. Express already does these.</div>
+    <div class="box warn"><strong>Run exactly ONE task for now.</strong> The live chat sockets, the rate limits and a few caches live in the memory of each container. Express adds tasks automatically under load unless you cap it, so the command below sets <code>minTaskCount=1,maxTaskCount=1</code>. During a release the canary briefly runs a second task; that is fine. Raise the cap only after the live updates move to a shared service.</div>
+    <div class="box warn"><strong>Checked against the AWS docs, not run on your account.</strong> The commands follow the Express Mode documentation (<code>create-express-gateway-service</code>, <code>update-express-gateway-service</code>, <code>describe-express-gateway-service</code>). Anything less certain is marked below. You need a recent AWS CLI v2 that has the <code>express-gateway</code> commands.</div>
 
     <h3>What you will create (in this order)</h3>
     <ol>
       <li>ECR repository and the pushed image</li>
-      <li>Security groups (load balancer, container, database access)</li>
-      <li>Two IAM roles (execution role, task role)</li>
+      <li>IAM roles: execution role, infrastructure role (Express), task role</li>
       <li>A secret in Secrets Manager and a log group</li>
-      <li>ECS cluster, task definition</li>
-      <li>Load balancer with HTTPS, then the ECS service</li>
-      <li>Database tables (one-off task), DNS name, and the final checks</li>
+      <li>The Express service (one command)</li>
+      <li>Database access and the database tables</li>
+      <li>Load balancer idle timeout for chat, then the final checks</li>
     </ol>
 
     <h3>Step 1: ECR repository and image</h3>
@@ -285,25 +286,30 @@ python scripts/rekognition_setup.py create</pre><button class="copy">Copy</butto
 $REGION  = "ap-south-1"
 $REPO    = "$ACCOUNT.dkr.ecr.$REGION.amazonaws.com/clockyn-backend"
 aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin "$ACCOUNT.dkr.ecr.$REGION.amazonaws.com"
-cd C:\POC\pa&#95;backend\Clockyn
+cd C:\POC\clockyn_backend
 docker build --platform linux/amd64 -t clockyn-backend:1 .
 docker tag clockyn-backend:1 "${REPO}:1"
 docker push "${REPO}:1"</pre><button class="copy">Copy</button></div>
-        <p>The first build is slow (many system packages). Use a new tag for every release (<code>:2</code>, <code>:3</code>, ...) so you can roll back.</p></li>
+        <p>The first build is slow (many system packages). Use a new tag for every release (<code>:2</code>, <code>:3</code>, ...) so you can roll back. The image must be <b>linux/amd64</b> (Express defaults to X86_64).</p></li>
     </ol>
 
-    <h3>Step 2: Security groups</h3>
-    <p>Console, <b>EC2</b>, Security Groups, Create. Use the same VPC as your database. Create these two:</p>
-    <table>
-      <tr><th>Name</th><th>Inbound rules</th></tr>
-      <tr><td><code>clockyn-alb-sg</code> (load balancer)</td><td>HTTPS 443 from <code>0.0.0.0/0</code> and HTTP 80 from <code>0.0.0.0/0</code></td></tr>
-      <tr><td><code>clockyn-ecs-sg</code> (the container)</td><td>Custom TCP <b>8080</b> from <b>source = clockyn-alb-sg</b> (not from the internet)</td></tr>
-    </table>
-    <p>Then open your <b>database's security group</b> and add one inbound rule: PostgreSQL <b>5432</b> from <b>source = clockyn-ecs-sg</b>. This lets the container reach the database. (Later you can remove the open-to-everyone rule on the database.)</p>
+    <h3>Step 2: IAM roles</h3>
+    <p>Express needs <b>two</b> roles, and the backend itself needs a third (what the running code may do). Create the three roles once. If you already created them for an earlier attempt, skip this block.</p>
+    <div class="cmd"><pre>@'
+{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ecs-tasks.amazonaws.com"},"Action":"sts:AssumeRole"}]}
+'@ | Set-Content trust-tasks.json -Encoding ascii
+@'
+{"Version":"2012-10-17","Statement":[{"Sid":"AllowAccessInfrastructureForECSExpressServices","Effect":"Allow","Principal":{"Service":"ecs.amazonaws.com"},"Action":"sts:AssumeRole"}]}
+'@ | Set-Content trust-infra.json -Encoding ascii
 
-    <h3>Step 3: IAM roles</h3>
-    <p>IAM, Roles, Create role, <b>AWS service</b>, use case <b>Elastic Container Service Task</b>. Create two roles:</p>
-    <p><b>3a. <code>clockynEcsExecutionRole</code></b> (lets ECS pull the image, write logs and read your secrets). Attach the managed policy <code>AmazonECSTaskExecutionRolePolicy</code>. After creating it, add an inline policy so it can read secrets:</p>
+aws iam create-role --role-name ecsTaskExecutionRole --assume-role-policy-document file://trust-tasks.json
+aws iam create-role --role-name clockynBackendTaskRole --assume-role-policy-document file://trust-tasks.json
+aws iam create-role --role-name ecsInfrastructureRoleForExpressServices --assume-role-policy-document file://trust-infra.json
+
+aws iam attach-role-policy --role-name ecsTaskExecutionRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+aws iam attach-role-policy --role-name ecsInfrastructureRoleForExpressServices --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRoleforExpressGatewayServices</pre><button class="copy">Copy</button></div>
+    <p>Then add two inline policies in the console (IAM, Roles, the role, <b>Add permissions</b>, <b>Create inline policy</b>, JSON tab).</p>
+    <p><b>2a. On <code>ecsTaskExecutionRole</code></b> (lets ECS read your secrets when the container starts):</p>
     <div class="cmd"><pre>{
   "Version": "2012-10-17",
   "Statement": [
@@ -311,7 +317,7 @@ docker push "${REPO}:1"</pre><button class="copy">Copy</button></div>
       "Resource": "arn:aws:secretsmanager:ap-south-1:YOUR_ACCOUNT_ID:secret:clockyn/*" }
   ]
 }</pre><button class="copy">Copy</button></div>
-    <p><b>3b. <code>clockynBackendTaskRole</code></b> (what the running backend is allowed to do). No managed policy; add this inline policy (replace the bucket name and collection name):</p>
+    <p><b>2b. On <code>clockynBackendTaskRole</code></b> (what the running backend is allowed to do; replace the bucket name and collection name):</p>
     <div class="cmd"><pre>{
   "Version": "2012-10-17",
   "Statement": [
@@ -329,9 +335,10 @@ docker push "${REPO}:1"</pre><button class="copy">Copy</button></div>
     { "Sid": "DetectFaces", "Effect": "Allow", "Action": "rekognition:DetectFaces", "Resource": "*" }
   ]
 }</pre><button class="copy">Copy</button></div>
-    <p>Because the backend runs under this role, you do <b>not</b> put AWS access keys in any setting.</p>
+    <p>Because the backend runs under this role, you do <b>not</b> put AWS access keys in any setting. The same S3 permissions sign the Video Hub upload and playback links (see the Video Hub tab).</p>
+    <p>IAM roles take a moment to become usable. If the create command in Step 4 fails with <code>Unable to assume the service linked role</code> (or a similar assume-role error), wait about a minute and run it again.</p>
 
-    <h3>Step 4: Secrets and logs</h3>
+    <h3>Step 3: Secrets and logs</h3>
     <ol>
       <li><b>Secrets Manager</b>, Store a new secret, type <b>Other type of secret</b>, <b>Key/value</b>. Add one row per secret value:
         <table>
@@ -343,137 +350,190 @@ docker push "${REPO}:1"</pre><button class="copy">Copy</button></div>
           <tr><td><code>FCM_PRIVATE_KEY</code> (and the other <code>FCM_*</code> if you use push)</td><td>from the Firebase service-account file</td></tr>
         </table>
         Name the secret <code>clockyn/backend</code>. Copy its <b>ARN</b> from the secret page (it ends with a random 6-character suffix).</li>
-      <li><b>CloudWatch</b>, Log groups, Create log group <code>/ecs/clockyn-backend</code>, retention 30 days.</li>
+      <li>Create the log group yourself so you control how long logs are kept (a log group that Express creates never expires):
+        <div class="cmd"><pre>aws logs create-log-group --log-group-name /ecs/clockyn-backend --region ap-south-1
+aws logs put-retention-policy --log-group-name /ecs/clockyn-backend --retention-in-days 30 --region ap-south-1</pre><button class="copy">Copy</button></div></li>
     </ol>
 
-    <h3>Step 5: ECS cluster and task definition</h3>
-    <ol>
-      <li><b>Amazon ECS</b>, Clusters, <b>Create cluster</b>, name <code>clockyn</code>, infrastructure <b>AWS Fargate</b> only.</li>
-      <li>ECS, Task definitions, <b>Create new task definition with JSON</b>. Paste this and edit the values in capitals (account id, secret ARN, image tag, your settings). It runs <b>1 vCPU and 2 GB</b>:
-        <div class="cmd"><pre>{
-  "family": "clockyn-backend",
-  "networkMode": "awsvpc",
-  "requiresCompatibilities": ["FARGATE"],
-  "cpu": "1024",
-  "memory": "2048",
-  "runtimePlatform": { "cpuArchitecture": "X86_64", "operatingSystemFamily": "LINUX" },
-  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/clockynEcsExecutionRole",
-  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/clockynBackendTaskRole",
-  "containerDefinitions": [
-    {
-      "name": "clockyn-backend",
-      "image": "YOUR_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/clockyn-backend:1",
-      "essential": true,
-      "portMappings": [{ "containerPort": 8080, "protocol": "tcp" }],
-      "environment": [
-        { "name": "APP_ENV", "value": "production" },
-        { "name": "DB_HOST", "value": "YOUR-RDS-ENDPOINT" },
-        { "name": "DB_PORT", "value": "5432" },
-        { "name": "DB_NAME", "value": "YOUR_DATABASE_NAME" },
-        { "name": "DB_USER", "value": "YOUR_DB_USER" },
-        { "name": "DB_SCHEMA", "value": "clockyn_dev" },
-        { "name": "PGSSLMODE", "value": "require" },
-        { "name": "USER_AUTH", "value": "email" },
-        { "name": "EMAIL_USER", "value": "your-verified-sender@your-domain.com" },
-        { "name": "AWS_SES_REGION", "value": "ap-south-1" },
-        { "name": "AWS_S3_REGION", "value": "ap-south-1" },
-        { "name": "S3_BUCKET_NAME", "value": "YOUR_BUCKET_NAME" },
-        { "name": "FACE_BACKEND", "value": "rekognition" },
-        { "name": "REKOGNITION_REGION", "value": "ap-south-1" },
-        { "name": "REKOGNITION_COLLECTION_ID", "value": "clockyn-faces-dev" },
-        { "name": "REKOGNITION_THRESHOLD", "value": "90" },
-        { "name": "TRUST_PROXY", "value": "1" },
-        { "name": "APP_NAME", "value": "Clockyn" }
-      ],
-      "secrets": [
-        { "name": "DB_PASSWORD", "valueFrom": "YOUR_SECRET_ARN:DB_PASSWORD::" },
-        { "name": "AUTH_TOKEN_SECRET", "valueFrom": "YOUR_SECRET_ARN:AUTH_TOKEN_SECRET::" },
-        { "name": "OPERATOR_API_KEY", "valueFrom": "YOUR_SECRET_ARN:OPERATOR_API_KEY::" },
-        { "name": "RAZORPAY_WEBHOOK_SECRET", "valueFrom": "YOUR_SECRET_ARN:RAZORPAY_WEBHOOK_SECRET::" }
-      ],
-      "healthCheck": {
-        "command": ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=4).status == 200 else 1)\""],
-        "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 120
-      },
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "/ecs/clockyn-backend",
-          "awslogs-region": "ap-south-1",
-          "awslogs-stream-prefix": "backend"
-        }
-      }
-    }
+    <h3>Step 4: Create the Express service</h3>
+    <p>First save the container settings as <code>primary.json</code> in <code>C:\POC\clockyn_backend</code>. Edit the values in capitals (account id, image tag, secret ARN, your settings). It holds your settings, so do not commit it to git. You will edit and re-send this same file for every later release or setting change.</p>
+    <div class="cmd"><pre>{
+  "image": "YOUR_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/clockyn-backend:1",
+  "containerPort": 8080,
+  "awsLogsConfiguration": { "logGroup": "/ecs/clockyn-backend", "logStreamPrefix": "backend" },
+  "environment": [
+    { "name": "APP_ENV", "value": "production" },
+    { "name": "DB_HOST", "value": "YOUR-RDS-ENDPOINT" },
+    { "name": "DB_PORT", "value": "5432" },
+    { "name": "DB_NAME", "value": "YOUR_DATABASE_NAME" },
+    { "name": "DB_USER", "value": "YOUR_DB_USER" },
+    { "name": "DB_SCHEMA", "value": "clockyn_dev" },
+    { "name": "PGSSLMODE", "value": "require" },
+    { "name": "USER_AUTH", "value": "email" },
+    { "name": "EMAIL_USER", "value": "your-verified-sender@your-domain.com" },
+    { "name": "AWS_SES_REGION", "value": "ap-south-1" },
+    { "name": "AWS_S3_REGION", "value": "ap-south-1" },
+    { "name": "S3_BUCKET_NAME", "value": "YOUR_BUCKET_NAME" },
+    { "name": "FACE_BACKEND", "value": "rekognition" },
+    { "name": "REKOGNITION_REGION", "value": "ap-south-1" },
+    { "name": "REKOGNITION_COLLECTION_ID", "value": "clockyn-faces-dev" },
+    { "name": "REKOGNITION_THRESHOLD", "value": "90" },
+    { "name": "TRUST_PROXY", "value": "1" },
+    { "name": "APP_NAME", "value": "Clockyn" }
+  ],
+  "secrets": [
+    { "name": "DB_PASSWORD", "valueFrom": "YOUR_SECRET_ARN:DB_PASSWORD::" },
+    { "name": "AUTH_TOKEN_SECRET", "valueFrom": "YOUR_SECRET_ARN:AUTH_TOKEN_SECRET::" },
+    { "name": "OPERATOR_API_KEY", "valueFrom": "YOUR_SECRET_ARN:OPERATOR_API_KEY::" },
+    { "name": "RAZORPAY_WEBHOOK_SECRET", "valueFrom": "YOUR_SECRET_ARN:RAZORPAY_WEBHOOK_SECRET::" }
   ]
-}</pre><button class="copy">Copy</button></div></li>
-    </ol>
-    <p>Add the other settings from the backend <code>.env</code> the same way (for example <code>SELLER_NAME</code>, <code>SELLER_GSTIN</code>, <code>SUPPORT_EMAIL</code>, <code>ANDROID_STORE_URL</code>, <code>IOS_STORE_URL</code>, <code>CORS_ALLOWED_ORIGINS</code>). In the secret reference, the format is <code>SECRET_ARN:KEY::</code>.</p>
+}</pre><button class="copy">Copy</button></div>
+    <p>Add the other settings from the backend <code>.env</code> the same way (for example <code>SELLER_NAME</code>, <code>SELLER_GSTIN</code>, <code>SUPPORT_EMAIL</code>, <code>ANDROID_STORE_URL</code>, <code>IOS_STORE_URL</code>, <code>CORS_ALLOWED_ORIGINS</code>). <code>CORS_ALLOWED_ORIGINS</code> is a comma list of exact origins; once it is set, only those sites can call the API from a browser, so include the admin web app's address (see the Video Hub tab). The secret reference format <code>SECRET_ARN:KEY::</code> is the standard ECS one; if the service fails to start with a secrets error, check these ARNs first.</p>
     <div class="box danger"><strong>Do NOT add</strong> <code>OTP_BYPASS</code>, <code>REQUIRE_AUTH</code>, or any AWS access key. Leave <code>REQUIRE_AUTH</code> out until the app has been tested end to end.</div>
+    <p>Create the service (PowerShell, in the same folder). It runs <b>1 vCPU and 2 GB</b>, one task, health check on <code>/health</code>:</p>
+    <div class="cmd"><pre>cd C:\POC\clockyn_backend
+aws ecs create-express-gateway-service `
+  --service-name clockyn-backend `
+  --execution-role-arn arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole `
+  --infrastructure-role-arn arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsInfrastructureRoleForExpressServices `
+  --task-role-arn arn:aws:iam::YOUR_ACCOUNT_ID:role/clockynBackendTaskRole `
+  --primary-container file://primary.json `
+  --cpu 1024 --memory 2048 `
+  --health-check-path /health `
+  --scaling-target "minTaskCount=1,maxTaskCount=1" `
+  --region ap-south-1 `
+  --monitor-resources</pre><button class="copy">Copy</button></div>
+    <p>It shows the resources as they are created (press <kbd>Ctrl</kbd>+<kbd>C</kbd> to stop watching; the service keeps deploying). The first deployment takes several minutes. The output includes the <b>service ARN</b>; keep it, every later command uses it. To find it again, and the address of the service:</p>
+    <div class="cmd"><pre>aws ecs list-services --cluster default --region ap-south-1
+$SVC = "arn:aws:ecs:ap-south-1:YOUR_ACCOUNT_ID:service/default/YOUR-SERVICE-NAME"
+aws ecs describe-express-gateway-service --service-arn $SVC --region ap-south-1 --query "service.activeConfigurations[0].ingressPaths[].endpoint"</pre><button class="copy">Copy</button></div>
+    <p>The address looks like <code>https://clockyn-backend-xxxx.ecs.ap-south-1.on.aws</code>. It is already <b>HTTPS</b>, which is what release builds of the app need. The health check path Express uses by default is <code>/ping</code>; the command above sets <code>/health</code>, which is the backend's real health endpoint.</p>
 
-    <h3>Step 6: Load balancer with HTTPS</h3>
-    <ol>
-      <li><b>Certificate (DNS at GoDaddy):</b> <b>AWS Certificate Manager</b> (same region as the load balancer, <code>ap-south-1</code>), Request, <b>public certificate</b>, domain name <code>api.your-domain.com</code> (use a <b>subdomain</b> like <code>api</code>), validation method <b>DNS validation</b>, Request. Then:
-        <ol>
-          <li>Open the certificate. Under <b>Domains</b> you see a <b>CNAME name</b> and a <b>CNAME value</b>. Keep this tab open.</li>
-          <li>In a new tab, open <b>GoDaddy</b>, My Products, your domain, <b>DNS</b>, <b>Add New Record</b>. Type <b>CNAME</b>.</li>
-          <li><b>Name:</b> paste the CNAME name <b>without your domain at the end</b>. ACM shows <code>_a1b2c3.api.your-domain.com.</code>; enter only <code>_a1b2c3.api</code>.</li>
-          <li><b>Value:</b> paste the CNAME value, for example <code>_x9y8z7.acm-validations.aws.</code> (if GoDaddy rejects the final dot, remove it). TTL: 600 seconds or the lowest offered. Save.</li>
-          <li>Back in ACM, wait until the status changes to <b>Issued</b>. It usually takes 5 to 30 minutes after the record is saved. Leave the validation record in place: ACM uses it to renew the certificate automatically.</li>
-        </ol>
-        <p>The app's release builds need HTTPS, so this step is required. If your domain has <b>CAA</b> records in GoDaddy, one of them must allow <code>amazon.com</code>.</p></li>
-      <li><b>Target group:</b> EC2, Target groups, Create. Type <b>IP addresses</b>, protocol HTTP, port <b>8080</b>, your VPC. Health check path <b>/health</b>, success code 200. Do not register targets; ECS does that. Name it <code>clockyn-backend-tg</code>.</li>
-      <li><b>Load balancer:</b> EC2, Load balancers, Create, <b>Application Load Balancer</b>, name <code>clockyn-alb</code>, <b>Internet-facing</b>, your VPC, <b>two public subnets</b> in different zones, security group <code>clockyn-alb-sg</code>.
-        <ul>
-          <li>Listener <b>HTTPS 443</b>: forward to <code>clockyn-backend-tg</code>, using the certificate from above.</li>
-          <li>Listener <b>HTTP 80</b>: redirect to HTTPS 443.</li>
-        </ul></li>
-      <li><b>Chat connections:</b> open the load balancer, Attributes, Edit, set <b>Idle timeout = 300 seconds</b> (the chat sockets are quiet between messages; the default 60 seconds would drop them).</li>
-    </ol>
+    <h3>Step 5: Database access and tables</h3>
+    <p><b>Let the service reach the database.</b> Express creates its own security group. Read its id, then open your <b>database's security group</b> (EC2, Security Groups) and add one inbound rule: PostgreSQL <b>5432</b> from <b>source = that security group</b>. The database must be reachable from the VPC the service uses (Express uses the default VPC and its public subnets unless you pass <code>--network-configuration "subnets=...,securityGroups=..."</code>).</p>
+    <div class="cmd"><pre>aws ecs describe-express-gateway-service --service-arn $SVC --region ap-south-1 --query "service.activeConfigurations[0].networkConfiguration"</pre><button class="copy">Copy</button></div>
+    <p><b>Create the tables (one time).</b> The simplest way is from your PC if it can reach the database (section 4 of the first tab: <code>python migrate.py --all</code>). If it cannot, run the migration runner as a one-off task using the service's own task definition:</p>
+    <div class="cmd"><pre>$d   = aws ecs describe-express-gateway-service --service-arn $SVC --region ap-south-1 | ConvertFrom-Json
+$cfg = $d.service.activeConfigurations[0]
+@{ containerOverrides = @(@{ name = "Main"; command = @("python","migrate.py","--all") }) } | ConvertTo-Json -Depth 5 | Set-Content overrides.json -Encoding ascii
+@{ awsvpcConfiguration = @{ subnets = @($cfg.networkConfiguration.subnets); securityGroups = @($cfg.networkConfiguration.securityGroups); assignPublicIp = "ENABLED" } } | ConvertTo-Json -Depth 5 | Set-Content netcfg.json -Encoding ascii
+aws ecs run-task --cluster default --launch-type FARGATE --task-definition $cfg.taskDefinitionArn --network-configuration file://netcfg.json --overrides file://overrides.json --region ap-south-1</pre><button class="copy">Copy</button></div>
+    <p>Open the task logs (CloudWatch, <code>/ecs/clockyn-backend</code>): you should see <code>done baseline applied</code> (or <code>noop</code> if the schema already exists). <b>Less certain:</b> the container name <code>Main</code> is what Express uses; if the run fails with a container-name error, list the real name with <code>aws ecs describe-task-definition --task-definition $cfg.taskDefinitionArn --query "taskDefinition.containerDefinitions[].name"</code>. Use <code>python,migrate.py,--status</code> the same way to see what is applied. The extra tables added by hand at the end of <code>clockyn_ddl_latest.sql</code> (for example the Video Hub tables) are not created by the runner; run those in DBeaver.</p>
 
-    <h3>Step 7: ECS service</h3>
-    <ol>
-      <li>ECS, Clusters, <code>clockyn</code>, Services, <b>Create</b>. Compute: <b>Launch type = Fargate</b>. Task definition: <code>clockyn-backend</code>, latest revision.</li>
-      <li><b>Desired tasks = 1</b>.</li>
-      <li>Networking: your VPC, the <b>public subnets</b>, security group <code>clockyn-ecs-sg</code>, <b>Public IP = ON</b> (this lets the container reach ECR, S3, SES and Rekognition without a paid NAT gateway; the security group still blocks everything from the internet except the load balancer).</li>
-      <li>Load balancing: <b>Application Load Balancer</b>, use the existing <code>clockyn-alb</code>, container <code>clockyn-backend 8080</code>, listener 443, target group <code>clockyn-backend-tg</code>. Health check grace period <b>120</b> seconds.</li>
-      <li>Create. Wait until the task shows <b>Running</b> and the target group shows <b>healthy</b>. If the task keeps stopping, open the task, Logs tab, and read the error (the usual causes are a wrong setting, no database access, or a secret ARN typo).</li>
-    </ol>
+    <h3>Step 6: Chat connections (load balancer idle timeout)</h3>
+    <p>The chat sockets are quiet between messages, and an ALB closes idle connections after 60 seconds by default. Open <b>EC2, Load balancers</b>, select the load balancer Express created for the service (your service in the ECS console links to it), <b>Attributes, Edit</b>, set <b>Idle timeout = 300 seconds</b>, Save. This is an ordinary setting on a load balancer in your account. If chat starts dropping every minute again after a release, check that this value is still 300.</p>
 
-    <h3>Step 8: Create the database tables (one time)</h3>
-    <p>The tables are built by the migration runner. Run it once as a one-off task:</p>
+    <h3>Step 7: Final checks</h3>
     <ol>
-      <li>ECS, Task definitions, <code>clockyn-backend</code>, Deploy, <b>Run task</b>. Cluster <code>clockyn</code>, Fargate, same subnets and <code>clockyn-ecs-sg</code>, public IP ON.</li>
-      <li>Under <b>Container overrides</b>, command override: <code>python,migrate.py,--all</code></li>
-      <li>Run, then open the task logs. You should see <code>done baseline applied</code> (or <code>noop</code> if the schema already exists). It writes only into the schema named in <code>DB_SCHEMA</code>.</li>
+      <li>Open <code>https://YOUR-SERVICE-ADDRESS/health</code> (should say ok) and <code>/ready</code> (ok means the database is reachable).</li>
+      <li>Open <code>/auth/config</code>. It should show <code>"user_auth": "email"</code>.</li>
+      <li>In the app, set <code>EXPO_PUBLIC_API_BASE_URL=https://YOUR-SERVICE-ADDRESS</code> (section 3 for local testing, the Expo build tab for EAS builds). In the admin web app, set <code>API_BASE</code> in <code>UI_ADMIN_APP\config.js</code> to the same address (it may still point at the old App Runner address).</li>
+      <li>Razorpay webhook: <code>https://YOUR-SERVICE-ADDRESS/webhook/razorpay</code>, with the same secret as <code>RAZORPAY_WEBHOOK_SECRET</code>.</li>
     </ol>
-    <p>Do the same with <code>python,migrate.py,--status</code> any time you want to see what is applied. For every later release that has new migrations, run <code>migrate.py --all</code> again <b>before</b> switching the service to the new image.</p>
-
-    <h3>Step 9: DNS name and the final checks</h3>
-    <ol>
-      <li><b>GoDaddy DNS:</b> in EC2, Load balancers, open <code>clockyn-alb</code> and copy its <b>DNS name</b> (like <code>clockyn-alb-123456789.ap-south-1.elb.amazonaws.com</code>). In GoDaddy, your domain, DNS, Add New Record: type <b>CNAME</b>, <b>Name = api</b>, <b>Value = the load balancer DNS name</b> (without <code>http://</code>), TTL 600 seconds, Save. Use the <b>load balancer name</b>, never an IP address: the load balancer's addresses change. GoDaddy cannot point the bare domain (<code>your-domain.com</code>) at a load balancer, which is why the API uses the <code>api</code> subdomain. Wait a few minutes for it to spread.</li>
-      <li>Check it resolves first (PowerShell): <code>nslookup api.your-domain.com</code> should show the load balancer. Then open <code>https://api.your-domain.com/health</code> (should say ok) and <code>https://api.your-domain.com/ready</code> (ok means the database is reachable).</li>
-      <li>Open <code>https://api.your-domain.com/auth/config</code>. It should show <code>"user_auth": "email"</code>.</li>
-      <li>In the app, set <code>EXPO_PUBLIC_API_BASE_URL=https://api.your-domain.com</code> (section 3 for local testing, the Expo build tab for EAS builds).</li>
-    </ol>
+    <div class="box warn"><strong>Your own domain (optional).</strong> The Express address is already HTTPS, so no GoDaddy record is needed for the app to work. Pointing something like <code>api.your-domain.com</code> at it is not covered by the Express Mode documentation I checked, so it is not in this guide. If you want it, ask and we will set it up (a certificate, a rule on the Express load balancer, and a CNAME at GoDaddy) and test it together.</div>
 
     <h3>Releasing a new version later</h3>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;backend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_backend
 docker build --platform linux/amd64 -t clockyn-backend:2 .
 docker tag clockyn-backend:2 "${REPO}:2"
 docker push "${REPO}:2"</pre><button class="copy">Copy</button></div>
     <ol>
-      <li>If this release has new migrations, run the one-off task (Step 8) first.</li>
-      <li>ECS, Task definitions, <code>clockyn-backend</code>, open the latest revision, <b>Create new revision</b>, change the image tag to <code>:2</code>, Create.</li>
-      <li>ECS, the service, <b>Update</b>, choose the new revision, Update. ECS starts the new task, waits for it to be healthy, then stops the old one.</li>
-      <li><b>Roll back:</b> update the service to the previous task definition revision.</li>
+      <li>If this release has new migrations, run them first (Step 5).</li>
+      <li>In <code>primary.json</code> change the image tag to <code>:2</code> (or change any setting).</li>
+      <li>Send the whole file again:
+        <div class="cmd"><pre>aws ecs update-express-gateway-service --service-arn $SVC --primary-container file://primary.json --region ap-south-1 --monitor-resources</pre><button class="copy">Copy</button></div>
+        Always send the complete file (image, settings and secrets). Do not rely on a partial update keeping your other settings. Express releases with a <b>canary</b>: it starts the new task, watches it, then moves traffic, and rolls back by itself if the 5XX alarm fires.</li>
+      <li><b>Roll back by hand:</b> put the previous image tag back in <code>primary.json</code> and run the same command.</li>
     </ol>
 
     <h3>Good to know</h3>
     <ul>
-      <li><b>Cost:</b> you pay for the running task, the load balancer (hourly), logs, and ECR storage. There is no NAT gateway in this setup.</li>
-      <li><b>Webhook:</b> point the Razorpay webhook to <code>https://api.your-domain.com/webhook/razorpay</code> and use the same secret as <code>RAZORPAY_WEBHOOK_SECRET</code>.</li>
+      <li><b>Cost:</b> you pay for the running task, the load balancer (hourly, shared by Express services), logs and ECR storage. There is no NAT gateway in this setup.</li>
+      <li><b>Watch or inspect:</b> <code>aws ecs monitor-express-gateway-service --service-arn $SVC</code> and <code>describe-express-gateway-service</code>. Logs are in CloudWatch under <code>/ecs/clockyn-backend</code>.</li>
+      <li><b>Remove everything:</b> <code>aws ecs delete-express-gateway-service --service-arn $SVC --monitor-resources</code>. The log group and ECR images stay until you delete them.</li>
       <li><b>Later, scaling:</b> more than one task needs the live chat updates moved to a shared service first. Ask me when you reach that point.</li>
     </ul>
+  </section>
+  </div>
+  <div class="panel" role="tabpanel" id="tab-videos" aria-labelledby="btn-videos" hidden>
+  <section id="videos">
+    <h2>Video Hub (guide videos) <span class="tag">database + S3 + admin web app</span></h2>
+    <p>The app's <b>Support</b> tab opens a <b>Video Hub</b> with short guide videos. The files live in S3 (folder <code>guide_videos/</code>); two database tables hold the list and who watched. You manage the videos from the admin web app (<code>UI_ADMIN_APP</code>): upload, rename, activate / deactivate, delete, and a <b>Video Views</b> page showing which organization and user opened which video.</p>
+
+    <h3>Step 1: Database tables (once)</h3>
+    <p>Run this in DBeaver (the same statements are at the end of <code>clockyn_ddl_latest.sql</code>). The app lists only rows with <code>status = 1</code>.</p>
+    <div class="cmd"><pre>CREATE TABLE IF NOT EXISTS clockyn_dev.support_video (
+	id int4 GENERATED BY DEFAULT AS IDENTITY NOT NULL,
+	video_name varchar(150) NOT NULL,
+	s3_path varchar(500) NOT NULL,
+	status int2 DEFAULT 1 NOT NULL,   -- 1 = active (shown in the app), 0 = inactive (hidden)
+	created_at timestamptz DEFAULT now() NOT NULL,
+	CONSTRAINT support_video_pkey PRIMARY KEY (id),
+	CONSTRAINT support_video_status_check CHECK (status IN (0, 1))
+);
+
+CREATE TABLE IF NOT EXISTS clockyn_dev.support_video_view (
+	id int8 GENERATED BY DEFAULT AS IDENTITY NOT NULL,
+	video_id int4 NOT NULL,
+	video_name varchar(150) NOT NULL,
+	user_id varchar(36) NOT NULL,
+	org_id varchar(36) NOT NULL,
+	viewed_at timestamptz DEFAULT now() NOT NULL,
+	CONSTRAINT support_video_view_pkey PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_support_video_view_video_id ON clockyn_dev.support_video_view USING btree (video_id);
+CREATE INDEX IF NOT EXISTS idx_support_video_view_viewed_at ON clockyn_dev.support_video_view USING btree (viewed_at DESC);</pre><button class="copy">Copy</button></div>
+
+    <h3>Step 2: S3 folder</h3>
+    <p>Videos go in the folder <code>guide_videos/</code> at the root of the bucket named in <code>S3_BUCKET_NAME</code>. You do not create it: the first upload creates it. Uploads from the admin page are stored as <code>guide_videos/&lt;random-id&gt;_&lt;filename&gt;.mp4</code>.</p>
+
+    <h3>Step 3: S3 CORS (needed to upload from the admin web app)</h3>
+    <p>The browser sends the video straight to S3, so the bucket must allow it. S3 console, your bucket, <b>Permissions</b>, <b>Cross-origin resource sharing (CORS)</b>, Edit, paste. <b>For testing from your PC</b> (any port on localhost):</p>
+    <div class="cmd"><pre>[
+  {
+    "AllowedOrigins": ["http://localhost:*", "http://127.0.0.1:*"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
+  }
+]</pre><button class="copy">Copy</button></div>
+    <p><b>When the admin site is hosted</b>, add its real address (replace the localhost entries or keep both):</p>
+    <div class="cmd"><pre>[
+  {
+    "AllowedOrigins": ["https://YOUR-ADMIN-SITE", "http://localhost:*", "http://127.0.0.1:*"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
+  }
+]</pre><button class="copy">Copy</button></div>
+    <div class="box warn"><strong>Serve the admin page over http.</strong> If you double-click the HTML file (<code>file://</code>), the browser sends the origin <code>null</code>, which S3 cannot match. Use the local server in Step 5.</div>
+
+    <h3>Step 4: Backend settings and permissions</h3>
+    <ul>
+      <li><b>Backend CORS:</b> if <code>CORS_ALLOWED_ORIGINS</code> is set on the backend, add the admin site's exact origin including the port, for example <code>http://localhost:5500</code>. When it is unset or <code>*</code> every site is allowed.</li>
+      <li><b>IAM:</b> the backend's task role already has <code>s3:GetObject</code>, <code>s3:PutObject</code> and <code>s3:DeleteObject</code> on the bucket (Express tab, Step 2b). The upload and playback links are signed with that role, so nothing more is needed.</li>
+      <li><b>Who can manage:</b> upload, activate / deactivate, rename and delete need a <b>super admin</b> (role 1 in the operator table, with their email filled in). Other operators can view the list, preview, and see Video Views.</li>
+    </ul>
+
+    <h3>Step 5: Run the admin web app on your PC</h3>
+    <div class="cmd"><pre>cd C:\POC\clockyn_frontend\UI_ADMIN_APP
+python -m http.server 5500</pre><button class="copy">Copy</button></div>
+    <p>Open <code>http://localhost:5500/login.html</code> and sign in with your email. The API address is the first line of <code>config.js</code>: set <code>API_BASE</code> to your Express address (or <code>http://localhost:8080</code> for a local backend).</p>
+
+    <h3>Step 6: Upload and manage videos</h3>
+    <ol>
+      <li>Admin web app, sidebar, <b>Video Hub</b>, <b>Upload Video</b>. Give it a name and choose a video file (video files only, up to 500 MB; compress bigger ones). A progress bar shows the upload.</li>
+      <li>New videos are <b>Active</b> and appear in the app's Support, Video Hub. <b>Deactivate</b> hides one without deleting it. <b>Delete</b> removes the row and the file from S3.</li>
+      <li>Prefer to add one by hand? Put the file under <code>guide_videos/</code> in S3, then run (SQL):
+        <div class="cmd"><pre>INSERT INTO clockyn_dev.support_video (video_name, s3_path)
+VALUES ('Getting started', 'guide_videos/getting-started.mp4');</pre><button class="copy">Copy</button></div></li>
+      <li><b>Video Views</b> (sidebar): every tap in the app is recorded with the user and organization. Filter by video, switch to <b>By Organization</b> to see which organizations watch what, and export to Excel or PDF.</li>
+    </ol>
+
+    <h3>Step 7: The app</h3>
+    <p>The Video Hub uses a new native video player (<code>expo-video</code>), so rebuild the development build once (Expo build tab, <code>eas build --profile development</code>). The development build you have installed now does not include it, so opening a video fails until you install the new build.</p>
   </section>
   </div>
   <div class="panel" role="tabpanel" id="tab-eas" aria-labelledby="btn-eas" hidden>
@@ -496,7 +556,7 @@ eas login
 eas whoami</pre><button class="copy">Copy</button></div>
 
     <h3>Step 2: link the app to an Expo project (first time only)</h3>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;frontend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_frontend
 eas init</pre><button class="copy">Copy</button></div>
     <p>This creates the project on Expo and prints its <b>project id</b>. The app reads that id from the variable <code>EAS_PROJECT_ID</code> (see <code>app.config.ts</code>), so add it in Step 3 and also set it in your terminal: <code>$env:EAS_PROJECT_ID = "the-id"</code>. If <code>eas init</code> asks to edit the app config, let it point to that variable and not hard-code the id.</p>
 
@@ -522,7 +582,7 @@ eas env:create --name GOOGLE_SERVICE_INFO_PLIST --type file --value ./GoogleServ
       <tr><td>Play Store release (Android app bundle)</td><td><code>eas build --profile production --platform android</code></td></tr>
       <tr><td>App Store release (iOS)</td><td><code>eas build --profile production --platform ios</code></td></tr>
     </table>
-    <div class="cmd"><pre>cd C:\POC\pa&#95;frontend\Clockyn
+    <div class="cmd"><pre>cd C:\POC\clockyn_frontend
 eas build --profile development --platform android</pre><button class="copy">Copy</button></div>
     <p>When it finishes, EAS shows an install link and a QR code (internal profiles). Install it on the phone, then run <code>npx expo start --dev-client -c</code> on your PC (section 6).</p>
     <ul>
@@ -559,12 +619,17 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
       <tr><td>Face punch rejects the right person</td><td>Lower <code>REKOGNITION_THRESHOLD</code> a little (for example 85) and ask them to register again in good light.</td></tr>
       <tr><td>Everyone gets "too many requests"</td><td>Behind a load balancer set <code>TRUST_PROXY=1</code>, otherwise all users share one address for the rate limits.</td></tr>
       <tr><td>Photos upload fails on iPhone (HEIC)</td><td>The app converts to JPEG before upload. Older app builds are accepted by the backend on most upload routes; face routes need JPEG.</td></tr>
-      <tr><td>Certificate stays "Pending validation" in ACM</td><td>The GoDaddy CNAME is wrong. The <b>Name</b> must not repeat your domain (<code>_a1b2c3.api</code>, not <code>_a1b2c3.api.your-domain.com</code>), and the value must match exactly. Check with <code>nslookup -type=CNAME _a1b2c3.api.your-domain.com</code>.</td></tr>
-      <tr><td><code>api.your-domain.com</code> does not open</td><td>The GoDaddy CNAME <code>api</code> must point to the load balancer DNS name, and the HTTPS listener needs the issued certificate. DNS changes can take up to an hour with a long TTL. Test with <code>nslookup api.your-domain.com</code>.</td></tr>
-      <tr><td>ECS task stops right after starting</td><td>Open the task, Logs tab. Usual causes: a setting or secret name typo (check the <code>secrets</code> ARNs), the container cannot reach the database (database security group must allow <code>clockyn-ecs-sg</code> on 5432), or the image tag does not exist in ECR.</td></tr>
-      <tr><td>ECS: target group stays unhealthy</td><td>The container must answer <code>/health</code> on port 8080 and <code>clockyn-ecs-sg</code> must allow 8080 from <code>clockyn-alb-sg</code>. Give the service a health check grace period of 120 seconds.</td></tr>
-      <tr><td>ECS: "CannotPullContainerError"</td><td>The execution role is missing <code>AmazonECSTaskExecutionRolePolicy</code>, or the task has no route to ECR: turn <b>Public IP ON</b> in the service networking (public subnets) or add a NAT gateway / VPC endpoints.</td></tr>
-      <tr><td>Chat disconnects every minute</td><td>Set the load balancer idle timeout to 300 seconds (Step 6).</td></tr>
+      <tr><td>Express: create fails with "Unable to assume the service linked role"</td><td>The new IAM roles have not propagated yet. Wait about a minute and run the command again.</td></tr>
+      <tr><td>Express: the service address does not open</td><td>The first deployment takes several minutes. Watch it with <code>aws ecs monitor-express-gateway-service --service-arn ...</code> until the status is <code>ACTIVE</code>, and check the address with <code>describe-express-gateway-service</code> (Express tab, Step 4).</td></tr>
+      <tr><td>Express: the task stops right after starting</td><td>Open the logs in CloudWatch (<code>/ecs/clockyn-backend</code>). Usual causes: a setting or secret ARN typo in <code>primary.json</code> (check the <code>secrets</code> values), the execution role cannot read the secret, the container cannot reach the database (the database security group must allow the service's security group on 5432), or the image tag does not exist in ECR.</td></tr>
+      <tr><td>Express: the health check keeps failing</td><td>The container must answer <code>/health</code> on port 8080. Express checks <code>/ping</code> unless you set <code>--health-check-path /health</code>, and the container port must be <code>8080</code> in <code>primary.json</code>.</td></tr>
+      <tr><td>Express: "CannotPullContainerError"</td><td>The execution role is missing <code>AmazonECSTaskExecutionRolePolicy</code>, the image tag is not in ECR, or the image was built for another CPU type. Build with <code>--platform linux/amd64</code>.</td></tr>
+      <tr><td>After an update, settings or secrets disappeared</td><td>Send the complete <code>primary.json</code> every time (image, environment and secrets), not just the image.</td></tr>
+      <tr><td>Chat disconnects every minute</td><td>Set the load balancer idle timeout to 300 seconds (Express tab, Step 6) and re-check it after a release.</td></tr>
+      <tr><td>Video upload: "Upload to storage failed"</td><td>The S3 bucket CORS does not allow your site. The origin must match exactly (for local use <code>http://localhost:*</code>) and <code>PUT</code> must be allowed (Video Hub tab, Step 3). Open the page from <code>http://localhost:...</code>, not as a file.</td></tr>
+      <tr><td>Admin pages show a CORS error or "Failed to load"</td><td>If <code>CORS_ALLOWED_ORIGINS</code> is set on the backend, add the admin site's exact origin including the port. Also check <code>API_BASE</code> in <code>UI_ADMIN_APP\config.js</code>.</td></tr>
+      <tr><td>Video upload or delete answers "Only role_id=1 admins can perform this action"</td><td>Only a super admin can manage videos. The operator row needs <code>role_id = 1</code> and their email filled in.</td></tr>
+      <tr><td>A video does not open in the app</td><td>Install the new development build (it adds the video player). Also check the video is Active and its file exists in S3 under <code>guide_videos/</code>.</td></tr>
       <tr><td>EAS build: no project id / wrong project</td><td>Set <code>EAS_PROJECT_ID</code> (Step 2 and 3) for the environment you build.</td></tr>
       <tr><td>EAS build works but the app cannot reach the backend</td><td>Release builds block plain <code>http://</code>. Use the HTTPS address in the EAS environment variable.</td></tr>
       <tr><td>Expo Go says the project is incompatible</td><td>Expo Go on the stores is SDK 57; this app is SDK 58. Use a development build (Expo build tab).</td></tr>
@@ -576,7 +641,7 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
 </main>
 <script>
 (function () {
-  var TABS = ['run', 'rekognition', 'ecs', 'eas', 'trouble'].map(function (x) { return x; });
+  var TABS = ['run', 'rekognition', 'ecs', 'videos', 'eas', 'trouble'].map(function (x) { return x; });
   var root = document.documentElement;
 
   /* ---------- tabs ---------- */
