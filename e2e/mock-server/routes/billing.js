@@ -195,6 +195,13 @@ function register(r) {
     c.s.tickets.unshift({ id: `tkt-${c.s.seq.ticket}`, org_id: D.resolveOrg(c.s, c.b.org_id), user_id: c.b.user_id, sub_id: subject.sub_id, sub_name: subject.sub_name, client_msg: c.b.message, photo_url: photo ? `/files/support/${c.s.seq.ticket}.png` : null, status: 'open', created_at: T.isoNow(), replies: [] });
     return ok({ message: 'Your request has been submitted' });
   });
+  r.get('/support/videos', (c) => c.s.videos.filter((v) => v.status === 1).map((v) => ({ id: v.id, name: v.video_name, url: `${c.origin}/guide/${v.path}?sig=mock` })));
+  r.post('/support/videos/:id/view', (c) => {
+    const v = c.s.videos.find((x) => String(x.id) === c.p.id && x.status === 1);
+    if (!v) fail(404, 'Video not found');
+    c.s.videoViews.push({ video_id: v.id, video_name: v.video_name, user_id: c.b.user_id, org_id: c.b.org_id, viewed_at: T.isoNow() });
+    return ok({});
+  });
   r.post('/support/:id/reply', (c) => {
     const t = c.s.tickets.find((x) => x.id === c.p.id);
     if (!t) return bizFail('Ticket not found');

@@ -325,6 +325,8 @@ async function main() {
   const inv = await fetch(`${BASE}/invoice/download?user_id=${ADM}&org_id=${ORG}&invoice_number=INV-2026-0001`);
   if (inv.status !== 200) { failures += 1; console.log('FAIL invoice download'); }
   await call('GET', '/support/subjects', { check: isList(3) });
+  await call('GET', '/support/videos', { check: isList(2) }); // only the active ones
+  await call('POST', '/support/videos/1/view', { body: { user_id: ADM, org_id: ORG }, check: isOk });
   await call('GET', `/support/requests/${ORG}`, { check: isList(2) });
   const sf = new FormData(); sf.append('subject', 'Other'); sf.append('message', 'help'); sf.append('user_id', ADM); sf.append('org_id', ORG);
   await call('POST', '/support/submit', { form: sf, check: isOk });

@@ -26,18 +26,31 @@ export function VideoPlayerModal({ video, onClose }: VideoPlayerModalProps) {
 function PlayerContent({ video, onClose }: { video: SupportVideo; onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const player = useVideoPlayer(video.url, (p) => {
-    p.play();
-  });
+  const player = useVideoPlayer(video.url);
 
+  // Start once the view is mounted: on web the player has no <video> element yet while it is being created, so a
+  // `play()` in the setup callback would do nothing. A browser may still refuse autoplay; the controls then show Play.
+  useEffect(() => {
+    player.play();
+  }, [player]);
+
+  // Loading ends at the first picture, at readyToPlay, or when playback starts, whichever comes first (a browser that
+  // does not autoplay never reaches readyToPlay, which used to leave the spinner on top of the video).
+  const markReady = () => setStatus((s) => (s === 'loading' ? 'ready' : s));
   useEffect(() => {
     const apply = (s: string) => {
-      if (s === 'readyToPlay') setStatus('ready');
+      if (s === 'readyToPlay') setStatus((cur) => (cur === 'error' ? cur : 'ready'));
       else if (s === 'error') setStatus('error');
     };
     apply(player.status);
-    const sub = player.addListener('statusChange', ({ status: s }) => apply(s));
-    return () => sub.remove();
+    const statusSub = player.addListener('statusChange', ({ status: s }) => apply(s));
+    const playingSub = player.addListener('playingChange', ({ isPlaying }) => {
+      if (isPlaying) markReady();
+    });
+    return () => {
+      statusSub.remove();
+      playingSub.remove();
+    };
   }, [player]);
 
   // Web: the RN modal only hears Escape while focus is inside it.
@@ -63,18 +76,24 @@ function PlayerContent({ video, onClose }: { video: SupportVideo; onClose: () =>
             </Text>
           </View>
         ) : (
-          <VideoView
-            player={player}
-            style={{ flex: 1 }}
-            nativeControls
-            fullscreenOptions={{ enable: true }}
-            contentFit="contain"
-            accessibilityLabel={video.name}
-          />
+          // An explicit full-size box inside a clipped container: on web a bare `flex: 1` <video> grows to its intrinsic
+          // height (a portrait phone recording becomes taller than the window and its controls fall off screen).
+          <View style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <VideoView
+              player={player}
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+              nativeControls
+              fullscreenOptions={{ enable: true }}
+              contentFit="contain"
+              playsInline
+              onFirstFrameRender={markReady}
+              accessibilityLabel={video.name}
+            />
+          </View>
         )}
 
         {status === 'loading' ? (
-          <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <View testID="video-loading" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
             <Spinner size="large" color={PLAYER_FG} />
           </View>
         ) : null}

@@ -95,6 +95,13 @@ function createState() {
     advances: [],
     paid: {}, // `${month}-${year}` -> {userId: date}
     tickets: [],
+    // Video Hub (GET /support/videos lists the active ones; POST /support/videos/:id/view logs a tap)
+    videos: [
+      { id: 1, video_name: 'Getting started', path: 'getting-started.mp4', status: 1 },
+      { id: 2, video_name: 'Marking attendance with your face', path: 'mark-attendance.mp4', status: 1 },
+      { id: 3, video_name: 'Retired walkthrough', path: 'retired.mp4', status: 0 },
+    ],
+    videoViews: [],
     subjects: [
       { sub_id: 1, sub_name: 'Login issue' },
       { sub_id: 2, sub_name: 'Billing and plans' },

@@ -172,7 +172,7 @@
       <div class="form-group">
         <label for="u-file">Video file *</label>
         <input type="file" id="u-file" accept="video/*" />
-        <div class="form-hint">MP4 recommended. Maximum 500 MB.</div>
+        <div class="form-hint">Use MP4 (H.264 video, AAC audio) so it plays on every phone and browser. Maximum 500 MB.</div>
       </div>
       <div class="progress-wrap" id="u-progress-wrap">
         <div class="progress-track"><div class="progress-bar" id="u-progress-bar"></div></div>
@@ -401,6 +401,31 @@
       document.getElementById('upload-modal').classList.remove('open');
     }
 
+    /* Can THIS browser decode the video track? iPhone HEVC .mov files often cannot be played outside Safari, so staff
+       would get a blank player. A file with no decodable picture reports a width of 0 (or an error). */
+    function probePlayable(file) {
+      return new Promise(function (resolve) {
+        var url = URL.createObjectURL(file);
+        var v = document.createElement('video');
+        var done = false;
+        var timer = setTimeout(function () { finish(true); }, 15000); /* too slow to tell: do not block the upload */
+        function finish(ok) {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          v.removeAttribute('src');
+          v.load();
+          URL.revokeObjectURL(url);
+          resolve(ok);
+        }
+        v.preload = 'metadata';
+        v.muted = true;
+        v.onloadedmetadata = function () { finish(v.videoWidth > 0 && v.videoHeight > 0); };
+        v.onerror = function () { finish(false); };
+        v.src = url;
+      });
+    }
+
     function putToS3(url, file, contentType) {
       return new Promise(function (resolve, reject) {
         var xhr = new XMLHttpRequest();
@@ -430,6 +455,14 @@
       if (!file) { errEl.textContent = 'Choose a video file.'; return; }
       if (!file.type || file.type.indexOf('video/') !== 0) { errEl.textContent = 'Only video files can be uploaded.'; return; }
       if (file.size > MAX_BYTES) { errEl.textContent = 'This file is larger than 500 MB. Please compress it and try again.'; return; }
+
+      btn.disabled = true; btn.textContent = 'Checking video...';
+      var playable = await probePlayable(file);
+      btn.disabled = false; btn.textContent = 'Upload';
+      if (!playable) {
+        errEl.textContent = 'This browser cannot play this file (iPhone .MOV / HEVC videos often fail). Convert it to MP4 (H.264 video, AAC audio) and try again.';
+        return;
+      }
 
       uploading = true;
       btn.disabled = true; btn.textContent = 'Uploading...';
