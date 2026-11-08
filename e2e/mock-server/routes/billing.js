@@ -196,6 +196,12 @@ function register(r) {
     return ok({ message: 'Your request has been submitted' });
   });
   r.get('/support/videos', (c) => c.s.videos.filter((v) => v.status === 1).map((v) => ({ id: v.id, name: v.video_name, url: `${c.origin}/guide/${v.path}?sig=mock` })));
+  r.get('/support/faqs', (c) =>
+    c.s.faqs
+      .filter((f) => f.status === 1)
+      .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
+      .map((f) => ({ id: f.id, faq_bucket: f.faq_bucket, category: f.category, question: f.question, answer: f.answer })),
+  );
   r.post('/support/videos/:id/view', (c) => {
     const v = c.s.videos.find((x) => String(x.id) === c.p.id && x.status === 1);
     if (!v) fail(404, 'Video not found');

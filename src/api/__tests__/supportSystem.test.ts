@@ -1,6 +1,6 @@
 import { api } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/errors';
-import { listSupportSubjects, listSupportVideos, listTickets, recordVideoView, mapSupportTicket, mapTicketStatus, replyToTicket, submitTicket } from '../support';
+import { listFaqs, listSupportSubjects, listSupportVideos, listTickets, recordVideoView, mapSupportTicket, mapTicketStatus, replyToTicket, submitTicket } from '../support';
 import {
   addHoliday,
   addHolidayDates,
@@ -73,6 +73,27 @@ describe('support', () => {
       { id: '1', name: 'Getting started', url: 'https://bucket.s3.amazonaws.com/guide/a.mp4?X-Amz-Signature=1' },
     ]);
     expect(mocked.get).toHaveBeenLastCalledWith('/support/videos');
+  });
+
+  it('lists the FAQs as the server ordered them, trimming text, defaulting a missing bucket / category to General and dropping entries without a question or answer', async () => {
+    mocked.get.mockResolvedValueOnce([
+      { id: 3, faq_bucket: ' Attendance & Time ', category: ' Shifts ', question: ' How do I add a shift? ', answer: 'Open Shifts.\r\nTap Add.\n\n  ' },
+      { id: 4, category: '', question: 'No category', answer: 'Falls back to General' },
+      { id: 5, category: 'Shifts', question: '', answer: 'no question' },
+      { id: 6, category: 'Shifts', question: 'No answer', answer: '   ' },
+    ]);
+    expect(await listFaqs()).toEqual([
+      { id: '3', bucket: 'Attendance & Time', category: 'Shifts', question: 'How do I add a shift?', answer: 'Open Shifts.\nTap Add.' },
+      { id: '4', bucket: 'General', category: 'General', question: 'No category', answer: 'Falls back to General' },
+    ]);
+    expect(mocked.get).toHaveBeenLastCalledWith('/support/faqs');
+  });
+
+  it('lists no FAQs for an empty or unexpected body', async () => {
+    mocked.get.mockResolvedValueOnce([]);
+    expect(await listFaqs()).toEqual([]);
+    mocked.get.mockResolvedValueOnce(null);
+    expect(await listFaqs()).toEqual([]);
   });
 
   it('records a video view with the user and organisation ids', async () => {

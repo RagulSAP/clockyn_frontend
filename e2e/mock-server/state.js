@@ -1,4 +1,5 @@
 'use strict';
+const { faqSeed } = require('./faqSeed');
 /**
  * In-memory, stateful fixture database of the mock backend. `createState()` builds a fresh, deterministic seed
  * (relative to the mock clock's "today"); `POST /__test/reset` simply replaces the live state with a new one.
@@ -104,6 +105,8 @@ function createState() {
       { id: 3, video_name: 'Retired walkthrough', path: 'retired.mp4', status: 0 },
     ],
     videoViews: [],
+    // FAQ Hub (GET /support/faqs lists the ACTIVE ones, ordered by sort_order then id): see faqSeed.js
+    faqs: faqSeed(),
     subjects: [
       { sub_id: 1, sub_name: 'Login issue' },
       { sub_id: 2, sub_name: 'Billing and plans' },

@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — FAQ Hub</title>
+  <meta name="color-scheme" content="light dark" />
+  <script src="../js/theme.js"></script>
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <style>
+    [hidden] { display: none !important; }
+    .i { width: 16px; height: 16px; flex-shrink: 0; display: block; }
+    .i-lg { width: 20px; height: 20px; }
+    .hamburger-btn .i { width: 18px; height: 18px; }
+    .topbar-actions { margin-left: auto; }
+    mark { background: var(--warning-soft); color: inherit; border-radius: 3px; padding: 0 1px; box-shadow: 0 0 0 1px rgba(var(--warning-rgb), 0.28); }
+
+    /* ── Layout: buckets on the left, the list on the right ── */
+    .faq-layout { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: 20px; align-items: start; }
+    .faq-layout > * { min-width: 0; }
+    .bucket-card {
+      position: sticky; top: calc(var(--topbar-height, 64px) + 16px); padding: 10px;
+      max-height: calc(100vh - var(--topbar-height, 64px) - 32px); overflow-y: auto;
+    }
+    .bucket-title { margin: 4px 8px 8px; font-size: 11.5px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; color: var(--text-muted); }
+    .bucket-list { display: flex; flex-direction: column; gap: 2px; }
+    .bucket {
+      display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px 9px 12px; text-align: left; cursor: pointer;
+      font: inherit; font-size: 13.5px; font-weight: 600; color: var(--text-secondary);
+      background: none; border: 1px solid transparent; border-radius: var(--radius-sm);
+      transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease);
+    }
+    .bucket:hover { background: var(--surface-muted); color: var(--text); }
+    .bucket:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+    .bucket[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+    .bucket .bname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bucket .bcount { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-muted); flex-shrink: 0; }
+    .bucket .bcount small { font-size: 11.5px; font-weight: 500; }
+    .bucket[aria-pressed="true"] .bcount { color: inherit; opacity: 0.78; }
+    .bucket .bdot { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); flex-shrink: 0; }
+    .bucket.searching .bcount { min-width: 22px; text-align: center; padding: 1px 7px; border-radius: var(--radius-pill); background: var(--surface-muted); color: var(--text); }
+    .bucket.searching.zero { opacity: 0.5; }
+    .bucket.searching.zero .bcount { background: none; color: var(--text-muted); }
+    .bucket.searching[aria-pressed="true"] .bcount { background: rgba(255,255,255,0.18); color: inherit; opacity: 1; }
+    :root[data-theme="dark"] .bucket.searching[aria-pressed="true"] .bcount { background: rgba(0,0,0,0.16); }
+
+    /* ── Main card: search, head ── */
+    .faq-search-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+    .faq-search { position: relative; flex: 1 1 280px; display: flex; align-items: center; min-width: 0; }
+    .faq-search .s-ico { position: absolute; left: 15px; display: flex; color: var(--text-muted); pointer-events: none; }
+    .faq-search input { width: 100%; height: 48px; padding: 0 48px 0 44px; font-size: 15px; border-radius: var(--radius-md); }
+    .faq-search .s-clear {
+      position: absolute; right: 8px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: none; color: var(--text-muted); cursor: pointer;
+      display: none; align-items: center; justify-content: center; transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+    }
+    .faq-search .s-clear:hover { background: var(--surface-muted); color: var(--text); }
+    .faq-search .s-clear:focus-visible { outline: 2px solid var(--ring); }
+    .faq-search.has-value .s-clear { display: inline-flex; }
+    .faq-search .s-kbd { position: absolute; right: 14px; display: none; pointer-events: none; }
+    .faq-search:not(.has-value):not(:focus-within) .s-kbd { display: inline-flex; }
+    @media (hover: none) { .faq-search .s-kbd { display: none !important; } }
+    .faq-search-row select { min-width: 150px; height: 48px; }
+    .faq-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+    .faq-head-title { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 200px; }
+    .faq-head h3 { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .faq-head .badge { font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .faq-bulk { display: inline-flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 13px; }
+    .link-btn {
+      padding: 4px 2px; background: none; border: 0; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600;
+      color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-strong);
+      border-radius: var(--radius-xs); transition: color var(--motion-fast) var(--ease);
+    }
+    .link-btn:hover { color: var(--text); text-decoration-color: currentColor; }
+    .link-btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+    /* ── Accordion ── */
+    .faq-list { display: block; }
+    .faq-group + .faq-group { border-top: 1px solid var(--border); }
+    .faq-group-head {
+      display: flex; align-items: center; gap: 10px; margin: 0; padding: 14px 18px 8px;
+      font-size: 11.5px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; color: var(--text-muted);
+    }
+    .faq-group-head .count { font-weight: 600; letter-spacing: 0.4px; font-variant-numeric: tabular-nums; padding: 1px 8px; border-radius: var(--radius-pill); background: var(--surface-muted); }
+    .faq-group-head .cat-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .faq-group-head .cat-link {
+      min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 2px 0; background: none; border: 0; cursor: pointer;
+      font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; border-radius: var(--radius-xs);
+    }
+    .faq-group-head .cat-link:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+    .faq-group-head .cat-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+    .faq-group-head .rename-cat { width: 26px; height: 26px; padding: 0; border-radius: 50%; background: none; border: 0; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .faq-group-head .rename-cat:hover { background: var(--surface-muted); color: var(--text); }
+    .faq-group-head .rename-cat:focus-visible { outline: 2px solid var(--ring); }
+    .faq-bucket-head {
+      display: flex; align-items: center; gap: 10px; margin: 0; padding: 18px 18px 6px; font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: var(--text);
+    }
+    .faq-bucket-head .count { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; padding: 1px 8px; border-radius: var(--radius-pill); background: var(--surface-muted); color: var(--text-muted); }
+    .faq-bucket-section + .faq-bucket-section { border-top: 2px solid var(--border); margin-top: 8px; }
+    .faq-chip .sep { opacity: 0.6; margin: 0 4px; }
+    .faq-item { border-top: 1px solid var(--border); }
+    .faq-group-head + .faq-item, .faq-list > .faq-item:first-child, .faq-group > .faq-item:first-child { border-top: 0; }
+    .faq-h { margin: 0; font: inherit; }
+    .faq-btn {
+      width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto 20px; align-items: center; column-gap: 14px;
+      padding: 14px 18px; text-align: left; cursor: pointer; font: inherit; color: var(--text);
+      background: none; border: 0; border-radius: 0;
+      transition: background-color var(--motion-fast) var(--ease);
+    }
+    .faq-btn:hover { background: var(--surface-muted); }
+    .faq-btn:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; background: var(--surface-muted); }
+    .faq-qmain { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+    .faq-q { font-size: 14.5px; font-weight: 600; letter-spacing: -0.1px; line-height: 1.4; overflow-wrap: anywhere; }
+    .faq-chip { display: inline-block; max-width: 100%; padding: 1px 9px; border-radius: var(--radius-pill); background: var(--surface-muted); color: var(--text-secondary); font-size: 11.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .faq-item.is-off .faq-q { color: var(--text-secondary); }
+    .faq-chev { display: inline-flex; color: var(--text-muted); transition: transform var(--motion-base) var(--ease); }
+    .faq-item.open .faq-chev { transform: rotate(180deg); color: var(--text); }
+    .faq-item.open .faq-btn { background: var(--surface-muted); }
+
+    /* the panel grows from 0 to its content height; a closed panel is out of the tab order and the accessibility tree */
+    .faq-panel {
+      display: grid; grid-template-rows: 0fr; visibility: hidden;
+      transition: grid-template-rows var(--motion-base) var(--ease), visibility 0s linear var(--motion-base);
+    }
+    .faq-item.open .faq-panel { grid-template-rows: 1fr; visibility: visible; transition-delay: 0s; }
+    .faq-panel-in { min-height: 0; overflow: hidden; }
+    .faq-body { padding: 4px 18px 18px; }
+    .faq-answer { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.6; color: var(--text-secondary); max-width: 78ch; }
+    .faq-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border); }
+    .faq-meta { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .faq-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .btn.act-on  { --btn-fg: var(--success); border-color: rgba(var(--success-rgb), 0.35); }
+    .btn.act-off { --btn-fg: var(--warning); border-color: rgba(var(--warning-rgb), 0.4); }
+    .btn.act-del { --btn-fg: var(--danger);  border-color: rgba(var(--danger-rgb), 0.35); }
+    .btn.act-on:hover:not(:disabled)  { background: rgba(var(--success-rgb), 0.1); border-color: rgba(var(--success-rgb), 0.55); }
+    .btn.act-off:hover:not(:disabled) { background: rgba(var(--warning-rgb), 0.12); border-color: rgba(var(--warning-rgb), 0.6); }
+    .btn.act-del:hover:not(:disabled) { background: rgba(var(--danger-rgb), 0.1); border-color: rgba(var(--danger-rgb), 0.55); }
+    .sk-item { padding: 18px; border-top: 1px solid var(--border); }
+    .sk-item:first-child { border-top: 0; }
+    .sk-item .skeleton-line { height: 14px; }
+    .sk-bucket { height: 36px; margin: 4px 2px; border-radius: var(--radius-sm); }
+
+    /* ── Form ── */
+    .modal-box.faq-modal { max-width: 640px; }
+    .f-row { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 16px; }
+    .f-row .form-group { margin-bottom: 4px; }
+    .f-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+    .f-label-row label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+    .f-label-row .counter { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .f-label-row .counter.over { color: var(--danger); font-weight: 600; }
+    #f-answer { min-height: 170px; line-height: 1.5; }
+    .form-group { margin-bottom: 14px; }
+    .switch { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text); }
+    .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+    .switch .track {
+      position: relative; width: 40px; height: 22px; border-radius: var(--radius-pill); flex-shrink: 0;
+      background: var(--surface-muted); border: 1px solid var(--border-strong);
+      transition: background-color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease);
+    }
+    .switch .track::after {
+      content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+      background: var(--text-muted); transition: transform var(--motion-fast) var(--ease), background-color var(--motion-fast) var(--ease);
+    }
+    .switch input:checked + .track { background: var(--success); border-color: var(--success); }
+    .switch input:checked + .track::after { transform: translateX(18px); background: var(--on-success); }
+    .switch input:focus-visible + .track { outline: 2px solid var(--ring); outline-offset: 2px; }
+    .invalid { border-color: var(--danger) !important; }
+    .confirm-text { font-size: 14px; line-height: 1.55; color: var(--text-secondary); overflow-wrap: anywhere; }
+    .confirm-text q, .confirm-text b { color: var(--text); font-weight: 600; quotes: "\201C" "\201D"; }
+    .note { margin-top: 6px; font-size: 12.5px; color: var(--warning); min-height: 0; }
+    .progress-wrap { margin-top: 14px; }
+    .progress-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+    .progress-wrap .progress { height: 8px; margin-top: 6px; }
+
+    /* tablet and phone: the buckets become a horizontal scroller above the list */
+    @media (max-width: 900px) {
+      .faq-layout { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+      .bucket-card { position: static; max-height: none; overflow: visible; padding: 10px 0 8px; background: none; border: 0; box-shadow: none; }
+      .bucket-title { margin: 0 2px 8px; }
+      .bucket-list { flex-direction: row; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scroll-snap-type: x proximity; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+      .bucket { width: auto; flex: 0 0 auto; white-space: nowrap; padding: 8px 12px; background: var(--surface); border-color: var(--border); border-radius: var(--radius-pill); scroll-snap-align: start; }
+      .bucket .bname { flex: 0 1 auto; max-width: 200px; }
+      .bucket[aria-pressed="true"] { border-color: var(--primary); }
+    }
+    @media (max-width: 720px) {
+      .faq-search-row { padding: 12px 16px; }
+      .faq-search-row select { flex: 1 1 100%; height: 44px; min-width: 0; }
+      .faq-search input { height: 46px; }
+      .faq-head { padding: 12px 16px; }
+      .faq-group-head { padding: 14px 16px 8px; }
+      .faq-btn { grid-template-columns: minmax(0, 1fr) 20px; grid-template-areas: "q chev" "badge chev"; row-gap: 8px; padding: 14px 16px; }
+      .faq-btn .faq-qmain { grid-area: q; }
+      .faq-btn .faq-badge { grid-area: badge; justify-self: start; }
+      .faq-btn .faq-chev { grid-area: chev; align-self: start; margin-top: 2px; }
+      .faq-body { padding: 2px 16px 16px; }
+      .faq-actions { gap: 8px; }
+      .f-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
+      .modal-overlay { padding: 12px; }
+      .modal-box { padding: 18px; }
+      .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .stat-tile { padding: 14px 16px; }
+      .stat-tile .stat-val { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar" id="app-sidebar" data-active="faqs"></aside>
+  <script src="../js/layout.js"></script>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu">
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+      </button>
+      <span class="topbar-title">FAQ Hub</span>
+      <div class="topbar-actions">
+        <button type="button" class="icon-btn" onclick="loadFaqs()" title="Refresh" aria-label="Refresh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        </button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-header">
+        <div>
+          <h1>FAQ Hub</h1>
+          <p>Answers shown in the app's Support, FAQ</p>
+        </div>
+        <div class="page-header-actions">
+          <button type="button" class="btn btn-ghost" onclick="loadFaqs()">
+            <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            Refresh
+          </button>
+          <button type="button" class="btn btn-primary" id="add-btn" style="display:none;" onclick="openFaqModal(null)">
+            <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Add FAQ
+          </button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-tile"><div class="stat-label">Total FAQs</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">In the library</div></div>
+        <div class="stat-tile"><div class="stat-label">Active</div><div class="stat-val" id="s-active" style="color:var(--success)">—</div><div class="stat-sub">Visible in the app</div></div>
+        <div class="stat-tile"><div class="stat-label">Inactive</div><div class="stat-val" id="s-inactive" style="color:var(--text-muted)">—</div><div class="stat-sub">Hidden from the app</div></div>
+        <div class="stat-tile"><div class="stat-label">Buckets</div><div class="stat-val" id="s-buckets">—</div><div class="stat-sub">Top-level groups</div></div>
+        <div class="stat-tile"><div class="stat-label">Categories</div><div class="stat-val" id="s-cats">—</div><div class="stat-sub">Topics inside buckets</div></div>
+      </div>
+
+      <div class="faq-layout">
+        <nav class="card bucket-card" aria-label="Buckets">
+          <div class="bucket-title">Buckets</div>
+          <div class="bucket-list" id="bucket-list">
+            <div class="skeleton sk-bucket"></div><div class="skeleton sk-bucket"></div><div class="skeleton sk-bucket"></div>
+          </div>
+        </nav>
+
+        <div class="card faq-main">
+          <div class="faq-search-row">
+            <div class="faq-search" id="search-box">
+              <span class="s-ico" aria-hidden="true"><svg class="i i-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></span>
+              <input type="search" id="search-input" placeholder="Search all FAQs" aria-label="Search FAQs in all categories" autocomplete="off" spellcheck="false" oninput="onSearch()" />
+              <button type="button" class="s-clear" id="search-clear" aria-label="Clear search" title="Clear search" onclick="clearSearch()">
+                <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+              <span class="kbd s-kbd" aria-hidden="true">/</span>
+            </div>
+            <label class="sr-only" for="status-filter">Filter by status</label>
+            <select id="status-filter" onchange="onFilter()">
+              <option value="">All statuses</option>
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+          <div class="faq-head">
+            <div class="faq-head-title">
+              <h3 id="list-title">All FAQs</h3>
+              <button type="button" class="btn btn-ghost btn-sm btn-icon" id="rename-btn" hidden onclick="openRename('bucket')" aria-label="Rename bucket" title="Rename bucket">
+                <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+              </button>
+              <button type="button" class="link-btn" id="clear-cat" hidden onclick="selectCategory('')">All categories</button>
+            </div>
+            <span class="badge badge-gray" id="result-count" aria-live="polite">0 FAQs</span>
+            <div class="faq-bulk" id="bulk" hidden>
+              <button type="button" class="link-btn" id="expand-all" onclick="setAll(true)">Expand all</button>
+              <span aria-hidden="true">·</span>
+              <button type="button" class="link-btn" id="collapse-all" onclick="setAll(false)">Collapse all</button>
+            </div>
+          </div>
+          <div class="faq-list" id="faq-list">
+            <div class="sk-item"><div class="skeleton skeleton-line"></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Add / edit modal -->
+  <div class="modal-overlay" id="faq-modal" onclick="overlayClick(event, 'faq')">
+    <div class="modal-box faq-modal" role="dialog" aria-modal="true" aria-labelledby="f-title">
+      <div class="modal-header">
+        <h2 id="f-title">Add FAQ</h2>
+        <button type="button" class="modal-close" aria-label="Close" onclick="closeFaqModal()">
+          <svg class="i i-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <input type="hidden" id="f-id" />
+      <div class="form-group">
+        <label for="f-bucket">Bucket *</label>
+        <input type="text" id="f-bucket" list="f-buckets" maxlength="60" placeholder="e.g. Attendance & Time" autocomplete="off" />
+        <datalist id="f-buckets"></datalist>
+        <div class="form-hint">The top-level group the app shows first.</div>
+        <div class="field-error" id="f-bucket-err" role="alert"></div>
+      </div>
+      <div class="f-row">
+        <div class="form-group">
+          <label for="f-category">Category *</label>
+          <input type="text" id="f-category" list="f-categories" maxlength="60" placeholder="e.g. Attendance & Face Punch" autocomplete="off" />
+          <datalist id="f-categories"></datalist>
+          <div class="field-error" id="f-category-err" role="alert"></div>
+        </div>
+        <div class="form-group">
+          <label for="f-order">Sort order</label>
+          <input type="number" id="f-order" min="0" max="1000000" step="1" placeholder="Auto" />
+          <div class="field-error" id="f-order-err" role="alert"></div>
+        </div>
+      </div>
+      <div class="form-hint" style="margin:0 0 14px">Lower numbers come first. Categories follow the order of their first FAQ.</div>
+      <div class="form-group">
+        <div class="f-label-row"><label for="f-question">Question *</label><span class="counter" id="q-count">0/300</span></div>
+        <input type="text" id="f-question" maxlength="300" placeholder="e.g. How do I add a new staff member?" autocomplete="off" />
+        <div class="field-error" id="f-question-err" role="alert"></div>
+      </div>
+      <div class="form-group">
+        <div class="f-label-row"><label for="f-answer">Answer *</label><span class="counter" id="a-count">0/8000</span></div>
+        <textarea id="f-answer" rows="8" maxlength="8000" placeholder="Write the answer in plain text"></textarea>
+        <div class="form-hint">Plain text. Put each step on its own line, for example: 1. Open Settings</div>
+        <div class="field-error" id="f-answer-err" role="alert"></div>
+      </div>
+      <div class="form-group">
+        <label class="switch" for="f-status">
+          <input type="checkbox" role="switch" id="f-status" checked />
+          <span class="track" aria-hidden="true"></span>
+          <span id="f-status-text">Active (shown in the app)</span>
+        </label>
+      </div>
+      <div class="field-error" id="f-error" role="alert"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeFaqModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="f-submit" onclick="submitFaq()">Save FAQ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rename category: confirms what will change, then updates the FAQs one by one with progress -->
+  <div class="modal-overlay" id="rename-modal" onclick="overlayClick(event, 'rename')">
+    <div class="modal-box modal-sm" role="dialog" aria-modal="true" aria-labelledby="r-title" aria-describedby="r-info">
+      <div class="modal-header">
+        <h2 id="r-title">Rename category</h2>
+        <button type="button" class="modal-close" id="r-x" aria-label="Close" onclick="closeRename()">
+          <svg class="i i-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <p class="confirm-text" id="r-info"></p>
+      <div class="form-group" style="margin-top:14px">
+        <label for="r-name" id="r-name-label">New name *</label>
+        <input type="text" id="r-name" list="f-categories" maxlength="60" autocomplete="off" />
+        <div class="note" id="r-note" role="status"></div>
+        <div class="field-error" id="r-err" role="alert"></div>
+      </div>
+      <div class="progress-wrap" id="r-progress" hidden>
+        <div class="progress-row"><span id="r-progress-text" aria-live="polite">Renaming…</span><span id="r-progress-pct">0%</span></div>
+        <div class="progress"><div class="progress-fill" id="r-bar" style="width:0"></div></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="r-cancel" onclick="closeRename()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="r-submit" onclick="submitRename()">Rename</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete confirmation (shared) -->
+  <div class="modal-overlay" id="confirm-modal" onclick="overlayClick(event, 'confirm')">
+    <div class="modal-box modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="c-title" aria-describedby="c-text">
+      <div class="modal-header">
+        <h2 id="c-title">Delete this FAQ?</h2>
+        <button type="button" class="modal-close" aria-label="Close" onclick="closeConfirm()">
+          <svg class="i i-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <p class="confirm-text" id="c-text"></p>
+      <div class="field-error" id="c-error" role="alert"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="c-cancel" onclick="closeConfirm()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="c-ok">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+    var adminEmail = localStorage.getItem('admin_email') || '';
+    var isSuper = localStorage.getItem('gen_admin_role') === '1';
+    var LIMITS = { category: 60, qMin: 5, qMax: 300, aMax: 8000, orderMax: 1000000 };
+    var faqs = [];
+    var loaded = false;          /* a list (even an empty one) has been shown */
+    var openIds = {};            /* id -> true for every expanded row; survives re-renders and reloads */
+    var selBucket = '';          /* the selected bucket ('' = All) */
+    var selCat = '';             /* a category inside it ('' = every category) */
+    var query = '';              /* the search text */
+    var tokens = [];             /* lower-case words of the search */
+    var hlRe = null;             /* highlights every word */
+    var lastFocus = null;
+    var pendingFocus = '';       /* selector to focus after the next render */
+    var busy = false;            /* a write is in flight */
+    var ren = null;              /* the rename in progress: { kind: 'bucket' | 'category', from, bucket } */
+
+    var ICONS = {
+      pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+      trash: '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+      alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+      help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+      plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+      refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74 2.74L3 16"/><path d="M8 16H3v5"/>',
+      chevron: '<path d="m6 9 6 6 6-6"/>',
+      up: '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
+      down: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>'
+    };
+    function svg(name, cls) {
+      return '<svg class="i ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[name] + '</svg>';
+    }
+    function $(id) { return document.getElementById(id); }
+
+    if (isSuper) $('add-btn').style.display = '';
+
+    function escHtml(s) {
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function formatIST(iso) {
+      if (!iso) return '—';
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function num(v) { var n = Number(v); return isFinite(n) ? n : 0; }
+    function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+    function showToast(msg, ok) {
+      var t = $('toast');
+      t.textContent = msg;
+      t.style.background = ok === false ? '#dc2626' : '#16a34a';
+      t.style.opacity = '1';
+      t.style.transform = 'translateY(0)';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(function () { t.style.opacity = '0'; t.style.transform = 'translateY(10px)'; }, 3000);
+    }
+
+    /* Validation errors from the API can arrive as {detail: "text"} or FastAPI's {detail: [{loc, msg}]}. */
+    function detailText(data) {
+      if (!data || data.detail == null) return '';
+      if (typeof data.detail === 'string') return data.detail;
+      if (Array.isArray(data.detail)) {
+        return data.detail.map(function (d) {
+          var where = Array.isArray(d.loc) ? d.loc.filter(function (x) { return x !== 'body'; }).join(' ') : '';
+          return (where ? where + ': ' : '') + (d.msg || '');
+        }).filter(Boolean).join('; ');
+      }
+      return '';
+    }
+    async function call(method, path, body) {
+      var res = await fetch(API_BASE + path, {
+        method: method,
+        headers: { 'Content-Type': 'application/json', 'x-admin-id': adminEmail },
+        body: body === undefined ? undefined : JSON.stringify(body)
+      });
+      var data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
+      if (!res.ok) {
+        var err = new Error(detailText(data) || ('Request failed (' + res.status + ')'));
+        err.status = res.status;
+        throw err;
+      }
+      return data;
+    }
+
+    /* ── Modal helpers ── */
+    function isOpen(id) { return $(id).classList.contains('open'); }
+    function anyModalOpen() { return !!document.querySelector('.modal-overlay.open'); }
+    function openModal(id, focusId) {
+      lastFocus = document.activeElement;
+      $(id).classList.add('open');
+      if (focusId) setTimeout(function () { var el = $(focusId); if (el) el.focus(); }, 30);
+    }
+    function closeModalEl(id) {
+      $(id).classList.remove('open');
+      if (lastFocus && lastFocus.focus && document.contains(lastFocus)) { try { lastFocus.focus(); } catch (e) {} }
+      lastFocus = null;
+    }
+    function overlayClick(e, which) {
+      if (e.target !== e.currentTarget) return;
+      if (which === 'confirm') closeConfirm(); else if (which === 'rename') closeRename(); else closeFaqModal();
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        if (isOpen('confirm-modal')) closeConfirm();
+        else if (isOpen('rename-modal')) closeRename();
+        else if (isOpen('faq-modal')) closeFaqModal();
+        return;
+      }
+      /* "/" jumps to the search box, like on most documentation sites */
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        var t = e.target, tag = t && t.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable) || anyModalOpen()) return;
+        e.preventDefault();
+        var s = $('search-input'); s.focus(); s.select();
+      }
+    });
+
+    /* ── URL state: #bucket=...&category=...&q=... ── */
+    function readHash() {
+      var h = location.hash.replace(/^#\??/, '');
+      var p = new URLSearchParams(h);
+      selBucket = p.get('bucket') || '';
+      selCat = p.get('category') || '';
+      query = p.get('q') || '';
+      $('search-input').value = query;
+      setTokens();
+      updateSearchBox();
+    }
+    function syncHash() {
+      var p = new URLSearchParams();
+      if (selBucket) p.set('bucket', selBucket);
+      if (selCat) p.set('category', selCat);
+      if (query.trim()) p.set('q', query);
+      var h = p.toString();
+      try { history.replaceState(null, '', location.pathname + location.search + (h ? '#' + h : '')); } catch (e) { /* file:// and sandboxes */ }
+    }
+    window.addEventListener('hashchange', function () { readHash(); if (loaded) renderAll(); });
+
+    /* ── Data helpers ── */
+    function ordered() {
+      return faqs.slice().sort(function (a, b) { return (num(a.sort_order) - num(b.sort_order)) || (num(a.id) - num(b.id)); });
+    }
+    function catOf(f) { return String(f.category == null ? '' : f.category).trim() || 'Uncategorised'; }
+    function bucketOf(f) { return String(f.faq_bucket == null ? '' : f.faq_bucket).trim() || 'General'; }
+    /* Buckets (and the categories inside one) appear in the order of their first FAQ, like in the app. */
+    function buckets() {
+      var seen = {}, out = [];
+      ordered().forEach(function (f) { var b = bucketOf(f); if (!seen[b]) { seen[b] = true; out.push(b); } });
+      return out;
+    }
+    function catsIn(bucket) {
+      var seen = {}, out = [];
+      ordered().forEach(function (f) { if (bucket && bucketOf(f) !== bucket) return; var c = catOf(f); if (!seen[c]) { seen[c] = true; out.push(c); } });
+      return out;
+    }
+    function pairCount() {
+      var seen = {}, n = 0;
+      faqs.forEach(function (f) { var k = bucketOf(f) + '\u0001' + catOf(f); if (!seen[k]) { seen[k] = true; n += 1; } });
+      return n;
+    }
+    function bucketStats() {
+      var m = {};
+      faqs.forEach(function (f) {
+        var b = bucketOf(f);
+        var s = m[b] || (m[b] = { total: 0, active: 0 });
+        s.total += 1;
+        if (Number(f.status) === 1) s.active += 1;
+      });
+      return m;
+    }
+    function setTokens() {
+      tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+      if (!tokens.length) { hlRe = null; return; }
+      var uniq = tokens.filter(function (t, i) { return tokens.indexOf(t) === i; }).sort(function (a, b) { return b.length - a.length; });
+      hlRe = new RegExp(uniq.map(function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|'), 'gi');
+    }
+    /* Escapes first, so a search for "<b>" can never inject markup. */
+    function hl(text) {
+      var s = String(text == null ? '' : text);
+      if (!hlRe) return escHtml(s);
+      var out = '', last = 0, m;
+      hlRe.lastIndex = 0;
+      while ((m = hlRe.exec(s)) !== null) {
+        if (!m[0]) { hlRe.lastIndex++; continue; }
+        out += escHtml(s.slice(last, m.index)) + '<mark>' + escHtml(m[0]) + '</mark>';
+        last = m.index + m[0].length;
+      }
+      return out + escHtml(s.slice(last));
+    }
+    function statusOk(f) {
+      var st = $('status-filter').value;
+      return st === '' || String(Number(f.status) === 1 ? 1 : 0) === st;
+    }
+    function allWords(text) {
+      var t = String(text || '').toLowerCase();
+      return tokens.every(function (w) { return t.indexOf(w) !== -1; });
+    }
+    /* Results of the search over ALL buckets (status filter applied): questions that match first, then the rest. */
+    function searchPool() {
+      var hits = ordered().filter(function (f) {
+        return statusOk(f) && allWords(f.question + ' ' + f.answer + ' ' + catOf(f) + ' ' + bucketOf(f));
+      });
+      var inQ = hits.filter(function (f) { return allWords(f.question); });
+      var rest = hits.filter(function (f) { return !allWords(f.question); });
+      return inQ.concat(rest);
+    }
+    function visibleFaqs() {
+      var base = tokens.length ? searchPool() : ordered().filter(statusOk);
+      return base.filter(function (f) { return (!selBucket || bucketOf(f) === selBucket) && (!selCat || catOf(f) === selCat); });
+    }
+    function findFaq(id) { return faqs.find(function (f) { return String(f.id) === String(id); }); }
+
+    /* ── Render ── */
+    function renderStats() {
+      var active = faqs.filter(function (f) { return Number(f.status) === 1; }).length;
+      $('s-total').textContent = faqs.length;
+      $('s-active').textContent = active;
+      $('s-inactive').textContent = faqs.length - active;
+      $('s-buckets').textContent = buckets().length;
+      $('s-cats').textContent = pairCount();
+    }
+
+    function renderBuckets() {
+      var host = $('bucket-list');
+      var focusIdx = -1;
+      var act = document.activeElement;
+      if (act && act.classList && act.classList.contains('bucket')) focusIdx = Array.prototype.indexOf.call(host.querySelectorAll('.bucket'), act);
+      var cats = buckets(), stats = bucketStats(), searching = tokens.length > 0;
+      var hits = {}, hitTotal = 0;
+      if (searching) searchPool().forEach(function (f) { var c = bucketOf(f); hits[c] = (hits[c] || 0) + 1; hitTotal += 1; });
+      function btn(cat, label, countHtml, cls, title) {
+        return '<button type="button" class="bucket' + cls + '" data-cat="' + escHtml(cat) + '" aria-pressed="' + (selBucket === cat) + '"' + (title ? ' title="' + escHtml(title) + '"' : '') + '>'
+          + '<span class="bname">' + escHtml(label) + '</span>' + countHtml + '</button>';
+      }
+      var allCount = searching ? hitTotal : faqs.length;
+      var html = btn('', 'All', '<span class="bcount">' + allCount + '</span>', searching ? ' searching' + (hitTotal ? '' : ' zero') : '', '');
+      html = html.replace('class="bucket', 'class="bucket all');
+      cats.forEach(function (c) {
+        var s = stats[c];
+        var cls = '', count, dot = '';
+        if (searching) {
+          var h = hits[c] || 0;
+          cls = ' searching' + (h ? '' : ' zero');
+          count = '<span class="bcount" title="' + plural(h, 'match', 'matches') + '">' + h + '</span>';
+        } else if (s.active < s.total) {
+          count = '<span class="bcount" title="' + s.active + ' active of ' + s.total + '"><small>' + s.active + '/' + s.total + '</small></span>';
+        } else {
+          count = '<span class="bcount">' + s.total + '</span>';
+        }
+        if (s.active === 0) dot = '<span class="bdot" role="img" aria-label="All FAQs in this category are inactive" title="All inactive"></span>';
+        html += btn(c, c, dot + count, cls, '');
+      });
+      host.innerHTML = html;
+      if (focusIdx >= 0) { var els = host.querySelectorAll('.bucket'); if (els[focusIdx]) els[focusIdx].focus(); }
+      /* keep the selected bucket in view in the horizontal scroller */
+      var sel = host.querySelector('.bucket[aria-pressed="true"]');
+      if (sel && host.scrollWidth > host.clientWidth) host.scrollLeft = Math.max(0, sel.offsetLeft - (host.clientWidth - sel.offsetWidth) / 2);
+    }
+
+    function renderHead(rows) {
+      var searching = tokens.length > 0;
+      var where = selBucket ? selBucket + (selCat ? ' › ' + selCat : '') : (selCat ? selCat : '');
+      $('list-title').textContent = searching ? (where ? 'Results in ' + where : 'Search results') : (where || 'All FAQs');
+      $('rename-btn').hidden = !(isSuper && selBucket && !searching);
+      $('rename-btn').setAttribute('aria-label', 'Rename bucket ' + selBucket);
+      $('clear-cat').hidden = !selCat;
+      $('result-count').textContent = searching ? plural(rows.length, 'result', 'results') : plural(rows.length, 'FAQ', 'FAQs');
+      $('bulk').hidden = !rows.length;
+    }
+
+    function stateBlock(icon, title, text, extra, danger) {
+      return '<div class="empty-state"><div class="empty-icon"' + (danger ? ' style="background:var(--danger-soft);color:var(--danger)"' : '') + '>' + svg(icon, 'i-lg') + '</div><h3>' + title + '</h3><p>' + text + '</p>' + (extra || '') + '</div>';
+    }
+
+    function itemHtml(f, group, idx, flat) {
+      var id = escHtml(f.id);
+      var active = Number(f.status) === 1;
+      var open = !!openIds[f.id];
+      var actions = '';
+      if (isSuper) {
+        actions = '<button type="button" class="btn btn-ghost btn-sm" data-act="edit" data-id="' + id + '">' + svg('pencil') + 'Edit</button>'
+          + '<button type="button" class="btn btn-ghost btn-sm ' + (active ? 'act-off' : 'act-on') + '" data-act="toggle" data-id="' + id + '">' + (active ? 'Deactivate' : 'Activate') + '</button>';
+        if (!flat) {
+          actions += '<button type="button" class="btn btn-ghost btn-sm btn-icon" data-act="up" data-id="' + id + '" aria-label="Move up" title="Move up"' + (idx === 0 ? ' disabled' : '') + '>' + svg('up') + '</button>'
+            + '<button type="button" class="btn btn-ghost btn-sm btn-icon" data-act="down" data-id="' + id + '" aria-label="Move down" title="Move down"' + (idx === group.length - 1 ? ' disabled' : '') + '>' + svg('down') + '</button>';
+        }
+        actions += '<button type="button" class="btn btn-ghost btn-sm act-del" data-act="delete" data-id="' + id + '">' + svg('trash') + 'Delete</button>';
+      }
+      return '<div class="faq-item' + (open ? ' open' : '') + (active ? '' : ' is-off') + '" data-id="' + id + '">'
+        + '<h4 class="faq-h"><button type="button" class="faq-btn" id="faq-btn-' + id + '" aria-expanded="' + open + '" aria-controls="faq-panel-' + id + '">'
+        +   '<span class="faq-qmain"><span class="faq-q">' + hl(f.question) + '</span>' + (flat ? '<span class="faq-chip">' + hl(bucketOf(f)) + '<span class="sep">›</span>' + hl(catOf(f)) + '</span>' : '') + '</span>'
+        +   '<span class="faq-badge">' + (active ? '<span class="badge badge-green badge-dot">Active</span>' : '<span class="badge badge-gray badge-dot">Inactive</span>') + '</span>'
+        +   '<span class="faq-chev">' + svg('chevron') + '</span>'
+        + '</button></h4>'
+        + '<div class="faq-panel" id="faq-panel-' + id + '" role="region" aria-labelledby="faq-btn-' + id + '"><div class="faq-panel-in"><div class="faq-body">'
+        +   '<div class="faq-answer">' + hl(f.answer) + '</div>'
+        +   '<div class="faq-foot"><span class="faq-meta">Order ' + escHtml(num(f.sort_order)) + ' · Updated ' + escHtml(formatIST(f.updated_at || f.created_at)) + '</span>'
+        +   (actions ? '<div class="faq-actions">' + actions + '</div>' : '') + '</div>'
+        + '</div></div></div>'
+        + '</div>';
+    }
+
+    function renderList(rows) {
+      var host = $('faq-list');
+      var searching = tokens.length > 0;
+      if (!rows.length) {
+        if (!faqs.length) {
+          host.innerHTML = stateBlock('help', 'No FAQs yet', 'Add the first one or load FAQ.sql. Active FAQs appear in the app\'s Support, FAQ.',
+            isSuper ? '<button type="button" class="btn btn-primary btn-sm" onclick="openFaqModal(null)" style="margin-top:8px">' + svg('plus') + 'Add FAQ</button>' : '');
+        } else {
+          host.innerHTML = stateBlock('help', 'No matching FAQs', searching ? 'Nothing matches “' + escHtml(query.trim()) + '”' + (selBucket || selCat ? ' in this selection' : '') + '. Check the spelling or try fewer words.' : 'Nothing matches your filters.',
+            '<button type="button" class="btn btn-ghost btn-sm" onclick="clearFilters()" style="margin-top:8px">Clear filters</button>');
+        }
+        return;
+      }
+      if (searching) {                       /* ranked results from every bucket, each with its bucket as a chip */
+        host.innerHTML = '<div class="faq-group">' + rows.map(function (f, i) { return itemHtml(f, rows, i, true); }).join('') + '</div>';
+        return;
+      }
+      /* bucket > category > questions. One bucket selected: its categories are the sub-headers. All: a heading per bucket too. */
+      var bOrder = [], byB = {}, gi = 0;
+      rows.forEach(function (f) {
+        var b = bucketOf(f), c = catOf(f);
+        if (!byB[b]) { byB[b] = { cats: [], map: {}, n: 0 }; bOrder.push(b); }
+        var g = byB[b];
+        if (!g.map[c]) { g.map[c] = []; g.cats.push(c); }
+        g.map[c].push(f); g.n += 1;
+      });
+      host.innerHTML = bOrder.map(function (b) {
+        var g = byB[b];
+        var head = selBucket ? '' : '<h2 class="faq-bucket-head"><span>' + escHtml(b) + '</span><span class="count">' + g.n + '</span></h2>';
+        return '<div class="faq-bucket-section">' + head + g.cats.map(function (c) {
+          var list = g.map[c], id = 'faq-g-' + (gi++);
+          var rn = isSuper ? '<button type="button" class="rename-cat" data-bucket="' + escHtml(b) + '" data-cat="' + escHtml(c) + '" aria-label="Rename category ' + escHtml(c) + '" title="Rename category">' + svg('pencil') + '</button>' : '';
+          return '<section class="faq-group" aria-labelledby="' + id + '">'
+            + '<h3 class="faq-group-head" id="' + id + '"><button type="button" class="cat-link" data-bucket="' + escHtml(b) + '" data-cat="' + escHtml(c) + '" title="Show only this category">' + escHtml(c) + '</button><span class="count">' + list.length + '</span>' + rn + '</h3>'
+            + list.map(function (f, idx) { return itemHtml(f, list, idx, false); }).join('')
+            + '</section>';
+        }).join('') + '</div>';
+      }).join('');
+    }
+
+    function renderAll() {
+      if (loaded) {                          /* a link or a deletion can leave a selection that no longer exists */
+        var fix = false;
+        if (selBucket && buckets().indexOf(selBucket) === -1) { selBucket = ''; fix = true; }
+        if (selCat && catsIn(selBucket).indexOf(selCat) === -1) { selCat = ''; fix = true; }
+        if (fix) syncHash();
+      }
+      var rows = visibleFaqs();
+      renderBuckets();
+      renderHead(rows);
+      renderList(rows);
+    }
+    function render() {
+      renderStats();
+      renderAll();
+      if (pendingFocus) {
+        var el = document.querySelector(pendingFocus);
+        pendingFocus = '';
+        if (el && !el.disabled) el.focus();
+      }
+    }
+
+    /* ── Accordion behaviour ── */
+    function setOpen(item, open) {
+      var id = item.getAttribute('data-id');
+      item.classList.toggle('open', open);
+      item.querySelector('.faq-btn').setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) openIds[id] = true; else delete openIds[id];
+    }
+    function setAll(open) {
+      Array.prototype.forEach.call(document.querySelectorAll('#faq-list .faq-item'), function (item) { setOpen(item, open); });
+    }
+
+    $('faq-list').addEventListener('click', function (e) {
+      var act = e.target.closest('button[data-act]');
+      if (act) { if (!act.disabled) onAction(act); return; }
+      var link = e.target.closest('.cat-link');
+      if (link) { selBucket = link.getAttribute('data-bucket') || selBucket; selectCategory(link.getAttribute('data-cat') || ''); return; }
+      var rn = e.target.closest('.rename-cat');
+      if (rn) { openRename('category', rn.getAttribute('data-bucket'), rn.getAttribute('data-cat')); return; }
+      var head = e.target.closest('.faq-btn');
+      if (head) setOpen(head.closest('.faq-item'), head.getAttribute('aria-expanded') !== 'true');
+    });
+    /* Up / Down / Home / End move between the question rows. */
+    $('faq-list').addEventListener('keydown', function (e) {
+      var head = e.target.closest ? e.target.closest('.faq-btn') : null;
+      if (!head || ['ArrowDown', 'ArrowUp', 'Home', 'End'].indexOf(e.key) === -1) return;
+      var all = Array.prototype.slice.call(document.querySelectorAll('#faq-list .faq-btn'));
+      var i = all.indexOf(head);
+      var next = e.key === 'ArrowDown' ? all[i + 1] : e.key === 'ArrowUp' ? all[i - 1] : e.key === 'Home' ? all[0] : all[all.length - 1];
+      if (next) { e.preventDefault(); next.focus(); }
+    });
+    $('bucket-list').addEventListener('click', function (e) {
+      var b = e.target.closest('.bucket');
+      if (b) selectBucket(b.getAttribute('data-cat') || '');
+    });
+
+    function onAction(btn) {
+      var f = findFaq(btn.getAttribute('data-id'));
+      if (!f || busy) return;
+      var act = btn.getAttribute('data-act');
+      if (act === 'edit') openFaqModal(f);
+      else if (act === 'toggle') toggleStatus(f);
+      else if (act === 'delete') askDelete(f);
+      else if (act === 'up') moveFaq(f, -1);
+      else if (act === 'down') moveFaq(f, 1);
+    }
+
+    /* ── Search, buckets, filters ── */
+    function updateSearchBox() { $('search-box').classList.toggle('has-value', $('search-input').value !== ''); }
+    /* A new search starts collapsed: the matches are a list of questions to scan, not to read. */
+    function onSearch() {
+      query = $('search-input').value;
+      setTokens();
+      updateSearchBox();
+      openIds = {};
+      syncHash();
+      if (loaded) renderAll();
+    }
+    function clearSearch() {
+      $('search-input').value = '';
+      onSearch();
+      $('search-input').focus();
+    }
+    $('search-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && this.value) { e.preventDefault(); e.stopPropagation(); clearSearch(); }
+    });
+    function selectBucket(b) {
+      selBucket = b;
+      selCat = '';
+      syncHash();
+      renderAll();
+    }
+    function selectCategory(c) {
+      selCat = c;
+      syncHash();
+      renderAll();
+    }
+    function onFilter() { renderAll(); }
+    function clearFilters() {
+      query = ''; selBucket = ''; selCat = ''; setTokens();
+      $('search-input').value = ''; $('status-filter').value = '';
+      updateSearchBox();
+      openIds = {};
+      syncHash();
+      renderAll();
+    }
+    /* After a save the row must be on screen: widen the view just enough. */
+    function ensureVisible(f) {
+      if (visibleFaqs().indexOf(f) !== -1) return;
+      if (selBucket && bucketOf(f) !== selBucket) { selBucket = bucketOf(f); selCat = ''; }
+      if (selCat && catOf(f) !== selCat) selCat = '';
+      if (visibleFaqs().indexOf(f) === -1) { query = ''; setTokens(); $('search-input').value = ''; $('status-filter').value = ''; updateSearchBox(); }
+      if (visibleFaqs().indexOf(f) === -1) { selBucket = ''; selCat = ''; }
+      syncHash();
+    }
+
+    /* ── Load ── */
+    async function loadFaqs() {
+      $('faq-list').innerHTML = '<div class="sk-item"><div class="skeleton skeleton-line" style="width:58%"></div></div>'
+        + '<div class="sk-item"><div class="skeleton skeleton-line" style="width:72%"></div></div>'
+        + '<div class="sk-item"><div class="skeleton skeleton-line" style="width:44%"></div></div>'
+        + '<div class="sk-item"><div class="skeleton skeleton-line" style="width:66%"></div></div>';
+      try {
+        var data = await call('GET', '/gen-dashboard/faqs');
+        faqs = Array.isArray(data) ? data : [];
+        loaded = true;
+        render();
+      } catch (e) {
+        faqs = [];
+        renderStats();
+        $('bucket-list').innerHTML = '';
+        $('result-count').textContent = '0 FAQs';
+        $('bulk').hidden = true;
+        $('rename-btn').hidden = true;
+        $('faq-list').innerHTML = stateBlock('alert', 'Couldn\'t load FAQs', escHtml(e.message),
+          '<button type="button" class="btn btn-ghost btn-sm" onclick="loadFaqs()" style="margin-top:8px">' + svg('refresh') + 'Try again</button>', true);
+      }
+    }
+
+    /* ── Row actions ── */
+    function merge(f, fromServer, fallback) {
+      var src = fromServer && typeof fromServer === 'object' ? fromServer : fallback;
+      Object.keys(src).forEach(function (k) { f[k] = src[k]; });
+    }
+
+    async function toggleStatus(f) {
+      var next = Number(f.status) === 1 ? 0 : 1;
+      busy = true;
+      try {
+        var res = await call('PUT', '/gen-dashboard/faqs/' + encodeURIComponent(f.id), { status: next });
+        merge(f, res && res.faq, { status: next });
+        pendingFocus = '#faq-panel-' + f.id + ' [data-act="toggle"]';
+        render();
+        showToast(next === 1 ? 'FAQ activated' : 'FAQ deactivated');
+      } catch (e) {
+        showToast(e.message, false);
+      } finally { busy = false; }
+    }
+
+    async function moveFaq(f, dir) {
+      var cat = catOf(f), bkt = bucketOf(f);
+      var group = visibleFaqs().filter(function (x) { return catOf(x) === cat && bucketOf(x) === bkt; });
+      var n = group[group.indexOf(f) + dir];
+      if (!n) return;
+      var a = num(f.sort_order), b = num(n.sort_order), na, nb;
+      if (a === b) { if (dir < 0) { na = a; nb = a + 1; } else { na = a + 1; nb = a; } }   /* a tie is broken by id: make the order explicit */
+      else { na = b; nb = a; }
+      busy = true;
+      try {
+        await call('PUT', '/gen-dashboard/faqs/' + encodeURIComponent(f.id), { sort_order: na });
+        f.sort_order = na;
+        await call('PUT', '/gen-dashboard/faqs/' + encodeURIComponent(n.id), { sort_order: nb });
+        n.sort_order = nb;
+        pendingFocus = '#faq-panel-' + f.id + ' [data-act="' + (dir < 0 ? 'up' : 'down') + '"]';
+        render();
+        if (!document.activeElement || document.activeElement === document.body) { var h = $('faq-btn-' + f.id); if (h) h.focus(); }
+        showToast(dir < 0 ? 'Moved up' : 'Moved down');
+      } catch (e) {
+        showToast(e.message, false);
+        busy = false;
+        await loadFaqs();      /* one of the two writes may have gone through: show the truth */
+      } finally { busy = false; }
+    }
+
+    /* ── Delete (shared confirm modal) ── */
+    function askDelete(f) {
+      $('c-title').textContent = 'Delete this FAQ?';
+      $('c-text').innerHTML = '<q>' + escHtml(f.question) + '</q> will be removed from the library and from the app. This cannot be undone.';
+      $('c-error').textContent = '';
+      var ok = $('c-ok');
+      ok.disabled = false; ok.textContent = 'Delete';
+      ok.onclick = function () { confirmDelete(f); };
+      openModal('confirm-modal', 'c-cancel');
+    }
+    function closeConfirm() {
+      if (busy) return;
+      closeModalEl('confirm-modal');
+    }
+    async function confirmDelete(f) {
+      var ok = $('c-ok');
+      ok.disabled = true; ok.textContent = 'Deleting...';
+      busy = true;
+      try {
+        await call('DELETE', '/gen-dashboard/faqs/' + encodeURIComponent(f.id));
+        var rows = visibleFaqs();
+        var i = rows.indexOf(f);
+        faqs = faqs.filter(function (x) { return x !== f; });
+        delete openIds[f.id];
+        var after = visibleFaqs();
+        var nextRow = after[Math.min(i, after.length - 1)];
+        pendingFocus = nextRow ? '#faq-btn-' + nextRow.id : '#add-btn';
+        busy = false;
+        lastFocus = null;
+        $('confirm-modal').classList.remove('open');
+        render();
+        showToast('FAQ deleted');
+      } catch (e) {
+        $('c-error').textContent = e.message;
+        ok.disabled = false; ok.textContent = 'Delete';
+      } finally { busy = false; }
+    }
+
+    /* ── Add / edit ── */
+    function updateCounters() {
+      var q = $('f-question').value.length, a = $('f-answer').value.length;
+      $('q-count').textContent = q + '/' + LIMITS.qMax;
+      $('q-count').classList.toggle('over', q > LIMITS.qMax);
+      $('a-count').textContent = a + '/' + LIMITS.aMax;
+      $('a-count').classList.toggle('over', a > LIMITS.aMax);
+    }
+    $('f-question').addEventListener('input', updateCounters);
+    $('f-answer').addEventListener('input', updateCounters);
+    $('f-status').addEventListener('change', function () {
+      $('f-status-text').textContent = this.checked ? 'Active (shown in the app)' : 'Inactive (hidden from the app)';
+    });
+
+    var FIELD_ERR = { bucket: 'f-bucket-err', category: 'f-category-err', order: 'f-order-err', question: 'f-question-err', answer: 'f-answer-err' };
+    var FIELD_INPUT = { bucket: 'f-bucket', category: 'f-category', order: 'f-order', question: 'f-question', answer: 'f-answer' };
+    function clearErrors() {
+      Object.keys(FIELD_ERR).forEach(function (k) { $(FIELD_ERR[k]).textContent = ''; $(FIELD_INPUT[k]).classList.remove('invalid'); $(FIELD_INPUT[k]).removeAttribute('aria-invalid'); });
+      $('f-error').textContent = '';
+    }
+    function fieldError(key, msg) {
+      $(FIELD_ERR[key]).textContent = msg;
+      $(FIELD_INPUT[key]).classList.add('invalid');
+      $(FIELD_INPUT[key]).setAttribute('aria-invalid', 'true');
+    }
+    function optionList(list) { return list.map(function (c) { return '<option value="' + escHtml(c) + '"></option>'; }).join(''); }
+    /* buckets to pick from; categories only of the chosen bucket (a new bucket has none yet) */
+    function fillBucketLists() {
+      $('f-buckets').innerHTML = optionList(buckets());
+      var b = $('f-bucket').value.trim();
+      $('f-categories').innerHTML = optionList(catsIn(b));
+    }
+    $('f-bucket').addEventListener('input', fillBucketLists);
+
+    function openFaqModal(f) {
+      if (!isSuper) return;
+      clearErrors();
+      $('f-id').value = f ? f.id : '';
+      $('f-title').textContent = f ? 'Edit FAQ' : 'Add FAQ';
+      $('f-submit').textContent = 'Save FAQ';
+      /* adding inside a bucket pre-fills its name (and the category when one is selected) */
+      $('f-bucket').value = f ? (f.faq_bucket || '') : selBucket;
+      $('f-category').value = f ? (f.category || '') : (selBucket ? selCat : '');
+      $('f-question').value = f ? (f.question || '') : '';
+      $('f-answer').value = f ? (f.answer || '') : '';
+      $('f-order').value = f ? num(f.sort_order) : '';
+      $('f-order').placeholder = 'Auto';
+      var on = f ? Number(f.status) === 1 : true;
+      $('f-status').checked = on;
+      $('f-status-text').textContent = on ? 'Active (shown in the app)' : 'Inactive (hidden from the app)';
+      fillBucketLists();
+      updateCounters();
+      openModal('faq-modal', f ? 'f-question' : !selBucket ? 'f-bucket' : !selCat ? 'f-category' : 'f-question');
+    }
+    function closeFaqModal() {
+      if (busy) return;
+      closeModalEl('faq-modal');
+    }
+
+    /* Mirrors the server limits; returns the request body or null after showing the errors. */
+    function readForm() {
+      clearErrors();
+      var bucket = $('f-bucket').value.trim();
+      var category = $('f-category').value.trim();
+      var question = $('f-question').value.trim();
+      var answer = $('f-answer').value.trim();
+      var orderRaw = $('f-order').value.trim();
+      var bad = false, first = '';
+      function fail(key, msg) { fieldError(key, msg); if (!first) first = FIELD_INPUT[key]; bad = true; }
+      if (!bucket) fail('bucket', 'Bucket is required.');
+      else if (bucket.length > LIMITS.category) fail('bucket', 'Bucket can be at most ' + LIMITS.category + ' characters.');
+      if (!category) fail('category', 'Category is required.');
+      else if (category.length > LIMITS.category) fail('category', 'Category can be at most ' + LIMITS.category + ' characters.');
+      if (question.length < LIMITS.qMin) fail('question', question ? 'Question must be at least ' + LIMITS.qMin + ' characters.' : 'Question is required.');
+      else if (question.length > LIMITS.qMax) fail('question', 'Question can be at most ' + LIMITS.qMax + ' characters.');
+      if (!answer) fail('answer', 'Answer is required.');
+      else if (answer.length > LIMITS.aMax) fail('answer', 'Answer can be at most ' + LIMITS.aMax + ' characters.');
+      var order = null;
+      if (orderRaw !== '') {
+        order = Number(orderRaw);
+        if (!/^\d+$/.test(orderRaw) || order < 0 || order > LIMITS.orderMax) fail('order', 'Sort order must be a whole number from 0 to ' + LIMITS.orderMax.toLocaleString('en-IN') + '.');
+      }
+      if (bad) { var el = $(first); if (el) el.focus(); return null; }
+      var body = { faq_bucket: bucket, category: category, question: question, answer: answer, status: $('f-status').checked ? 1 : 0 };
+      if (order !== null) body.sort_order = order;       /* blank on a new FAQ: the server puts it at the end */
+      return body;
+    }
+
+    async function submitFaq() {
+      if (busy) return;
+      var id = $('f-id').value;
+      var body = readForm();
+      if (!body) return;
+      var btn = $('f-submit');
+      busy = true;
+      btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        var res = id
+          ? await call('PUT', '/gen-dashboard/faqs/' + encodeURIComponent(id), body)
+          : await call('POST', '/gen-dashboard/faqs', body);
+        var saved = res && res.faq && typeof res.faq === 'object' ? res.faq : null;
+        var f;
+        if (id) {
+          f = findFaq(id);
+          if (f) merge(f, saved, body);
+        } else if (saved) {
+          faqs.push(saved); f = saved;
+        }
+        busy = false;
+        $('faq-modal').classList.remove('open');
+        lastFocus = null;
+        if (!saved && !id) { await loadFaqs(); }
+        else {
+          if (f) { ensureVisible(f); openIds[f.id] = true; pendingFocus = '#faq-btn-' + f.id; }
+          render();
+          if (f) { var item = document.querySelector('.faq-item[data-id="' + f.id + '"]'); if (item) item.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+        }
+        showToast(id ? 'FAQ saved' : 'FAQ added');
+      } catch (e) {
+        if (e.status === 409) fieldError('question', e.message || 'This question already exists.');
+        else $('f-error').textContent = e.message;
+        if (e.status === 409) $('f-question').focus();
+      } finally {
+        busy = false;
+        btn.disabled = false; btn.textContent = 'Save FAQ';
+      }
+    }
+
+    /* ── Rename a bucket or a category: PUT on each FAQ of it, one after the other, with progress ── */
+    function renameList() {
+      return faqs.filter(function (f) {
+        return ren.kind === 'bucket' ? bucketOf(f) === ren.from : (catOf(f) === ren.from && bucketOf(f) === ren.bucket);
+      });
+    }
+    function renameSummary() {
+      var n = renameList().length;
+      var label = ren.kind === 'bucket' ? 'bucket' : 'category';
+      $('r-title').textContent = 'Rename ' + label;
+      $('r-name-label').textContent = 'New ' + label + ' name *';
+      $('r-info').innerHTML = '<b>' + escHtml(ren.from) + '</b> has ' + plural(n, 'FAQ', 'FAQs') + (ren.kind === 'category' ? ' in the bucket <b>' + escHtml(ren.bucket) + '</b>' : '')
+        + '. Renaming the ' + label + ' updates each of them, one by one.';
+      $('r-submit').textContent = 'Rename ' + plural(n, 'FAQ', 'FAQs');
+    }
+    function renameTaken() { return ren.kind === 'bucket' ? buckets() : catsIn(ren.bucket); }
+    function openRename(kind, bucket, cat) {
+      if (!isSuper || busy) return;
+      if (kind === 'bucket') { if (!selBucket) return; ren = { kind: 'bucket', from: selBucket, bucket: selBucket }; }
+      else ren = { kind: 'category', from: cat, bucket: bucket };
+      renameSummary();
+      $('r-name').value = ren.from;
+      $('r-name').disabled = false;
+      $('r-err').textContent = ''; $('r-note').textContent = '';
+      $('r-progress').hidden = true;
+      $('r-submit').disabled = false; $('r-cancel').disabled = false; $('r-x').disabled = false;
+      $('f-buckets').innerHTML = optionList(buckets());
+      $('f-categories').innerHTML = optionList(catsIn(ren.bucket));
+      $('r-name').setAttribute('list', ren.kind === 'bucket' ? 'f-buckets' : 'f-categories');
+      openModal('rename-modal', 'r-name');
+      setTimeout(function () { $('r-name').select(); }, 40);
+    }
+    function closeRename() {
+      if (busy) return;
+      closeModalEl('rename-modal');
+    }
+    $('r-name').addEventListener('input', function () {
+      var v = this.value.trim();
+      $('r-err').textContent = '';
+      $('r-note').textContent = ren && v && v !== ren.from && renameTaken().indexOf(v) !== -1
+        ? 'A ' + ren.kind + ' called “' + v + '” already exists. The FAQs will be merged into it.' : '';
+    });
+    $('r-name').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submitRename(); } });
+
+    async function submitRename() {
+      if (busy || !ren) return;
+      var name = $('r-name').value.trim();
+      var err = $('r-err');
+      err.textContent = '';
+      var label = ren.kind === 'bucket' ? 'Bucket' : 'Category';
+      if (!name) { err.textContent = label + ' name is required.'; $('r-name').focus(); return; }
+      if (name.length > LIMITS.category) { err.textContent = label + ' can be at most ' + LIMITS.category + ' characters.'; return; }
+      if (name === ren.from) { err.textContent = 'Enter a different name.'; return; }
+      var list = renameList();
+      if (!list.length) { closeRename(); return; }
+      var field = ren.kind === 'bucket' ? 'faq_bucket' : 'category';
+      busy = true;
+      $('r-submit').disabled = true; $('r-cancel').disabled = true; $('r-x').disabled = true; $('r-name').disabled = true;
+      $('r-progress').hidden = false;
+      var done = 0;
+      function progress() {
+        var pct = Math.round(done / list.length * 100);
+        $('r-progress-text').textContent = 'Renaming ' + done + ' of ' + list.length + '…';
+        $('r-progress-pct').textContent = pct + '%';
+        $('r-bar').style.width = pct + '%';
+      }
+      progress();
+      try {
+        for (var i = 0; i < list.length; i++) {
+          var f = list[i];
+          var body = {}; body[field] = name;
+          var res = await call('PUT', '/gen-dashboard/faqs/' + encodeURIComponent(f.id), body);
+          var fb = {}; fb[field] = name;
+          merge(f, res && res.faq, fb);
+          done += 1;
+          progress();
+        }
+        busy = false;
+        lastFocus = null;
+        $('rename-modal').classList.remove('open');
+        if (ren.kind === 'bucket') { selBucket = name; if (selCat && catsIn(name).indexOf(selCat) === -1) selCat = ''; }
+        else if (selCat === ren.from && (!selBucket || selBucket === ren.bucket)) selCat = name;
+        syncHash();
+        render();
+        showToast('Renamed ' + plural(done, 'FAQ', 'FAQs'));
+        var b = document.querySelector(ren.kind === 'bucket' ? '#bucket-list .bucket[aria-pressed="true"]' : '.cat-link[data-cat="' + (window.CSS && CSS.escape ? CSS.escape(name) : name) + '"]');
+        if (b) b.focus();
+      } catch (e) {
+        /* stop at the first failure; the ones already renamed stay renamed */
+        busy = false;
+        err.textContent = 'Renamed ' + done + ' of ' + list.length + ' FAQs, then it failed: ' + e.message;
+        renameSummary();
+        $('r-name').disabled = false; $('r-cancel').disabled = false; $('r-x').disabled = false; $('r-submit').disabled = false;
+        $('r-submit').textContent = 'Retry the remaining ' + (list.length - done);
+        render();
+      } finally { busy = false; }
+    }
+
+    function handleLogout() { showLogoutModal(); }
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      $('sidebar-overlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      $('sidebar-overlay').classList.remove('open');
+    }
+
+    readHash();
+    loadFaqs();
+  </script>
+
+</body>
+</html>

@@ -84,11 +84,13 @@ describe('SupportHubScreen', () => {
     expect(screen.queryByTestId('support-live-chat-badge')).toBeNull();
   });
 
-  it('says FAQ is coming soon instead of navigating', async () => {
+  it('opens the FAQ screen from the FAQ row, with no "Soon" badge', async () => {
     await renderScreen(<SupportHubScreen />);
+    expect(screen.queryByText('Soon')).toBeNull();
+    expect(screen.getByText('Answers to common questions')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('support-faq'));
-    expect(await screen.findByText('FAQ is coming soon')).toBeTruthy();
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenLastCalledWith('/admin/help/faq');
+    expect(screen.queryByText('FAQ is coming soon')).toBeNull();
   });
 
   it.each([2, 3])('sends role %i away: the Support hub is for the admin only', async (roleId) => {

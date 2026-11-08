@@ -2,14 +2,14 @@ import React from 'react';
 import { View } from 'react-native';
 
 import { Screen } from '@/components/layout';
-import { Badge, Card, CountBadge, ListItem, Reveal, useToast } from '@/components/ui';
+import { Card, CountBadge, ListItem, Reveal } from '@/components/ui';
 import { routes, useAppRouter } from '@/lib/navigation';
 import { useLiveChatBadge } from '@/store/badges';
 import { radii } from '@/theme';
 
 import { AdminOnly } from '../components/AdminOnly';
 
-/** "Support" tab root (admins only): FAQ (coming soon), Live Chat with Clockyn support, and the Video Hub of guide videos. */
+/** "Support" tab root (admins only): FAQ, Live Chat with Clockyn support, and the Video Hub of guide videos. */
 export default function SupportHubScreen() {
   return (
     <AdminOnly>
@@ -20,7 +20,6 @@ export default function SupportHubScreen() {
 
 function SupportHub() {
   const router = useAppRouter();
-  const toast = useToast();
   const unread = useLiveChatBadge();
 
   return (
@@ -32,8 +31,7 @@ function SupportHub() {
               icon="help-circle"
               title="FAQ"
               subtitle="Answers to common questions"
-              right={<Badge label="Soon" tone="info" size="sm" />}
-              onPress={() => toast.info('FAQ is coming soon')}
+              onPress={() => router.push(routes.admin.helpFaq)}
               divider
               testID="support-faq"
             />

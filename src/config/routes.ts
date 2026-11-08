@@ -23,6 +23,7 @@ export const routes = {
     settings: '/admin/settings',
     help: '/admin/help', // "Support" tab (admin only): FAQ / Live Chat / Video Hub (ticket screen is `support` below)
     helpVideos: '/admin/help/videos',
+    helpFaq: '/admin/help/faq',
     helpLiveChat: '/admin/help/live-chat',
 
     overview: '/admin/overview', // params: date

@@ -32,7 +32,7 @@ Route files go in `src/app/<path>.tsx` (tab roots in `src/app/{admin,staff}/(tab
 | attendance_rule | `/admin/attendance-rule` | features/team-rules | 03/attendance_rule | B4 |
 | holiday_management | `/admin/holidays` | features/team-rules | 03/holiday_management | B4 |
 | settings | `/admin/settings` (tab) | features/settings | 04/settings | B5 |
-| support hub / Video Hub / Live Chat (admin only) | `/admin/help` (tab), `/admin/help/videos`, `/admin/help/live-chat` | features/help | new in Clockyn (no v1 page) | - |
+| support hub / FAQ / Video Hub / Live Chat (admin only) | `/admin/help` (tab), `/admin/help/faq`, `/admin/help/videos`, `/admin/help/live-chat` | features/help | new in Clockyn (no v1 page) | `/admin/help/faq`: `bucket?` (bucket name or slug, e.g. `attendance-time`), `category?` (narrows the bucket) |
 | beyond (live parts) | `/admin/more`, `/admin/permissions` | features/settings | 04/beyond, 04/settings | B5 |
 | support / suggest_feature | `/admin/support`, `/admin/suggest-feature` | features/settings | 04/support, 04/suggest_feature | B5 |
 | other_apps | **dropped** (cross-promotes other products by name) | – | 04/other_apps | – |

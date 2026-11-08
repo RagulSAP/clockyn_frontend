@@ -326,6 +326,7 @@ async function main() {
   if (inv.status !== 200) { failures += 1; console.log('FAIL invoice download'); }
   await call('GET', '/support/subjects', { check: isList(3) });
   await call('GET', '/support/videos', { check: isList(2) }); // only the active ones
+  await call('GET', '/support/faqs', { check: (j) => { const l = list(j); const ids = l ? l.map((f) => f.id) : []; return l && l.length === 36 && !ids.includes(99) && ids.indexOf(28) < ids.indexOf(27) && new Set(l.map((f) => f.faq_bucket)).size === 6 && new Set(l.map((f) => f.category)).size === 18 && l.every((f) => f.faq_bucket && f.category && f.question && f.answer) ? null : 'faqs: 36 active in sort order (28 before 27), 6 buckets, 18 categories, none inactive'; } }); // only the active ones
   await call('POST', '/support/videos/1/view', { body: { user_id: ADM, org_id: ORG }, check: isOk });
   // Live Chat (app side + the support test hooks)
   await call('GET', `/live-chat/messages/${ORG}?user_id=${ADM}`, { check: (j) => (j.success && j.status === null && j.unread === 0 && Array.isArray(j.messages) && j.messages.length === 0 ? null : 'empty thread expected') });
