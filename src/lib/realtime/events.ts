@@ -6,6 +6,7 @@
  * Event table (see the realtime spec):
  *   new_message | new_chat_message  -> chat unread +1 (dedupe by message id, ignore own messages)
  *   new_group_message               -> group unread +1 (same rules)
+ *   live_chat_message               -> Support badge +1 when SUPPORT sent it (dedupe by message id; own / org messages ignored)
  *   announcement                    -> announcements unread +1 (broadcast | targeted)
  *   request_submitted               -> requests badge +1 (admin)
  *   badge_update                    -> punch notification
@@ -27,6 +28,7 @@ export type PunchNotification = {
 
 export type GlobalAction =
   | { kind: 'chat_message'; section: ChatSection; messageId: string }
+  | { kind: 'live_chat_message'; messageId: string }
   | { kind: 'announcement'; announcement: AnnouncementKind }
   | { kind: 'request_submitted' }
   | { kind: 'punch_notification'; notification: PunchNotification | null };
@@ -34,6 +36,7 @@ export type GlobalAction =
 /** What the realtime layer needs from the badge store (wired in `useGlobalSocket`). */
 export type BadgeSink = {
   addChatMessage: (section: ChatSection, messageId: string) => void;
+  addLiveChatMessage: (messageId: string) => void;
   addAnnouncement: (kind: AnnouncementKind) => void;
   addRequest: () => void;
 };
@@ -89,6 +92,13 @@ export function interpretSocketFrame(frame: unknown, selfId: string, now: () => 
       const section: ChatSection = type === 'new_group_message' || data.group_id ? 'group' : 'individual';
       return { kind: 'chat_message', section, messageId };
     }
+    case 'live_chat_message': {
+      const data = asRecord(msg.data) ?? msg;
+      const messageId = asString(data.message_id ?? data.messageId);
+      // Only messages FROM support count; the admin's own messages (echoed to other devices) never do.
+      if (!messageId || asString(data.sender_type) !== 'support') return null;
+      return { kind: 'live_chat_message', messageId };
+    }
     default:
       return null;
   }
@@ -127,6 +137,12 @@ export function interpretPushData(
       return { kind: 'announcement', announcement: classifyAnnouncementTarget(data.target) };
     case 'request_submitted':
       return { kind: 'request_submitted' };
+    case 'live_chat_message': {
+      // The push is only sent for support messages. Without an id the socket is authoritative while it is open.
+      const realId = asString(data.message_id ?? data.messageId);
+      if (realId) return { kind: 'live_chat_message', messageId: realId };
+      return opts.socketOpen ? null : { kind: 'live_chat_message', messageId: `push_${now()}` };
+    }
     case 'new_message':
     case 'new_chat_message':
     case 'new_group_message': {
@@ -158,6 +174,11 @@ export function applyGlobalAction(action: GlobalAction, sink: BadgeSink, deduper
       sink.addChatMessage(action.section, action.messageId);
       realtimeBus.emit({ type: 'chat_message', section: action.section, messageId: action.messageId });
       return true;
+    case 'live_chat_message':
+      if (deduper.seen(`live:${action.messageId}`)) return false;
+      sink.addLiveChatMessage(action.messageId);
+      realtimeBus.emit({ type: 'live_chat_message', messageId: action.messageId });
+      return true;
     case 'announcement':
       sink.addAnnouncement(action.announcement);
       realtimeBus.emit({ type: 'announcement', announcement: action.announcement });
@@ -174,6 +195,7 @@ export function applyGlobalAction(action: GlobalAction, sink: BadgeSink, deduper
 
 export type RealtimeEvent =
   | { type: 'chat_message'; section: ChatSection; messageId: string }
+  | { type: 'live_chat_message'; messageId: string }
   | { type: 'announcement'; announcement: AnnouncementKind }
   | { type: 'request_submitted' }
   | { type: 'punch_notification'; notification: PunchNotification | null }

@@ -9,11 +9,20 @@ import { useSession } from '@/store/auth';
 import type { SupportVideo } from '@/types/api/support';
 import { radii } from '@/theme';
 
+import { AdminOnly } from '../components/AdminOnly';
 import { VideoPlayerModal } from '../components/VideoPlayerModal';
 import { useSupportVideos } from '../hooks/useSupportVideos';
 
 /** Video Hub: the active guide videos (the server only returns status = 1); a tap plays one full screen. */
 export default function VideoHubScreen() {
+  return (
+    <AdminOnly>
+      <VideoHub />
+    </AdminOnly>
+  );
+}
+
+function VideoHub() {
   const videos = useSupportVideos();
   const session = useSession();
   const [selected, setSelected] = useState<SupportVideo | null>(null);

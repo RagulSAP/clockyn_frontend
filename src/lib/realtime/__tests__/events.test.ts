@@ -1,7 +1,7 @@
 import { applyGlobalAction, classifyAnnouncementTarget, interpretPushData, interpretSocketFrame, realtimeBus, type BadgeSink } from '../events';
 import { createDeduper } from '../socketCore';
 
-const makeSink = (): jest.Mocked<BadgeSink> => ({ addChatMessage: jest.fn(), addAnnouncement: jest.fn(), addRequest: jest.fn() });
+const makeSink = (): jest.Mocked<BadgeSink> => ({ addChatMessage: jest.fn(), addLiveChatMessage: jest.fn(), addAnnouncement: jest.fn(), addRequest: jest.fn() });
 const fixedNow = () => new Date('2026-01-02T03:04:05.000Z');
 
 describe('classifyAnnouncementTarget', () => {
@@ -14,6 +14,37 @@ describe('classifyAnnouncementTarget', () => {
     [undefined, 'targeted'],
   ])('%s -> %s', (input, expected) => {
     expect(classifyAnnouncementTarget(input)).toBe(expected);
+  });
+});
+
+describe('live chat frames', () => {
+  const frame = (over: Record<string, unknown> = {}) => ({ type: 'live_chat_message', data: { message_id: 'lcm-1', sender_type: 'support', sender_id: 'agent@x', org_id: 'o1', ...over } });
+
+  it('counts a message from support (socket)', () => {
+    expect(interpretSocketFrame(frame(), 'u1')).toEqual({ kind: 'live_chat_message', messageId: 'lcm-1' });
+  });
+  it("ignores the admin's own messages (echo to another device) and frames without an id", () => {
+    expect(interpretSocketFrame(frame({ sender_type: 'org', sender_id: 'u1' }), 'u1')).toBeNull();
+    expect(interpretSocketFrame(frame({ message_id: '' }), 'u1')).toBeNull();
+    expect(interpretSocketFrame({ type: 'live_chat_read', data: { org_id: 'o1', reader: 'support' } }, 'u1')).toBeNull();
+  });
+  it('push: counts by message id; without an id only while the socket is down', () => {
+    expect(interpretPushData({ type: 'live_chat_message', message_id: 'lcm-2' }, { selfId: 'u1', socketOpen: true })).toEqual({ kind: 'live_chat_message', messageId: 'lcm-2' });
+    expect(interpretPushData({ type: 'live_chat_message' }, { selfId: 'u1', socketOpen: true })).toBeNull();
+    expect(interpretPushData({ type: 'live_chat_message' }, { selfId: 'u1', socketOpen: false, now: () => 5 })).toEqual({ kind: 'live_chat_message', messageId: 'push_5' });
+  });
+  it('applyGlobalAction: dedupes socket + push of the same message and publishes on the bus', () => {
+    const sink = makeSink();
+    const seen: unknown[] = [];
+    const off = realtimeBus.subscribe((e) => seen.push(e));
+    const deduper = createDeduper(50);
+    const action = { kind: 'live_chat_message', messageId: 'lcm-9' } as const;
+    expect(applyGlobalAction(action, sink, deduper)).toBe(true);
+    expect(applyGlobalAction(action, sink, deduper)).toBe(false);
+    off();
+    expect(sink.addLiveChatMessage).toHaveBeenCalledTimes(1);
+    expect(sink.addLiveChatMessage).toHaveBeenCalledWith('lcm-9');
+    expect(seen).toEqual([{ type: 'live_chat_message', messageId: 'lcm-9' }]);
   });
 });
 

@@ -56,6 +56,7 @@ const first = (data: PushData, ...keys: string[]): string | undefined => {
  *  announcement                                   → staff home (admin home for role 1)
  *  new_chat_message / new_message                 → direct chat (admin | staff by role), `userId` when the payload has a sender id
  *  new_group_message                              → group chat (admin | staff by role), `groupId` when present
+ *  live_chat_message                              → Live Chat (admins only; any other role: nothing to open)
  *  request_submitted                              → admin requests hub
  *  request_updated                                → staff requests hub
  *
@@ -96,6 +97,8 @@ export function parseNotificationTarget(
         params: groupId ? { groupId } : {},
       };
     }
+    case 'live_chat_message':
+      return isAdmin ? { route: routes.admin.helpLiveChat, params: {} } : null;
     case 'request_submitted':
       return { route: routes.admin.requests.hub, params: {} };
     case 'request_updated':
@@ -116,6 +119,8 @@ export function foregroundLocalNotification(msg: Pick<PushMessage, 'title' | 'bo
       return { title: msg.title || 'New Message', body: msg.body ?? '', data: msg.data };
     case 'new_group_message':
       return { title: msg.title || 'New Group Message', body: msg.body ?? '', data: msg.data };
+    case 'live_chat_message':
+      return { title: msg.title || 'Clockyn Support', body: msg.body ?? '', data: msg.data };
     default:
       return null;
   }

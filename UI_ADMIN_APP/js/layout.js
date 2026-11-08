@@ -6,10 +6,11 @@
  *   <script src="../js/layout.js"></script>
  *
  * `data-active` is one of: dashboard, organizations, users, subscriptions, payments, coupons, suggestions,
- * tickets, videos, video_views, activity, settings. When it is missing the key is derived from the file name.
+ * tickets, live_chat, videos, video_views, activity, settings. When it is missing the key is derived from the file name.
  * The markup is written synchronously (no flash) and before auth.js runs its DOMContentLoaded handler, so auth.js
  * finds the ids/classes it fills: .sidebar-logo-img, #sidebar-avatar, #sidebar-user-name, #sidebar-user-mobile,
- * #sidebar-user-role, .nav-users-badge, .nav-suggestion-badge.
+ * #sidebar-user-role, .nav-users-badge, .nav-suggestion-badge, .nav-livechat-badge (filled by js/live-chat-notify.js, which
+ * this script loads on every page that has the sidebar).
  * Icons are the exact Lucide icons the Clockyn app uses (stroke = currentColor, so they follow the theme).
  */
 (function () {
@@ -25,6 +26,7 @@
     coupons: [["path",{"d":"M2 9a3 3 0 1 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"}],["path",{"d":"M9 9h.01"}],["path",{"d":"m15 9-6 6"}],["path",{"d":"M15 15h.01"}]],
     suggestions: [["path",{"d":"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"}],["path",{"d":"M9 18h6"}],["path",{"d":"M10 22h4"}]],
     tickets: [["circle",{"cx":"12","cy":"12","r":"10"}],["path",{"d":"m4.93 4.93 4.24 4.24"}],["path",{"d":"m14.83 9.17 4.24-4.24"}],["path",{"d":"m14.83 14.83 4.24 4.24"}],["path",{"d":"m9.17 14.83-4.24 4.24"}],["circle",{"cx":"12","cy":"12","r":"4"}]],
+    live_chat: [["path",{"d":"M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"}],["path",{"d":"M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"}]],
     videos: [["path",{"d":"M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"}],["circle",{"cx":"12","cy":"12","r":"10"}]],
     video_views: [["path",{"d":"M3 3v16a2 2 0 0 0 2 2h16"}],["path",{"d":"M18 17V9"}],["path",{"d":"M13 17V5"}],["path",{"d":"M8 17v-3"}]],
     activity: [["path",{"d":"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"}],["path",{"d":"M3 3v5h5"}],["path",{"d":"M12 7v5l4 2"}]],
@@ -44,6 +46,7 @@
       { key: 'coupons', label: 'Coupons', href: 'coupons.html' },
       { key: 'suggestions', label: 'Suggestions', href: 'suggestions.html', badge: 'nav-badge nav-suggestion-badge', badgeDisplay: 'none' },
       { key: 'tickets', label: 'Ticketing & Bugs', href: 'tickets.html' },
+      { key: 'live_chat', label: 'Live Chat', href: 'live_chat.html', badge: 'nav-badge nav-livechat-badge', badgeDisplay: 'none' },
       { key: 'videos', label: 'Video Hub', href: 'videos.html' },
       { key: 'video_views', label: 'Video Views', href: 'video_views.html' }
     ] },
@@ -125,4 +128,14 @@
 
   var aside = document.getElementById('app-sidebar');
   if (aside) render(aside);
+
+  /* Live Chat notifier (socket, sidebar badge, tab title, chime, browser notifications) on every page with the sidebar. */
+  var self = document.currentScript;
+  if (aside && self && self.src && !window.ClockynLiveChat && !window.__clockynLiveChatLoading) {
+    window.__clockynLiveChatLoading = true;
+    var notifier = document.createElement('script');
+    notifier.src = self.src.replace(/layout\.js(\?.*)?$/, 'live-chat-notify.js');
+    notifier.async = true;
+    document.head.appendChild(notifier);
+  }
 })();

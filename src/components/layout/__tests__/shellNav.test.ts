@@ -69,12 +69,14 @@ describe('variantForRole', () => {
 });
 
 describe('SHELL_TABS', () => {
-  it('has Home, CRM, Chat, Settings, Support in order for both variants', () => {
-    for (const v of ['admin', 'staff'] as const) {
-      expect(SHELL_TABS[v].map((t) => t.label)).toEqual(['Home', 'CRM', 'Chat', 'Settings', 'Support']);
-    }
+  it('admin: Home, CRM, Chat, Settings, Support in order', () => {
+    expect(SHELL_TABS.admin.map((t) => t.label)).toEqual(['Home', 'CRM', 'Chat', 'Settings', 'Support']);
     expect(SHELL_TABS.admin.map((t) => t.route)).toEqual(['/admin/home', '/admin/crm', '/admin/chat', '/admin/settings', '/admin/help']);
-    expect(SHELL_TABS.staff.map((t) => t.route)).toEqual(['/staff/home', '/staff/crm', '/staff/chat', '/staff/settings', '/staff/help']);
+  });
+  it('staff and managers never get the Support tab', () => {
+    expect(SHELL_TABS.staff.map((t) => t.label)).toEqual(['Home', 'CRM', 'Chat', 'Settings']);
+    expect(SHELL_TABS.staff.map((t) => t.route)).toEqual(['/staff/home', '/staff/crm', '/staff/chat', '/staff/settings']);
+    expect(SHELL_TABS.staff.some((t) => t.key === 'support')).toBe(false);
   });
 });
 
@@ -90,10 +92,14 @@ describe('activeTabKey', () => {
     expect(activeTabKey('/staff/requests/leave', 'staff')).toBe('home');
     expect(activeTabKey('/staff/permissions', 'staff')).toBe('settings');
   });
-  it('highlights Support on its hub and the Video Hub, not Settings (the ticket screen stays under Settings)', () => {
+  it('highlights Support on its hub, the Video Hub and Live Chat, not Settings (the ticket screen stays under Settings)', () => {
     expect(activeTabKey('/admin/help', 'admin')).toBe('support');
-    expect(activeTabKey('/staff/help/videos', 'staff')).toBe('support');
+    expect(activeTabKey('/admin/help/videos', 'admin')).toBe('support');
+    expect(activeTabKey('/admin/help/live-chat', 'admin')).toBe('support');
     expect(activeTabKey('/admin/support', 'admin')).toBe('settings');
+  });
+  it('the staff shell highlights nothing on the (unreachable) support paths', () => {
+    expect(activeTabKey('/staff/help', 'staff')).toBeNull();
   });
   it('does not match on a shared string prefix', () => {
     expect(activeTabKey('/admin/homeless', 'admin')).toBeNull();
@@ -116,6 +122,12 @@ describe('tabBadgeCount', () => {
   it('crm badge is hidden while on the CRM tab', () => {
     expect(tabBadgeCount('crm', counts, 'home')).toBe(4);
     expect(tabBadgeCount('crm', counts, 'crm')).toBe(0);
+  });
+  it('support shows the unread live-chat messages and is not hidden while open', () => {
+    expect(tabBadgeCount('support', { ...counts, liveChat: 3 }, 'home')).toBe(3);
+    expect(tabBadgeCount('support', { ...counts, liveChat: 3 }, 'support')).toBe(3);
+    expect(tabBadgeCount('support', counts, null)).toBe(0);
+    expect(tabBadgeCount('support', { ...counts, liveChat: Number.NaN }, null)).toBe(0);
   });
   it('home and settings never show a badge', () => {
     expect(tabBadgeCount('home', counts, null)).toBe(0);

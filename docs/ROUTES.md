@@ -32,7 +32,7 @@ Route files go in `src/app/<path>.tsx` (tab roots in `src/app/{admin,staff}/(tab
 | attendance_rule | `/admin/attendance-rule` | features/team-rules | 03/attendance_rule | B4 |
 | holiday_management | `/admin/holidays` | features/team-rules | 03/holiday_management | B4 |
 | settings | `/admin/settings` (tab) | features/settings | 04/settings | B5 |
-| support hub / Video Hub | `/admin/help` (tab), `/admin/help/videos` | features/help | new in Clockyn (no v1 page) | - |
+| support hub / Video Hub / Live Chat (admin only) | `/admin/help` (tab), `/admin/help/videos`, `/admin/help/live-chat` | features/help | new in Clockyn (no v1 page) | - |
 | beyond (live parts) | `/admin/more`, `/admin/permissions` | features/settings | 04/beyond, 04/settings | B5 |
 | support / suggest_feature | `/admin/support`, `/admin/suggest-feature` | features/settings | 04/support, 04/suggest_feature | B5 |
 | other_apps | **dropped** (cross-promotes other products by name) | – | 04/other_apps | – |
@@ -61,7 +61,6 @@ Route files go in `src/app/<path>.tsx` (tab roots in `src/app/{admin,staff}/(tab
 | emp_attendance_calendar | `/staff/attendance` | features/employee | 11/emp_attendance_calendar | B11 |
 | emp_personal_details | `/staff/profile` | features/employee | 11/emp_personal_details | B11 |
 | emp_settings | `/staff/settings` (tab) + `/staff/permissions`, `/staff/more` | features/employee | 11/emp_settings | B11 |
-| support hub / Video Hub | `/staff/help` (tab), `/staff/help/videos` | features/help | new in Clockyn (no v1 page) | - |
 | emp_permission_calendar | **dropped** (mock orphan) | – | 11/emp_permission_calendar | – |
 | emp_crm | `/staff/crm` (tab) | features/crm | 09/emp_crm | B10 |
 | emp_chat (hub) | `/staff/chat` (tab) | features/chat | 10/emp_chat | B9b |

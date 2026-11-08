@@ -146,6 +146,12 @@ export const queryKeys = {
     search: (userId: Scope, term: string) => ['chat', s(userId), 'search', term] as const,
     unread: (userId: Scope) => ['chat', s(userId), 'unread'] as const,
   },
+  /** Live Chat (org admin <-> Clockyn support), one thread per organisation. */
+  liveChat: {
+    all: (userId: Scope) => ['live-chat', s(userId)] as const,
+    messages: (userId: Scope, orgId: Scope) => ['live-chat', s(userId), 'messages', s(orgId)] as const,
+    unread: (userId: Scope, orgId: Scope) => ['live-chat', s(userId), 'unread', s(orgId)] as const,
+  },
   groupChat: {
     all: (userId: Scope) => ['group-chat', s(userId)] as const,
     list: (userId: Scope, orgId?: Scope) => ['group-chat', s(userId), 'list', s(orgId)] as const,

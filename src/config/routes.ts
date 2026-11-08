@@ -21,8 +21,9 @@ export const routes = {
     crm: '/admin/crm',
     chat: '/admin/chat',
     settings: '/admin/settings',
-    help: '/admin/help', // "Support" tab: FAQ / WhatsApp chat / Video Hub (ticket screen is `support` below)
+    help: '/admin/help', // "Support" tab (admin only): FAQ / Live Chat / Video Hub (ticket screen is `support` below)
     helpVideos: '/admin/help/videos',
+    helpLiveChat: '/admin/help/live-chat',
 
     overview: '/admin/overview', // params: date
 
@@ -105,8 +106,6 @@ export const routes = {
     crm: '/staff/crm',
     chat: '/staff/chat',
     settings: '/staff/settings',
-    help: '/staff/help', // "Support" tab: FAQ / WhatsApp chat / Video Hub
-    helpVideos: '/staff/help/videos',
 
     attendance: '/staff/attendance', // monthly calendar + payslip/advance sheets
     profile: '/staff/profile', // personal details (view/edit)

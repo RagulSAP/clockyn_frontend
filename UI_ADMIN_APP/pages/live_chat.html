@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Live Chat</title>
+  <meta name="color-scheme" content="light dark" />
+  <script src="../js/theme.js"></script>
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <style>
+    [hidden] { display: none !important; }
+    .i { width: 16px; height: 16px; flex-shrink: 0; display: block; }
+    .i-lg { width: 20px; height: 20px; }
+    .hamburger-btn .i { width: 18px; height: 18px; }
+
+    .lc-content { max-width: 1400px; }
+    .page-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Shell: thread list | conversation ── */
+    .lc {
+      display: grid; grid-template-columns: 372px minmax(0, 1fr);
+      height: calc(100vh - var(--topbar-height) - 150px); height: calc(100dvh - var(--topbar-height) - 150px); min-height: 540px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm), inset 0 1px 0 var(--highlight); overflow: hidden;
+    }
+
+    /* ── Thread list ── */
+    .lc-list { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--border); background: var(--surface); }
+    .lc-list-head { padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--border); }
+    .lc-search {
+      display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px;
+      background: var(--surface-muted); border: 1px solid transparent; border-radius: var(--radius-pill);
+      transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+    }
+    .lc-search:focus-within { border-color: var(--text-muted); box-shadow: 0 0 0 3px var(--ring); }
+    .lc-search .i { color: var(--text-muted); }
+    .lc-search input { flex: 1; min-width: 0; background: none; border: none; outline: none; box-shadow: none; padding: 0; min-height: 0; font-size: 14px; color: var(--text); }
+    .lc-tabs { display: flex; width: 100%; }
+    .lc-tabs > button { flex: 1; padding: 6px 4px; font-size: 12.5px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+    .lc-tab-count { font-size: 10.5px; font-weight: 700; background: var(--danger); color: var(--on-danger); border-radius: var(--radius-pill); padding: 0 6px; min-width: 17px; line-height: 17px; text-align: center; }
+    .lc-threads { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+
+    .lc-row {
+      display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 12px 14px; text-align: left;
+      background: transparent; border: 0; border-bottom: 1px solid var(--border); cursor: pointer; font: inherit; color: inherit;
+      transition: background-color var(--motion-fast) var(--ease);
+    }
+    .lc-row:hover { background: var(--row-hover); }
+    .lc-row.active { background: var(--primary-soft); }
+    .lc-row:focus-visible { outline: 2px solid var(--text-muted); outline-offset: -2px; }
+    .lc-avatar {
+      position: relative; width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 13.5px; font-weight: 700; letter-spacing: 0.2px;
+      background: var(--surface-muted); color: var(--text-secondary);
+    }
+    .lc-avatar.t0 { background: var(--info-soft); color: var(--info); }
+    .lc-avatar.t1 { background: var(--success-soft); color: var(--success); }
+    .lc-avatar.t2 { background: var(--warning-soft); color: var(--warning); }
+    .lc-avatar.t3 { background: var(--purple-soft); color: var(--purple); }
+    .lc-avatar.t4 { background: var(--cyan-soft); color: var(--cyan); }
+    .lc-avatar-lg { width: 44px; height: 44px; }
+    .lc-dot { position: absolute; right: -3px; bottom: -3px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--surface); background: var(--success); }
+    .lc-row.active .lc-dot { border-color: var(--primary-soft); }
+    .lc-dot.closed { background: var(--border-strong); }
+    .lc-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    .lc-row-top, .lc-row-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+    .lc-org { font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lc-time { font-size: 11.5px; color: var(--text-muted); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+    .lc-preview { font-size: 13px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 4px; min-width: 0; }
+    .lc-preview .lc-you { color: var(--text-secondary); flex-shrink: 0; }
+    .lc-pv-i { width: 13px; height: 13px; flex-shrink: 0; }
+    .lc-row.unread .lc-org { font-weight: 700; }
+    .lc-row.unread .lc-preview { color: var(--text); font-weight: 500; }
+    .lc-row.unread .lc-time { color: var(--text); font-weight: 600; }
+    .lc-unread { min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius-pill); background: var(--danger); color: var(--on-danger); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .lc-closed-tag { font-size: 10.5px; font-weight: 600; padding: 1px 8px; border-radius: var(--radius-pill); background: var(--surface-muted); color: var(--text-muted); flex-shrink: 0; }
+    .lc-skel-row { display: flex; gap: 12px; padding: 14px; border-bottom: 1px solid var(--border); }
+    .lc-skel-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+    .lc-skel-avatar { width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0; }
+
+    /* ── Conversation ── */
+    .lc-conv { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--background); position: relative; }
+    .lc-conv-empty { flex: 1; display: flex; align-items: center; justify-content: center; }
+    .lc-conv-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .lc-conv.drop::after { content: "Drop a file to send"; position: absolute; inset: 10px; z-index: 5; border: 2px dashed var(--border-strong); border-radius: var(--radius-md); background: var(--overlay); color: var(--on-gradient); display: flex; align-items: center; justify-content: center; font-weight: 600; pointer-events: none; }
+    .lc-conv-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .lc-back { display: none; }
+    .lc-head-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    .lc-head-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .lc-org-link { display: inline-flex; align-items: center; gap: 6px; min-width: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.2px; color: var(--text); text-decoration: none; }
+    .lc-org-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lc-org-link .i { width: 14px; height: 14px; color: var(--text-muted); }
+    .lc-org-link:hover { text-decoration: underline; }
+    .lc-contact { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 12.5px; color: var(--text-muted); }
+    .lc-contact-item { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+    .lc-copy { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--text-muted); border-radius: var(--radius-xs); cursor: pointer; }
+    .lc-copy:hover { background: var(--surface-muted); color: var(--text); }
+    .lc-copy .i { width: 13px; height: 13px; }
+
+    .lc-msgs-wrap { flex: 1; min-height: 0; position: relative; }
+    .lc-msgs { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 14px 20px 18px; display: flex; flex-direction: column; }
+    .lc-msgs:focus-visible { outline: 2px solid var(--text-muted); outline-offset: -2px; }
+    .lc-day { align-self: center; margin: 14px 0 6px; }
+    .lc-day span { display: inline-block; font-size: 11.5px; font-weight: 600; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 2px 12px; }
+    .lc-msg { display: flex; flex-direction: column; max-width: min(560px, 80%); margin-top: 8px; }
+    .lc-msg.cont { margin-top: 2px; }
+    .lc-msg.mine { align-self: flex-end; align-items: flex-end; }
+    .lc-msg.theirs { align-self: flex-start; align-items: flex-start; }
+    .lc-sender { font-size: 11.5px; font-weight: 600; color: var(--text-muted); margin: 0 6px 3px; }
+    .lc-bubble { padding: 9px 13px; border-radius: 18px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+    .lc-bubble a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+    .mine .lc-bubble { background: var(--primary); color: var(--on-primary); border-bottom-right-radius: 6px; }
+    .theirs .lc-bubble { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
+    .lc-bubble.media { padding: 4px; }
+    .lc-img { display: block; max-width: 280px; max-height: 260px; width: auto; height: auto; border-radius: 14px; cursor: zoom-in; object-fit: cover; background: var(--surface-muted); }
+    .lc-file { display: flex; align-items: center; gap: 10px; min-width: 190px; max-width: 320px; padding: 8px 10px; border-radius: 14px; color: inherit; text-decoration: none !important; background: color-mix(in srgb, currentColor 11%, transparent); }
+    .lc-file:hover { background: color-mix(in srgb, currentColor 18%, transparent); }
+    .lc-file-ic { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, currentColor 14%, transparent); flex-shrink: 0; }
+    .lc-file-name { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lc-file-sub { font-size: 11.5px; opacity: 0.75; }
+    .lc-file-body { min-width: 0; flex: 1; }
+    .lc-meta { display: flex; align-items: center; gap: 4px; margin: 3px 6px 0; font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .lc-tick { width: 15px; height: 15px; }
+    .lc-tick.read { color: var(--info); }
+    .lc-msg.sending .lc-bubble { opacity: 0.65; }
+    .lc-msg.failed .lc-bubble { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(var(--danger-rgb), 0.35); }
+    .lc-failed-row { display: flex; align-items: center; gap: 10px; margin: 4px 6px 0; font-size: 12px; color: var(--danger); }
+    .lc-failed-row button { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--text); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+    .lc-newpill {
+      position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 3;
+      display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius-pill); border: 0; cursor: pointer;
+      background: var(--primary); color: var(--on-primary); font: inherit; font-size: 12.5px; font-weight: 600; box-shadow: var(--shadow-md);
+    }
+
+    .lc-closed-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border); font-size: 13.5px; color: var(--text-secondary); }
+    .lc-closed-bar .lc-closed-text { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .lc-composer { display: flex; align-items: flex-end; gap: 8px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border); }
+    .lc-input {
+      flex: 1; min-width: 0; resize: none; max-height: 140px; min-height: 42px; padding: 10px 16px; border-radius: 21px; line-height: 1.4; font-size: 14px;
+      background: var(--surface-muted); border: 1px solid transparent; color: var(--text); font-family: inherit; outline: none; overflow-y: auto;
+    }
+    .lc-input:focus { border-color: var(--text-muted); box-shadow: 0 0 0 3px var(--ring); background: var(--surface); }
+    .lc-iconbtn, .lc-send {
+      width: 42px; height: 42px; border-radius: 50%; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: background-color var(--motion-fast) var(--ease), opacity var(--motion-fast) var(--ease);
+    }
+    .lc-iconbtn { background: transparent; color: var(--text-secondary); }
+    .lc-iconbtn:hover { background: var(--surface-muted); color: var(--text); }
+    .lc-send { background: var(--primary); color: var(--on-primary); }
+    .lc-send:hover:not(:disabled) { background: var(--primary-hover); }
+    .lc-send:disabled { opacity: 0.35; cursor: default; }
+    .lc-iconbtn:focus-visible, .lc-send:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 2px; }
+    .lc-center { margin: auto; text-align: center; color: var(--text-muted); padding: 24px; }
+
+    /* ── Lightbox (a photo viewer is always dark, like the other pages) ── */
+    .lc-lightbox { position: fixed; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(0, 0, 0, 0.9); }
+    .lc-lightbox img { max-width: 100%; max-height: 100%; border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); }
+    .lc-lightbox-x { position: absolute; top: 16px; right: 16px; width: 42px; height: 42px; border-radius: 50%; border: 0; cursor: pointer; background: rgba(255, 255, 255, 0.16); color: #fff; display: flex; align-items: center; justify-content: center; }
+    .lc-lightbox-x:hover { background: rgba(255, 255, 255, 0.28); }
+
+    #lc-notify-btn.granted { cursor: default; }
+    #lc-mute-btn[aria-pressed="true"] { color: var(--danger); }
+
+    @media (max-width: 900px) {
+      .lc { grid-template-columns: 1fr; border-radius: var(--radius-md); }
+      .lc[data-view="list"] .lc-conv { display: none; }
+      .lc[data-view="conv"] .lc-list { display: none; }
+      .lc-back { display: flex; }
+      .lc-msgs { padding: 12px 12px 16px; }
+      .lc-msg { max-width: 88%; }
+      .lc-conv-head { padding: 10px 12px; flex-wrap: wrap; gap: 8px 10px; }
+      .lc-conv-head .lc-avatar { display: none; }
+      .lc-head-main { flex-basis: 0; min-width: 120px; }
+      .lc-head-title { flex-wrap: wrap; gap: 4px 8px; }
+      .lc-org-link { max-width: 100%; }
+      .lc-contact { gap: 2px 10px; font-size: 12px; }
+      .lc-contact-item { max-width: 100%; }
+      #lc-status-btn { flex-basis: 100%; justify-content: center; }
+      .lc-composer { padding: 10px 12px; }
+      .lc-img { max-width: 220px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .lc-row, .lc-search { transition: none; } }
+  </style>
+</head>
+<body data-page="live_chat">
+
+  <aside class="sidebar" id="app-sidebar" data-active="live_chat"></aside>
+  <script src="../js/layout.js"></script>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu">
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+      </button>
+      <span class="topbar-title">Live Chat</span>
+      <div class="topbar-actions" style="margin-left:auto;">
+        <button type="button" class="icon-btn" id="lc-refresh" title="Refresh" aria-label="Refresh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        </button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content lc-content">
+
+      <div class="page-header">
+        <div>
+          <h1>Live Chat</h1>
+          <p>Conversations with the organization admins who write to support from the Clockyn app</p>
+        </div>
+        <div class="page-header-actions">
+          <span class="badge badge-gray badge-dot" id="lc-live" title="Connection to the live inbox">Connecting...</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="lc-mute-btn" aria-pressed="false" title="Mute the new message chime"></button>
+          <button type="button" class="btn btn-ghost btn-sm" id="lc-notify-btn" hidden></button>
+        </div>
+      </div>
+
+      <div class="lc" id="lc-root" data-view="list">
+
+        <section class="lc-list" aria-label="Conversations">
+          <div class="lc-list-head">
+            <label class="lc-search" for="lc-search">
+              <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+              <input type="search" id="lc-search" placeholder="Search organizations or messages" autocomplete="off" />
+            </label>
+            <div class="segmented lc-tabs" role="tablist" aria-label="Filter conversations" id="lc-tabs">
+              <button type="button" role="tab" data-filter="all" class="active" aria-selected="true">All</button>
+              <button type="button" role="tab" data-filter="unread" aria-selected="false">Unread<span class="lc-tab-count" id="lc-unread-tab" hidden></span></button>
+              <button type="button" role="tab" data-filter="open" aria-selected="false">Open</button>
+              <button type="button" role="tab" data-filter="closed" aria-selected="false">Closed</button>
+            </div>
+          </div>
+          <div class="lc-threads" id="lc-thread-list" role="list" aria-label="Conversation list"></div>
+        </section>
+
+        <section class="lc-conv" id="lc-conv" aria-label="Conversation">
+          <div class="lc-conv-empty" id="lc-conv-empty">
+            <div class="empty-state">
+              <div class="empty-icon"><svg class="i-lg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></svg></div>
+              <h3>Select a conversation</h3>
+              <p>Pick an organization on the left to read and reply. New messages appear here live.</p>
+            </div>
+          </div>
+          <div class="lc-conv-body" id="lc-conv-body" hidden>
+            <header class="lc-conv-head" id="lc-head"></header>
+            <div class="lc-msgs-wrap">
+              <div class="lc-msgs" id="lc-msgs" tabindex="0" role="log" aria-live="polite" aria-label="Messages"></div>
+              <button type="button" class="lc-newpill" id="lc-newpill" hidden>
+                <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                <span id="lc-newpill-text">New messages</span>
+              </button>
+            </div>
+            <div class="lc-closed-bar" id="lc-closed-bar" hidden>
+              <span class="lc-closed-text">
+                <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                This conversation is closed. Reopen it to reply.
+              </span>
+              <button type="button" class="btn btn-primary btn-sm" id="lc-reopen-bar">Reopen</button>
+            </div>
+            <form class="lc-composer" id="lc-composer" autocomplete="off">
+              <input type="file" id="lc-attach-input" hidden />
+              <button type="button" class="lc-iconbtn" id="lc-attach" aria-label="Attach a file" title="Attach a file (up to 10 MB)">
+                <svg class="i-lg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"/></svg>
+              </button>
+              <textarea class="lc-input" id="lc-input" rows="1" placeholder="Write a reply" aria-label="Reply to the organization"></textarea>
+              <button type="submit" class="lc-send" id="lc-send" aria-label="Send reply" title="Send (Enter)" disabled>
+                <svg class="i-lg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>
+              </button>
+            </form>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Close / reopen confirmation -->
+  <div class="modal-overlay" id="lc-confirm" role="presentation">
+    <div class="modal-box modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="lc-confirm-title" aria-describedby="lc-confirm-desc">
+      <div class="modal-header">
+        <h2 id="lc-confirm-title">Close conversation?</h2>
+        <button type="button" class="modal-close" id="lc-confirm-x" aria-label="Close dialog">
+          <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body"><p id="lc-confirm-desc" style="font-size:14px;color:var(--text-secondary);line-height:1.5;"></p></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="lc-confirm-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="lc-confirm-ok">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image lightbox -->
+  <div class="lc-lightbox" id="lc-lightbox" role="dialog" aria-modal="true" aria-label="Image preview" hidden>
+    <button type="button" class="lc-lightbox-x" id="lc-lightbox-x" aria-label="Close preview">
+      <svg class="i-lg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+    <img id="lc-lightbox-img" alt="" />
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    var $ = function (id) { return document.getElementById(id); };
+    var ADMIN = (function () { try { return localStorage.getItem('admin_email') || ''; } catch (e) { return ''; } })();
+    var IST = { timeZone: 'Asia/Kolkata' };
+    var MAX_FILE = 10 * 1024 * 1024;
+
+    /* Lucide icon markup (same data as the other pages), stroke = currentColor so it follows the theme. */
+    var ICON = {
+      arrowLeft: '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+      copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+      external: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+      paperclip: '<path d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"/>',
+      check: '<path d="M20 6 9 17l-5-5"/>',
+      checkCheck: '<path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/>',
+      image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+      file: '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+      lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+      unlock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
+      volume: '<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>',
+      volumeX: '<path d="M11 4.702a.7.7 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.7.7 0 0 0 11 19.298z"/><path d="m16.5 14.5 5-5"/><path d="m16.5 9.5 5 5"/>',
+      bell: '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
+      bellOff: '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742"/><path d="m2 2 20 20"/><path d="M8.668 3.01A6 6 0 0 1 18 8c0 2.687.77 4.653 1.707 6.05"/>',
+      alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+      inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+      search: '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>',
+      down: '<path d="m6 9 6 6 6-6"/>'
+    };
+    function ic(name, cls) {
+      return '<svg class="' + (cls || 'i') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + (ICON[name] || '') + '</svg>';
+    }
+
+    function escHtml(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function safeUrl(u) {
+      var s = String(u || '');
+      return /^(https?:\/\/|blob:)/i.test(s) ? s : '';
+    }
+
+    /* ── time (IST, like the other pages) ── */
+    function fmtTime(iso) {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleTimeString('en-IN', { timeZone: IST.timeZone, hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+    function dayKey(iso) {
+      var d = new Date(iso);
+      return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-CA', IST);
+    }
+    function dayLabel(iso) {
+      var k = dayKey(iso);
+      if (k === dayKey(new Date())) return 'Today';
+      if (k === dayKey(new Date(Date.now() - 864e5))) return 'Yesterday';
+      return new Date(iso).toLocaleDateString('en-IN', { timeZone: IST.timeZone, day: 'numeric', month: 'short', year: 'numeric' });
+    }
+    function fullTime(iso) {
+      var d = new Date(iso);
+      return isNaN(d.getTime()) ? '' : d.toLocaleString('en-IN', { timeZone: IST.timeZone, day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+    function relTime(iso) {
+      if (!iso) return '';
+      var d = new Date(iso);
+      var mins = (Date.now() - d.getTime()) / 60000;
+      if (isNaN(mins)) return '';
+      if (mins < 1) return 'now';
+      if (mins < 60) return Math.floor(mins) + 'm';
+      var k = dayKey(iso);
+      if (k === dayKey(new Date())) return fmtTime(iso);
+      if (k === dayKey(new Date(Date.now() - 864e5))) return 'Yesterday';
+      return d.toLocaleDateString('en-IN', { timeZone: IST.timeZone, day: 'numeric', month: 'short' });
+    }
+
+    function initials(name) {
+      var w = String(name || '?').trim().split(/\s+/).filter(Boolean);
+      return ((w[0] || '?').charAt(0) + (w[1] ? w[1].charAt(0) : '')).toUpperCase();
+    }
+    function tone(id) {
+      var h = 0, s = String(id || '');
+      for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+      return 't' + (h % 5);
+    }
+
+    /* ── state ── */
+    var S = {
+      threads: [], threadsLoading: true, threadsError: '',
+      filter: 'all', q: '',
+      org: '', thread: null, msgs: [], msgsLoading: false, msgsError: '',
+      atBottom: true, newBelow: 0, localSeq: 0, openToken: 0, readPending: false, renderQueued: false
+    };
+    var seenIds = [];
+
+    function threadOf(org) {
+      for (var i = 0; i < S.threads.length; i++) if (S.threads[i].org_id === org) return S.threads[i];
+      return null;
+    }
+    function sortThreads() {
+      S.threads.sort(function (a, b) { return String(b.last_message_at || '').localeCompare(String(a.last_message_at || '')); });
+    }
+    function looking() { return !document.hidden && document.hasFocus(); }
+
+    /* ── API ── */
+    function api(method, path, body) {
+      var opts = { method: method, headers: { 'x-admin-id': ADMIN }, cache: 'no-store' };
+      if (typeof FormData !== 'undefined' && body instanceof FormData) opts.body = body;
+      else if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+      return fetch(API_BASE + '/gen-dashboard/live-chat' + path, opts).then(function (res) {
+        return res.json().catch(function () { return null; }).then(function (data) {
+          if (!res.ok) {
+            var err = new Error((data && typeof data.detail === 'string' && data.detail) || ('Request failed (' + res.status + ')'));
+            err.status = res.status;
+            throw err;
+          }
+          return data;
+        });
+      });
+    }
+    function enc(s) { return encodeURIComponent(s); }
+
+    function toast(msg, ok) {
+      var t = $('toast');
+      t.textContent = msg;
+      t.style.background = ok === false ? '#dc2626' : '#16a34a';
+      t.style.opacity = '1';
+      t.style.transform = 'translateY(0)';
+      clearTimeout(toast._t);
+      toast._t = setTimeout(function () { t.style.opacity = '0'; t.style.transform = 'translateY(10px)'; }, 3200);
+    }
+
+    /* ── thread list ── */
+    function visibleThreads() {
+      var q = S.q.trim().toLowerCase();
+      return S.threads.filter(function (t) {
+        if (S.filter === 'unread' && !(t.unread_count > 0)) return false;
+        if (S.filter === 'open' && t.status !== 'open') return false;
+        if (S.filter === 'closed' && t.status !== 'closed') return false;
+        if (!q) return true;
+        return [t.org_name, t.admin_name, t.admin_email, t.admin_mobile, t.last_message].some(function (f) {
+          return String(f || '').toLowerCase().indexOf(q) >= 0;
+        });
+      });
+    }
+
+    function previewHtml(t) {
+      var pre = t.last_sender_type === 'support' ? '<span class="lc-you">You:</span>' : '';
+      if (t.last_message_type === 'image') return pre + ic('image', 'i lc-pv-i') + '<span>Photo</span>';
+      if (t.last_message_type === 'file') return pre + ic('paperclip', 'i lc-pv-i') + '<span>' + escHtml(t.last_message || 'Attachment') + '</span>';
+      return pre + '<span>' + escHtml(t.last_message || 'No messages yet') + '</span>';
+    }
+
+    function rowHtml(t) {
+      var active = t.org_id === S.org;
+      var unread = t.unread_count > 0;
+      var name = t.org_name || 'Unknown organization';
+      var badge = unread
+        ? '<span class="lc-unread" aria-label="' + escHtml(t.unread_count) + ' unread">' + escHtml(t.unread_count > 99 ? '99+' : t.unread_count) + '</span>'
+        : (t.status === 'closed' ? '<span class="lc-closed-tag">Closed</span>' : '');
+      return '<button type="button" role="listitem" class="lc-row' + (active ? ' active' : '') + (unread ? ' unread' : '') + '" data-org="' + escHtml(t.org_id) + '"' + (active ? ' aria-current="true"' : '') + '>' +
+        '<span class="lc-avatar ' + tone(t.org_id) + '" aria-hidden="true">' + escHtml(initials(name)) + '<span class="lc-dot' + (t.status === 'closed' ? ' closed' : '') + '"></span></span>' +
+        '<span class="lc-row-main">' +
+          '<span class="lc-row-top"><span class="lc-org" title="' + escHtml(name) + '">' + escHtml(name) + '</span>' +
+            '<span class="lc-time" title="' + escHtml(fullTime(t.last_message_at)) + '">' + escHtml(relTime(t.last_message_at)) + '</span></span>' +
+          '<span class="lc-row-bottom"><span class="lc-preview">' + previewHtml(t) + '</span>' + badge + '</span>' +
+        '</span></button>';
+    }
+
+    function skeletonRows(n) {
+      var out = '';
+      for (var i = 0; i < n; i++) {
+        out += '<div class="lc-skel-row"><div class="skeleton lc-skel-avatar"></div><div class="lc-skel-lines"><div class="skeleton skeleton-line" style="width:' + (50 + (i * 13) % 40) + '%"></div><div class="skeleton skeleton-line" style="width:' + (70 + (i * 7) % 25) + '%"></div></div></div>';
+      }
+      return out;
+    }
+
+    function renderList() {
+      var box = $('lc-thread-list');
+      var unreadThreads = S.threads.filter(function (t) { return t.unread_count > 0; }).length;
+      var tab = $('lc-unread-tab');
+      tab.textContent = unreadThreads > 99 ? '99+' : String(unreadThreads);
+      tab.hidden = unreadThreads === 0;
+      var buttons = document.querySelectorAll('#lc-tabs button');
+      for (var i = 0; i < buttons.length; i++) {
+        var on = buttons[i].getAttribute('data-filter') === S.filter;
+        buttons[i].classList.toggle('active', on);
+        buttons[i].setAttribute('aria-selected', on ? 'true' : 'false');
+      }
+      if (S.threadsLoading) { box.innerHTML = skeletonRows(7); return; }
+      if (S.threadsError) {
+        box.innerHTML = '<div class="empty-state"><div class="empty-icon">' + ic('alert', 'i-lg') + '</div><h3>Could not load conversations</h3><p>' + escHtml(S.threadsError) + '</p><button type="button" class="btn btn-ghost btn-sm" id="lc-retry-list">Try again</button></div>';
+        return;
+      }
+      var rows = visibleThreads();
+      if (!rows.length) {
+        var filtered = S.threads.length > 0;
+        box.innerHTML = '<div class="empty-state"><div class="empty-icon">' + ic(filtered ? 'search' : 'inbox', 'i-lg') + '</div><h3>' + (filtered ? 'No conversations match' : 'No conversations yet') + '</h3><p>' +
+          (filtered ? 'Try another search or filter.' : "When an organization's admin writes from the Clockyn app, the conversation appears here.") + '</p></div>';
+        return;
+      }
+      var scroll = box.scrollTop;
+      box.innerHTML = rows.map(rowHtml).join('');
+      box.scrollTop = scroll;
+    }
+
+    function loadThreads(silent) {
+      if (!silent) { S.threadsLoading = true; S.threadsError = ''; renderList(); }
+      return api('GET', '/threads?status=all').then(function (rows) {
+        S.threads = Array.isArray(rows) ? rows : [];
+        S.threadsLoading = false; S.threadsError = '';
+        sortThreads();
+        renderList();
+      }).catch(function (e) {
+        S.threadsLoading = false;
+        if (!silent || !S.threads.length) S.threadsError = e.message;
+        renderList();
+      });
+    }
+
+    /* ── conversation ── */
+    function setView(v) { $('lc-root').setAttribute('data-view', v); }
+
+    function syncUrl(org) {
+      try { history.replaceState(null, '', location.pathname + (org ? '?org_id=' + enc(org) : '')); } catch (e) { /* file:// */ }
+    }
+
+    function setActive(org) {
+      S.org = org || '';
+      window.__clockynLiveChatActiveOrg = S.org;
+      if (window.ClockynLiveChat) window.ClockynLiveChat.setActiveOrg(S.org);
+    }
+
+    function linkify(text) {
+      var out = '', last = 0, re = /https?:\/\/[^\s<>"']+/gi, m;
+      while ((m = re.exec(text))) {
+        var url = m[0].replace(/[.,;:!?)\]]+$/, '');
+        out += escHtml(text.slice(last, m.index));
+        var ok = safeUrl(url);
+        out += ok ? '<a href="' + escHtml(ok) + '" target="_blank" rel="noopener noreferrer">' + escHtml(url) + '</a>' : escHtml(url);
+        last = m.index + url.length;
+        re.lastIndex = last;
+      }
+      return out + escHtml(text.slice(last));
+    }
+
+    function fileSub(m) {
+      var t = String(m.content_type || '').split('/')[1] || 'file';
+      return t.toUpperCase().slice(0, 12);
+    }
+
+    function attachmentHtml(m) {
+      var url = safeUrl(m.file_url) || safeUrl(m._previewUrl);
+      var name = m.file_name || m.message || 'Attachment';
+      if (m.message_type === 'image' && url) {
+        return '<img class="lc-img" src="' + escHtml(url) + '" alt="' + escHtml(name) + '" data-full="' + escHtml(url) + '" tabindex="0" role="button" loading="lazy" />';
+      }
+      var inner = '<span class="lc-file-ic">' + ic(m.message_type === 'image' ? 'image' : 'file', 'i-lg') + '</span><span class="lc-file-body"><div class="lc-file-name">' + escHtml(name) + '</div><div class="lc-file-sub">' + escHtml(fileSub(m)) + '</div></span>';
+      return url
+        ? '<a class="lc-file" href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer" download="' + escHtml(name) + '">' + inner + '</a>'
+        : '<div class="lc-file">' + inner + '</div>';
+    }
+
+    function msgHtml(m, prev) {
+      var mine = m.sender_type === 'support';
+      var first = !prev || prev.sender_type !== m.sender_type || prev.sender_id !== m.sender_id;
+      var label = '';
+      if (first) {
+        if (!mine) label = m.sender_name || 'Organization admin';
+        else if (m.sender_id && ADMIN && m.sender_id !== ADMIN && !m._local) label = m.sender_name || 'Support';
+      }
+      var media = m.message_type === 'image' || m.message_type === 'file';
+      var body = media ? attachmentHtml(m) : linkify(String(m.message || ''));
+      var ticks = '';
+      if (mine && !m._state) ticks = m.is_read ? ic('checkCheck', 'i lc-tick read') : (m.is_delivered ? ic('check', 'i lc-tick') : '');
+      var meta = m._state === 'sending' ? 'Sending...' : escHtml(fmtTime(m.timestamp));
+      var failed = m._state === 'failed'
+        ? '<div class="lc-failed-row"><span>Not sent</span><button type="button" class="lc-retry" data-local="' + escHtml(m.message_id) + '">Retry</button><button type="button" class="lc-discard" data-local="' + escHtml(m.message_id) + '">Discard</button></div>'
+        : '';
+      return '<div class="lc-msg ' + (mine ? 'mine' : 'theirs') + (first ? '' : ' cont') + (m._state ? ' ' + m._state : '') + '" data-id="' + escHtml(m.message_id) + '">' +
+        (label ? '<div class="lc-sender">' + escHtml(label) + '</div>' : '') +
+        '<div class="lc-bubble' + (media ? ' media' : '') + '">' + body + '</div>' +
+        (failed || '<div class="lc-meta"><span title="' + escHtml(fullTime(m.timestamp)) + '">' + meta + '</span>' + ticks + '</div>') +
+        '</div>';
+    }
+
+    function renderHead() {
+      var t = S.thread || {};
+      var name = t.org_name || 'Organization';
+      var closed = t.status === 'closed';
+      var contact = '';
+      if (t.admin_name) contact += '<span class="lc-contact-item">' + escHtml(t.admin_name) + '</span>';
+      if (t.admin_email) contact += '<span class="lc-contact-item">' + escHtml(t.admin_email) + '<button type="button" class="lc-copy" data-copy="' + escHtml(t.admin_email) + '" aria-label="Copy email" title="Copy email">' + ic('copy') + '</button></span>';
+      if (t.admin_mobile) contact += '<span class="lc-contact-item">' + escHtml(t.admin_mobile) + '<button type="button" class="lc-copy" data-copy="' + escHtml(t.admin_mobile) + '" aria-label="Copy mobile number" title="Copy mobile number">' + ic('copy') + '</button></span>';
+      $('lc-head').innerHTML =
+        '<button type="button" class="icon-btn lc-back" id="lc-back" aria-label="Back to conversations">' + ic('arrowLeft', 'i-lg') + '</button>' +
+        '<span class="lc-avatar lc-avatar-lg ' + tone(S.org) + '" aria-hidden="true">' + escHtml(initials(name)) + '</span>' +
+        '<div class="lc-head-main">' +
+          '<div class="lc-head-title"><a class="lc-org-link" href="org_analytics.html?org_id=' + enc(S.org) + '&org_name=' + enc(name) + '" title="Open the organization"><span>' + escHtml(name) + '</span>' + ic('external') + '</a>' +
+            '<span class="badge ' + (closed ? 'badge-gray' : 'badge-green') + ' badge-dot" id="lc-status-chip">' + (closed ? 'Closed' : 'Open') + '</span></div>' +
+          '<div class="lc-contact">' + contact + '</div>' +
+        '</div>' +
+        '<button type="button" class="btn btn-ghost btn-sm" id="lc-status-btn">' + (closed ? 'Reopen' : 'Close conversation') + '</button>';
+      $('lc-closed-bar').hidden = !closed;
+      $('lc-composer').hidden = closed;
+    }
+
+    function renderMessages() {
+      var box = $('lc-msgs');
+      if (S.msgsLoading) { box.innerHTML = '<div class="lc-center">Loading messages...</div>'; return; }
+      if (S.msgsError) {
+        box.innerHTML = '<div class="lc-center"><div class="empty-state"><div class="empty-icon">' + ic('alert', 'i-lg') + '</div><h3>Could not load this conversation</h3><p>' + escHtml(S.msgsError) + '</p><button type="button" class="btn btn-ghost btn-sm" id="lc-retry-msgs">Try again</button></div></div>';
+        return;
+      }
+      if (!S.msgs.length) { box.innerHTML = '<div class="lc-center">No messages yet.</div>'; return; }
+      var html = '', prev = null, day = '';
+      S.msgs.forEach(function (m) {
+        var k = dayKey(m.timestamp);
+        if (k !== day) { html += '<div class="lc-day"><span>' + escHtml(dayLabel(m.timestamp)) + '</span></div>'; day = k; prev = null; }
+        html += msgHtml(m, prev);
+        prev = m;
+      });
+      var wasBottom = S.atBottom;
+      box.innerHTML = html;
+      if (wasBottom) box.scrollTop = box.scrollHeight;
+    }
+
+    function renderConversation() {
+      var has = !!S.org;
+      $('lc-conv-empty').hidden = has;
+      $('lc-conv-body').hidden = !has;
+      if (!has) return;
+      renderHead();
+      renderMessages();
+      updatePill();
+    }
+
+    function scheduleRender() {
+      if (S.renderQueued) return;
+      S.renderQueued = true;
+      requestAnimationFrame(function () { S.renderQueued = false; renderMessages(); updatePill(); });
+    }
+
+    function updatePill() {
+      var pill = $('lc-newpill');
+      pill.hidden = !(S.newBelow > 0 && !S.atBottom);
+      $('lc-newpill-text').textContent = S.newBelow > 1 ? S.newBelow + ' new messages' : 'New message';
+    }
+
+    function scrollBottom() {
+      var box = $('lc-msgs');
+      box.scrollTop = box.scrollHeight;
+      S.atBottom = true; S.newBelow = 0;
+      updatePill();
+    }
+
+    function mergeServer(list) {
+      var locals = S.msgs.filter(function (m) { return m._local; });
+      return list.concat(locals);
+    }
+
+    function upsertThread(info, lastMsg) {
+      var t = threadOf(info.org_id);
+      if (!t) {
+        t = { org_id: info.org_id, org_name: '', admin_name: '', admin_email: '', admin_mobile: '', status: 'open', unread_count: 0, last_message: null, last_message_type: null, last_sender_type: null, last_message_at: null };
+        S.threads.push(t);
+      }
+      for (var k in info) if (Object.prototype.hasOwnProperty.call(info, k) && info[k] != null) t[k] = info[k];
+      if (lastMsg) setPreview(t, lastMsg);
+      sortThreads();
+      return t;
+    }
+
+    function setPreview(t, m) {
+      t.last_message = m.message; t.last_message_type = m.message_type; t.last_sender_type = m.sender_type; t.last_message_at = m.timestamp;
+    }
+
+    function openThread(org, opts) {
+      opts = opts || {};
+      if (!org) return Promise.resolve();
+      setActive(org);
+      var known = threadOf(org);
+      S.thread = known ? Object.assign({}, known) : { org_id: org, org_name: opts.orgName || '', status: 'open' };
+      S.msgs = []; S.msgsLoading = true; S.msgsError = ''; S.newBelow = 0; S.atBottom = true; S.readPending = false;
+      var token = ++S.openToken;
+      setView('conv'); syncUrl(org);
+      renderList(); renderConversation();
+      return api('GET', '/threads/' + enc(org) + '/messages').then(function (res) {
+        if (token !== S.openToken) return;
+        var info = res && res.thread ? res.thread : {};
+        S.msgs = mergeServer((res && res.messages) || []);
+        S.msgsLoading = false;
+        var last = S.msgs.length ? S.msgs[S.msgs.length - 1] : null;
+        var t = upsertThread(Object.assign({ org_id: org }, info), known ? null : last);
+        S.thread = Object.assign({}, t);
+        renderList(); renderConversation(); scrollBottom();
+        markRead();
+        $('lc-input').focus({ preventScroll: true });
+      }).catch(function (e) {
+        if (token !== S.openToken) return;
+        S.msgsLoading = false; S.msgsError = e.message;
+        renderConversation();
+      });
+    }
+
+    function closeThread() {
+      S.openToken++;
+      setActive('');
+      S.thread = null; S.msgs = [];
+      setView('list'); syncUrl('');
+      renderList(); renderConversation();
+    }
+
+    function syncActive() {
+      var org = S.org;
+      if (!org) return Promise.resolve();
+      return api('GET', '/threads/' + enc(org) + '/messages').then(function (res) {
+        if (org !== S.org || !res) return;
+        S.msgs = mergeServer(res.messages || []);
+        if (res.thread) { var t = upsertThread(Object.assign({ org_id: org }, res.thread)); S.thread = Object.assign({}, t); renderHead(); }
+        scheduleRender();
+        markRead();
+      }).catch(function () { /* stays on what we have */ });
+    }
+
+    function markRead() {
+      var org = S.org;
+      if (!org) return;
+      var t = threadOf(org);
+      if (!(t && t.unread_count > 0) && !S.readPending) return;
+      if (!looking()) { S.readPending = true; return; }
+      S.readPending = false;
+      if (t) t.unread_count = 0;
+      renderList();
+      api('PUT', '/threads/' + enc(org) + '/read').then(function () {
+        if (window.ClockynLiveChat) window.ClockynLiveChat.refreshUnread();
+      }).catch(function () { S.readPending = true; });
+    }
+
+    /* ── sending ── */
+    function makeLocal(extra) {
+      return Object.assign({
+        message_id: 'local-' + (++S.localSeq), timestamp: new Date().toISOString(), sender_type: 'support', sender_id: ADMIN,
+        sender_name: 'You', is_read: false, is_delivered: false, _local: true, _state: 'sending', _org: S.org
+      }, extra);
+    }
+
+    function afterLocalAdd() {
+      S.atBottom = true;
+      renderMessages();
+      scrollBottom();
+    }
+
+    function revoke(m) {
+      if (m && m._previewUrl) { try { URL.revokeObjectURL(m._previewUrl); } catch (e) { /* ignore */ } m._previewUrl = ''; }
+    }
+
+    function sendRequest(local) {
+      if (local._file) {
+        var fd = new FormData();
+        fd.append('file', local._file);
+        return api('POST', '/threads/' + enc(local._org) + '/messages/file', fd);
+      }
+      return api('POST', '/threads/' + enc(local._org) + '/messages', { message: local.message });
+    }
+
+    function deliver(local) {
+      local._state = 'sending';
+      scheduleRender();
+      sendRequest(local).then(function (m) {
+        var org = local._org;
+        var t = threadOf(org);
+        if (t && m) { setPreview(t, m); if (t.status === 'closed') t.status = 'open'; sortThreads(); renderList(); }
+        if (org !== S.org || !m) return;
+        var idx = S.msgs.indexOf(local);
+        var exists = S.msgs.some(function (x) { return x.message_id === m.message_id; });
+        if (idx >= 0) { if (exists) S.msgs.splice(idx, 1); else S.msgs[idx] = m; }
+        else if (!exists) S.msgs.push(m);
+        revoke(local);
+        scheduleRender();
+      }).catch(function (e) {
+        local._state = 'failed';
+        scheduleRender();
+        toast((e && e.message) || 'Could not send the message', false);
+      });
+    }
+
+    function sendText(text) {
+      text = String(text || '').trim();
+      if (!text || !S.org || (S.thread && S.thread.status === 'closed')) return;
+      var local = makeLocal({ message_type: 'text', message: text });
+      S.msgs.push(local);
+      afterLocalAdd();
+      deliver(local);
+    }
+
+    function attachFile(file) {
+      if (!file || !S.org || (S.thread && S.thread.status === 'closed')) return;
+      if (file.size > MAX_FILE) { toast('That file is larger than 10 MB.', false); return; }
+      var isImg = /^image\//i.test(file.type || '');
+      var local = makeLocal({
+        message_type: isImg ? 'image' : 'file', message: file.name, file_name: file.name, content_type: file.type || '',
+        _file: file, _previewUrl: isImg ? URL.createObjectURL(file) : ''
+      });
+      S.msgs.push(local);
+      afterLocalAdd();
+      deliver(local);
+    }
+
+    function localById(id) {
+      for (var i = 0; i < S.msgs.length; i++) if (S.msgs[i].message_id === id) return S.msgs[i];
+      return null;
+    }
+
+    /* ── status (close / reopen) ── */
+    var confirmResolve = null;
+    function confirmDialog(title, text, okLabel) {
+      return new Promise(function (resolve) {
+        confirmResolve = resolve;
+        $('lc-confirm-title').textContent = title;
+        $('lc-confirm-desc').textContent = text;
+        $('lc-confirm-ok').textContent = okLabel;
+        $('lc-confirm').classList.add('open');
+        $('lc-confirm-cancel').focus();
+      });
+    }
+    function closeConfirm(result) {
+      $('lc-confirm').classList.remove('open');
+      var r = confirmResolve; confirmResolve = null;
+      if (r) r(result);
+    }
+
+    function changeStatus(next) {
+      var org = S.org;
+      if (!org) return;
+      var name = (S.thread && S.thread.org_name) || 'this organization';
+      var p = next === 'closed'
+        ? confirmDialog('Close conversation?', 'Mark the conversation with ' + name + ' as closed. If their admin writes again it reopens automatically.', 'Close conversation')
+        : confirmDialog('Reopen conversation?', 'Reopen the conversation with ' + name + ' so you can reply.', 'Reopen');
+      p.then(function (yes) {
+        if (!yes) return;
+        return api('PUT', '/threads/' + enc(org) + '/status', { status: next }).then(function (res) {
+          applyStatus(org, (res && res.status) || next);
+          toast(next === 'closed' ? 'Conversation closed' : 'Conversation reopened');
+        }).catch(function (e) { toast(e.message || 'Could not update the conversation', false); });
+      });
+    }
+
+    function applyStatus(org, status) {
+      var t = threadOf(org);
+      if (t) t.status = status;
+      if (org === S.org) { if (S.thread) S.thread.status = status; renderHead(); }
+      renderList();
+    }
+
+    /* ── realtime frames (the notifier owns the socket and re-broadcasts them) ── */
+    function remember(id) {
+      if (!id) return false;
+      if (seenIds.indexOf(id) >= 0) return true;
+      seenIds.push(id);
+      if (seenIds.length > 600) seenIds.shift();
+      return false;
+    }
+
+    function ingest(m) {
+      if (S.msgs.some(function (x) { return x.message_id === m.message_id; })) return false;
+      if (m.sender_type === 'support') {
+        for (var i = 0; i < S.msgs.length; i++) {
+          var x = S.msgs[i];
+          if (x._local && x._state === 'sending' && x.message_type === m.message_type && x.message === m.message) {
+            revoke(x);
+            S.msgs[i] = m;
+            return true;
+          }
+        }
+      }
+      S.msgs.push(m);
+      return true;
+    }
+
+    function onMessageFrame(d) {
+      if (!d || !d.org_id || !d.message_id) return;
+      var isOrg = d.sender_type === 'org';
+      var fresh = !remember(d.message_id);
+      var t = threadOf(d.org_id);
+      var unknown = !t;
+      t = upsertThread({ org_id: d.org_id, org_name: d.org_name, status: d.thread_status }, d);
+      if (d.org_id === S.org) {
+        if (S.thread && d.thread_status) S.thread.status = d.thread_status;
+        if (ingest(d)) {
+          if (isOrg) {
+            S.readPending = true;
+            if (!looking()) t.unread_count = (t.unread_count || 0) + 1;
+            if (!S.atBottom) S.newBelow++;
+            else { S.atBottom = true; }
+          }
+          renderHead();
+          renderMessages();
+          if (S.atBottom) scrollBottom(); else updatePill();
+          markRead();
+        }
+      } else if (isOrg && fresh) {
+        t.unread_count = (t.unread_count || 0) + 1;
+      }
+      sortThreads();
+      renderList();
+      if (unknown) loadThreads(true);
+    }
+
+    function onFrame(ev) {
+      var f = ev && ev.detail;
+      if (!f) return;
+      if (f.type === 'resync') { loadThreads(true); syncActive(); return; }
+      var d = f.data;
+      if (!d) return;
+      if (f.type === 'live_chat_message') onMessageFrame(d);
+      else if (f.type === 'live_chat_read') {
+        if (d.reader === 'org' && d.org_id === S.org) {
+          S.msgs.forEach(function (m) { if (m.sender_type === 'support') m.is_read = true; });
+          scheduleRender();
+        }
+      } else if (f.type === 'live_chat_status') {
+        if (d.org_id && d.status) applyStatus(d.org_id, d.status);
+      }
+    }
+
+    /* ── notification + connection UI ── */
+    function renderNotifyUi() {
+      var lc = window.ClockynLiveChat;
+      var perm = lc ? lc.permission() : 'unsupported';
+      var muted = lc ? lc.isMuted() : false;
+      var live = $('lc-live');
+      if (!lc) { live.className = 'badge badge-gray badge-dot'; live.textContent = 'Connecting...'; }
+      else if (lc.isConnected()) { live.className = 'badge badge-green badge-dot'; live.textContent = 'Live'; }
+      else { live.className = 'badge badge-orange badge-dot'; live.textContent = 'Reconnecting'; }
+
+      var mute = $('lc-mute-btn');
+      mute.setAttribute('aria-pressed', muted ? 'true' : 'false');
+      mute.innerHTML = ic(muted ? 'volumeX' : 'volume') + '<span>' + (muted ? 'Sound off' : 'Sound on') + '</span>';
+      mute.style.display = 'inline-flex'; mute.style.alignItems = 'center'; mute.style.gap = '6px';
+
+      var btn = $('lc-notify-btn');
+      btn.hidden = perm === 'unsupported';
+      btn.classList.toggle('granted', perm === 'granted');
+      btn.style.display = btn.hidden ? 'none' : 'inline-flex'; btn.style.alignItems = 'center'; btn.style.gap = '6px';
+      if (perm === 'granted') {
+        btn.innerHTML = ic('bell') + '<span>Notifications on</span>'; btn.title = 'Desktop notifications are on for new messages';
+      } else if (perm === 'denied') {
+        btn.innerHTML = ic('bellOff') + '<span>Notifications blocked</span>'; btn.title = "Notifications are blocked. Allow them for this site in your browser's settings.";
+      } else {
+        btn.innerHTML = ic('bell') + '<span>Enable notifications</span>'; btn.title = 'Get a desktop notification when an organization writes';
+      }
+    }
+
+    function copyText(text) {
+      var done = function () { toast('Copied'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+      } else { fallbackCopy(text); done(); }
+    }
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+      document.body.removeChild(ta);
+    }
+
+    /* ── lightbox ── */
+    function openLightbox(src, alt) {
+      $('lc-lightbox-img').src = src;
+      $('lc-lightbox-img').alt = alt || '';
+      $('lc-lightbox').hidden = false;
+      $('lc-lightbox-x').focus();
+    }
+    function closeLightbox() {
+      $('lc-lightbox').hidden = true;
+      $('lc-lightbox-img').removeAttribute('src');
+    }
+
+    /* ── composer ── */
+    function growInput() {
+      var ta = $('lc-input');
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
+      $('lc-send').disabled = !ta.value.trim();
+    }
+
+    /* ── wiring ── */
+    $('lc-search').addEventListener('input', function (e) { S.q = e.target.value; renderList(); });
+    $('lc-tabs').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-filter]');
+      if (!b) return;
+      S.filter = b.getAttribute('data-filter');
+      renderList();
+    });
+    $('lc-thread-list').addEventListener('click', function (e) {
+      if (e.target.closest('#lc-retry-list')) { loadThreads(); return; }
+      var row = e.target.closest('.lc-row');
+      if (row) openThread(row.getAttribute('data-org'));
+    });
+    $('lc-thread-list').addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      var rows = Array.prototype.slice.call(document.querySelectorAll('#lc-thread-list .lc-row'));
+      var i = rows.indexOf(document.activeElement);
+      if (i < 0) return;
+      e.preventDefault();
+      var next = rows[i + (e.key === 'ArrowDown' ? 1 : -1)];
+      if (next) next.focus();
+    });
+    $('lc-head').addEventListener('click', function (e) {
+      if (e.target.closest('#lc-back')) { closeThread(); return; }
+      if (e.target.closest('#lc-status-btn')) { changeStatus(S.thread && S.thread.status === 'closed' ? 'open' : 'closed'); return; }
+      var c = e.target.closest('.lc-copy');
+      if (c) copyText(c.getAttribute('data-copy'));
+    });
+    $('lc-reopen-bar').addEventListener('click', function () { changeStatus('open'); });
+    $('lc-msgs').addEventListener('click', function (e) {
+      var img = e.target.closest('.lc-img');
+      if (img) { openLightbox(img.getAttribute('data-full'), img.getAttribute('alt')); return; }
+      if (e.target.closest('#lc-retry-msgs')) { openThread(S.org); return; }
+      var r = e.target.closest('.lc-retry');
+      if (r) { var m = localById(r.getAttribute('data-local')); if (m) deliver(m); return; }
+      var d = e.target.closest('.lc-discard');
+      if (d) {
+        var x = localById(d.getAttribute('data-local'));
+        if (x) { revoke(x); S.msgs.splice(S.msgs.indexOf(x), 1); scheduleRender(); }
+      }
+    });
+    $('lc-msgs').addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('lc-img')) { e.preventDefault(); openLightbox(e.target.getAttribute('data-full'), e.target.getAttribute('alt')); }
+    });
+    $('lc-msgs').addEventListener('scroll', function () {
+      var box = $('lc-msgs');
+      S.atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+      if (S.atBottom) S.newBelow = 0;
+      updatePill();
+    }, { passive: true });
+    $('lc-newpill').addEventListener('click', scrollBottom);
+
+    $('lc-composer').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var ta = $('lc-input');
+      var text = ta.value;
+      if (!text.trim()) return;
+      ta.value = '';
+      growInput();
+      sendText(text);
+      ta.focus();
+    });
+    $('lc-input').addEventListener('input', growInput);
+    $('lc-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
+        e.preventDefault();
+        $('lc-composer').requestSubmit ? $('lc-composer').requestSubmit() : $('lc-send').click();
+      }
+    });
+    $('lc-input').addEventListener('paste', function (e) {
+      var files = e.clipboardData && e.clipboardData.files;
+      if (files && files.length) { e.preventDefault(); attachFile(files[0]); }
+    });
+    $('lc-attach').addEventListener('click', function () { $('lc-attach-input').click(); });
+    $('lc-attach-input').addEventListener('change', function (e) {
+      var f = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (f) attachFile(f);
+    });
+    var conv = $('lc-conv');
+    conv.addEventListener('dragover', function (e) { if (S.org && e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0) { e.preventDefault(); conv.classList.add('drop'); } });
+    conv.addEventListener('dragleave', function (e) { if (e.target === conv || !conv.contains(e.relatedTarget)) conv.classList.remove('drop'); });
+    conv.addEventListener('drop', function (e) {
+      conv.classList.remove('drop');
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f && S.org) { e.preventDefault(); attachFile(f); }
+    });
+
+    $('lc-confirm-ok').addEventListener('click', function () { closeConfirm(true); });
+    $('lc-confirm-cancel').addEventListener('click', function () { closeConfirm(false); });
+    $('lc-confirm-x').addEventListener('click', function () { closeConfirm(false); });
+    $('lc-confirm').addEventListener('mousedown', function (e) { if (e.target === $('lc-confirm')) closeConfirm(false); });
+    $('lc-lightbox-x').addEventListener('click', closeLightbox);
+    $('lc-lightbox').addEventListener('click', function (e) { if (e.target === $('lc-lightbox')) closeLightbox(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if (!$('lc-lightbox').hidden) closeLightbox();
+      else if ($('lc-confirm').classList.contains('open')) closeConfirm(false);
+    });
+
+    $('lc-refresh').addEventListener('click', function () { loadThreads(); syncActive(); });
+    $('lc-mute-btn').addEventListener('click', function () {
+      if (window.ClockynLiveChat) window.ClockynLiveChat.setMuted(!window.ClockynLiveChat.isMuted());
+      renderNotifyUi();
+    });
+    $('lc-notify-btn').addEventListener('click', function () {
+      var lc = window.ClockynLiveChat;
+      if (!lc) return;
+      var p = lc.permission();
+      if (p === 'denied') { toast("Notifications are blocked. Allow them for this site in your browser's settings.", false); return; }
+      if (p === 'default') lc.requestPermission().then(function (r) {
+        renderNotifyUi();
+        if (r === 'denied') toast('Notifications are blocked for this site.', false);
+      });
+    });
+
+    document.addEventListener('clockyn-livechat', onFrame);
+    document.addEventListener('clockyn-livechat-state', renderNotifyUi);
+    document.addEventListener('clockyn-livechat-open', function (e) { if (e.detail && e.detail.org_id) openThread(e.detail.org_id); });
+    window.addEventListener('focus', function () { if (S.readPending) markRead(); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden && S.readPending) markRead(); });
+
+    var tick = 0;
+    setInterval(function () {
+      tick++;
+      renderList();
+      var lc = window.ClockynLiveChat;
+      var connected = !!(lc && lc.isConnected());
+      if (document.hidden) return;
+      if (!connected && tick % 3 === 0) { loadThreads(true); syncActive(); }
+      else if (connected && tick % 12 === 0) loadThreads(true);
+    }, 10000);
+
+    window.handleLogout = function () { showLogoutModal(); };
+    window.toggleSidebar = function () {
+      document.querySelector('.sidebar').classList.toggle('open');
+      $('sidebar-overlay').classList.toggle('open');
+    };
+    window.closeSidebar = function () {
+      document.querySelector('.sidebar').classList.remove('open');
+      $('sidebar-overlay').classList.remove('open');
+    };
+
+    /* ── boot ── */
+    renderList();
+    renderConversation();
+    renderNotifyUi();
+    setTimeout(renderNotifyUi, 800);
+    var deepLink = '';
+    try { deepLink = new URLSearchParams(location.search).get('org_id') || ''; } catch (e) { deepLink = ''; }
+    loadThreads().then(function () { if (deepLink) openThread(deepLink); });
+  })();
+  </script>
+
+</body>
+</html>

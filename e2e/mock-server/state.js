@@ -80,6 +80,8 @@ function createState() {
     allowanceRate: 8,
     locations: {}, // userId -> [{latitude,longitude,timestamp}]
     messages: [],
+    // Live Chat (org admin <-> support): threads by org id { thread_id, status } and the messages of all threads
+    liveChat: { threads: {}, messages: [], seq: 0 },
     groups: [],
     groupMessages: [],
     announcements: [],

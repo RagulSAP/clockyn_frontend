@@ -18,6 +18,7 @@ import {
   type ChatSection,
   type GlobalAction,
 } from './events';
+import { liveChatSession } from './liveChatSession';
 import { createDeduper } from './socketCore';
 
 export const globalMessageDeduper = createDeduper(1000);
@@ -35,6 +36,12 @@ export function isGlobalSocketOpen(): boolean {
 export const badgeSink: BadgeSink = {
   addChatMessage: (section: ChatSection, messageId: string) => {
     badges.incrementChatForMessage(section, messageId);
+  },
+  addLiveChatMessage: (messageId: string) => {
+    const session = getSession();
+    if (!session || session.roleId !== 1) return; // Live Chat belongs to the admin
+    if (liveChatSession.isOpen()) return; // the open conversation reads it itself
+    badges.incrementLiveChatForMessage(messageId);
   },
   addAnnouncement: (_kind: AnnouncementKind) => {
     const session = getSession();

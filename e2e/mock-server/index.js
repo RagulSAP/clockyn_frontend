@@ -6,7 +6,7 @@
  *   node e2e/mock-server/index.js            (port from MOCK_PORT / PORT, default 8787)
  *
  * Implements every endpoint family the app calls with in-memory, stateful fixtures and the real backend's response
- * envelopes. Control surface (all under /__test): reset, state, requests, push, fixtures, sockets, pushes, tenants, health.
+ * envelopes. Control surface (all under /__test): reset, state, requests, push, fixtures, sockets, pushes, tenants, health, live-chat/support-reply, live-chat/support-read.
  *
  * Tenancy: every browser origin (and every `x-e2e-tenant` header / `?__tenant=` value) gets its OWN independent state,
  * request log and WebSocket registry. Playwright workers use one web origin each, so specs can run in parallel
@@ -77,7 +77,7 @@ const isOnlineIn = (t, userId) => !!(t.sockets.get(userId) && [...t.sockets.get(
 
 // ─── routes ──────────────────────────────────────────────────────────────────────────────────────────
 const router = new Router();
-for (const mod of ['auth', 'home', 'org', 'staff', 'attendance', 'requests', 'expenses', 'comms', 'crm', 'payroll', 'reports', 'billing']) {
+for (const mod of ['auth', 'home', 'org', 'staff', 'attendance', 'requests', 'expenses', 'comms', 'liveChat', 'crm', 'payroll', 'reports', 'billing']) {
   require(`./routes/${mod}`).register(router);
 }
 
@@ -199,6 +199,18 @@ async function control(req, res, t, pathname, query) {
     let delivered = 0;
     for (const id of ids) delivered += pushTo(t, id, frame);
     return sendJson(res, 200, { delivered, targets: ids.length });
+  }
+  // Live Chat: the support side of the conversation (the web console is not part of this mock).
+  //   POST /__test/live-chat/support-reply { org_id, message?, agent_name?, status?, file_name?, content_type? }
+  //   POST /__test/live-chat/support-read  { org_id }   (the agent read the org's messages: ticks turn blue)
+  if ((pathname === '/__test/live-chat/support-reply' || pathname === '/__test/live-chat/support-read') && method === 'POST') {
+    const { body } = await parseBody(req);
+    act();
+    const orgId = body && body.org_id;
+    if (!orgId) throw new HttpError(400, 'needs { org_id }');
+    const ctx = { s: t.state, origin: `http://${req.headers.host || `${HOST}:${PORT}`}`, push: (uid, frame) => pushTo(t, uid, frame) };
+    const liveChat = require('./routes/liveChat');
+    return sendJson(res, 200, pathname.endsWith('support-read') ? liveChat.supportRead(ctx, body) : liveChat.supportReply(ctx, body));
   }
   if (pathname === '/__test/sockets') {
     const rows = [];

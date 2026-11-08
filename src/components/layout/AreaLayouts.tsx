@@ -35,11 +35,11 @@ export function StaffAreaLayout() {
 }
 
 /**
- * `(tabs)/_layout.tsx` of both areas: Home / CRM / Chat / Settings / Support with our own bar (bottom bar on phones, nothing
- * on wide screens where the sidebar from `AppShell` takes over). Android back from another tab returns to Home,
- * and from Home leaves the app.
+ * `(tabs)/_layout.tsx` of both areas: Home / CRM / Chat / Settings with our own bar (bottom bar on phones, nothing
+ * on wide screens where the sidebar from `AppShell` takes over); the ADMIN area adds a fifth tab, Support. Android back
+ * from another tab returns to Home, and from Home leaves the app.
  */
-export function TabsAreaLayout() {
+export function TabsAreaLayout({ variant }: { variant: 'admin' | 'staff' }) {
   const { colors } = useTheme();
   return (
     <Tabs
@@ -47,12 +47,12 @@ export function TabsAreaLayout() {
       tabBar={() => <TabBar />}
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.background } }}
     >
-      {/* Expo Router 58: only screens declared here become tabs (order = Home, CRM, Chat, Settings, Support). */}
+      {/* Expo Router 58: only screens declared here become tabs (order = Home, CRM, Chat, Settings, Support). Support exists for admins only. */}
       <Tabs.Screen name="home" />
       <Tabs.Screen name="crm" />
       <Tabs.Screen name="chat" />
       <Tabs.Screen name="settings" />
-      <Tabs.Screen name="help" />
+      {variant === 'admin' ? <Tabs.Screen name="help" /> : null}
     </Tabs>
   );
 }

@@ -1,17 +1,27 @@
 import React from 'react';
 import { View } from 'react-native';
 
-import { Screen, variantForRole } from '@/components/layout';
-import { Badge, Card, ListItem, Reveal, useToast } from '@/components/ui';
+import { Screen } from '@/components/layout';
+import { Badge, Card, CountBadge, ListItem, Reveal, useToast } from '@/components/ui';
 import { routes, useAppRouter } from '@/lib/navigation';
-import { useRole } from '@/store/auth';
+import { useLiveChatBadge } from '@/store/badges';
 import { radii } from '@/theme';
 
-/** "Support" tab root: FAQ and WhatsApp chat (coming soon) and the Video Hub of guide videos. */
+import { AdminOnly } from '../components/AdminOnly';
+
+/** "Support" tab root (admins only): FAQ (coming soon), Live Chat with Clockyn support, and the Video Hub of guide videos. */
 export default function SupportHubScreen() {
+  return (
+    <AdminOnly>
+      <SupportHub />
+    </AdminOnly>
+  );
+}
+
+function SupportHub() {
   const router = useAppRouter();
   const toast = useToast();
-  const videosRoute = variantForRole(useRole()) === 'admin' ? routes.admin.helpVideos : routes.staff.helpVideos;
+  const unread = useLiveChatBadge();
 
   return (
     <Screen title="Support" subtitle="How can we help you?" hideBack edges={['top']} testID="support-hub-screen">
@@ -29,18 +39,18 @@ export default function SupportHubScreen() {
             />
             <ListItem
               icon="chat"
-              title="WhatsApp Chat"
+              title="Live Chat"
               subtitle="Chat with our support team"
-              right={<Badge label="Soon" tone="info" size="sm" />}
-              onPress={() => toast.info('WhatsApp chat is coming soon')}
+              right={unread > 0 ? <CountBadge count={unread} testID="support-live-chat-badge" /> : undefined}
+              onPress={() => router.push(routes.admin.helpLiveChat)}
               divider
-              testID="support-whatsapp"
+              testID="support-live-chat"
             />
             <ListItem
               icon="play"
               title="Video Hub"
               subtitle="Watch step-by-step guides"
-              onPress={() => router.push(videosRoute)}
+              onPress={() => router.push(routes.admin.helpVideos)}
               testID="support-video-hub"
             />
           </View>

@@ -80,24 +80,49 @@ describe('chat counting', () => {
   });
 });
 
+describe('live chat counter', () => {
+  it('counts a support message once per id and ignores a missing id', () => {
+    expect(badges.incrementLiveChatForMessage('m1')).toBe(true);
+    expect(badges.incrementLiveChatForMessage('m1')).toBe(false);
+    expect(badges.incrementLiveChatForMessage(undefined)).toBe(false);
+    expect(badges.incrementLiveChatForMessage('m2')).toBe(true);
+    expect(badges.get().liveChat).toBe(2);
+  });
+  it('is independent from the chat counters, set / markRead work and never go below zero', () => {
+    badges.setChatSection('individual', 3);
+    badges.set('liveChat', 5);
+    expect(badges.get()).toMatchObject({ chat: 3, liveChat: 5 });
+    badges.markRead('liveChat', 2);
+    expect(badges.get().liveChat).toBe(3);
+    badges.markRead('liveChat');
+    badges.markRead('liveChat', 9);
+    expect(badges.get()).toMatchObject({ chat: 3, liveChat: 0 });
+  });
+  it('a live-chat message id does not collide with a chat message id', () => {
+    expect(badges.incrementChatForMessage('individual', 'same')).toBe(true);
+    expect(badges.incrementLiveChatForMessage('same')).toBe(true);
+  });
+});
+
 describe('other counters', () => {
   it('increment / set / markRead for announcements, crm, requests', () => {
     badges.increment('announcements');
     badges.increment('announcements', 2);
     badges.increment('crm', 4);
     badges.set('requests', 7);
-    expect(badges.get()).toEqual({ chat: 0, announcements: 3, crm: 4, requests: 7 });
+    expect(badges.get()).toEqual({ chat: 0, announcements: 3, crm: 4, requests: 7, liveChat: 0 });
     badges.markRead('announcements', 1);
     badges.markRead('crm');
     badges.markRead('requests', 100);
-    expect(badges.get()).toEqual({ chat: 0, announcements: 2, crm: 0, requests: 0 });
+    expect(badges.get()).toEqual({ chat: 0, announcements: 2, crm: 0, requests: 0, liveChat: 0 });
   });
   it('rejects negative / NaN amounts', () => {
     badges.increment('crm', -5);
     badges.increment('crm', Number.NaN);
     badges.set('requests', -3);
     badges.set('announcements', Number.NaN);
-    expect(badges.get()).toEqual({ chat: 0, announcements: 0, crm: 0, requests: 0 });
+    badges.increment('liveChat', -1);
+    expect(badges.get()).toEqual({ chat: 0, announcements: 0, crm: 0, requests: 0, liveChat: 0 });
   });
   it('floors fractional values', () => {
     badges.set('crm', 2.9);
@@ -106,8 +131,9 @@ describe('other counters', () => {
   it('reset zeroes everything', () => {
     badges.increment('crm', 3);
     badges.setChatSection('group', 2);
+    badges.increment('liveChat', 4);
     badges.reset();
-    expect(badges.get()).toEqual({ chat: 0, announcements: 0, crm: 0, requests: 0 });
+    expect(badges.get()).toEqual({ chat: 0, announcements: 0, crm: 0, requests: 0, liveChat: 0 });
     expect(useBadgeStore.getState()).toMatchObject({ chatGroup: 0, chatIndividual: 0 });
   });
 });

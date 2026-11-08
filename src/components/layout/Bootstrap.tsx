@@ -3,6 +3,7 @@ import React from 'react';
 import { useAnnouncementUnreadSync } from '@/features/announcements';
 import { useChatBadgeSeed } from '@/features/chat';
 import { useCrmBadgeSync } from '@/features/crm';
+import { useLiveChatBadgeSeed } from '@/features/help';
 import { useGlobalSocket } from '@/lib/realtime/socket';
 import { UpdatePrompt } from './bootstrap/UpdatePrompt';
 import { useBootstrapTeardown } from './bootstrap/useBootstrapTeardown';
@@ -24,6 +25,7 @@ import { useSessionWatcher } from './bootstrap/useSessionWatcher';
  *  - global realtime socket feeding the badge store
  *  - announcement unread sync (staff / managers: seen-ids -> Chat tab badge + hub cards)
  *  - chat unread seed (individual + group totals -> Chat tab badge before the hub is opened)
+ *  - Live Chat unread seed (admins: unread support messages -> Support tab badge)
  *  - plan status freshness (re-read on foreground when older than 5 min: renewals / expiry mid-session)
  *  - app-update check (start / foreground) and its modal
  *  - location resume for field staff (roles 2/3) who are still punched in
@@ -35,6 +37,7 @@ export function Bootstrap() {
   useGlobalSocket();
   useAnnouncementUnreadSync();
   useChatBadgeSeed();
+  useLiveChatBadgeSeed();
   useSessionWatcher();
   useSessionExpiry();
   usePlanStatusRefresh();

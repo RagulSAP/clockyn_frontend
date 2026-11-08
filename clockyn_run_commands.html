@@ -104,7 +104,7 @@
       <tr><td>Your database schema</td><td><code>clockyn_dev</code> (the only schema Clockyn may write to)</td></tr>
       <tr><td>Stop anything running</td><td><code>Ctrl + C</code> in its terminal</td></tr>
     </table>
-    <div class="box danger"><strong>Important.</strong> Your database also holds the legacy production schemas (live data). Never run the schema <code>.sql</code> file from the backend folder as it is: it writes into the legacy production schema. Use <code>python migrate.py --all</code> or <code>scripts/render_schema.py</code> (section 4).</div>
+    <div class="box danger"><strong>Important.</strong> Your database also holds the legacy production schemas (live data). The schema file in the backend folder, <code>clockyn_ddl_latest.sql</code>, is written for <code>clockyn_dev</code>, so running it as it is only touches that schema. To build any other schema use <code>python migrate.py --all</code> (with that <code>DB_SCHEMA</code>) or <code>scripts/render_schema.py</code>, which rewrites the schema name and refuses the legacy ones (section 4).</div>
   </section>
   <section id="frontend-mock">
     <h2>1. App with the built-in test backend <span class="tag">no setup, works offline</span></h2>
@@ -184,7 +184,7 @@ python migrate.py --all --dry-run</pre><button class="copy">Copy</button></div>
     <h3>Build or update the schema, and see its status</h3>
     <div class="cmd"><pre>python migrate.py --all
 python migrate.py --status</pre><button class="copy">Copy</button></div>
-    <p>On an empty schema it builds everything (72 tables, 3 enum types, indexes, seed rows) and records the migrations. A second run does nothing. It uses <code>DB_SCHEMA</code> from <code>.env</code>.</p>
+    <p>On an empty schema it builds everything from <code>clockyn_ddl_latest.sql</code> (tables, enum types, indexes, seed rows) and records the migrations. A second run does nothing. It uses <code>DB_SCHEMA</code> from <code>.env</code>. Tables you added by hand at the end of that file (for example the Video Hub tables) are part of it too, so a fresh build already has them.</p>
     <h3>Make a schema file you can run by hand (DBeaver or psql)</h3>
     <div class="cmd"><pre>python scripts/render_schema.py --schema your_schema_name --out your_schema.sql</pre><button class="copy">Copy</button></div>
     <p>It rewrites every object to your schema name and refuses the legacy and system schema names. Run the output once, on a schema that does not exist yet.</p>
@@ -346,7 +346,7 @@ aws iam attach-role-policy --role-name ecsInfrastructureRoleForExpressServices -
           <tr><td><code>DB_PASSWORD</code></td><td>the database password (use the restricted user, not the master)</td></tr>
           <tr><td><code>AUTH_TOKEN_SECRET</code></td><td>a random string of 32+ characters</td></tr>
           <tr><td><code>OPERATOR_API_KEY</code></td><td>a random string</td></tr>
-          <tr><td><code>RAZORPAY_WEBHOOK_SECRET</code></td><td>from your Razorpay dashboard</td></tr>
+          <tr><td><code>RAZORPAY_WEBHOOK_SECRET</code></td><td>a random string <b>you make up</b> (20+ characters, no spaces). You type the very same value into the Razorpay dashboard webhook (see Step 8). It is not your API key secret</td></tr>
           <tr><td><code>FCM_PRIVATE_KEY</code> (and the other <code>FCM_*</code> if you use push)</td><td>from the Firebase service-account file</td></tr>
         </table>
         Name the secret <code>clockyn/backend</code>. Copy its <b>ARN</b> from the secret page (it ends with a random 6-character suffix).</li>
@@ -428,7 +428,25 @@ aws ecs run-task --cluster default --launch-type FARGATE --task-definition $cfg.
       <li>Open <code>https://YOUR-SERVICE-ADDRESS/health</code> (should say ok) and <code>/ready</code> (ok means the database is reachable).</li>
       <li>Open <code>/auth/config</code>. It should show <code>"user_auth": "email"</code>.</li>
       <li>In the app, set <code>EXPO_PUBLIC_API_BASE_URL=https://YOUR-SERVICE-ADDRESS</code> (section 3 for local testing, the Expo build tab for EAS builds). In the admin web app, set <code>API_BASE</code> in <code>UI_ADMIN_APP\js\config.js</code> to the same address (it may still point at the old App Runner address).</li>
-      <li>Razorpay webhook: <code>https://YOUR-SERVICE-ADDRESS/webhook/razorpay</code>, with the same secret as <code>RAZORPAY_WEBHOOK_SECRET</code>.</li>
+      <li>Razorpay webhook: set it up and test it in Step 8 below.</li>
+    </ol>
+
+    <h3>Step 8: Razorpay webhook (the payment safety net)</h3>
+    <p>When someone pays, the app asks the server to verify and activate the plan. If the app is closed or loses its connection right after the payment, only the <b>webhook</b> can still activate the plan, and it is what fills the <code>gen_webhook_events</code> table. Without the secret every webhook is refused, so that table stays empty and nothing warns you, because normal payments still work.</p>
+    <ol>
+      <li><b>Secret on the server.</b> Add <code>RAZORPAY_WEBHOOK_SECRET</code> to the Secrets Manager secret <code>clockyn/backend</code> (a random string you choose) and keep the line <code>{ "name": "RAZORPAY_WEBHOOK_SECRET", "valueFrom": "YOUR_SECRET_ARN:RAZORPAY_WEBHOOK_SECRET::" }</code> in the <code>secrets</code> list of <code>primary.json</code>. Then send the whole file again (the update command under "Releasing a new version later").</li>
+      <li><b>Webhook in Razorpay.</b> Razorpay dashboard, <b>Settings, Webhooks, Add New Webhook</b>. Webhook URL <code>https://YOUR-SERVICE-ADDRESS/webhook/razorpay</code> (exactly this path, no trailing slash). Secret: the same value as above. Tick the events <code>payment.captured</code>, <code>order.paid</code> and <code>payment.failed</code> (<code>payment.authorized</code> is optional). <b>Test mode and Live mode have separate webhooks</b>: add it in the mode you are using.</li>
+      <li><b>Check the server side without paying</b> (this sends an invalid signature, so it stores nothing):
+        <div class="cmd"><pre>curl.exe -i --ssl-no-revoke -X POST https://YOUR-SERVICE-ADDRESS/webhook/razorpay -H "Content-Type: application/json" -H "X-Razorpay-Signature: test" -d "{}"</pre><button class="copy">Copy</button></div>
+        <b>400</b> "Invalid webhook signature" means the route works and the secret is set (this is the good answer). <b>503</b> "Webhook is not configured" means the secret is missing on the server (that is what stops the table filling up).</li>
+      <li><b>Check end to end.</b> In the Razorpay dashboard open the webhook, <b>Send test webhook</b> (or make a small test payment), then look at the delivery log there: it should show <b>200</b>. Then in the database:
+        <div class="cmd"><pre>SELECT id, event_id, event_type, received_at FROM clockyn_dev.gen_webhook_events ORDER BY id DESC LIMIT 10;</pre><button class="copy">Copy</button></div>
+        A paid test should add <code>payment.captured</code> and <code>order.paid</code> rows. Razorpay retries a refused webhook for about 24 hours and can then disable it, so re-enable it in the dashboard if it was switched off.</li>
+      <li>If Razorpay shows 200 but the table is still empty, or the log shows a database error, check that the table has its unique index (the webhook insert needs it):
+        <div class="cmd"><pre>SELECT indexname FROM pg_indexes WHERE schemaname = 'clockyn_dev' AND tablename = 'gen_webhook_events';
+-- expected: gen_webhook_events_pkey and gen_webhook_events_event_id_key. If the second is missing:
+CREATE UNIQUE INDEX IF NOT EXISTS gen_webhook_events_event_id_key ON clockyn_dev.gen_webhook_events USING btree (event_id);</pre><button class="copy">Copy</button></div></li>
+      <li>The server now writes a warning at start-up when the secret is missing, and a log line for every rejected webhook (CloudWatch, <code>/ecs/clockyn-backend</code>), so the cause is visible there.</li>
     </ol>
     <div class="box warn"><strong>Your own domain (optional).</strong> The Express address is already HTTPS, so no GoDaddy record is needed for the app to work. Pointing something like <code>api.your-domain.com</code> at it is not covered by the Express Mode documentation I checked, so it is not in this guide. If you want it, ask and we will set it up (a certificate, a rule on the Express load balancer, and a CNAME at GoDaddy) and test it together.</div>
 
@@ -626,6 +644,7 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
       <tr><td>Express: the health check keeps failing</td><td>The container must answer <code>/health</code> on port 8080. Express checks <code>/ping</code> unless you set <code>--health-check-path /health</code>, and the container port must be <code>8080</code> in <code>primary.json</code>.</td></tr>
       <tr><td>Express: "CannotPullContainerError"</td><td>The execution role is missing <code>AmazonECSTaskExecutionRolePolicy</code>, the image tag is not in ECR, or the image was built for another CPU type. Build with <code>--platform linux/amd64</code>.</td></tr>
       <tr><td>After an update, settings or secrets disappeared</td><td>Send the complete <code>primary.json</code> every time (image, environment and secrets), not just the image.</td></tr>
+      <tr><td><code>gen_webhook_events</code> stays empty</td><td>Run the curl check in Express tab, Step 8. 503 means <code>RAZORPAY_WEBHOOK_SECRET</code> is not set on the server; 400 for a real Razorpay delivery means the secret in the Razorpay dashboard differs from the server's; no delivery at all means the webhook URL or events are not set in the dashboard (or it is the other mode, Test versus Live).</td></tr>
       <tr><td>Chat disconnects every minute</td><td>Set the load balancer idle timeout to 300 seconds (Express tab, Step 6) and re-check it after a release.</td></tr>
       <tr><td>Video upload: "Upload to storage failed"</td><td>The S3 bucket CORS does not allow your site. The origin must match exactly (for local use <code>http://localhost:*</code>) and <code>PUT</code> must be allowed (Video Hub tab, Step 3). Open the page from <code>http://localhost:...</code>, not as a file.</td></tr>
       <tr><td>Admin pages show a CORS error or "Failed to load"</td><td>If <code>CORS_ALLOWED_ORIGINS</code> is set on the backend, add the admin site's exact origin including the port. Also check <code>API_BASE</code> in <code>UI_ADMIN_APP\js\config.js</code>.</td></tr>

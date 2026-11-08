@@ -1,3 +1,4 @@
+import { routes } from '@/config/routes';
 import type { PushMessage } from '@/lib/platform/notificationRouting';
 import { areaOfRoute, createOpenDeduper, resolveTapTarget } from '../notificationGlue';
 
@@ -47,6 +48,16 @@ describe('resolveTapTarget', () => {
 
   it('ignores an invalid role', () => {
     expect(resolveTapTarget(msg({ type: 'punch_in' }), { roleId: 9 })).toBeNull();
+  });
+});
+
+describe('resolveTapTarget (live chat)', () => {
+  it('opens Live Chat for the admin', () => {
+    expect(resolveTapTarget({ data: { type: 'live_chat_message', org_id: 'o1' } }, { roleId: 1 })).toEqual({ route: routes.admin.helpLiveChat, params: {} });
+  });
+  it('opens nothing for a manager or staff member', () => {
+    expect(resolveTapTarget({ data: { type: 'live_chat_message' } }, { roleId: 2 })).toBeNull();
+    expect(resolveTapTarget({ data: { type: 'live_chat_message' } }, { roleId: 3 })).toBeNull();
   });
 });
 

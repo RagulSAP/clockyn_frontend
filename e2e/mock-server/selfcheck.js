@@ -327,6 +327,18 @@ async function main() {
   await call('GET', '/support/subjects', { check: isList(3) });
   await call('GET', '/support/videos', { check: isList(2) }); // only the active ones
   await call('POST', '/support/videos/1/view', { body: { user_id: ADM, org_id: ORG }, check: isOk });
+  // Live Chat (app side + the support test hooks)
+  await call('GET', `/live-chat/messages/${ORG}?user_id=${ADM}`, { check: (j) => (j.success && j.status === null && j.unread === 0 && Array.isArray(j.messages) && j.messages.length === 0 ? null : 'empty thread expected') });
+  await call('GET', `/live-chat/messages/${ORG}?user_id=stf-0001`, { expect: 403 });
+  await call('POST', '/live-chat/send', { body: { org_id: ORG, user_id: ADM, message: 'Hello support' }, check: (j) => (j.sender_type === 'org' && j.message === 'Hello support' && j.message_id ? null : 'org message wire') });
+  await call('POST', '/live-chat/send', { body: { org_id: ORG, user_id: ADM, message: '   ' }, expect: 200, check: (j) => (j.success === false ? null : 'blank message must be refused') });
+  await call('POST', '/__test/live-chat/support-reply', { body: { org_id: ORG, message: 'Hi, how can we help?' }, check: (j) => (j.ok && j.message.sender_type === 'support' ? null : 'support reply') });
+  await call('GET', `/live-chat/unread/${ORG}?user_id=${ADM}`, { check: (j) => (j.unread === 1 ? null : `unread 1 expected, got ${j.unread}`) });
+  await call('PUT', '/live-chat/mark-read', { body: { org_id: ORG, user_id: ADM }, check: (j) => (j.success && j.marked === 1 ? null : 'mark-read count') });
+  await call('POST', '/__test/live-chat/support-reply', { body: { org_id: ORG, status: 'closed' }, check: (j) => (j.status === 'closed' ? null : 'close') });
+  await call('GET', `/live-chat/messages/${ORG}?user_id=${ADM}`, { check: (j) => (j.status === 'closed' && j.messages.length === 2 ? null : 'closed thread with 2 messages') });
+  await call('POST', '/live-chat/send', { body: { org_id: ORG, user_id: ADM, message: 'Still there?' }, check: isOk });
+  await call('GET', `/live-chat/messages/${ORG}?user_id=${ADM}`, { check: (j) => (j.status === 'open' ? null : 'an org message reopens the thread') });
   await call('GET', `/support/requests/${ORG}`, { check: isList(2) });
   const sf = new FormData(); sf.append('subject', 'Other'); sf.append('message', 'help'); sf.append('user_id', ADM); sf.append('org_id', ORG);
   await call('POST', '/support/submit', { form: sf, check: isOk });

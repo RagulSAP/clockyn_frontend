@@ -2,14 +2,15 @@
  * Badge counters (bottom bar / sidebar / home). In-memory only: counts are re-derived from the server on start
  * (chat/group lists, announcements, leads) and bumped live by the global socket / push events.
  *
- *  - Tab display rules live in the shell: Chat tab = `chat + announcements`, CRM tab = `crm`.
+ *  - Tab display rules live in the shell: Chat tab = `chat + announcements`, CRM tab = `crm`, Support tab = `liveChat`
+ *    (unread support messages of the admin's Live Chat).
  *  - `chat` is always `chatGroup + chatIndividual`; use the section-aware actions when you know the section.
  *  - Message ids are de-duplicated across every source (global socket, chat-screen socket, push) with a bounded set.
  */
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 
-export type BadgeKey = 'chat' | 'announcements' | 'crm' | 'requests';
+export type BadgeKey = 'chat' | 'announcements' | 'crm' | 'requests' | 'liveChat';
 export type ChatSection = 'group' | 'individual';
 
 export interface BadgeCounts {
@@ -17,6 +18,7 @@ export interface BadgeCounts {
   announcements: number;
   crm: number;
   requests: number;
+  liveChat: number;
 }
 
 interface BadgeState extends BadgeCounts {
@@ -36,6 +38,8 @@ interface BadgeState extends BadgeCounts {
   incrementChatForMessage: (section: ChatSection, messageId: string | number | null | undefined) => boolean;
   /** Subtract `n` (or zero when omitted) from one chat section. */
   markChatRead: (section: ChatSection, n?: number) => void;
+  /** +1 for a live-chat message from support unless its id was already counted (returns whether it counted). */
+  incrementLiveChatForMessage: (messageId: string | number | null | undefined) => boolean;
 
   /** Zero everything and forget seen message ids (sign-out). */
   reset: () => void;
@@ -48,6 +52,7 @@ const ZERO: BadgeCounts & { chatGroup: number; chatIndividual: number } = {
   announcements: 0,
   crm: 0,
   requests: 0,
+  liveChat: 0,
   chatGroup: 0,
   chatIndividual: 0,
 };
@@ -141,6 +146,13 @@ export const useBadgeStore = create<BadgeState>()((set, get) => ({
     return true;
   },
 
+  incrementLiveChatForMessage: (messageId) => {
+    if (messageId === null || messageId === undefined) return false;
+    if (!registerMessageId(`live:${messageId}`)) return false;
+    set({ liveChat: get().liveChat + 1 });
+    return true;
+  },
+
   markChatRead: (section, n) => {
     const s = get();
     const current = section === 'group' ? s.chatGroup : s.chatIndividual;
@@ -158,11 +170,16 @@ export const useBadgeStore = create<BadgeState>()((set, get) => ({
 
 // ── hooks / non-React access ─────────────────────────────────────────────────────────────────
 
-/** `{ chat, announcements, crm, requests }` (re-renders only when a count changes). */
+/** `{ chat, announcements, crm, requests, liveChat }` (re-renders only when a count changes). */
 export function useBadges(): BadgeCounts {
   return useBadgeStore(
-    useShallow((s) => ({ chat: s.chat, announcements: s.announcements, crm: s.crm, requests: s.requests })),
+    useShallow((s) => ({ chat: s.chat, announcements: s.announcements, crm: s.crm, requests: s.requests, liveChat: s.liveChat })),
   );
+}
+
+/** Unread live-chat messages from support (Support tab and the hub row). */
+export function useLiveChatBadge(): number {
+  return useBadgeStore((s) => s.liveChat);
 }
 
 /** Chat tab number: unread chat + unread announcements. */
@@ -173,7 +190,7 @@ export function useChatTabBadge(): number {
 /** Stable action bag (does not subscribe to counts). */
 export function useBadgeActions(): Pick<
   BadgeState,
-  'increment' | 'set' | 'markRead' | 'setChatSection' | 'incrementChatForMessage' | 'markChatRead' | 'reset'
+  'increment' | 'set' | 'markRead' | 'setChatSection' | 'incrementChatForMessage' | 'markChatRead' | 'incrementLiveChatForMessage' | 'reset'
 > {
   return useBadgeStore(
     useShallow((s) => ({
@@ -183,6 +200,7 @@ export function useBadgeActions(): Pick<
       setChatSection: s.setChatSection,
       incrementChatForMessage: s.incrementChatForMessage,
       markChatRead: s.markChatRead,
+      incrementLiveChatForMessage: s.incrementLiveChatForMessage,
       reset: s.reset,
     })),
   );
@@ -192,7 +210,7 @@ export function useBadgeActions(): Pick<
 export const badges = {
   get: (): BadgeCounts => {
     const s = useBadgeStore.getState();
-    return { chat: s.chat, announcements: s.announcements, crm: s.crm, requests: s.requests };
+    return { chat: s.chat, announcements: s.announcements, crm: s.crm, requests: s.requests, liveChat: s.liveChat };
   },
   increment: (key: BadgeKey, n?: number): void => useBadgeStore.getState().increment(key, n),
   set: (key: BadgeKey, n: number): void => useBadgeStore.getState().set(key, n),
@@ -201,6 +219,8 @@ export const badges = {
   incrementChatForMessage: (section: ChatSection, messageId: string | number | null | undefined): boolean =>
     useBadgeStore.getState().incrementChatForMessage(section, messageId),
   markChatRead: (section: ChatSection, n?: number): void => useBadgeStore.getState().markChatRead(section, n),
+  incrementLiveChatForMessage: (messageId: string | number | null | undefined): boolean =>
+    useBadgeStore.getState().incrementLiveChatForMessage(messageId),
   reset: (): void => useBadgeStore.getState().reset(),
 };
 

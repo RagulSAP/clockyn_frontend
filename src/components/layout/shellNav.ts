@@ -73,7 +73,6 @@ const staffTabs: readonly ShellTab[] = [
   { key: 'crm', label: 'CRM', icon: 'briefcase', route: routes.staff.crm, within: [] },
   { key: 'chat', label: 'Chat', icon: 'chat', route: routes.staff.chat, within: [] },
   { key: 'settings', label: 'Settings', icon: 'settings', route: routes.staff.settings, within: [routes.staff.permissions, routes.staff.more] },
-  { key: 'support', label: 'Support', icon: 'life-buoy', route: routes.staff.help, within: [] },
 ];
 
 export const SHELL_TABS: Record<ShellVariant, readonly ShellTab[]> = { admin: adminTabs, staff: staffTabs };
@@ -101,9 +100,9 @@ export function activeTabKey(pathname: string, variant: ShellVariant): ShellTabK
   return parent ? parent.key : null;
 }
 
-export type BadgeCounts = { chat: number; announcements: number; crm: number; requests?: number };
+export type BadgeCounts = { chat: number; announcements: number; crm: number; requests?: number; liveChat?: number };
 
-/** Badge number of a tab. Chat = chat + announcements; CRM = new leads (hidden while the CRM tab is open). */
+/** Badge number of a tab. Chat = chat + announcements; CRM = new leads (hidden while the CRM tab is open); Support = unread live-chat messages. */
 export function tabBadgeCount(key: ShellTabKey, counts: BadgeCounts, activeKey: ShellTabKey | null): number {
   const safe = (n: number | undefined) => (Number.isFinite(n) && (n as number) > 0 ? Math.floor(n as number) : 0);
   switch (key) {
@@ -111,6 +110,8 @@ export function tabBadgeCount(key: ShellTabKey, counts: BadgeCounts, activeKey: 
       return safe(counts.chat) + safe(counts.announcements);
     case 'crm':
       return activeKey === 'crm' ? 0 : safe(counts.crm);
+    case 'support':
+      return safe(counts.liveChat);
     default:
       return 0;
   }

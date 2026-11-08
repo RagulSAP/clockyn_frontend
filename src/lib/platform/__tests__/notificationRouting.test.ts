@@ -52,6 +52,23 @@ describe('parseNotificationTarget', () => {
   });
 });
 
+describe('live chat notifications', () => {
+  it('a support message opens Live Chat for an admin', () => {
+    const data = { type: 'live_chat_message', org_id: 'o1', message_id: 'lcm-1' };
+    expect(parseNotificationTarget(data, { roleId: 1 })).toEqual({ route: routes.admin.helpLiveChat, params: {} });
+    expect(parseNotificationTarget({ ...data, role_id: '1' })).toEqual({ route: routes.admin.helpLiveChat, params: {} });
+  });
+  it('opens nothing for managers and staff (the session role wins over the payload)', () => {
+    const data = { type: 'live_chat_message', role_id: '1' };
+    expect(parseNotificationTarget(data, { roleId: 2 })).toBeNull();
+    expect(parseNotificationTarget(data, { roleId: 3 })).toBeNull();
+  });
+  it('is re-displayed in the foreground with a default title', () => {
+    expect(foregroundLocalNotification({ data: { type: 'live_chat_message' } })).toMatchObject({ title: 'Clockyn Support', body: '' });
+    expect(foregroundLocalNotification({ data: { type: 'live_chat_message' }, title: 'Priya', body: 'On it' })).toMatchObject({ title: 'Priya', body: 'On it' });
+  });
+});
+
 describe('normalizePushData', () => {
   it('keeps strings, stringifies numbers/booleans and drops the rest', () => {
     expect(normalizePushData({ a: 'x', b: 2, c: true, d: null, e: { z: 1 }, f: undefined })).toEqual({ a: 'x', b: '2', c: 'true' });

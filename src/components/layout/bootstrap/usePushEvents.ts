@@ -3,6 +3,7 @@ import { router, useRootNavigationState, usePathname } from 'expo-router';
 
 import { foregroundLocalNotification, showLocalNotification, subscribePushEvents, type PushMessage } from '@/lib/platform/notifications';
 import { handlePushData } from '@/lib/realtime/globalRealtime';
+import { liveChatSession } from '@/lib/realtime/liveChatSession';
 import { buildHref, type AppRoute } from '@/lib/navigation';
 import { getSession, signOut, useAuthHydrated, useSession } from '@/store/auth';
 import { useLatestRef } from '@/lib/realtime/useLatestRef';
@@ -50,7 +51,9 @@ export function usePushEvents(): void {
           return;
         }
         handlePushData(msg.data, { title: msg.title, body: msg.body });
-        const local = foregroundLocalNotification(msg);
+        // the Live Chat screen shows a support message itself: no banner on top of the open conversation
+        const onScreen = msg.data.type === 'live_chat_message' && liveChatSession.isOpen();
+        const local = onScreen ? null : foregroundLocalNotification(msg);
         if (local) void showLocalNotification(local);
       },
       onOpen: (msg) => {

@@ -14,6 +14,7 @@ export * as expensesApi from './expenses';
 export * as locationApi from './location';
 export * as chatApi from './chat';
 export * as groupChatApi from './groupChat';
+export * as liveChatApi from './liveChat';
 export * as announcementsApi from './announcements';
 export * as leadsApi from './leads';
 export * as payrollApi from './payroll';

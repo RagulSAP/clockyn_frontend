@@ -55,6 +55,7 @@ export function useGlobalSocket(): void {
         if (reconnected) {
           void queryClient.invalidateQueries({ queryKey: queryKeys.chat.all(userId) });
           void queryClient.invalidateQueries({ queryKey: queryKeys.groupChat.all(userId) });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.liveChat.all(userId) });
           realtimeBus.emit({ type: 'socket_reconnected' });
         }
       },

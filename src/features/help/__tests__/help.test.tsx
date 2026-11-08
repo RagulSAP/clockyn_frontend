@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 
 import { ApiError } from '@/lib/api/errors';
+import { badges, resetBadges } from '@/store/badges';
 import type { SupportVideo } from '@/types/api/support';
 
 import { renderScreen, signInTestAdmin } from '../../settings/__tests__/testHelpers';
@@ -9,7 +10,12 @@ import SupportHubScreen from '../screens/SupportHubScreen';
 import VideoHubScreen from '../screens/VideoHubScreen';
 
 const mockPush = jest.fn();
+const mockRedirect = jest.fn();
 jest.mock('expo-router', () => ({
+  Redirect: ({ href }: { href: string }) => {
+    mockRedirect(href);
+    return null;
+  },
   router: { back: jest.fn(), replace: jest.fn(), push: jest.fn(), canGoBack: () => true },
   useRouter: () => ({ push: (...a: unknown[]) => mockPush(...a), replace: jest.fn(), back: jest.fn(), canGoBack: () => true, dismissAll: jest.fn() }),
   useFocusEffect: () => undefined,
@@ -44,33 +50,63 @@ const video = (id: string, name: string): SupportVideo => ({ id, name, url: `htt
 beforeEach(() => {
   jest.clearAllMocks();
   mockRecordView.mockResolvedValue(undefined);
+  resetBadges();
   signInTestAdmin();
 });
 
 describe('SupportHubScreen', () => {
-  it('offers FAQ, WhatsApp Chat and Video Hub', async () => {
+  it('offers FAQ, Live Chat and Video Hub (no more WhatsApp chat)', async () => {
     await renderScreen(<SupportHubScreen />);
     expect(screen.getByText('FAQ')).toBeTruthy();
-    expect(screen.getByText('WhatsApp Chat')).toBeTruthy();
+    expect(screen.getByText('Live Chat')).toBeTruthy();
+    expect(screen.getByText('Chat with our support team')).toBeTruthy();
     expect(screen.getByText('Video Hub')).toBeTruthy();
+    expect(screen.queryByText('WhatsApp Chat')).toBeNull();
   });
 
-  it('opens the admin Video Hub for the owner and the staff one for staff', async () => {
+  it('opens the Video Hub and Live Chat', async () => {
     await renderScreen(<SupportHubScreen />);
     await fireEvent.press(screen.getByTestId('support-video-hub'));
     expect(mockPush).toHaveBeenLastCalledWith('/admin/help/videos');
-
-    signInTestAdmin({ roleId: 3 });
-    await renderScreen(<SupportHubScreen />);
-    await fireEvent.press(screen.getAllByTestId('support-video-hub').at(-1)!);
-    expect(mockPush).toHaveBeenLastCalledWith('/staff/help/videos');
+    await fireEvent.press(screen.getByTestId('support-live-chat'));
+    expect(mockPush).toHaveBeenLastCalledWith('/admin/help/live-chat');
   });
 
-  it('says FAQ and WhatsApp chat are coming soon instead of navigating', async () => {
+  it('shows the unread support messages on the Live Chat row', async () => {
+    badges.set('liveChat', 4);
+    await renderScreen(<SupportHubScreen />);
+    expect(screen.getByTestId('support-live-chat-badge')).toBeTruthy();
+    expect(screen.getByText('4')).toBeTruthy();
+  });
+
+  it('shows no badge when nothing is unread', async () => {
+    await renderScreen(<SupportHubScreen />);
+    expect(screen.queryByTestId('support-live-chat-badge')).toBeNull();
+  });
+
+  it('says FAQ is coming soon instead of navigating', async () => {
     await renderScreen(<SupportHubScreen />);
     await fireEvent.press(screen.getByTestId('support-faq'));
     expect(await screen.findByText('FAQ is coming soon')).toBeTruthy();
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it.each([2, 3])('sends role %i away: the Support hub is for the admin only', async (roleId) => {
+    signInTestAdmin({ roleId: roleId as 2 | 3 });
+    await renderScreen(<SupportHubScreen />);
+    expect(mockRedirect).toHaveBeenCalledWith('/staff/home');
+    expect(screen.queryByText('Live Chat')).toBeNull();
+  });
+});
+
+describe('Video Hub access', () => {
+  it.each([2, 3])('sends role %i away', async (roleId) => {
+    signInTestAdmin({ roleId: roleId as 2 | 3 });
+    mockListVideos.mockResolvedValue([video('1', 'Getting started')]);
+    await renderScreen(<VideoHubScreen />);
+    expect(mockRedirect).toHaveBeenCalledWith('/staff/home');
+    expect(screen.queryByText('Video Hub')).toBeNull();
+    expect(mockListVideos).not.toHaveBeenCalled();
   });
 });
 
