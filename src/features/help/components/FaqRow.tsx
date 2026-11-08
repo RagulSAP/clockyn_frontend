@@ -1,17 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { Animated, Easing, Pressable, View } from 'react-native';
+import React, { memo, useCallback, useSyncExternalStore } from 'react';
+import { LayoutAnimation, Platform, Pressable, View } from 'react-native';
 
 import { Icon, Text, type TextProps } from '@/components/ui';
-import { useReduceMotion } from '@/components/ui/motion';
 import { radii, spacing, useTheme } from '@/theme';
 import type { SupportFaq } from '@/types/api/support';
 
+import type { FaqOpenStore } from '../utils/faqOpen';
 import { splitMatches } from '../utils/faq';
 
-const DURATION_MS = 220;
-
 /** Text with the searched words in bold; plain text (a single string child) when nothing is searched. */
-export function HighlightedText({ children, words, ...rest }: Omit<TextProps, 'children'> & { children: string; words: readonly string[] }) {
+export function HighlightedText({
+  children,
+  words,
+  ...rest
+}: Omit<TextProps, 'children'> & {
+  children: string;
+  words: readonly string[];
+}) {
   if (words.length === 0) return <Text {...rest}>{children}</Text>;
   return (
     <Text {...rest}>
@@ -30,9 +35,9 @@ export function HighlightedText({ children, words, ...rest }: Omit<TextProps, 'c
 
 export type FaqRowProps = {
   faq: SupportFaq;
-  expanded: boolean;
-  onToggle: () => void;
-  /** Searched words: shown in bold in the question and, once open, in the answer. */
+  /** Which rows are open (see `createFaqOpenStore`): the row subscribes to its own entry only. */
+  store: FaqOpenStore;
+  /** Searched words: shown in bold in the question and, once open, in the answer. Keep the array stable between renders. */
   highlight?: readonly string[];
   /** Small chip under the question, e.g. "Attendance & Time > Shifts" (search results). */
   chip?: string;
@@ -40,53 +45,40 @@ export type FaqRowProps = {
 
 const NO_WORDS: readonly string[] = [];
 
+// Web: the browser skips layout and paint of rows that are far off screen (a long list stays cheap); a collapsed row is ~56px tall.
+const OFFSCREEN_SKIP = (Platform.OS === 'web' ? { contentVisibility: 'auto', containIntrinsicSize: 'auto 56px' } : undefined) as object | undefined;
+
 /**
- * One FAQ: a row that shows ONLY the question and a chevron. Pressing anywhere on the row opens the answer in place under it
- * (height + opacity animation) and pressing again closes it; rows toggle independently of each other. The answer is only
- * mounted while it is open or animating, so a collapsed answer is neither on screen nor read out by assistive technology.
+ * One FAQ: a row that shows ONLY the question and a chevron. Pressing anywhere on the row opens the answer in place under it and
+ * pressing again closes it; rows toggle independently of each other. The answer is only mounted while the row is open, so a
+ * collapsed answer is neither on screen nor read out by assistive technology.
+ *
+ * Cheap on purpose (the list can hold hundreds of rows): memoized, the open state is read from the store so only THIS row renders
+ * when it is toggled, and the open/close animation is the native LayoutAnimation (it runs off the JS thread, nothing is measured
+ * or animated frame by frame in JavaScript).
  */
-export function FaqRow({ faq, expanded, onToggle, highlight = NO_WORDS, chip }: FaqRowProps) {
+export const FaqRow = memo(function FaqRow({ faq, store, highlight = NO_WORDS, chip }: FaqRowProps) {
   const { colors } = useTheme();
-  const reduceMotion = useReduceMotion();
-  const [progress] = useState(() => new Animated.Value(expanded ? 1 : 0));
-  const [contentHeight, setContentHeight] = useState(0);
-  // `moving` is true from the moment `expanded` flips until the animation has finished (set while rendering, not in an effect)
-  const [seen, setSeen] = useState(expanded);
-  const [moving, setMoving] = useState(false);
-  if (seen !== expanded) {
-    setSeen(expanded);
-    setMoving(true);
-  }
+  const { id } = faq;
+  const expanded = useSyncExternalStore(
+    useCallback((notify: () => void) => store.subscribe(id, notify), [store, id]),
+    () => store.isOpen(id),
+    () => false,
+  );
 
-  useEffect(() => {
-    if (!moving) return undefined;
-    const anim = Animated.timing(progress, {
-      toValue: expanded ? 1 : 0,
-      duration: reduceMotion ? 0 : DURATION_MS,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false, // height cannot run on the native driver; one JS-driven value also drives the chevron
-    });
-    anim.start(({ finished }) => {
-      if (finished) setMoving(false);
-    });
-    return () => anim.stop();
-  }, [expanded, moving, reduceMotion, progress]);
-
-  const mounted = expanded || moving; // a collapsed answer is not mounted at all: not on screen, not read out
-
-  const rotate = progress.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
-  const height = progress.interpolate({ inputRange: [0, 1], outputRange: [0, Math.max(contentHeight, 0)] });
-  // while animating the content is measured out of flow so the fixed height never squeezes it; once settled it flows normally
-  const settledOpen = expanded && !moving;
+  const onPress = useCallback(() => {
+    if (store.animate && Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    store.toggle(id);
+  }, [store, id]);
 
   return (
-    <View testID={`faq-item-${faq.id}`}>
+    <View testID={`faq-item-${id}`} style={OFFSCREEN_SKIP}>
       <Pressable
-        onPress={onToggle}
+        onPress={onPress}
         accessibilityRole="button"
         accessibilityState={{ expanded }}
         aria-expanded={expanded}
-        testID={`faq-${faq.id}`}
+        testID={`faq-${id}`}
         style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => ({
           minHeight: 48,
           flexDirection: 'row',
@@ -102,37 +94,41 @@ export function FaqRow({ faq, expanded, onToggle, highlight = NO_WORDS, chip }: 
             {faq.question}
           </HighlightedText>
           {chip ? (
-            <View style={{ alignSelf: 'flex-start', backgroundColor: colors.primarySoft, borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 }}>
-              <Text variant="micro" color="textSecondary" testID={`faq-${faq.id}-chip`}>
+            <View
+              style={{
+                alignSelf: 'flex-start',
+                backgroundColor: colors.primarySoft,
+                borderRadius: radii.pill,
+                paddingHorizontal: spacing.sm,
+                paddingVertical: 2,
+              }}
+            >
+              <Text variant="micro" color="textSecondary" testID={`faq-${id}-chip`}>
                 {chip}
               </Text>
             </View>
           ) : null}
         </View>
-        <Animated.View style={{ transform: [{ rotate }] }}>
+        <View style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}>
           <Icon name="chevron-down" size={20} color="textMuted" />
-        </Animated.View>
+        </View>
       </Pressable>
 
-      {mounted ? (
-        <Animated.View
-          testID={`faq-${faq.id}-panel`}
-          style={settledOpen ? undefined : { height, opacity: progress, overflow: 'hidden' }}
-        >
+      {expanded ? (
+        <View testID={`faq-${id}-panel`} style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.lg }}>
           <View
-            onLayout={(e) => setContentHeight(e.nativeEvent.layout.height)}
-            style={settledOpen ? undefined : { position: 'absolute', left: 0, right: 0, top: 0 }}
+            style={{
+              backgroundColor: colors.surfaceMuted,
+              borderRadius: radii.md,
+              padding: spacing.md,
+            }}
           >
-            <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.lg }}>
-              <View style={{ backgroundColor: colors.surfaceMuted, borderRadius: radii.md, padding: spacing.md }}>
-                <HighlightedText variant="body" color="textSecondary" selectable testID={`faq-${faq.id}-answer`} words={highlight}>
-                  {faq.answer}
-                </HighlightedText>
-              </View>
-            </View>
+            <HighlightedText variant="body" color="textSecondary" selectable testID={`faq-${id}-answer`} words={highlight}>
+              {faq.answer}
+            </HighlightedText>
           </View>
-        </Animated.View>
+        </View>
       ) : null}
     </View>
   );
-}
+});

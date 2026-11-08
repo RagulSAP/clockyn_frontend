@@ -4,6 +4,7 @@ import { useLocalSearchParams, useNavigation } from 'expo-router';
 
 import { Screen, useBreakpoint } from '@/components/layout';
 import { Button, Card, Divider, EmptyState, ErrorState, FilterChips, SearchBar, SkeletonList, Text } from '@/components/ui';
+import { useReduceMotion } from '@/components/ui/motion';
 import { useDebounce } from '@/hooks';
 import { getErrorMessage } from '@/lib/api/errors';
 import { routes, useAppRouter } from '@/lib/navigation';
@@ -14,9 +15,24 @@ import { AdminOnly } from '../components/AdminOnly';
 import { BucketIcon, FaqBucketTile, questionsLabel } from '../components/FaqBucketTile';
 import { FaqRow } from '../components/FaqRow';
 import { useSupportFaqs } from '../hooks/useSupportFaqs';
-import { bucketSlug, faqBuckets, findBucket, groupByBucket, groupByCategory, searchFaqs, searchWords } from '../utils/faq';
+import {
+  bucketSlug,
+  faqBuckets,
+  findBucket,
+  groupByBucket,
+  groupByCategory,
+  limitBucketGroups,
+  limitCategoryGroups,
+  searchFaqs,
+  searchWords,
+} from '../utils/faq';
+import { createFaqOpenStore } from '../utils/faqOpen';
 
 const SEARCH_DEBOUNCE_MS = 150;
+// A long list (a big bucket, "All questions" on desktop, a wide search) is mounted in steps so the screen appears at once:
+// the first rows immediately, the rest on the next ticks.
+const FIRST_ROWS = 24;
+const MORE_ROWS = 48;
 type BeforeRemove = {
   addListener: (type: 'beforeRemove', cb: (e: { preventDefault: () => void; data?: { action?: { type?: string } } }) => void) => () => void;
 };
@@ -38,7 +54,21 @@ export default function FaqScreen() {
   );
 }
 
-function NavItem({ label, count, selected, onPress, testID, icon }: { label: string; count: number; selected: boolean; onPress: () => void; testID: string; icon: string | null }) {
+function NavItem({
+  label,
+  count,
+  selected,
+  onPress,
+  testID,
+  icon,
+}: {
+  label: string;
+  count: number;
+  selected: boolean;
+  onPress: () => void;
+  testID: string;
+  icon: string | null;
+}) {
   const { colors } = useTheme();
   return (
     <Pressable
@@ -82,9 +112,13 @@ function Faq() {
   // `undefined` = "follow the link params"; a value (or null = the tiles / "All questions") = the user picked.
   const [pickedBucket, setPickedBucket] = useState<string | null | undefined>(undefined);
   const [pickedCategory, setPickedCategory] = useState<string | null | undefined>(undefined);
-  // Which rows are open, by FAQ id. Rows toggle independently; the state lives here so it survives searching,
-  // switching bucket and any other re-render of the list.
-  const [open, setOpen] = useState<Record<string, boolean>>({});
+  // Which rows are open, by FAQ id. Rows toggle independently; the store lives here so it survives searching and switching
+  // bucket, and toggling a row renders only that row (the screen does not re-render).
+  const [openStore] = useState(createFaqOpenStore);
+  const reduceMotion = useReduceMotion();
+  useEffect(() => {
+    openStore.setAnimate(!reduceMotion);
+  }, [openStore, reduceMotion]);
   const [refreshing, setRefreshing] = useState(false);
 
   const all = useMemo(() => faqs.data ?? [], [faqs.data]);
@@ -101,8 +135,27 @@ function Faq() {
   const words = useMemo(() => searchWords(q), [q]);
   const searching = words.length > 0;
   const results = useMemo(() => searchFaqs(all, q), [all, q]);
-  const bucketItems = useMemo(() => (bucket ? all.filter((f) => f.bucket === bucket && (!category || f.category === category)) : []), [all, bucket, category]);
+  const bucketItems = useMemo(
+    () => (bucket ? all.filter((f) => f.bucket === bucket && (!category || f.category === category)) : []),
+    [all, bucket, category],
+  );
   const drilled = !!bucket && !isDesktop && !searching;
+  const bucketGroups = useMemo(() => groupByCategory(bucketItems), [bucketItems]);
+  const allGroups = useMemo(() => groupByBucket(all), [all]);
+
+  // Rows are mounted in steps (see FIRST_ROWS): `shown` is how many rows of the current view are mounted so far.
+  const viewKey = searching ? `s:${q}` : bucket ? `b:${bucket}/${category ?? ''}` : isDesktop ? 'all' : 'tiles';
+  const viewRows = searching ? results.length : bucket ? bucketItems.length : isDesktop ? all.length : 0;
+  const [chunk, setChunk] = useState({ key: viewKey, n: FIRST_ROWS });
+  const shown = chunk.key === viewKey ? chunk.n : FIRST_ROWS;
+  useEffect(() => {
+    if (shown >= viewRows) return undefined;
+    const timer = setTimeout(() => setChunk({ key: viewKey, n: shown + MORE_ROWS }), 0);
+    return () => clearTimeout(timer);
+  }, [shown, viewRows, viewKey]);
+  const shownResults = useMemo(() => results.slice(0, shown), [results, shown]);
+  const shownBucketGroups = useMemo(() => limitCategoryGroups(bucketGroups, shown), [bucketGroups, shown]);
+  const shownAllGroups = useMemo(() => limitBucketGroups(allGroups, shown), [allGroups, shown]);
 
   const selectBucket = (name: string | null) => {
     setPickedBucket(name);
@@ -150,7 +203,6 @@ function Faq() {
     };
   }, [drilled]);
 
-  const toggle = (id: string) => setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -160,24 +212,21 @@ function Faq() {
     }
   };
 
-  const rows = (items: SupportFaq[], opts: { highlight?: string[]; chips?: boolean } = {}) => (
-    <Card padding={0}>
-      <View style={{ borderRadius: radii.lg, overflow: 'hidden' }}>
-        {items.map((faq, i) => (
-          <View key={faq.id}>
-            {i > 0 ? <Divider /> : null}
-            <FaqRow
-              faq={faq}
-              expanded={!!open[faq.id]}
-              onToggle={() => toggle(faq.id)}
-              highlight={opts.highlight}
-              chip={opts.chips ? `${faq.bucket} > ${faq.category}` : undefined}
-            />
-          </View>
-        ))}
-      </View>
-    </Card>
-  );
+  const rows = (items: SupportFaq[], opts: { highlight?: string[]; chips?: boolean } = {}) => {
+    if (items.length === 0) return null;
+    return (
+      <Card padding={0}>
+        <View style={{ borderRadius: radii.lg, overflow: 'hidden' }}>
+          {items.map((faq, i) => (
+            <View key={faq.id}>
+              {i > 0 ? <Divider /> : null}
+              <FaqRow faq={faq} store={openStore} highlight={opts.highlight} chip={opts.chips ? `${faq.bucket} > ${faq.category}` : undefined} />
+            </View>
+          ))}
+        </View>
+      </Card>
+    );
+  };
 
   const subHeader = (name: string, count: number) => (
     <Text variant="micro" color="textMuted" accessibilityRole="header" style={{ textTransform: 'uppercase', paddingHorizontal: spacing.xs }}>
@@ -185,10 +234,10 @@ function Faq() {
     </Text>
   );
 
-  const categoryGroups = (items: SupportFaq[]) =>
-    groupByCategory(items).map((g) => (
+  const categoryGroups = () =>
+    shownBucketGroups.map((g) => (
       <View key={g.category} style={{ gap: spacing.sm }} testID={`faq-category-${bucketSlug(g.category)}`}>
-        {subHeader(g.category, g.items.length)}
+        {subHeader(g.category, g.total)}
         {rows(g.items)}
       </View>
     ));
@@ -220,7 +269,13 @@ function Faq() {
   const bucketView = (
     <View style={{ gap: spacing.lg }} testID="faq-bucket-view">
       {isDesktop ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.md,
+          }}
+        >
           <BucketIcon name={bucket ?? ''} size={36} />
           <View>
             <Text variant="title3" accessibilityRole="header">
@@ -232,25 +287,53 @@ function Faq() {
           </View>
         </View>
       ) : (
-        <FilterChips options={buckets.map((b) => ({ label: b.name, value: b.name, count: b.count }))} value={bucket} onChange={(name) => selectBucket(name)} testID="faq-chips" />
+        <FilterChips
+          options={buckets.map((b) => ({
+            label: b.name,
+            value: b.name,
+            count: b.count,
+          }))}
+          value={bucket}
+          onChange={(name) => selectBucket(name)}
+          testID="faq-chips"
+        />
       )}
       {category ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.sm,
+            flexWrap: 'wrap',
+          }}
+        >
           <Text variant="caption" color="textSecondary">
             Showing {category} only
           </Text>
-          <Button title={`Show all in ${bucket}`} size="sm" variant="secondary" onPress={() => setPickedCategory(null)} testID="faq-show-all-categories" />
+          <Button
+            title={`Show all in ${bucket}`}
+            size="sm"
+            variant="secondary"
+            onPress={() => setPickedCategory(null)}
+            testID="faq-show-all-categories"
+          />
         </View>
       ) : null}
-      {categoryGroups(bucketItems)}
+      {categoryGroups()}
     </View>
   );
 
   const everything = (
     <View style={{ gap: spacing.xl }} testID="faq-all-view">
-      {groupByBucket(all).map((g) => (
+      {shownAllGroups.map((g) => (
         <View key={g.bucket} style={{ gap: spacing.lg }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: spacing.md,
+            }}
+          >
             <BucketIcon name={g.bucket} size={32} />
             <Text variant="title3" accessibilityRole="header">
               {g.bucket}
@@ -258,7 +341,7 @@ function Faq() {
           </View>
           {g.categories.map((c) => (
             <View key={c.category} style={{ gap: spacing.sm }} testID={`faq-category-${bucketSlug(c.category)}`}>
-              {subHeader(c.category, c.items.length)}
+              {subHeader(c.category, c.total)}
               {rows(c.items)}
             </View>
           ))}
@@ -271,7 +354,14 @@ function Faq() {
     results.length === 0 ? (
       <View style={{ gap: spacing.md }} testID="faq-no-match">
         <EmptyState icon="search" title="No answers match" message="Try different words, browse the topics or ask our support team." />
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, justifyContent: 'center' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: spacing.sm,
+            justifyContent: 'center',
+          }}
+        >
           <Button title="Clear search" icon="x" variant="secondary" onPress={() => setQuery('')} testID="faq-clear-search" />
           <Button title="Browse topics" icon="layout-grid" variant="secondary" onPress={() => selectBucket(null)} testID="faq-browse-topics" />
           <Button title="Ask support in Live Chat" icon="chat" onPress={() => router.push(routes.admin.helpLiveChat)} testID="faq-ask-support" />
@@ -282,15 +372,27 @@ function Faq() {
         <Text variant="caption" color="textMuted" testID="faq-result-count">
           {results.length} {results.length === 1 ? 'result' : 'results'}
         </Text>
-        {rows(results, { highlight: words, chips: true })}
+        {rows(shownResults, { highlight: words, chips: true })}
       </View>
     );
 
   const desktopNav = (
-    <View style={[{ width: 264, gap: spacing.xs, alignSelf: 'flex-start' }, { position: 'sticky', top: spacing.lg } as object]} accessibilityRole="tablist" testID="faq-nav">
+    <View
+      style={[{ width: 264, gap: spacing.xs, alignSelf: 'flex-start' }, { position: 'sticky', top: spacing.lg } as object]}
+      accessibilityRole="tablist"
+      testID="faq-nav"
+    >
       <NavItem label="All questions" count={all.length} selected={!bucket} onPress={() => selectBucket(null)} testID="faq-nav-all" icon={null} />
       {buckets.map((b) => (
-        <NavItem key={b.name} label={b.name} count={b.count} selected={bucket === b.name} onPress={() => selectBucket(b.name)} testID={`faq-nav-${bucketSlug(b.name)}`} icon={b.name} />
+        <NavItem
+          key={b.name}
+          label={b.name}
+          count={b.count}
+          selected={bucket === b.name}
+          onPress={() => selectBucket(b.name)}
+          testID={`faq-nav-${bucketSlug(b.name)}`}
+          icon={b.name}
+        />
       ))}
     </View>
   );
@@ -316,9 +418,21 @@ function Faq() {
           <EmptyState icon="help-circle" title="No FAQs yet" message="Answers to common questions will appear here as soon as they are added." />
         ) : (
           <>
-            <SearchBar value={query} onChangeText={setQuery} placeholder="Search all questions" accessibilityLabel="Search the FAQ" testID="faq-search" />
+            <SearchBar
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search all questions"
+              accessibilityLabel="Search the FAQ"
+              testID="faq-search"
+            />
             {isDesktop ? (
-              <View style={{ flexDirection: 'row', gap: spacing.xl, alignItems: 'flex-start' }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  gap: spacing.xl,
+                  alignItems: 'flex-start',
+                }}
+              >
                 {desktopNav}
                 <View style={{ flex: 1, minWidth: 0, gap: spacing.lg }}>{content}</View>
               </View>

@@ -27,7 +27,7 @@ const res = spawnSync(`npx ${args.join(' ')}`, {
   cwd: root,
   stdio: 'inherit',
   shell: true,
-  env: { ...process.env, EXPO_PUBLIC_API_BASE_URL: api, CI: process.env.CI || '1' },
+  env: { ...process.env, EXPO_PUBLIC_API_BASE_URL: api, EXPO_PUBLIC_ALLOW_WEB_EMPLOYEE: 'true', CI: process.env.CI || '1' }, // the browser tests sign in as staff too
 });
 if (res.status !== 0) {
   console.error('[e2e:build] expo export failed');

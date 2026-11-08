@@ -12,6 +12,8 @@ export interface FaqBucket {
 export interface FaqCategoryGroup {
   category: string;
   items: SupportFaq[];
+  /** How many FAQs the category holds in all (`items` can be cut short while a long list is still being mounted). */
+  total: number;
 }
 
 export interface FaqBucketGroup {
@@ -40,10 +42,11 @@ export function groupByCategory(list: readonly SupportFaq[]): FaqCategoryGroup[]
   for (const f of list) {
     let g = groups.find((x) => x.category === f.category);
     if (!g) {
-      g = { category: f.category, items: [] };
+      g = { category: f.category, items: [], total: 0 };
       groups.push(g);
     }
     g.items.push(f);
+    g.total += 1;
   }
   return groups;
 }
@@ -51,6 +54,32 @@ export function groupByCategory(list: readonly SupportFaq[]): FaqCategoryGroup[]
 /** Bucket > category > questions for the whole list. */
 export function groupByBucket(list: readonly SupportFaq[]): FaqBucketGroup[] {
   return faqBuckets(list).map((b) => ({ bucket: b.name, categories: groupByCategory(list.filter((f) => f.bucket === b.name)) }));
+}
+
+/** The first `limit` FAQs of the groups, in order; groups left with nothing are dropped (their `total` still counts all). */
+export function limitCategoryGroups(groups: readonly FaqCategoryGroup[], limit: number): FaqCategoryGroup[] {
+  let left = limit;
+  const out: FaqCategoryGroup[] = [];
+  for (const g of groups) {
+    if (left <= 0) break;
+    const items = g.items.length <= left ? g.items : g.items.slice(0, left);
+    left -= items.length;
+    out.push(items === g.items ? g : { ...g, items });
+  }
+  return out;
+}
+
+/** Same for bucket groups (bucket > category > FAQs). */
+export function limitBucketGroups(groups: readonly FaqBucketGroup[], limit: number): FaqBucketGroup[] {
+  let left = limit;
+  const out: FaqBucketGroup[] = [];
+  for (const g of groups) {
+    if (left <= 0) break;
+    const categories = limitCategoryGroups(g.categories, left);
+    left -= categories.reduce((n, c) => n + c.items.length, 0);
+    out.push({ ...g, categories });
+  }
+  return out;
 }
 
 /** The words of a search text: lower-cased, split on whitespace, no empties, no duplicates. */
@@ -110,7 +139,11 @@ export function bucketVisual(name: string): { icon: IconName; tone: FaqTone } {
 }
 
 /** A stable, test- and URL-friendly id of a bucket name ("Set up & Account" -> "set-up-account"). */
-export const bucketSlug = (name: string): string => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+export const bucketSlug = (name: string): string =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 /** Finds a bucket by a name given in a link, ignoring case (and `&` / spacing differences via the slug). */
 export function findBucket(buckets: readonly FaqBucket[], wanted: string | undefined): string | null {

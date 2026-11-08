@@ -9,14 +9,17 @@ import { signOutNoticeMessage, useUiStore } from '@/store/ui';
 import { spacing } from '@/theme';
 
 import { AuthShell, FEATURE_ITEMS } from '../components/AuthShell';
+import { EmployeeMobileOnlyModal } from '../components/EmployeeMobileOnlyModal';
 import { InfoBox } from '../components/InfoBox';
 import { PortalCard } from '../components/PortalCard';
+import { isEmployeeAccessBlocked } from '../utils/employeeAccess';
 
 /** Welcome / role chooser. Signed-in users are redirected to their role home (reactively). */
 export default function WelcomeScreen() {
   const { ready, href } = useRootRedirect();
   const router = useAppRouter();
   // The sign-out reason (forced / deleted) is captured on mount, shown once, then forgotten.
+  const [mobileOnly, setMobileOnly] = useState(false); // Employee Access tapped in a browser
   const [notice] = useState(() => signOutNoticeMessage(useUiStore.getState().signOutNotice));
   useEffect(() => {
     useUiStore.getState().clearSignOutNotice();
@@ -61,7 +64,7 @@ export default function WelcomeScreen() {
               title="Employee Access"
               description="Attendance & personal records"
               tone="success"
-              onPress={() => router.push(routes.staffLogin)}
+              onPress={() => (isEmployeeAccessBlocked() ? setMobileOnly(true) : router.push(routes.staffLogin))}
               testID="portal-staff"
             />
           </Reveal>
@@ -78,6 +81,7 @@ export default function WelcomeScreen() {
           ))}
         </View>
       </Card>
+      <EmployeeMobileOnlyModal visible={mobileOnly} onClose={() => setMobileOnly(false)} />
     </AuthShell>
   );
 }

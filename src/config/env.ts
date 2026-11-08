@@ -13,6 +13,8 @@ export const env = {
   webPortalUrl: read(process.env.EXPO_PUBLIC_WEB_PORTAL_URL),
   androidStoreUrl: read(process.env.EXPO_PUBLIC_ANDROID_STORE_URL),
   iosStoreUrl: read(process.env.EXPO_PUBLIC_IOS_STORE_URL),
+  /** Employee Access (staff / manager sign-in) is for the Android / iOS app only. Set to `true` ONLY for the browser test build. */
+  allowWebEmployee: read(process.env.EXPO_PUBLIC_ALLOW_WEB_EMPLOYEE).toLowerCase() === 'true',
 } as const;
 
 /** WebSocket base derived from the API base (http→ws, https→wss). */
