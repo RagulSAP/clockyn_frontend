@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "460160253044",
+    "project_id": "clockyn-aurocloud",
+    "storage_bucket": "clockyn-aurocloud.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:460160253044:android:5ccf1b666899abfdd96521",
+        "android_client_info": {
+          "package_name": "com.clockyn.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxr4KOdsQuvofyQUyX9FFBsBkjH4C0HKw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
