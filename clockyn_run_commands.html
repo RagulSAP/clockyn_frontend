@@ -76,6 +76,7 @@
       <button class="tab" role="tab" id="btn-ecs" data-tab="ecs" aria-controls="tab-ecs" aria-selected="false">Deploy (Express Mode)</button>
       <button class="tab" role="tab" id="btn-videos" data-tab="videos" aria-controls="tab-videos" aria-selected="false">Support</button>
       <button class="tab" role="tab" id="btn-eas" data-tab="eas" aria-controls="tab-eas" aria-selected="false">Expo build</button>
+      <button class="tab" role="tab" id="btn-fcm" data-tab="fcm" aria-controls="tab-fcm" aria-selected="false">Push (FCM)</button>
       <button class="tab" role="tab" id="btn-trouble" data-tab="trouble" aria-controls="tab-trouble" aria-selected="false">Troubleshooting</button>
     </div>
     <button class="theme" id="themeBtn" type="button" aria-label="Switch between light and dark theme">Dark mode</button>
@@ -758,10 +759,21 @@ eas env:list --environment preview</pre><button class="copy">Copy</button></div>
 eas submit --platform ios --profile production</pre><button class="copy">Copy</button></div>
     <p>Android needs a Google Play service-account key, and the very first upload of a new app must be done by hand in Play Console. iOS uses your App Store Connect login. Before submitting, make sure the privacy policy link (<code>EXPO_PUBLIC_PRIVACY_POLICY_URL</code>) and the account-deletion information page are set.</p>
 
-    <h3 id="fcm">Push notifications (Firebase Cloud Messaging), step by step</h3>
+    <h3>Before a real release, check</h3>
+    <ul>
+      <li>The backend is deployed on AWS with its environment variables set (database, SES sender, <code>TRUST_PROXY=1</code>, <code>AUTH_TOKEN_SECRET</code>, <code>RAZORPAY_WEBHOOK_SECRET</code>) and the IAM role attached.</li>
+      <li><code>EXPO_PUBLIC_API_BASE_URL</code> is the HTTPS address of that backend, in the same EAS environment you build.</li>
+      <li>Both the app version (<code>version</code> in <code>app.config.ts</code>) and the Firebase apps match the app id.</li>
+      <li>You have tried face punch, photo upload and sign-in on a real Android phone and a real iPhone.</li>
+    </ul>
+  </section>
+  </div>
+  <div class="panel" role="tabpanel" id="tab-fcm" aria-labelledby="btn-fcm" hidden>
+  <section id="fcm">
+    <h2>Push notifications (Firebase Cloud Messaging) <span class="tag">Firebase console + AWS + one app build</span></h2>
     <p>A push needs three things to line up: the <b>app</b> carries the Firebase file of your project and registers its device token, the <b>backend</b> holds a key of the same project and sends through Google, and the <b>phone</b> allows notifications. If any one is missing, the app keeps working but nothing arrives. Do the steps in this order.</p>
 
-    <h4>Part A. Firebase project and the Android app (once)</h4>
+    <h3>Part A. Firebase project and the Android app (once)</h3>
     <ol>
       <li>Open the <a href="https://console.firebase.google.com" target="_blank" rel="noopener">Firebase console</a> and use the project of the app (it is <code>clockyn-aurocloud</code> today). Use <b>one</b> project for the app and the backend; a key from another project makes Google reject every push.</li>
       <li><b>Project settings</b> (gear icon), <b>General</b>, <b>Your apps</b>: there must be an <b>Android</b> app whose package name is exactly <code>com.clockyn.app</code> (the <code>APP_ID</code> of the app). Add it if it is missing.</li>
@@ -769,7 +781,7 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
       <li><b>Project settings</b>, <b>Cloud Messaging</b>: <b>Firebase Cloud Messaging API (V1)</b> must say <b>Enabled</b>. If it does not, open the three-dot menu there, <b>Manage API in Google Cloud Console</b>, and click <b>Enable</b>.</li>
     </ol>
 
-    <h4>Part B. The backend key (once, then after every key change)</h4>
+    <h3>Part B. The backend key (once, then after every key change)</h3>
     <ol>
       <li><b>Project settings</b>, <b>Service accounts</b>, <b>Generate new private key</b>. A <code>.json</code> file downloads. It is a password for sending pushes as your project: never commit it to git and never send it in chat.</li>
       <li>Open the file. You need five values from it:
@@ -792,23 +804,23 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
       <li>Check it after the deploy: in CloudWatch, log group <code>/ecs/clockyn-backend</code>, search <code>[FCM] not configured</code>. If that line appears, a setting is missing or misspelled.</li>
     </ol>
 
-    <h4>Part C. iPhone (only if you ship iOS)</h4>
+    <h3>Part C. iPhone (only if you ship iOS)</h3>
     <ol>
       <li>Firebase, <b>Project settings</b>, <b>Your apps</b>: add an <b>iOS</b> app with the bundle id <code>com.clockyn.app</code> and download <code>GoogleService-Info.plist</code>.</li>
       <li><b>Project settings</b>, <b>Cloud Messaging</b>, <b>Apple app configuration</b>: upload an <b>APNs Authentication Key</b> (.p8) made in your Apple Developer account (Certificates, Identifiers &amp; Profiles, Keys, enable Apple Push Notifications service). Enter its Key ID and your Team ID. Without it iPhones never receive a push.</li>
-      <li>Give the plist to EAS as a file variable (Step 3 above):
+      <li>Give the plist to EAS as a file variable (Expo build tab, Step 3):
         <div class="cmd"><pre>eas env:create --name GOOGLE_SERVICE_INFO_PLIST --type file --value ./GoogleService-Info.plist --environment production --visibility secret</pre><button class="copy">Copy</button></div></li>
     </ol>
 
-    <h4>Part D. Build the app again and allow notifications</h4>
+    <h3>Part D. Build the app again and allow notifications</h3>
     <ol>
-      <li>Any change to <code>google-services.json</code> or to the Firebase plugin needs a new native build, not only an update. Build with the cache cleared (Step 4 above), for example:
+      <li>Any change to <code>google-services.json</code> or to the Firebase plugin needs a new native build, not only an update. Build with the cache cleared (Expo build tab, Step 4), for example:
         <div class="cmd"><pre>eas build --profile preview --platform android --clear-cache</pre><button class="copy">Copy</button></div></li>
       <li>Install the new build. If an older Clockyn is on the phone, uninstall it first.</li>
       <li>Open the app and <b>sign in</b>, then tap <b>Allow</b> on the notification question (Android 13 and later ask once; if you tapped Don't allow, turn it on in Android Settings, Apps, Clockyn, Notifications). The app sends its device token to the backend when you sign in and every time it comes to the front.</li>
     </ol>
 
-    <h4>Part E. Test it</h4>
+    <h3>Part E. Test it</h3>
     <ol>
       <li>Sign in on the phone as the <b>organization admin</b>, then press the Home button so the app is in the background (a push is shown by the phone only when the app is not open on that screen).</li>
       <li>From the admin web app, <b>Live Chat</b>, send the organization a message. A notification should appear within a few seconds. Tapping it opens the chat.</li>
@@ -822,14 +834,6 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
           <tr><td><code>[Notify][FCM] failed: 404</code> or <code>UNREGISTERED</code></td><td>The token is old (app reinstalled). Open the app once; it registers a new one and the old one is removed automatically.</td></tr>
         </table></li>
     </ol>
-
-    <h3>Before a real release, check</h3>
-    <ul>
-      <li>The backend is deployed on AWS with its environment variables set (database, SES sender, <code>TRUST_PROXY=1</code>, <code>AUTH_TOKEN_SECRET</code>, <code>RAZORPAY_WEBHOOK_SECRET</code>) and the IAM role attached.</li>
-      <li><code>EXPO_PUBLIC_API_BASE_URL</code> is the HTTPS address of that backend, in the same EAS environment you build.</li>
-      <li>Both the app version (<code>version</code> in <code>app.config.ts</code>) and the Firebase apps match the app id.</li>
-      <li>You have tried face punch, photo upload and sign-in on a real Android phone and a real iPhone.</li>
-    </ul>
   </section>
   </div>
   <div class="panel" role="tabpanel" id="tab-trouble" aria-labelledby="btn-trouble" hidden>
@@ -838,7 +842,7 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
     <table>
       <tr><th>Symptom</th><th>Likely cause and fix</th></tr>
       <tr><td>The preview or production app closes the moment it opens (the development build works)</td><td>Find the cause with <code>adb logcat -b crash -d</code> (phone on USB) or in EAS Observe. Usual causes: <code>google-services.json</code> missing from the build, a variable set in the wrong EAS environment (check with <code>eas env:list --environment preview</code>), or an <code>http://</code> backend address (release builds block it). After fixing, build again with <code>--clear-cache</code>.</td></tr>
-      <tr><td>Push notifications do not arrive</td><td>Follow the Expo build tab, "Push notifications (Firebase Cloud Messaging), step by step". Most often the <code>FCM_*</code> secrets are missing from <code>primary.json</code> on the server, or the phone never registered a token.</td></tr>
+      <tr><td>Push notifications do not arrive</td><td>Follow the <b>Push (FCM)</b> tab, step by step. Most often the <code>FCM_*</code> secrets are missing from <code>primary.json</code> on the server, or the phone never registered a token.</td></tr>
       <tr><td>The app still talks to the old backend</td><td>No <code>.env</code>, or the bundler was not restarted. Set <code>EXPO_PUBLIC_API_BASE_URL</code> and run <code>npx expo start -c</code>.</td></tr>
       <tr><td>Phone cannot reach <code>http://192.168.x.x:8080</code></td><td>Start the backend with <code>--host 0.0.0.0</code>, allow port 8080 in the Windows firewall, and keep the phone on the same Wi-Fi.</td></tr>
       <tr><td>Backend: <code>server closed the connection unexpectedly</code></td><td>The database instance is unhealthy or unreachable. Check it in the RDS console (status, security group, logs).</td></tr>
@@ -879,7 +883,7 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
 </main>
 <script>
 (function () {
-  var TABS = ['run', 'rekognition', 'ecs', 'videos', 'eas', 'trouble'].map(function (x) { return x; });
+  var TABS = ['run', 'rekognition', 'ecs', 'videos', 'eas', 'fcm', 'trouble'].map(function (x) { return x; });
   var root = document.documentElement;
 
   /* ---------- tabs ---------- */
