@@ -86,8 +86,7 @@ export function GroupConversationPane({ groupId, variant, onBack }: { groupId: s
       />
       <Composer
         onSend={(t) => void convo.sendText(t)}
-        onPhoto={(s) => void convo.sendPhoto(s)}
-        onFile={() => void convo.sendFile()}
+        onAttach={(a) => void convo.sendAttachment(a)}
         uploading={convo.uploading}
         accent={theme.accent}
         inputBackground={theme.inputBackground}

@@ -10,7 +10,10 @@ import { routes, useAppRouter } from '@/lib/navigation';
 import { spacing, useTheme } from '@/theme';
 
 import { AdminOnly } from '../components/AdminOnly';
+import { DelayNotice } from '../components/DelayNotice';
+import { SupportHoursBanner } from '../components/SupportHoursBanner';
 import { useLiveChat } from '../hooks/useLiveChat';
+import { useSupportStatus } from '../hooks/useSupportStatus';
 
 export const LIVE_CHAT_TITLE = 'Live Chat';
 export const LIVE_CHAT_SUBTITLE = 'Clockyn Support';
@@ -58,20 +61,25 @@ function LiveChat() {
 function LiveChatPane() {
   const { colors } = useTheme();
   const convo = useLiveChat();
+  const support = useSupportStatus(convo.items);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <MessageList
-        items={convo.items}
-        isLoading={convo.isLoading}
-        error={convo.error}
-        onReload={() => void convo.refetch()}
-        showSender
-        onRetry={(id) => void convo.retry(id)}
-        onDiscard={convo.discard}
-        emptyTitle={LIVE_CHAT_EMPTY_TITLE}
-        emptyMessage={LIVE_CHAT_EMPTY_MESSAGE}
-      />
+      <SupportHoursBanner open={support.open} nextOpening={support.nextOpening} />
+      <View style={{ flex: 1 }}>
+        <MessageList
+          items={convo.items}
+          isLoading={convo.isLoading}
+          error={convo.error}
+          onReload={() => void convo.refetch()}
+          showSender
+          onRetry={(id) => void convo.retry(id)}
+          onDiscard={convo.discard}
+          emptyTitle={LIVE_CHAT_EMPTY_TITLE}
+          emptyMessage={LIVE_CHAT_EMPTY_MESSAGE}
+        />
+        {support.showDelayNotice ? <DelayNotice onDismiss={support.dismissDelayNotice} /> : null}
+      </View>
       {convo.status === 'closed' ? (
         <View
           testID="live-chat-closed-banner"
@@ -84,8 +92,7 @@ function LiveChatPane() {
       ) : null}
       <Composer
         onSend={(t) => void convo.sendText(t)}
-        onPhoto={(s) => void convo.sendPhoto(s)}
-        onFile={() => void convo.sendFile()}
+        onAttach={(a) => void convo.sendAttachment(a)}
         uploading={convo.uploading}
         autoFocus
       />

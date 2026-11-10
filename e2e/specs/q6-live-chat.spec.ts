@@ -50,6 +50,24 @@ test.describe('Live Chat (admin)', () => {
     await snap(page, testInfo, 'live-chat-empty');
   });
 
+  test('support hours banner: Mon-Fri 10 AM-6 PM IST with the 5-minute promise; Online during hours, Offline with the next opening otherwise', async ({ page }, testInfo) => {
+    // Tuesday 2027-01-05 11:00 IST (05:30 UTC): the team is in
+    await page.clock.install({ time: new Date('2027-01-05T05:30:00Z') });
+    await visit(page, '/admin/help/live-chat');
+    await expect(page.getByTestId('support-hours-banner')).toBeVisible();
+    await expect(page.getByText('Mon – Fri, 10 AM – 6 PM IST')).toBeVisible();
+    await expect(page.getByTestId('support-status')).toContainText('Online');
+    await expect(page.getByTestId('support-hours-note')).toContainText('We usually reply within 5 minutes.');
+    await snap(page, testInfo, 'live-chat-hours-online');
+
+    // Saturday 2027-01-09 12:00 IST (06:30 UTC): the team is off until Monday
+    await page.clock.setSystemTime(new Date('2027-01-09T06:30:00Z'));
+    await page.clock.runFor(30_000); // the status re-checks the clock every 20 seconds
+    await expect(page.getByTestId('support-status')).toContainText('Offline');
+    await expect(page.getByTestId('support-hours-note')).toContainText("We'll reply Monday at 10 AM.");
+    await snap(page, testInfo, 'live-chat-hours-offline');
+  });
+
   test('a sent message appears at once, is stored with the sender and shows a tick; support reading turns it to Read', async ({ page, mock }, testInfo) => {
     await visit(page, '/admin/help/live-chat');
     await expect(page.getByTestId('chat-input')).toBeVisible();
@@ -116,6 +134,9 @@ test.describe('Live Chat (admin)', () => {
     const chooser = page.waitForEvent('filechooser');
     await page.getByText('Photo library', { exact: true }).click();
     (await chooser).setFiles({ name: 'screen.png', mimeType: 'image/png', buffer: PNG });
+    await expect(page.getByTestId('attachment-preview')).toBeVisible();
+    await expect(page.getByTestId('attachment-preview-name')).toHaveText('screen.png');
+    await page.getByTestId('attachment-preview-send').click(); // the preview asks first: Cancel or Send
     const imgCall = await mock.waitForRequest('/live-chat/send-file', { method: 'POST' });
     expect(imgCall.files?.[0]).toMatchObject({ field: 'file' });
     expect(imgCall.files?.[0].mimetype).toMatch(/^image\//);
@@ -125,6 +146,7 @@ test.describe('Live Chat (admin)', () => {
     const chooser2 = page.waitForEvent('filechooser');
     await page.getByText('Document', { exact: true }).click();
     (await chooser2).setFiles({ name: 'invoice-oct.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 test') });
+    await page.getByTestId('attachment-preview-send').click(); // the preview asks first: Cancel or Send
     await expect(list(page).getByText('invoice-oct.pdf')).toBeVisible();
     // the bubble is optimistic, so wait for the upload itself
     const docCall = await mock.waitForRequest('/live-chat/send-file', { method: 'POST', predicate: (r) => r.files?.[0]?.filename === 'invoice-oct.pdf' });

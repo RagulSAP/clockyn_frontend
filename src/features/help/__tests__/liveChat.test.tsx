@@ -63,10 +63,11 @@ jest.mock('@/api', () => ({
   },
 }));
 const mockPickImage = jest.fn();
+const mockPickDocument = jest.fn(async (): Promise<unknown> => null);
 jest.mock('@/lib/platform/media', () => ({
   ...jest.requireActual('@/lib/platform/media'),
   pickImage: (...a: unknown[]) => mockPickImage(...a),
-  pickDocument: jest.fn(async () => null),
+  pickDocument: (...a: unknown[]) => (mockPickDocument as (...x: unknown[]) => unknown)(...a),
 }));
 
 const iso = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60_000).toISOString();
@@ -258,8 +259,102 @@ describe('LiveChatScreen', () => {
     await renderScreen(<LiveChatScreen />);
     await screen.findByText('Hi, how can we help?');
     await fireEvent.press(screen.getByLabelText('Take a photo'));
+    // the pick opens a preview first: nothing is uploaded until Send is pressed
+    expect(await screen.findByTestId('attachment-preview')).toBeTruthy();
+    expect(mockSendFile).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByLabelText('Send attachment'));
     await waitFor(() => expect(mockSendFile).toHaveBeenCalled());
     expect(mockSendFile).toHaveBeenCalledWith(expect.objectContaining({ orgId: 'org-1', userId: 'user-1', fileUri: 'file:///tmp/p.jpg', fileName: 'p.jpg', mimeType: 'image/jpeg' }));
+    await waitFor(() => expect(screen.queryByTestId('attachment-preview')).toBeNull());
+  });
+
+  it('Cancel in the attachment preview discards the pick and sends nothing', async () => {
+    mockPickImage.mockResolvedValue({ uri: 'file:///tmp/p.jpg', fileName: 'p.jpg', mimeType: 'image/jpeg' });
+    await renderScreen(<LiveChatScreen />);
+    await screen.findByText('Hi, how can we help?');
+    await fireEvent.press(screen.getByLabelText('Take a photo'));
+    expect(await screen.findByTestId('attachment-preview')).toBeTruthy();
+    expect(screen.getByTestId('attachment-preview-name')).toHaveTextContent('p.jpg');
+    await fireEvent.press(screen.getByTestId('attachment-preview-cancel'));
+    await waitFor(() => expect(screen.queryByTestId('attachment-preview')).toBeNull());
+    expect(mockSendFile).not.toHaveBeenCalled();
+  });
+
+  it('previews a picked document as a file card with its name and kind', async () => {
+    mockPickDocument.mockResolvedValue({ uri: 'file:///tmp/report.pdf', name: 'report.pdf', mimeType: 'application/pdf' });
+    await renderScreen(<LiveChatScreen />);
+    await screen.findByText('Hi, how can we help?');
+    await fireEvent.press(screen.getByLabelText('Attach a file'));
+    await fireEvent.press(await screen.findByText('Document'));
+    expect(await screen.findByTestId('attachment-preview-file')).toBeTruthy();
+    expect(screen.getByTestId('attachment-preview-name')).toHaveTextContent('report.pdf');
+    expect(screen.getByText('PDF document')).toBeTruthy();
+    expect(mockSendFile).not.toHaveBeenCalled();
+  });
+
+  describe('support hours and the "busy" note', () => {
+    /** Pins "now" to an India-time clock (2026-11-10 is a Tuesday); the messages are built relative to it. */
+    const pinNow = (day: number, hour: number, minute = 0) => {
+      const now = Date.UTC(2026, 10, day, hour, minute) - 330 * 60_000;
+      jest.spyOn(Date, 'now').mockReturnValue(now);
+      return (minutesAgo: number) => new Date(now - minutesAgo * 60_000).toISOString();
+    };
+    const orgMsg = (id: string, sentAt: string) => live({ id, senderType: 'org', senderId: 'user-1', senderName: 'Owner', text: 'Payroll question', sentAt });
+    afterEach(() => jest.restoreAllMocks());
+
+    it('shows the support hours, the five-minute promise and an Online pill while the team is in', async () => {
+      const at = pinNow(10, 11, 0); // Tuesday 11:00 IST
+      mockGetMessages.mockResolvedValue(history([live({ id: 'm1', text: 'Hi', sentAt: at(30) })]));
+      await renderScreen(<LiveChatScreen />);
+      await screen.findByText('Hi');
+      expect(screen.getByText('Mon – Fri, 10 AM – 6 PM IST')).toBeTruthy();
+      expect(screen.getByTestId('support-hours-note')).toHaveTextContent('We usually reply within 5 minutes.');
+      expect(screen.getByTestId('support-status')).toHaveTextContent('Online');
+      expect(screen.queryByTestId('support-delay-notice')).toBeNull();
+    });
+
+    it('says when the team is back while it is off (Saturday)', async () => {
+      const at = pinNow(14, 12, 0); // Saturday 12:00 IST
+      mockGetMessages.mockResolvedValue(history([live({ id: 'm1', text: 'Hi', sentAt: at(30) })]));
+      await renderScreen(<LiveChatScreen />);
+      await screen.findByText('Hi');
+      expect(screen.getByTestId('support-status')).toHaveTextContent('Offline');
+      expect(screen.getByTestId('support-hours-note')).toHaveTextContent("We're offline right now. We'll reply Monday at 10 AM.");
+    });
+
+    it('shows the calm "busy" note when the last message waited more than five minutes, and Dismiss hides it', async () => {
+      const at = pinNow(10, 11, 0);
+      mockGetMessages.mockResolvedValue(history([live({ id: 'm1', text: 'Hi', sentAt: at(40) }), orgMsg('m2', at(8))]));
+      await renderScreen(<LiveChatScreen />);
+      expect(await screen.findByTestId('support-delay-notice')).toBeTruthy();
+      expect(screen.getByText("We're handling a lot of requests")).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Dismiss notice'));
+      await waitFor(() => expect(screen.queryByTestId('support-delay-notice')).toBeNull());
+    });
+
+    it('has no "busy" note within five minutes of the last message', async () => {
+      const at = pinNow(10, 11, 0);
+      mockGetMessages.mockResolvedValue(history([orgMsg('m2', at(3))]));
+      await renderScreen(<LiveChatScreen />);
+      await screen.findByText('Payroll question');
+      expect(screen.queryByTestId('support-delay-notice')).toBeNull();
+    });
+
+    it('has no "busy" note once support has replied', async () => {
+      const at = pinNow(10, 11, 0);
+      mockGetMessages.mockResolvedValue(history([orgMsg('m2', at(20)), live({ id: 'm3', text: 'On it', sentAt: at(2) })]));
+      await renderScreen(<LiveChatScreen />);
+      await screen.findByText('On it');
+      expect(screen.queryByTestId('support-delay-notice')).toBeNull();
+    });
+
+    it('has no "busy" note while the team is off (Saturday)', async () => {
+      const at = pinNow(14, 12, 0);
+      mockGetMessages.mockResolvedValue(history([orgMsg('m2', at(60))]));
+      await renderScreen(<LiveChatScreen />);
+      await screen.findByText('Payroll question');
+      expect(screen.queryByTestId('support-delay-notice')).toBeNull();
+    });
   });
 
   it('shows the closed banner until the admin writes (sending reopens the thread)', async () => {

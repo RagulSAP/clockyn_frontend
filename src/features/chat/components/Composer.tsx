@@ -4,11 +4,13 @@ import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 
 import { BottomSheet, IconButton, ListItem, Spinner } from '@/components/ui';
 import { fontFamily, radii, spacing, typography, useTheme } from '@/theme';
+import { usePickAttachment, type PickedAttachment } from '../hooks/usePickAttachment';
+import { AttachmentPreview } from './AttachmentPreview';
 
 export interface ComposerProps {
   onSend: (text: string) => void;
-  onPhoto: (source: 'camera' | 'library') => void;
-  onFile: () => void;
+  /** A photo / file the person picked AND confirmed in the preview (Send). Nothing is passed on before that. */
+  onAttach: (attachment: PickedAttachment) => void;
   /** An upload is running: camera / attach are disabled and attach shows a spinner. */
   uploading: boolean;
   /** Accent of the send button (group theme). */
@@ -18,12 +20,30 @@ export interface ComposerProps {
   autoFocus?: boolean;
 }
 
-/** Message composer: text, camera, attach (photo library / document) and send. Empty text is never sent. */
-export function Composer({ onSend, onPhoto, onFile, uploading, accent, inputBackground, autoFocus }: ComposerProps) {
+/**
+ * Message composer: text, camera, attach (photo library / document) and send. Empty text is never sent. A picked photo or
+ * file first opens a preview (like WhatsApp) with Cancel and Send; only Send hands it to `onAttach`.
+ */
+export function Composer({ onSend, onAttach, uploading, accent, inputBackground, autoFocus }: ComposerProps) {
   const { colors } = useTheme();
   const insets = useContext(SafeAreaInsetsContext);
   const [text, setText] = useState('');
   const [attachOpen, setAttachOpen] = useState(false);
+  const [pending, setPending] = useState<PickedAttachment | null>(null);
+  const { pickPhoto, pickFile } = usePickAttachment();
+
+  const pickFrom = useCallback(
+    async (source: 'camera' | 'library' | 'file') => {
+      const picked = source === 'file' ? await pickFile() : await pickPhoto(source);
+      if (picked) setPending(picked);
+    },
+    [pickPhoto, pickFile],
+  );
+  const confirmAttachment = useCallback(() => {
+    const picked = pending;
+    setPending(null);
+    if (picked) onAttach(picked);
+  }, [pending, onAttach]);
 
   const submit = useCallback(() => {
     const value = text.trim();
@@ -60,7 +80,7 @@ export function Composer({ onSend, onPhoto, onFile, uploading, accent, inputBack
         borderTopColor: colors.border,
       }}
     >
-      <IconButton icon="camera" variant="plain" accessibilityLabel="Take a photo" disabled={uploading} onPress={() => onPhoto('camera')} />
+      <IconButton icon="camera" variant="plain" accessibilityLabel="Take a photo" disabled={uploading} onPress={() => void pickFrom('camera')} />
       {uploading ? (
         <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Spinner />
@@ -113,7 +133,7 @@ export function Composer({ onSend, onPhoto, onFile, uploading, accent, inputBack
           icon="image"
           onPress={() => {
             setAttachOpen(false);
-            onPhoto('library');
+            void pickFrom('library');
           }}
         />
         <ListItem
@@ -121,10 +141,12 @@ export function Composer({ onSend, onPhoto, onFile, uploading, accent, inputBack
           icon="file-text"
           onPress={() => {
             setAttachOpen(false);
-            onFile();
+            void pickFrom('file');
           }}
         />
       </BottomSheet>
+
+      <AttachmentPreview attachment={pending} onCancel={() => setPending(null)} onSend={confirmAttachment} />
     </View>
   );
 }

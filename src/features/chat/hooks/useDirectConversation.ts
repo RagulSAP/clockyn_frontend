@@ -22,7 +22,7 @@ import {
   newClientId,
 } from '../utils/messageLog';
 import { peerKey } from './keys';
-import { usePickAttachment, type PickedAttachment } from './usePickAttachment';
+import type { PickedAttachment } from './usePickAttachment';
 import { useOrgAdminContact, useStaffDirectory } from './useStaffDirectory';
 
 export interface PeerInfo {
@@ -105,8 +105,8 @@ export interface DirectConversationState {
   /** True while an attachment is uploading (camera / attach buttons are disabled meanwhile). */
   uploading: boolean;
   sendText: (text: string) => Promise<void>;
-  sendPhoto: (source: 'camera' | 'library') => Promise<void>;
-  sendFile: () => Promise<void>;
+  /** Sends a photo / file the person already picked and confirmed in the preview. */
+  sendAttachment: (attachment: PickedAttachment) => Promise<void>;
   retry: (clientId: string) => Promise<void>;
   discard: (clientId: string) => void;
 }
@@ -121,7 +121,6 @@ export function useDirectConversation(peerId: string): DirectConversationState {
   const session = useSession();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { pickPhoto, pickFile } = usePickAttachment();
   const listKey = useMemo(() => queryKeys.chat.list(userId, orgId), [userId, orgId]);
   const senderName = session?.name?.trim() || undefined;
 
@@ -291,19 +290,6 @@ export function useDirectConversation(peerId: string): DirectConversationState {
     [userId, peerId, deliver, updateListPreview],
   );
 
-  const sendPhoto = useCallback(
-    async (source: 'camera' | 'library') => {
-      const asset = await pickPhoto(source);
-      if (asset) await sendAttachment(asset);
-    },
-    [pickPhoto, sendAttachment],
-  );
-
-  const sendFile = useCallback(async () => {
-    const asset = await pickFile();
-    if (asset) await sendAttachment(asset);
-  }, [pickFile, sendAttachment]);
-
   const retry = useCallback(
     async (clientId: string) => {
       const item = itemsRef.current.find((i) => i.clientId === clientId && i.state === 'failed');
@@ -318,5 +304,5 @@ export function useDirectConversation(peerId: string): DirectConversationState {
 
   const uploading = useMemo(() => items.some((i) => i.state === 'sending' && i.retry?.kind === 'file'), [items]);
 
-  return { items, isLoading: history.isLoading, error: history.error, refetch, uploading, sendText, sendPhoto, sendFile, retry, discard };
+  return { items, isLoading: history.isLoading, error: history.error, refetch, uploading, sendText, sendAttachment, retry, discard };
 }

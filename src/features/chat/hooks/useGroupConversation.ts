@@ -21,7 +21,7 @@ import {
   messageLogReducer,
   newClientId,
 } from '../utils/messageLog';
-import { usePickAttachment, type PickedAttachment } from './usePickAttachment';
+import type { PickedAttachment } from './usePickAttachment';
 import { useGroupListQuery } from './useGroupChatList';
 
 const READ_REFETCH_DELAY_MS = 800;
@@ -39,8 +39,8 @@ export interface GroupConversationState {
   refetch: () => Promise<unknown>;
   uploading: boolean;
   sendText: (text: string) => Promise<void>;
-  sendPhoto: (source: 'camera' | 'library') => Promise<void>;
-  sendFile: () => Promise<void>;
+  /** Sends a photo / file the person already picked and confirmed in the preview. */
+  sendAttachment: (attachment: PickedAttachment) => Promise<void>;
   retry: (clientId: string) => Promise<void>;
   discard: (clientId: string) => void;
   /** Adds staff to the group, refreshes the members and the member count; resolves false on failure (toasted). */
@@ -57,7 +57,6 @@ export function useGroupConversation(groupId: string): GroupConversationState {
   const orgId = useOrgId();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { pickPhoto, pickFile } = usePickAttachment();
   const listKey = useMemo(() => queryKeys.groupChat.list(userId, orgId), [userId, orgId]);
   const messagesKey = useMemo(() => queryKeys.groupChat.messages(userId, groupId), [userId, groupId]);
   const membersKey = useMemo(() => queryKeys.groupChat.members(userId, groupId), [userId, groupId]);
@@ -219,19 +218,6 @@ export function useGroupConversation(groupId: string): GroupConversationState {
     [userId, groupId, deliver, previewSent],
   );
 
-  const sendPhoto = useCallback(
-    async (source: 'camera' | 'library') => {
-      const asset = await pickPhoto(source);
-      if (asset) await sendAttachment(asset);
-    },
-    [pickPhoto, sendAttachment],
-  );
-
-  const sendFile = useCallback(async () => {
-    const asset = await pickFile();
-    if (asset) await sendAttachment(asset);
-  }, [pickFile, sendAttachment]);
-
   const retry = useCallback(
     async (clientId: string) => {
       const item = itemsRef.current.find((i) => i.clientId === clientId && i.state === 'failed');
@@ -276,8 +262,7 @@ export function useGroupConversation(groupId: string): GroupConversationState {
     refetch,
     uploading,
     sendText,
-    sendPhoto,
-    sendFile,
+    sendAttachment,
     retry,
     discard,
     addMembers,

@@ -104,6 +104,13 @@ test.describe('direct chat', () => {
     const chooser = page.waitForEvent('filechooser');
     await page.getByText('Photo library', { exact: true }).click();
     (await chooser).setFiles({ name: 'site-photo.png', mimeType: 'image/png', buffer: PNG });
+    // the pick opens a preview with Cancel / Send; nothing is uploaded before Send
+    await expect(page.getByTestId('attachment-preview')).toBeVisible();
+    await expect(page.getByTestId('attachment-preview-name')).toHaveText('site-photo.png');
+    await expect(page.getByRole('img', { name: 'Photo to send' })).toBeVisible();
+    expect(await mock.requests({ path: '/chat/send-file', method: 'POST' })).toHaveLength(0);
+    await page.getByTestId('attachment-preview-send').click();
+    await expect(page.getByTestId('attachment-preview')).toBeHidden();
     const imgCall = await mock.waitForRequest('/chat/send-file', { method: 'POST' });
     expect(imgCall.files?.[0]).toMatchObject({ field: 'file' });
     expect(imgCall.files?.[0].mimetype).toMatch(/^image\//);
@@ -113,6 +120,9 @@ test.describe('direct chat', () => {
     const chooser2 = page.waitForEvent('filechooser');
     await page.getByText('Document', { exact: true }).click();
     (await chooser2).setFiles({ name: 'report-q3.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 test') });
+    await expect(page.getByTestId('attachment-preview-file')).toBeVisible();
+    await expect(page.getByText('PDF document')).toBeVisible();
+    await page.getByTestId('attachment-preview-send').click();
     await expect(bubbles(page).getByText('report-q3.pdf')).toBeVisible();
     await expect(bubbles(page).getByText(/PDF · Tap to open/)).toBeVisible();
     expect((await mock.requests({ path: '/chat/send-file', method: 'POST' }))[1].files?.[0].filename).toBe('report-q3.pdf');
@@ -122,7 +132,31 @@ test.describe('direct chat', () => {
     const chooser3 = page.waitForEvent('filechooser');
     await page.getByText('Document', { exact: true }).click();
     (await chooser3).setFiles({ name: 'broken.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer: Buffer.from('x') });
+    await page.getByTestId('attachment-preview-send').click();
     await expect(page.getByText('Failed to send').first()).toBeVisible();
+  });
+
+  test('attachment preview: Cancel (button or Escape) discards the pick and uploads nothing', async ({ page, mock }) => {
+    await visit(page, '/admin/chat/direct');
+    await openConversation(page, STAFF.userId);
+
+    await page.getByRole('button', { name: 'Attach a file' }).click();
+    const chooser = page.waitForEvent('filechooser');
+    await page.getByText('Photo library', { exact: true }).click();
+    (await chooser).setFiles({ name: 'site-photo.png', mimeType: 'image/png', buffer: PNG });
+    await expect(page.getByTestId('attachment-preview')).toBeVisible();
+    await page.getByTestId('attachment-preview-cancel').click();
+    await expect(page.getByTestId('attachment-preview')).toBeHidden();
+
+    await page.getByRole('button', { name: 'Attach a file' }).click();
+    const chooser2 = page.waitForEvent('filechooser');
+    await page.getByText('Document', { exact: true }).click();
+    (await chooser2).setFiles({ name: 'notes.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 test') });
+    await expect(page.getByTestId('attachment-preview')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('attachment-preview')).toBeHidden();
+
+    expect(await mock.requests({ path: '/chat/send-file', method: 'POST' })).toHaveLength(0);
   });
 
   test('image tap opens the full-screen viewer (first tap reveals incoming photos); Escape closes it', async ({ page }) => {
@@ -132,6 +166,7 @@ test.describe('direct chat', () => {
     const chooser = page.waitForEvent('filechooser');
     await page.getByText('Photo library', { exact: true }).click();
     (await chooser).setFiles({ name: 'p.png', mimeType: 'image/png', buffer: PNG });
+    await page.getByTestId('attachment-preview-send').click();
     await expect(page.getByLabel('Open photo').last()).toBeVisible();
     await page.getByLabel('Open photo').last().click();
     await expect(page.getByRole('button', { name: /zoom in/i }).first()).toBeVisible();

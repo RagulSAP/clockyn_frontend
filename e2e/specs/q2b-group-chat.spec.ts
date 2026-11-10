@@ -314,6 +314,7 @@ test.describe('group conversation', () => {
     const c1 = page.waitForEvent('filechooser');
     await page.getByText('Photo library', { exact: true }).click();
     (await c1).setFiles({ name: 'site-photo.png', mimeType: 'image/png', buffer: PNG });
+    await page.getByTestId('attachment-preview-send').click(); // the preview asks first: Cancel or Send
     const img = await mock.waitForRequest('/group-chat/send-file', { method: 'POST' });
     expect(img.files?.[0]).toMatchObject({ field: 'file' });
     expect(img.files?.[0].mimetype).toMatch(/^image\//);
@@ -324,6 +325,7 @@ test.describe('group conversation', () => {
     const c2 = page.waitForEvent('filechooser');
     await page.getByText('Document', { exact: true }).click();
     (await c2).setFiles({ name: 'roster.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 test') });
+    await page.getByTestId('attachment-preview-send').click(); // the preview asks first: Cancel or Send
     await expect(list(page).getByText('roster.pdf')).toBeVisible();
     const doc = await mock.waitForRequest('/group-chat/send-file', { method: 'POST', predicate: (r) => r.files?.[0]?.filename === 'roster.pdf' });
     expect(doc.files?.[0].mimetype).toBe('application/pdf');
@@ -333,6 +335,7 @@ test.describe('group conversation', () => {
     const c3 = page.waitForEvent('filechooser');
     await page.getByText('Document', { exact: true }).click();
     (await c3).setFiles({ name: 'broken.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer: Buffer.from('x') });
+    await page.getByTestId('attachment-preview-send').click(); // the preview asks first: Cancel or Send
     await expect(page.getByText('Failed to send').first()).toBeVisible();
     await expect(page.getByRole('button', { name: 'Retry sending' })).toBeVisible();
   });

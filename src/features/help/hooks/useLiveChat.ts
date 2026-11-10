@@ -5,7 +5,7 @@ import { useFocusEffect } from 'expo-router';
 import { liveChatApi } from '@/api';
 import { useToast } from '@/components/ui';
 import type { ChatItem } from '@/features/chat/types';
-import { usePickAttachment, type PickedAttachment } from '@/features/chat/hooks/usePickAttachment';
+import type { PickedAttachment } from '@/features/chat/hooks/usePickAttachment';
 import { createOptimisticItem, messageLogReducer, newClientId } from '@/features/chat/utils/messageLog';
 import { getErrorMessage } from '@/lib/api/errors';
 import { liveChatSession } from '@/lib/realtime/liveChatSession';
@@ -28,8 +28,8 @@ export interface LiveChatState {
   /** True while an attachment is uploading. */
   uploading: boolean;
   sendText: (text: string) => Promise<void>;
-  sendPhoto: (source: 'camera' | 'library') => Promise<void>;
-  sendFile: () => Promise<void>;
+  /** Sends a photo / file the person already picked and confirmed in the preview. */
+  sendAttachment: (attachment: PickedAttachment) => Promise<void>;
   retry: (clientId: string) => Promise<void>;
   discard: (clientId: string) => void;
 }
@@ -44,7 +44,6 @@ export function useLiveChat(): LiveChatState {
   const orgId = useOrgId();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { pickPhoto, pickFile } = usePickAttachment();
   const enabled = userId !== '' && orgId !== '';
 
   const [items, dispatch] = useReducer(messageLogReducer, [] as ChatItem[]);
@@ -168,19 +167,6 @@ export function useLiveChat(): LiveChatState {
     [enabled, userId, deliver],
   );
 
-  const sendPhoto = useCallback(
-    async (source: 'camera' | 'library') => {
-      const asset = await pickPhoto(source);
-      if (asset) await sendAttachment(asset);
-    },
-    [pickPhoto, sendAttachment],
-  );
-
-  const sendFile = useCallback(async () => {
-    const asset = await pickFile();
-    if (asset) await sendAttachment(asset);
-  }, [pickFile, sendAttachment]);
-
   const retry = useCallback(
     async (clientId: string) => {
       const item = itemsRef.current.find((i) => i.clientId === clientId && i.state === 'failed');
@@ -197,5 +183,5 @@ export function useLiveChat(): LiveChatState {
   const reopened = reopenedAt !== null && history.dataUpdatedAt <= reopenedAt;
   const status: LiveChatStatus | null = reopened ? 'open' : (history.data?.status ?? null);
 
-  return { items, isLoading: history.isLoading, error: history.error, refetch, status, uploading, sendText, sendPhoto, sendFile, retry, discard };
+  return { items, isLoading: history.isLoading, error: history.error, refetch, status, uploading, sendText, sendAttachment, retry, discard };
 }

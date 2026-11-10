@@ -99,8 +99,7 @@ export function DirectConversationPane({ peerId, variant, onBack, onLeave }: { p
       />
       <Composer
         onSend={(t) => void convo.sendText(t)}
-        onPhoto={(s) => void convo.sendPhoto(s)}
-        onFile={() => void convo.sendFile()}
+        onAttach={(a) => void convo.sendAttachment(a)}
         uploading={convo.uploading}
         autoFocus={full}
       />
