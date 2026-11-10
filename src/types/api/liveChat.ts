@@ -55,4 +55,6 @@ export interface SendLiveChatFileInput {
 export type LiveChatSocketEvent =
   | { type: 'live_chat_message'; orgId: string; message: LiveChatMessage }
   | { type: 'live_chat_read'; orgId: string; reader: LiveChatSenderType }
+  /** A message was deleted from the admin console; `lastMessage*` describe the thread's new last message ('' when none). */
+  | { type: 'live_chat_message_deleted'; orgId: string; messageId: string; lastMessage: string; lastMessageAt: string }
   | { type: 'unknown' };

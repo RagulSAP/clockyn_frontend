@@ -1,7 +1,7 @@
 /**
  * Live Chat API: the org admin's conversation with Clockyn support (`/live-chat/*`, admin only).
  * One thread per organisation; the server derives the sender's name itself. Realtime frames
- * (`live_chat_message`, `live_chat_read`) arrive on the per-user chat socket.
+ * (`live_chat_message`, `live_chat_read`, `live_chat_message_deleted`) arrive on the per-user chat socket.
  */
 import { api } from '@/lib/api/client';
 import type {
@@ -63,6 +63,9 @@ export function parseLiveChatSocketEvent(frame: unknown): LiveChatSocketEvent {
   const data = rec(value.data);
   if (type === 'live_chat_message') return { type, orgId: str(data.org_id), message: mapLiveChatMessage(data) };
   if (type === 'live_chat_read') return { type, orgId: str(data.org_id), reader: senderType(data.reader) };
+  if (type === 'live_chat_message_deleted') {
+    return { type, orgId: str(data.org_id), messageId: str(data.message_id), lastMessage: str(data.last_message), lastMessageAt: str(data.last_message_at) };
+  }
   return { type: 'unknown' };
 }
 

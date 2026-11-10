@@ -144,6 +144,8 @@ export type LogAction =
   | { type: 'incoming'; item: ChatItem }
   /** Direct chat: the peer read my messages. */
   | { type: 'own_read' }
+  /** A message was deleted on the server (e.g. from the admin console): it disappears; unknown ids change nothing. */
+  | { type: 'remove'; messageId: string }
   | { type: 'delivered'; messageId: string }
   /** Group chat: read receipt counts. `fallbackTotal` is used when neither the payload nor the message knows it. */
   | { type: 'group_read'; messageId?: string; readCount?: number; totalMembers?: number; fallbackTotal: number };
@@ -236,6 +238,11 @@ export function messageLogReducer(items: ChatItem[], action: LogAction): ChatIte
         }
       }
       return normalizeItems([...items, incoming]);
+    }
+
+    case 'remove': {
+      if (!action.messageId || !items.some((i) => i.id === action.messageId)) return items;
+      return items.filter((i) => i.id !== action.messageId);
     }
 
     case 'own_read':

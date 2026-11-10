@@ -146,7 +146,7 @@ export function Composer({ onSend, onAttach, uploading, accent, inputBackground,
         />
       </BottomSheet>
 
-      <AttachmentPreview attachment={pending} onCancel={() => setPending(null)} onSend={confirmAttachment} />
+      <AttachmentPreview attachment={pending} onCancel={() => setPending(null)} onSend={confirmAttachment} onChange={setPending} />
     </View>
   );
 }

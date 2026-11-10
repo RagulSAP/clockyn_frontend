@@ -3,6 +3,7 @@
  * One shared de-duper + the store's own message-id memory guarantee a chat message counts exactly once, no
  * matter whether the global socket, a chat screen's socket or a push delivers it.
  */
+import { parseLiveChatSocketEvent } from '@/api/liveChat';
 import { queryClient } from '@/lib/query/queryClient';
 import { queryKeys } from '@/lib/query/queryKeys';
 import { getSession } from '@/store/auth';
@@ -19,6 +20,7 @@ import {
   type GlobalAction,
 } from './events';
 import { liveChatSession } from './liveChatSession';
+import { removeLiveChatMessageFromCache } from './liveChatCache';
 import { createDeduper } from './socketCore';
 
 export const globalMessageDeduper = createDeduper(1000);
@@ -61,6 +63,12 @@ export const badgeSink: BadgeSink = {
 export function handleSocketFrame(frame: unknown): boolean {
   const session = getSession();
   if (!session) return false;
+  // a message deleted from the admin console leaves the cached Live Chat history even while the screen is not mounted
+  const live = parseLiveChatSocketEvent(frame);
+  if (live.type === 'live_chat_message_deleted') {
+    if (!live.orgId || live.orgId === session.orgId) removeLiveChatMessageFromCache(queryClient, session.userId, session.orgId, live.messageId);
+    return true;
+  }
   const action = interpretSocketFrame(frame, session.userId);
   return action ? applyGlobalAction(action, badgeSink, globalMessageDeduper) : false;
 }

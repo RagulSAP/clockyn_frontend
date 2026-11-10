@@ -3,6 +3,7 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 
 import type { LiveChatHistory, LiveChatMessage } from '@/types/api/liveChat';
 import { liveChatSession } from '@/lib/realtime/liveChatSession';
+import { queryKeys } from '@/lib/query/queryKeys';
 import { badges, resetBadges } from '@/store/badges';
 
 import { renderScreen, signInTestAdmin } from '../../settings/__tests__/testHelpers';
@@ -232,6 +233,35 @@ describe('LiveChatScreen', () => {
     await screen.findByText('Hi, how can we help?');
     await act(async () => mockSockets.chat?.(messageFrame(live({ id: 'x1', text: 'Not for us' }), 'other-org')));
     expect(screen.queryByText('Not for us')).toBeNull();
+  });
+
+  describe('live_chat_message_deleted', () => {
+    const deletedFrame = (messageId: string, orgId = 'org-1') => ({
+      type: 'live_chat_message_deleted',
+      data: { org_id: orgId, message_id: messageId, last_message: 'Hi, how can we help?', last_message_at: iso(5) },
+    });
+
+    it('removes the deleted message from the open conversation and the cached history, and reloads the unread count', async () => {
+      mockGetMessages.mockResolvedValue(history([live({ id: 'm1', text: 'Hi, how can we help?' }), live({ id: 'm2', text: 'Oops wrong thread' })]));
+      const { client: queryClient } = await renderScreen(<LiveChatScreen />);
+      await screen.findByText('Oops wrong thread');
+      const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+      await act(async () => mockSockets.chat?.(deletedFrame('m2')));
+      await waitFor(() => expect(screen.queryByText('Oops wrong thread')).toBeNull());
+      expect(screen.getByText('Hi, how can we help?')).toBeTruthy();
+      const cached = queryClient.getQueryData<LiveChatHistory>(queryKeys.liveChat.messages('user-1', 'org-1'));
+      expect(cached?.messages.map((m) => m.id)).toEqual(['m1']);
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.liveChat.unread('user-1', 'org-1') });
+      invalidate.mockRestore();
+    });
+
+    it('does nothing for an unknown message id or another organisation', async () => {
+      await renderScreen(<LiveChatScreen />);
+      await screen.findByText('Hi, how can we help?');
+      await act(async () => mockSockets.chat?.(deletedFrame('nope')));
+      await act(async () => mockSockets.chat?.(deletedFrame('m1', 'other-org')));
+      expect(screen.getByText('Hi, how can we help?')).toBeTruthy();
+    });
   });
 
   it('turns my ticks to Read when support reads (live_chat_read)', async () => {

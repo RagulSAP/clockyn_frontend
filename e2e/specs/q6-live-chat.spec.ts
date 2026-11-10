@@ -21,6 +21,7 @@ const supportNav = (page: Page) => page.locator('[data-testid="tab-support"], [d
 const list = (page: Page) => page.getByTestId('message-list');
 
 const supportReply = (tenant: string, body: Record<string, unknown>) => mockApi(tenant, 'POST', '/__test/live-chat/support-reply', { org_id: ORG_ID, ...body });
+const supportDelete = (tenant: string, messageId: string) => mockApi(tenant, 'POST', '/__test/live-chat/support-delete', { org_id: ORG_ID, message_id: messageId });
 const supportRead = (tenant: string) => mockApi(tenant, 'POST', '/__test/live-chat/support-read', { org_id: ORG_ID });
 
 async function openLiveChat(page: Page): Promise<void> {
@@ -118,6 +119,23 @@ test.describe('Live Chat (admin)', () => {
     await page.goBack();
     await expect(supportNav(page)).toHaveAttribute('aria-label', 'Support');
     await expect(page.getByTestId('support-live-chat-badge')).toHaveCount(0);
+  });
+
+  test('a message deleted from the admin console disappears from the open conversation live and stays gone after a reload', async ({ page, mock }) => {
+    const keep = await supportReply(mock.tenant, { message: 'Your ticket is open.' });
+    const wrong = await supportReply(mock.tenant, { message: 'Sent to the wrong customer.' });
+    expect(keep.ok && wrong.ok).toBe(true);
+    await visit(page, '/admin/help/live-chat');
+    await expect(list(page).getByText('Sent to the wrong customer.')).toBeVisible();
+    await mock.waitForSocket(ADMIN);
+    const id = (wrong.message as { message_id: string }).message_id;
+    expect(await supportDelete(mock.tenant, 'lcm-does-not-exist')).toMatchObject({ ok: false }); // unknown id: no frame
+    expect(await supportDelete(mock.tenant, id)).toMatchObject({ ok: true });
+    await expect(list(page).getByText('Sent to the wrong customer.')).toHaveCount(0);
+    await expect(list(page).getByText('Your ticket is open.')).toBeVisible();
+    await page.reload();
+    await expect(list(page).getByText('Your ticket is open.')).toBeVisible();
+    await expect(list(page).getByText('Sent to the wrong customer.')).toHaveCount(0);
   });
 
   test('an unread reply from before the app was opened is on the Support badge right after sign-in', async ({ page, mock }) => {

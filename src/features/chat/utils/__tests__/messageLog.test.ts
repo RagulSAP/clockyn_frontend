@@ -180,6 +180,16 @@ describe('conversation guards and read receipts', () => {
     expect(out.find((i) => i.id === 'c1')?.isRead).toBe(false);
   });
 
+  it('remove drops the message with that id and ignores unknown ids', () => {
+    const a = chatItemFromDirect(direct({ id: 'a' }), ME);
+    const b = chatItemFromDirect(direct({ id: 'b', sentAt: '2026-10-18T05:01:00Z' }), ME);
+    const out = run([a, b], { type: 'remove', messageId: 'a' });
+    expect(out.map((i) => i.id)).toEqual(['b']);
+    const same = [a, b];
+    expect(messageLogReducer(same, { type: 'remove', messageId: 'zzz' })).toBe(same);
+    expect(messageLogReducer(same, { type: 'remove', messageId: '' })).toBe(same);
+  });
+
   it('delivered flags exactly one message', () => {
     const a = { ...chatItemFromDirect(direct({ id: 'a', senderId: ME }), ME), isDelivered: false };
     const b = { ...chatItemFromDirect(direct({ id: 'b', senderId: ME }), ME), isDelivered: false };

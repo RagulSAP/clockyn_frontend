@@ -11,6 +11,11 @@ export interface PickedAttachment {
   mimeType: string;
   /** The message type the attachment will be shown as (images are recognised by their extension too). */
   type: 'image' | 'file';
+  /** Pixel size of a photo when the picker reported it (the crop tool also learns it from the loaded image). */
+  width?: number;
+  height?: number;
+  /** Set on a cropped photo: the photo as picked, so the crop can be reset. */
+  original?: PickedAttachment;
 }
 
 /** Camera / library photo and document pickers with user-visible failures (v1 swallowed a refused permission). */
@@ -25,7 +30,7 @@ export function usePickAttachment(): {
       try {
         const img = await pickImage({ source, quality: 0.8 });
         if (!img) return null;
-        return { uri: img.uri, fileName: img.fileName || `photo_${Date.now()}.jpg`, mimeType: img.mimeType || 'image/jpeg', type: 'image' };
+        return { uri: img.uri, fileName: img.fileName || `photo_${Date.now()}.jpg`, mimeType: img.mimeType || 'image/jpeg', type: 'image', width: img.width, height: img.height };
       } catch (e) {
         toast.error(e instanceof MediaPermissionError ? e.message : getErrorMessage(e, 'Could not open the camera'));
         return null;

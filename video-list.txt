@@ -36,7 +36,7 @@ SUGGESTED ORDER (the story of a new company: set up > staff start using it > dai
   Week 3 (CRM, chat):     V25 V26
   Week 4 (plans, help):   V27 V28
   Last:                   V29 (full end-to-end walkthrough, built from the approved videos above)
-  Done so far:            V01 to V28 (V29, the full walkthrough, is still TODO)
+  Done so far:            V01 to V29 (all DONE)
 
 
 =============================================================================================
@@ -276,7 +276,10 @@ V29  Clockyn end-to-end walkthrough (admin setup > employee daily use > manager 
            departments > add staff and manager > shifts, offs, holidays > attendance rules > employee sets up face and
            punches in/out > attendance review and corrections > leave > salary and payslips > reports > CRM and chat >
            plan and support. Re-uses the already-approved scenes; chapter title cards between sections; no step numbers.
-     CAN RECORD: yes (recorded in several parts and joined into one MP4)     STATUS: TODO
+     CAN RECORD: yes (recorded in several parts and joined into one MP4)     STATUS: DONE (V29-full-walkthrough.mp4, 48.8 min, 245 MB)
+     FILES: all 28 topics re-recorded from the saved specs (C:\POC\clockyn_videos\source\examples), the opening question card of each kept as
+           a 'Part N' title card, one continuous music bed, MP4 chapter markers (one per topic; list in source\full\V29-chapters.txt).
+           Re-assemble with source\fullwalk\assemble.py after re-rendering any topic (source\fullwalk\record.ps1 / render-worker.ps1).
 
 
 =============================================================================================

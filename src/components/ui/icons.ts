@@ -39,6 +39,7 @@ import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import ChevronUp from 'lucide-react-native/icons/chevron-up';
 import ChevronsUpDown from 'lucide-react-native/icons/chevrons-up-down';
+import Crop from 'lucide-react-native/icons/crop';
 import Circle from 'lucide-react-native/icons/circle';
 import CircleAlert from 'lucide-react-native/icons/circle-alert';
 import CircleCheck from 'lucide-react-native/icons/circle-check';
@@ -302,6 +303,7 @@ export const iconMap = {
   link: Link,
   refresh: RefreshCw,
   'rotate-ccw': RotateCcw,
+  crop: Crop,
   pause: Pause,
   play: Play,
   power: Power,

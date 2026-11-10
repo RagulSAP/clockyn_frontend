@@ -158,6 +158,83 @@
     .lc-lightbox-x { position: absolute; top: 16px; right: 16px; width: 42px; height: 42px; border-radius: 50%; border: 0; cursor: pointer; background: rgba(255, 255, 255, 0.16); color: #fff; display: flex; align-items: center; justify-content: center; }
     .lc-lightbox-x:hover { background: rgba(255, 255, 255, 0.28); }
 
+    /* ── Per-message action (⋮ → Delete message) ── */
+    .lc-brow { display: flex; align-items: center; gap: 2px; max-width: 100%; }
+    .lc-msg.mine .lc-brow { flex-direction: row-reverse; }
+    .lc-brow > .lc-bubble { min-width: 0; }
+    .lc-msg-act {
+      width: 28px; height: 28px; border-radius: 50%; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center; opacity: 0;
+      transition: opacity var(--motion-fast) var(--ease), background-color var(--motion-fast) var(--ease);
+    }
+    .lc-msg-act .i { width: 17px; height: 17px; }
+    .lc-msg:hover .lc-msg-act, .lc-msg:focus-within .lc-msg-act, .lc-msg.menu-open .lc-msg-act { opacity: 1; }
+    .lc-msg-act:hover, .lc-msg.menu-open .lc-msg-act { background: var(--surface-muted); color: var(--text); }
+    .lc-msg-act:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 1px; }
+    @media (hover: none) { .lc-msg-act { opacity: 0.75; width: 34px; height: 34px; } }
+    .lc-msg.deleting .lc-bubble { opacity: 0.45; }
+    .lc-menu { position: fixed; z-index: 1250; min-width: 176px; padding: 6px; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg), inset 0 1px 0 var(--highlight); animation: ck-pop var(--motion-fast) var(--ease) both; }
+    .lc-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 11px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--danger); font: inherit; font-size: 13.5px; font-weight: 600; text-align: left; cursor: pointer; }
+    .lc-menu button:hover, .lc-menu button:focus-visible { background: var(--danger-soft); outline: none; }
+
+    /* ── Pre-send attachment preview (always dark, like the photo viewer; mirrors the mobile app) ── */
+    .lc-pv { position: fixed; inset: 0; z-index: 1300; display: flex; flex-direction: column; background: #000; color: #fff; animation: ck-fade var(--motion-base) var(--ease) both; }
+    .lc-pv-top { display: flex; align-items: center; gap: 10px; padding: 12px 16px 8px; }
+    .lc-pv-x { width: 42px; height: 42px; border-radius: 50%; border: 0; cursor: pointer; flex-shrink: 0; background: rgba(255, 255, 255, 0.16); color: #fff; display: flex; align-items: center; justify-content: center; }
+    .lc-pv-x:hover { background: rgba(255, 255, 255, 0.28); }
+    .lc-pv-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lc-pv-tools { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .lc-pv-tool { height: 40px; padding: 0 16px; border-radius: var(--radius-pill); border: 0; cursor: pointer; background: rgba(255, 255, 255, 0.16); color: #fff; font: inherit; font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; transition: background-color var(--motion-fast) var(--ease); }
+    .lc-pv-tool:hover:not(:disabled) { background: rgba(255, 255, 255, 0.28); }
+    .lc-pv-tool:disabled { opacity: 0.4; cursor: not-allowed; }
+    .lc-pv-x:focus-visible, .lc-pv-tool:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    .lc-pv-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 8px 24px; }
+    .lc-pv-frame { position: relative; flex: none; width: 100px; height: 100px; user-select: none; -webkit-user-select: none; }
+    .lc-pv-img { display: block; width: 100%; height: 100%; border-radius: 4px; pointer-events: none; -webkit-user-drag: none; background: #111; }
+    .lc-pv-info { min-height: 22px; padding: 2px 16px 10px; text-align: center; font-size: 12.5px; color: #b5b5b5; font-variant-numeric: tabular-nums; }
+    .lc-pv-card { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 340px; text-align: center; }
+    .lc-pv-card-ic { width: 112px; height: 112px; border-radius: var(--radius-xl); background: #1f1f1f; display: flex; align-items: center; justify-content: center; color: #fff; }
+    .lc-pv-card-ic .i { width: 52px; height: 52px; }
+    .lc-pv-card-name { font-size: 19px; font-weight: 700; letter-spacing: -0.2px; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .lc-pv-card-sub { font-size: 14px; color: #b5b5b5; }
+    .lc-pv-foot { background: var(--surface); color: var(--text); border-top: 1px solid var(--border); padding: 14px 20px; padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+    .lc-pv-actions, .lc-pv-cropbar { display: flex; gap: 12px; align-items: center; justify-content: center; max-width: 560px; margin: 0 auto; }
+    .lc-pv-actions .btn { flex: 1; }
+    .lc-pv-cropbar { flex-wrap: wrap; max-width: 760px; justify-content: space-between; }
+    .lc-pv-aspects { display: inline-flex; flex-shrink: 0; }
+    .lc-pv-aspects > button { padding: 6px 14px; font-size: 13px; }
+    .lc-pv-cropbtns { display: flex; gap: 8px; }
+    /* crop box: the 9999px shadow dims everything outside it (the stage clips it) */
+    .lc-crop { position: absolute; z-index: 2; border: 1.5px solid #fff; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.58); cursor: move; touch-action: none; outline: none; }
+    .lc-crop:focus-visible { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.58), 0 0 0 3px rgba(255, 255, 255, 0.55); }
+    .lc-crop::before { content: ""; position: absolute; inset: 0; pointer-events: none; background:
+      linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)) 33.333% 0 / 1px 100% no-repeat,
+      linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)) 66.666% 0 / 1px 100% no-repeat,
+      linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)) 0 33.333% / 100% 1px no-repeat,
+      linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)) 0 66.666% / 100% 1px no-repeat; }
+    .lc-crop-h { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; background: #fff; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4); touch-action: none; }
+    .lc-crop-h::after { content: ""; position: absolute; inset: -12px; }
+    .lc-crop-h[data-h="n"], .lc-crop-h[data-h="s"] { width: 30px; height: 6px; margin: -3px 0 0 -15px; }
+    .lc-crop-h[data-h="e"], .lc-crop-h[data-h="w"] { width: 6px; height: 30px; margin: -15px 0 0 -3px; }
+    .lc-crop-h[data-h="nw"] { left: 0; top: 0; cursor: nwse-resize; } .lc-crop-h[data-h="n"] { left: 50%; top: 0; cursor: ns-resize; }
+    .lc-crop-h[data-h="ne"] { left: 100%; top: 0; cursor: nesw-resize; } .lc-crop-h[data-h="e"] { left: 100%; top: 50%; cursor: ew-resize; }
+    .lc-crop-h[data-h="se"] { left: 100%; top: 100%; cursor: nwse-resize; } .lc-crop-h[data-h="s"] { left: 50%; top: 100%; cursor: ns-resize; }
+    .lc-crop-h[data-h="sw"] { left: 0; top: 100%; cursor: nesw-resize; } .lc-crop-h[data-h="w"] { left: 0; top: 50%; cursor: ew-resize; }
+    @media (hover: none) { .lc-crop-h { width: 18px; height: 18px; margin: -9px 0 0 -9px; } .lc-crop-h::after { inset: -14px; } }
+    @media (max-width: 600px) {
+      .lc-pv-top { padding: 10px 12px 6px; gap: 8px; }
+      .lc-pv-stage { padding: 8px 14px; }
+      .lc-pv-tool { padding: 0 12px; }
+      .lc-pv-tool .lc-pv-tool-t { display: none; }
+      .lc-pv-tool { width: 40px; padding: 0; justify-content: center; }
+      .lc-pv-foot { padding: 12px 14px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+      .lc-pv-cropbar { flex-direction: column; align-items: stretch; gap: 10px; }
+      .lc-pv-aspects { width: 100%; }
+      .lc-pv-aspects > button { flex: 1; padding: 6px 4px; }
+      .lc-pv-cropbtns > .btn { flex: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) { .lc-pv, .lc-menu { animation: none; } }
+
     #lc-notify-btn.granted { cursor: default; }
     #lc-mute-btn[aria-pressed="true"] { color: var(--danger); }
 
@@ -309,6 +386,52 @@
     <img id="lc-lightbox-img" alt="" />
   </div>
 
+  <!-- Pre-send attachment preview (nothing is uploaded until Send) -->
+  <div class="lc-pv" id="lc-pv" role="dialog" aria-modal="true" aria-labelledby="lc-pv-name" hidden>
+    <div class="lc-pv-top">
+      <button type="button" class="lc-pv-x" id="lc-pv-x" aria-label="Close preview"><span data-ic="x" data-cls="i-lg"></span></button>
+      <div class="lc-pv-name" id="lc-pv-name"></div>
+      <div class="lc-pv-tools" id="lc-pv-tools">
+        <button type="button" class="lc-pv-tool" id="lc-pv-undo" aria-label="Reset to the original photo" title="Reset to the original photo" hidden><span data-ic="undo"></span><span class="lc-pv-tool-t">Reset</span></button>
+        <button type="button" class="lc-pv-tool" id="lc-pv-crop" aria-label="Crop" title="Crop"><span data-ic="crop"></span><span class="lc-pv-tool-t">Crop</span></button>
+      </div>
+    </div>
+    <div class="lc-pv-stage" id="lc-pv-stage">
+      <div class="lc-pv-frame" id="lc-pv-frame" hidden>
+        <img class="lc-pv-img" id="lc-pv-img" alt="Photo to send" draggable="false" />
+        <div class="lc-crop" id="lc-crop" role="group" tabindex="0" aria-label="Crop area. Arrow keys move it, Shift plus arrow keys resize it, Enter applies the crop, Escape cancels." hidden>
+          <span class="lc-crop-h" data-h="nw"></span><span class="lc-crop-h" data-h="n"></span><span class="lc-crop-h" data-h="ne"></span><span class="lc-crop-h" data-h="e"></span>
+          <span class="lc-crop-h" data-h="se"></span><span class="lc-crop-h" data-h="s"></span><span class="lc-crop-h" data-h="sw"></span><span class="lc-crop-h" data-h="w"></span>
+        </div>
+      </div>
+      <div class="lc-pv-card" id="lc-pv-card" hidden>
+        <div class="lc-pv-card-ic"><span data-ic="file"></span></div>
+        <div class="lc-pv-card-name" id="lc-pv-card-name"></div>
+        <div class="lc-pv-card-sub" id="lc-pv-card-sub"></div>
+      </div>
+    </div>
+    <div class="lc-pv-info" id="lc-pv-info" aria-live="polite"></div>
+    <div class="lc-pv-foot">
+      <div class="lc-pv-actions" id="lc-pv-actions">
+        <button type="button" class="btn btn-ghost" id="lc-pv-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="lc-pv-send" aria-label="Send attachment"><span data-ic="send"></span>Send</button>
+      </div>
+      <div class="lc-pv-cropbar" id="lc-pv-cropbar" hidden>
+        <div class="segmented lc-pv-aspects" role="radiogroup" aria-label="Crop shape" id="lc-pv-aspects">
+          <button type="button" role="radio" data-ar="free" class="active" aria-checked="true">Free</button>
+          <button type="button" role="radio" data-ar="1" aria-checked="false">1:1</button>
+          <button type="button" role="radio" data-ar="1.3333333" aria-checked="false">4:3</button>
+          <button type="button" role="radio" data-ar="1.7777778" aria-checked="false">16:9</button>
+        </div>
+        <div class="lc-pv-cropbtns">
+          <button type="button" class="btn btn-ghost" id="lc-crop-cancel" aria-label="Cancel crop">Cancel</button>
+          <button type="button" class="btn btn-ghost" id="lc-crop-reset" title="Select the whole photo again">Reset</button>
+          <button type="button" class="btn btn-primary" id="lc-crop-apply">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="../js/config.js"></script>
   <script src="../js/auth.js"></script>
   <script>
@@ -339,7 +462,13 @@
       alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
       inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
       search: '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>',
-      down: '<path d="m6 9 6 6 6-6"/>'
+      down: '<path d="m6 9 6 6 6-6"/>',
+      x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+      crop: '<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',
+      undo: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+      send: '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>',
+      more: '<circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>',
+      trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>'
     };
     function ic(name, cls) {
       return '<svg class="' + (cls || 'i') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + (ICON[name] || '') + '</svg>';
@@ -402,7 +531,7 @@
       threads: [], threadsLoading: true, threadsError: '',
       filter: 'all', q: '',
       org: '', thread: null, msgs: [], msgsLoading: false, msgsError: '',
-      atBottom: true, newBelow: 0, localSeq: 0, openToken: 0, readPending: false, renderQueued: false
+      atBottom: true, newBelow: 0, localSeq: 0, openToken: 0, readPending: false, renderQueued: false, deleting: {}
     };
     var seenIds = [];
 
@@ -590,9 +719,11 @@
       var failed = m._state === 'failed'
         ? '<div class="lc-failed-row"><span>Not sent</span><button type="button" class="lc-retry" data-local="' + escHtml(m.message_id) + '">Retry</button><button type="button" class="lc-discard" data-local="' + escHtml(m.message_id) + '">Discard</button></div>'
         : '';
-      return '<div class="lc-msg ' + (mine ? 'mine' : 'theirs') + (first ? '' : ' cont') + (m._state ? ' ' + m._state : '') + '" data-id="' + escHtml(m.message_id) + '">' +
+      /* only delivered (server) messages can be deleted; local sending / failed ones keep Retry / Discard */
+      var actions = m._local ? '' : '<button type="button" class="lc-msg-act" data-act="' + escHtml(m.message_id) + '" aria-haspopup="menu" aria-label="Message actions" title="Message actions">' + ic('more') + '</button>';
+      return '<div class="lc-msg ' + (mine ? 'mine' : 'theirs') + (first ? '' : ' cont') + (m._state ? ' ' + m._state : '') + (S.deleting[m.message_id] ? ' deleting' : '') + '" data-id="' + escHtml(m.message_id) + '">' +
         (label ? '<div class="lc-sender">' + escHtml(label) + '</div>' : '') +
-        '<div class="lc-bubble' + (media ? ' media' : '') + '">' + body + '</div>' +
+        '<div class="lc-brow"><div class="lc-bubble' + (media ? ' media' : '') + '">' + body + '</div>' + actions + '</div>' +
         (failed || '<div class="lc-meta"><span title="' + escHtml(fullTime(m.timestamp)) + '">' + meta + '</span>' + ticks + '</div>') +
         '</div>';
     }
@@ -633,9 +764,10 @@
         html += msgHtml(m, prev);
         prev = m;
       });
-      var wasBottom = S.atBottom;
+      var wasBottom = S.atBottom, st = box.scrollTop;
+      closeMsgMenu(true);
       box.innerHTML = html;
-      if (wasBottom) box.scrollTop = box.scrollHeight;
+      if (wasBottom) box.scrollTop = box.scrollHeight; else box.scrollTop = st;
     }
 
     function renderConversation() {
@@ -807,7 +939,14 @@
       deliver(local);
     }
 
+    /* Every entry point (attach button, paste, drop) calls attachFile(): it only opens the preview. The upload starts from sendAttachment() when the operator presses Send. */
     function attachFile(file) {
+      if (!file || !S.org || (S.thread && S.thread.status === 'closed')) return;
+      if (file.size > MAX_FILE) { toast('That file is larger than 10 MB.', false); return; }
+      openPreview(file);
+    }
+
+    function sendAttachment(file) {
       if (!file || !S.org || (S.thread && S.thread.status === 'closed')) return;
       if (file.size > MAX_FILE) { toast('That file is larger than 10 MB.', false); return; }
       var isImg = /^image\//i.test(file.type || '');
@@ -827,12 +966,13 @@
 
     /* ── status (close / reopen) ── */
     var confirmResolve = null;
-    function confirmDialog(title, text, okLabel) {
+    function confirmDialog(title, text, okLabel, danger) {
       return new Promise(function (resolve) {
         confirmResolve = resolve;
         $('lc-confirm-title').textContent = title;
         $('lc-confirm-desc').textContent = text;
         $('lc-confirm-ok').textContent = okLabel;
+        $('lc-confirm-ok').className = 'btn ' + (danger ? 'btn-danger' : 'btn-primary');
         $('lc-confirm').classList.add('open');
         $('lc-confirm-cancel').focus();
       });
@@ -864,6 +1004,107 @@
       if (t) t.status = status;
       if (org === S.org) { if (S.thread) S.thread.status = status; renderHead(); }
       renderList();
+    }
+
+    /* ── delete a message (⋮ → Delete message) ── */
+    var menuEl = null, menuBtn = null;
+    function closeMsgMenu(noFocus) {
+      if (!menuEl) return;
+      if (menuEl.parentNode) menuEl.parentNode.removeChild(menuEl);
+      var btn = menuBtn;
+      menuEl = null; menuBtn = null;
+      var row = btn && btn.closest ? btn.closest('.lc-msg') : null;
+      if (row) row.classList.remove('menu-open');
+      if (!noFocus && btn && document.contains(btn)) btn.focus();
+    }
+    function openMsgMenu(btn) {
+      var again = menuBtn === btn;
+      closeMsgMenu(true);
+      if (again) return;
+      var el = document.createElement('div');
+      el.className = 'lc-menu'; el.setAttribute('role', 'menu'); el.setAttribute('aria-label', 'Message actions');
+      el.innerHTML = '<button type="button" role="menuitem" data-del="' + escHtml(btn.getAttribute('data-act')) + '">' + ic('trash') + '<span>Delete message</span></button>';
+      document.body.appendChild(el);
+      var row = btn.closest('.lc-msg');
+      menuEl = el; menuBtn = btn;
+      placeMsgMenu();
+      if (!menuEl) return;
+      if (row) row.classList.add('menu-open');
+      el.querySelector('button').focus();
+    }
+    /* keeps the menu next to its button (the list may scroll or the window resize while it is open); closes it if the button scrolled out of view */
+    function placeMsgMenu() {
+      if (!menuEl || !menuBtn) return;
+      var box = $('lc-msgs').getBoundingClientRect(), r = menuBtn.getBoundingClientRect();
+      if (r.bottom < box.top || r.top > box.bottom) { closeMsgMenu(true); return; }
+      var row = menuBtn.closest('.lc-msg'), w = menuEl.offsetWidth, h = menuEl.offsetHeight;
+      var left = row && row.classList.contains('mine') ? r.right - w : r.left;
+      var top = r.bottom + 4;
+      if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 4);
+      menuEl.style.left = clamp(left, 8, Math.max(8, window.innerWidth - w - 8)) + 'px';
+      menuEl.style.top = top + 'px';
+    }
+
+    function msgById(id) {
+      for (var i = 0; i < S.msgs.length; i++) if (S.msgs[i].message_id === id) return S.msgs[i];
+      return null;
+    }
+
+    function deleteMessage(id) {
+      var org = S.org, m = msgById(id);
+      if (!org || !m || m._local || S.deleting[id]) return;
+      var refocus = function () {
+        var b = document.querySelector('#lc-msgs .lc-msg-act[data-act="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+        if (b) b.focus();
+      };
+      confirmDialog('Delete this message?', "It will be removed for everyone, including the customer's app. This can't be undone.", 'Delete', true).then(function (yes) {
+        if (!yes) { refocus(); return; }
+        S.deleting[id] = true;
+        scheduleRender();
+        return api('DELETE', '/threads/' + enc(org) + '/messages/' + enc(id)).then(function (res) {
+          delete S.deleting[id];
+          var wasOpen = org === S.org;
+          applyDeleted(org, id, res || {});
+          toast('Message deleted');
+          if (wasOpen && org === S.org && !$('lc-composer').hidden) $('lc-input').focus({ preventScroll: true });
+        }).catch(function (e) {
+          delete S.deleting[id];
+          scheduleRender();
+          toast((e && e.message) || 'Could not delete the message', false);
+          if (e && e.status === 404) syncActive();       /* it is already gone: show the truth */
+        });
+      });
+    }
+
+    /* the message is gone (this console deleted it, or another operator did and the socket told us) */
+    function applyDeleted(org, id, d) {
+      if (org === S.org) {
+        var i = -1;
+        for (var k = 0; k < S.msgs.length; k++) if (S.msgs[k].message_id === id) { i = k; break; }
+        if (i >= 0) S.msgs.splice(i, 1);
+        scheduleRender();
+      }
+      var t = threadOf(org);
+      if (d && typeof d.last_message !== 'undefined') {
+        if (d.last_message == null && d.last_message_at == null) {
+          /* that was the last message: the server hides an empty thread, so drop it from the list and leave its (now blank) view */
+          S.threads = S.threads.filter(function (x) { return x.org_id !== org; });
+          if (org === S.org) closeThread();
+        } else if (t) {
+          t.last_message = d.last_message == null ? null : d.last_message;
+          t.last_message_at = d.last_message_at || null;
+          t.last_message_type = null; t.last_sender_type = null;
+          if (org === S.org) {                            /* the open thread knows the type and sender of its new last message */
+            for (var j = S.msgs.length - 1; j >= 0; j--) {
+              if (!S.msgs[j]._local) { t.last_message_type = S.msgs[j].message_type; t.last_sender_type = S.msgs[j].sender_type; break; }
+            }
+          } else if (t.last_message != null) t.last_message_type = 'text';
+          sortThreads();
+        }
+      }
+      renderList();
+      loadThreads(true);                                /* exact preview type / unread count from the server */
+      if (window.ClockynLiveChat) window.ClockynLiveChat.refreshUnread();
     }
 
     /* ── realtime frames (the notifier owns the socket and re-broadcasts them) ── */
@@ -934,6 +1175,8 @@
         }
       } else if (f.type === 'live_chat_status') {
         if (d.org_id && d.status) applyStatus(d.org_id, d.status);
+      } else if (f.type === 'live_chat_message_deleted') {
+        if (d.org_id && d.message_id) applyDeleted(d.org_id, d.message_id, d);
       }
     }
 
@@ -991,6 +1234,407 @@
       $('lc-lightbox-img').removeAttribute('src');
     }
 
+    /* ── pre-send preview + crop ──
+     * attachFile(file) (attach button, paste, drop) opens this dialog; nothing is uploaded until Send.
+     * Images get a Crop tool: a dependency-free canvas crop (pointer events, so mouse / touch / pen all work). */
+    var P = null;                 /* the pending attachment: { file, original, org, url, isImage, failed, natW, natH, fw, fh, crop, opener, busy } */
+    var CROP_MAX = 4096;          /* longest side of a cropped picture, in pixels */
+    var CROP_MIN = 28;            /* smallest crop box, in screen pixels */
+    var pvObserver = null;
+    var pvDrag = null;
+
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(v, hi)); }
+    function fileExt(name) { var m = /\.([A-Za-z0-9]+)$/.exec(String(name || '')); return m ? m[1].toLowerCase() : ''; }
+    function fmtSize(n) {
+      n = Number(n) || 0;
+      if (n < 1024) return n + ' B';
+      if (n < 1048576) return Math.max(1, Math.round(n / 1024)) + ' KB';
+      return (n / 1048576).toFixed(1) + ' MB';
+    }
+    /* same labels as the mobile app's describeAttachment() */
+    function describeFile(name, mime) {
+      mime = String(mime || '').toLowerCase();
+      var ext = fileExt(name);
+      if (mime.indexOf('image/') === 0) return 'Photo';
+      if (mime === 'application/pdf' || ext === 'pdf') return 'PDF document';
+      if (mime.indexOf('word') >= 0 || ext === 'doc' || ext === 'docx') return 'Word document';
+      if (mime.indexOf('sheet') >= 0 || mime.indexOf('excel') >= 0 || ext === 'xls' || ext === 'xlsx' || ext === 'csv') return 'Spreadsheet';
+      if (mime.indexOf('presentation') >= 0 || mime.indexOf('powerpoint') >= 0 || ext === 'ppt' || ext === 'pptx') return 'Presentation';
+      if (mime.indexOf('text/') === 0 || ext === 'txt') return 'Text file';
+      if (mime.indexOf('video/') === 0) return 'Video';
+      if (mime.indexOf('audio/') === 0) return 'Audio';
+      return ext && ext.length <= 5 ? ext.toUpperCase() + ' file' : 'File';
+    }
+    /* what a crop of this picture is saved as; { error } = cannot be cropped (animated GIF, vector SVG) */
+    function cropTarget(file) {
+      var t = String(file.type || '').toLowerCase(), ext = fileExt(file.name);
+      if (t === 'image/gif' || (!t && ext === 'gif')) return { error: "Animated GIFs can't be cropped." };
+      if (t === 'image/svg+xml' || (!t && ext === 'svg')) return { error: "Vector images can't be cropped." };
+      if (t === 'image/jpeg' || t === 'image/jpg' || (!t && (ext === 'jpg' || ext === 'jpeg'))) return { type: 'image/jpeg' };
+      if (t === 'image/webp' || (!t && ext === 'webp')) return { type: 'image/webp' };
+      return { type: 'image/png' };
+    }
+    function cropName(name, mime) {
+      var exts = mime === 'image/jpeg' ? ['jpg', 'jpeg'] : mime === 'image/webp' ? ['webp'] : ['png'];
+      name = String(name || 'photo');
+      var cur = fileExt(name);
+      if (cur && exts.indexOf(cur) >= 0) return name;
+      return (cur ? name.slice(0, -(cur.length + 1)) : name) + '.' + exts[0];
+    }
+
+    function pvShow() {
+      var f = P.file;
+      $('lc-pv-name').textContent = f.name || 'Attachment';
+      if (P.url) { try { URL.revokeObjectURL(P.url); } catch (e) { /* ignore */ } P.url = ''; }
+      var asImage = P.isImage && !P.failed;
+      $('lc-pv-frame').hidden = !asImage;
+      $('lc-pv-card').hidden = asImage;
+      $('lc-pv-tools').hidden = !asImage;
+      $('lc-pv-undo').hidden = P.file === P.original;
+      var tgt = asImage ? cropTarget(f) : null;
+      var cropBtn = $('lc-pv-crop');
+      cropBtn.disabled = !!(tgt && tgt.error);
+      cropBtn.title = tgt && tgt.error ? tgt.error : 'Crop';
+      if (asImage) {
+        var img = $('lc-pv-img');
+        $('lc-pv-frame').style.visibility = 'hidden';
+        img.onload = pvOnLoad;
+        img.onerror = pvOnError;
+        P.url = URL.createObjectURL(f);
+        img.src = P.url;
+        $('lc-pv-info').textContent = fmtSize(f.size);
+      } else {
+        $('lc-pv-card-name').textContent = f.name || 'Attachment';
+        $('lc-pv-card-sub').textContent = describeFile(f.name, f.type) + ' · ' + fmtSize(f.size);
+        $('lc-pv-info').textContent = '';
+      }
+    }
+
+    function pvOnLoad() {
+      if (!P) return;
+      var img = $('lc-pv-img');
+      P.natW = img.naturalWidth; P.natH = img.naturalHeight;
+      $('lc-pv-frame').style.visibility = '';
+      pvLayout();
+      pvInfo();
+    }
+    function pvOnError() {
+      if (!P) return;
+      P.failed = true;               /* not a picture the browser can show: fall back to the file card */
+      pvShow();
+    }
+
+    function pvInfo() {
+      if (!P || !P.isImage || P.failed) return;
+      var txt = 'Photo';
+      if (P.crop) {
+        var r = cropPixels();
+        txt = 'Crop · ' + r.cw + ' × ' + r.ch + ' px';
+      } else {
+        if (P.natW) txt += ' · ' + P.natW + ' × ' + P.natH + ' px';
+        txt += ' · ' + fmtSize(P.file.size) + (P.file !== P.original ? ' · Cropped' : '');
+      }
+      $('lc-pv-info').textContent = txt;
+    }
+
+    /* fit the picture into the stage; the crop box is stored as fractions of the picture so it survives a resize */
+    function pvLayout() {
+      if (!P || !P.natW) return;
+      var st = $('lc-pv-stage'), cs = getComputedStyle(st);
+      var aw = st.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      var ah = st.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      if (aw <= 0 || ah <= 0) return;
+      var sc = Math.min(aw / P.natW, ah / P.natH, 3);
+      P.fw = Math.max(8, Math.round(P.natW * sc)); P.fh = Math.max(8, Math.round(P.natH * sc));
+      var fr = $('lc-pv-frame');
+      fr.style.width = P.fw + 'px'; fr.style.height = P.fh + 'px';
+      if (P.crop) cropRender();
+    }
+
+    function openPreview(file) {
+      var opener = P ? P.opener : document.activeElement;
+      if (P) closePreview(true);
+      P = { file: file, original: file, org: S.org, url: '', isImage: /^image\//i.test(file.type || ''), failed: false, natW: 0, natH: 0, fw: 0, fh: 0, crop: null, opener: opener, busy: false };
+      closeMsgMenu(true);
+      $('lc-pv').hidden = false;
+      $('lc-pv-actions').hidden = false; $('lc-pv-cropbar').hidden = true; $('lc-crop').hidden = true;
+      pvShow();
+      if (typeof ResizeObserver === 'function') { pvObserver = new ResizeObserver(pvLayout); pvObserver.observe($('lc-pv-stage')); }
+      $('lc-pv-send').focus();
+    }
+
+    function closePreview(silent) {
+      if (!P) return;
+      var opener = P.opener;
+      if (P.url) { try { URL.revokeObjectURL(P.url); } catch (e) { /* ignore */ } }
+      if (pvObserver) { pvObserver.disconnect(); pvObserver = null; }
+      pvDrag = null;
+      var img = $('lc-pv-img');
+      img.onload = null; img.onerror = null; img.removeAttribute('src');
+      $('lc-crop').hidden = true;
+      $('lc-pv').hidden = true;
+      P = null;
+      if (silent) return;
+      if (opener && document.contains(opener) && typeof opener.focus === 'function' && !opener.disabled) opener.focus();
+      else if (!$('lc-composer').hidden) $('lc-input').focus();
+    }
+    function cancelPreview() { if (P && !P.busy) closePreview(); }
+
+    function pvSend() {
+      if (!P || P.busy) return;
+      if (P.org !== S.org) { toast('The conversation changed. Attach the file again.', false); closePreview(); return; }
+      var f = P.file;
+      closePreview();
+      sendAttachment(f);
+    }
+
+    /* ── crop ── */
+    function cropRect() {                       /* screen px, relative to the picture */
+      var c = P.crop;
+      return { x: c.x * P.fw, y: c.y * P.fh, w: c.w * P.fw, h: c.h * P.fh };
+    }
+    function cropSet(r) {
+      var c = P.crop;
+      c.x = clamp(r.x / P.fw, 0, 1); c.y = clamp(r.y / P.fh, 0, 1);
+      c.w = clamp(r.w / P.fw, 0, 1 - c.x); c.h = clamp(r.h / P.fh, 0, 1 - c.y);
+    }
+    function cropRender() {
+      var r = cropRect(), el = $('lc-crop');
+      el.style.left = r.x + 'px'; el.style.top = r.y + 'px'; el.style.width = r.w + 'px'; el.style.height = r.h + 'px';
+      pvInfo();
+    }
+    /* the crop in source-picture pixels (an aspect-locked crop gets its height from the width so 1:1 is exactly square) */
+    function cropPixels() {
+      var c = P.crop, W = P.natW, H = P.natH;
+      var cw = clamp(Math.round(c.w * W), 1, W);
+      var ch = c.ar ? clamp(Math.round(cw / c.ar), 1, H) : clamp(Math.round(c.h * H), 1, H);
+      var sx = clamp(Math.round(c.x * W), 0, W - cw), sy = clamp(Math.round(c.y * H), 0, H - ch);
+      return { sx: sx, sy: sy, cw: cw, ch: ch };
+    }
+
+    /* pure geometry: the rectangle after dragging handle `h` ('move' | n s e w ne nw se sw) by dx, dy; ar = locked width/height or null */
+    function resizeRect(h, r0, dx, dy, ar, fw, fh) {
+      if (h === 'move') return { x: clamp(r0.x + dx, 0, fw - r0.w), y: clamp(r0.y + dy, 0, fh - r0.h), w: r0.w, h: r0.h };
+      var hasW = h.indexOf('w') >= 0, hasE = h.indexOf('e') >= 0, hasN = h.indexOf('n') >= 0, hasS = h.indexOf('s') >= 0;
+      var x1 = r0.x, y1 = r0.y, x2 = r0.x + r0.w, y2 = r0.y + r0.h, MIN = CROP_MIN;
+      if (!ar) {
+        if (hasW) x1 = clamp(r0.x + dx, 0, x2 - MIN);
+        if (hasE) x2 = clamp(x2 + dx, x1 + MIN, fw);
+        if (hasN) y1 = clamp(r0.y + dy, 0, y2 - MIN);
+        if (hasS) y2 = clamp(y2 + dy, y1 + MIN, fh);
+        return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+      }
+      var minW = Math.max(MIN, MIN * ar), w, hh;
+      if ((hasW || hasE) && (hasN || hasS)) {                         /* corner: the opposite corner stays put */
+        var sx = hasE ? 1 : -1, sy = hasS ? 1 : -1;
+        var ax = hasE ? x1 : x2, ay = hasS ? y1 : y2;
+        w = sx * ((hasE ? x2 : x1) + dx - ax);
+        hh = sy * ((hasS ? y2 : y1) + dy - ay);
+        w = Math.max(w, hh * ar);
+        var wmax = Math.min(sx > 0 ? fw - ax : ax, (sy > 0 ? fh - ay : ay) * ar);
+        w = Math.max(Math.min(w, wmax), Math.min(minW, wmax));
+        hh = w / ar;
+        return { x: sx > 0 ? ax : ax - w, y: sy > 0 ? ay : ay - hh, w: w, h: hh };
+      }
+      if (hasE || hasW) {                                             /* left / right edge: grows around the vertical centre */
+        var cy = r0.y + r0.h / 2;
+        w = hasE ? x2 + dx - x1 : x2 - (x1 + dx);
+        var wm = Math.min(hasE ? fw - x1 : x2, 2 * Math.min(cy, fh - cy) * ar);
+        w = clamp(w, Math.min(minW, wm), wm);
+        hh = w / ar;
+        return { x: hasE ? x1 : x2 - w, y: cy - hh / 2, w: w, h: hh };
+      }
+      var cx = r0.x + r0.w / 2;                                       /* top / bottom edge: grows around the horizontal centre */
+      hh = hasS ? y2 + dy - y1 : y2 - (y1 + dy);
+      var hm = Math.min(hasS ? fh - y1 : y2, 2 * Math.min(cx, fw - cx) / ar);
+      hh = clamp(hh, Math.min(minW / ar, hm), hm);
+      w = hh * ar;
+      return { x: cx - w / 2, y: hasS ? y1 : y2 - hh, w: w, h: hh };
+    }
+
+    function setAspectUi(key) {
+      var bs = $('lc-pv-aspects').querySelectorAll('button');
+      for (var i = 0; i < bs.length; i++) {
+        var on = bs[i].getAttribute('data-ar') === key;
+        bs[i].classList.toggle('active', on);
+        bs[i].setAttribute('aria-checked', on ? 'true' : 'false');
+      }
+    }
+    function cropSetAspect(key) {
+      if (!P || !P.crop) return;
+      setAspectUi(key);
+      var ar = key === 'free' ? null : parseFloat(key);
+      P.crop.ar = ar;
+      if (!ar) return;
+      var r = cropRect(), w = r.w, h = r.h;           /* the largest box of that shape inside the current one, same centre */
+      if (w / h > ar) w = h * ar; else h = w / ar;
+      cropSet({ x: r.x + (r.w - w) / 2, y: r.y + (r.h - h) / 2, w: w, h: h });
+      cropRender();
+    }
+    function cropReset() {
+      if (!P || !P.crop) return;
+      P.crop = { x: 0, y: 0, w: 1, h: 1, ar: null };
+      setAspectUi('free');
+      cropRender();
+    }
+
+    function enterCrop() {
+      if (!P || !P.isImage || P.failed || !P.natW || P.busy) return;
+      var tgt = cropTarget(P.file);
+      if (tgt.error) { toast(tgt.error, false); return; }
+      P.crop = { x: 0, y: 0, w: 1, h: 1, ar: null };
+      setAspectUi('free');
+      $('lc-pv-actions').hidden = true; $('lc-pv-cropbar').hidden = false;
+      $('lc-pv-tools').hidden = true;
+      $('lc-crop').hidden = false;
+      pvLayout(); cropRender();
+      $('lc-crop').focus({ preventScroll: true });
+    }
+    function exitCrop() {
+      if (!P || P.busy) return;
+      P.crop = null; pvDrag = null;
+      $('lc-crop').hidden = true;
+      $('lc-pv-cropbar').hidden = true; $('lc-pv-actions').hidden = false;
+      $('lc-pv-tools').hidden = false;
+      pvLayout(); pvInfo();
+      var b = $('lc-pv-crop');
+      if (!b.disabled) b.focus(); else $('lc-pv-send').focus();
+    }
+
+    function decodeImage(file) {
+      var viaImg = function () {
+        return new Promise(function (resolve, reject) {
+          var u = URL.createObjectURL(file), im = new Image();
+          im.onload = function () { resolve({ src: im, w: im.naturalWidth, h: im.naturalHeight, done: function () { URL.revokeObjectURL(u); } }); };
+          im.onerror = function () { URL.revokeObjectURL(u); reject(new Error('Could not read this image.')); };
+          im.src = u;
+        });
+      };
+      if (typeof createImageBitmap !== 'function') return viaImg();
+      return createImageBitmap(file, { imageOrientation: 'from-image' })        /* honours the EXIF rotation */
+        .catch(function () { return createImageBitmap(file); })
+        .then(function (b) { return { src: b, w: b.width, h: b.height, done: function () { try { b.close(); } catch (e) { /* ignore */ } } }; }, viaImg);
+    }
+
+    function applyCrop() {
+      if (!P || !P.crop || P.busy) return;
+      var cur = P, c = cur.crop;
+      if (c.w > 0.995 && c.h > 0.995) { exitCrop(); return; }                 /* the whole picture: nothing to do */
+      var tgt = cropTarget(cur.file);
+      cur.busy = true;
+      var apply = $('lc-crop-apply');
+      apply.disabled = true; apply.textContent = 'Applying...';
+      var finish = function () { cur.busy = false; apply.disabled = false; apply.textContent = 'Apply'; };
+      decodeImage(cur.file).then(function (bmp) {
+        var W = bmp.w, H = bmp.h;
+        var sw = clamp(Math.round(c.w * W), 1, W);
+        var sh = c.ar ? clamp(Math.round(sw / c.ar), 1, H) : clamp(Math.round(c.h * H), 1, H);
+        var sx = clamp(Math.round(c.x * W), 0, W - sw), sy = clamp(Math.round(c.y * H), 0, H - sh);
+        var k = Math.min(1, CROP_MAX / Math.max(sw, sh));                        /* huge pictures are capped */
+        var ow = Math.max(1, Math.round(sw * k)), oh = Math.max(1, Math.round(sh * k));
+        var cv = document.createElement('canvas');
+        cv.width = ow; cv.height = oh;
+        var ctx = cv.getContext('2d');
+        if (tgt.type === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, ow, oh); }
+        ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(bmp.src, sx, sy, sw, sh, 0, 0, ow, oh);
+        bmp.done();
+        return new Promise(function (resolve, reject) {
+          cv.toBlob(function (b) { if (b) resolve(b); else reject(new Error('Could not crop this image.')); }, tgt.type, tgt.type === 'image/png' ? undefined : 0.92);
+        });
+      }).then(function (blob) {
+        if (P !== cur) return;
+        if (blob.size > MAX_FILE) throw new Error('The cropped picture is larger than 10 MB. Try a smaller area.');
+        var type = blob.type || tgt.type;
+        cur.file = new File([blob], cropName(cur.original.name, type), { type: type, lastModified: Date.now() });
+        cur.crop = null; pvDrag = null;
+        $('lc-crop').hidden = true;
+        $('lc-pv-cropbar').hidden = true; $('lc-pv-actions').hidden = false;
+        pvShow();                                                                 /* shows the cropped result; crop again or Reset */
+        $('lc-pv-crop').focus();
+      }).catch(function (e) {
+        toast((e && e.message) || 'Could not crop this image.', false);
+      }).then(finish, finish);
+    }
+
+    function pvReset() {
+      if (!P || P.busy || P.file === P.original) return;
+      P.file = P.original; P.crop = null;
+      pvShow();
+      $('lc-pv-crop').focus();
+    }
+
+    /* pointer: drag the box to move it, drag a handle to resize (mouse, touch and pen); keyboard: arrows move, Shift+arrows resize */
+    function cropKey(e) {
+      if (!P || !P.crop || P.busy) return;
+      var k = e.key;
+      if (k === 'Enter') { e.preventDefault(); applyCrop(); return; }
+      var d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[k];
+      if (!d) return;
+      e.preventDefault();
+      var step = Math.max(2, Math.round(Math.min(P.fw, P.fh) * 0.02)) * (e.altKey ? 0.5 : 1);
+      var dx = d[0] * step, dy = d[1] * step;
+      if (e.shiftKey && P.crop.ar) { dx = dy = (d[0] + d[1]) * step; }          /* a locked shape grows / shrinks as a whole */
+      var r = resizeRect(e.shiftKey ? 'se' : 'move', cropRect(), dx, dy, P.crop.ar, P.fw, P.fh);
+      cropSet(r); cropRender();
+    }
+    var cropEl = $('lc-crop');
+    cropEl.addEventListener('keydown', cropKey);
+    cropEl.addEventListener('pointerdown', function (e) {
+      if (!P || !P.crop || P.busy || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      var h = (e.target && e.target.getAttribute && e.target.getAttribute('data-h')) || 'move';
+      pvDrag = { id: e.pointerId, h: h, x: e.clientX, y: e.clientY, r0: cropRect() };
+      try { cropEl.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      cropEl.focus({ preventScroll: true });
+      e.preventDefault();
+    });
+    cropEl.addEventListener('pointermove', function (e) {
+      if (!pvDrag || e.pointerId !== pvDrag.id || !P || !P.crop) return;
+      var r = resizeRect(pvDrag.h, pvDrag.r0, e.clientX - pvDrag.x, e.clientY - pvDrag.y, P.crop.ar, P.fw, P.fh);
+      cropSet(r); cropRender();
+    });
+    var endDrag = function (e) { if (pvDrag && e.pointerId === pvDrag.id) pvDrag = null; };
+    cropEl.addEventListener('pointerup', endDrag);
+    cropEl.addEventListener('pointercancel', endDrag);
+    cropEl.addEventListener('lostpointercapture', endDrag);
+
+    /* Tab stays inside the dialog; a click on the empty dark area (not after a drag) cancels */
+    function pvFocusables() {
+      return Array.prototype.filter.call($('lc-pv').querySelectorAll('button, [tabindex="0"]'), function (el) {
+        return !el.disabled && el.getClientRects().length > 0;
+      });
+    }
+    $('lc-pv').addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab') return;
+      var f = pvFocusables();
+      if (!f.length) { e.preventDefault(); return; }
+      var first = f[0], last = f[f.length - 1], a = document.activeElement;
+      if (e.shiftKey && (a === first || !$('lc-pv').contains(a))) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (a === last || !$('lc-pv').contains(a))) { e.preventDefault(); first.focus(); }
+    });
+    var stageDown = false;
+    $('lc-pv-stage').addEventListener('pointerdown', function (e) { stageDown = e.target === $('lc-pv-stage'); });
+    $('lc-pv-stage').addEventListener('click', function (e) { if (stageDown && e.target === $('lc-pv-stage') && P && !P.crop) cancelPreview(); stageDown = false; });
+    /* a file dropped on the dialog must not navigate the tab away */
+    $('lc-pv').addEventListener('dragover', function (e) { e.preventDefault(); });
+    $('lc-pv').addEventListener('drop', function (e) { e.preventDefault(); });
+    $('lc-pv-x').addEventListener('click', cancelPreview);
+    $('lc-pv-cancel').addEventListener('click', cancelPreview);
+    $('lc-pv-send').addEventListener('click', pvSend);
+    $('lc-pv-crop').addEventListener('click', enterCrop);
+    $('lc-pv-undo').addEventListener('click', pvReset);
+    $('lc-crop-apply').addEventListener('click', applyCrop);
+    $('lc-crop-cancel').addEventListener('click', exitCrop);
+    $('lc-crop-reset').addEventListener('click', cropReset);
+    $('lc-pv-aspects').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-ar]');
+      if (b) cropSetAspect(b.getAttribute('data-ar'));
+    });
+    (function fillIcons() {
+      var els = document.querySelectorAll('[data-ic]');
+      for (var i = els.length - 1; i >= 0; i--) els[i].outerHTML = ic(els[i].getAttribute('data-ic'), els[i].getAttribute('data-cls') || 'i');
+    })();
+
     /* ── composer ── */
     function growInput() {
       var ta = $('lc-input');
@@ -1029,6 +1673,8 @@
     });
     $('lc-reopen-bar').addEventListener('click', function () { changeStatus('open'); });
     $('lc-msgs').addEventListener('click', function (e) {
+      var act = e.target.closest('.lc-msg-act');
+      if (act) { openMsgMenu(act); return; }
       var img = e.target.closest('.lc-img');
       if (img) { openLightbox(img.getAttribute('data-full'), img.getAttribute('alt')); return; }
       if (e.target.closest('#lc-retry-msgs')) { openThread(S.org); return; }
@@ -1095,9 +1741,21 @@
     $('lc-lightbox').addEventListener('click', function (e) { if (e.target === $('lc-lightbox')) closeLightbox(); });
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
+      if (P) { if (P.crop) exitCrop(); else cancelPreview(); return; }
+      if (menuEl) { closeMsgMenu(); return; }
       if (!$('lc-lightbox').hidden) closeLightbox();
       else if ($('lc-confirm').classList.contains('open')) closeConfirm(false);
     });
+
+    document.addEventListener('click', function (e) {
+      if (!menuEl) return;
+      var it = e.target.closest ? e.target.closest('.lc-menu button[data-del]') : null;
+      if (it) { var id = it.getAttribute('data-del'); closeMsgMenu(true); deleteMessage(id); return; }
+      if (!e.target.closest('.lc-menu') && !e.target.closest('.lc-msg-act')) closeMsgMenu(true);
+    });
+    document.addEventListener('keydown', function (e) { if (menuEl && e.key === 'Tab') closeMsgMenu(true); });
+    window.addEventListener('resize', placeMsgMenu);
+    $('lc-msgs').addEventListener('scroll', placeMsgMenu, { passive: true });
 
     $('lc-refresh').addEventListener('click', function () { loadThreads(); syncActive(); });
     $('lc-mute-btn').addEventListener('click', function () {

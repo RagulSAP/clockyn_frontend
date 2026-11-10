@@ -203,14 +203,16 @@ async function control(req, res, t, pathname, query) {
   // Live Chat: the support side of the conversation (the web console is not part of this mock).
   //   POST /__test/live-chat/support-reply { org_id, message?, agent_name?, status?, file_name?, content_type? }
   //   POST /__test/live-chat/support-read  { org_id }   (the agent read the org's messages: ticks turn blue)
-  if ((pathname === '/__test/live-chat/support-reply' || pathname === '/__test/live-chat/support-read') && method === 'POST') {
+  //   POST /__test/live-chat/support-delete { org_id, message_id }  (deleted from the admin console: live_chat_message_deleted)
+  if ((pathname === '/__test/live-chat/support-reply' || pathname === '/__test/live-chat/support-read' || pathname === '/__test/live-chat/support-delete') && method === 'POST') {
     const { body } = await parseBody(req);
     act();
     const orgId = body && body.org_id;
     if (!orgId) throw new HttpError(400, 'needs { org_id }');
     const ctx = { s: t.state, origin: `http://${req.headers.host || `${HOST}:${PORT}`}`, push: (uid, frame) => pushTo(t, uid, frame) };
     const liveChat = require('./routes/liveChat');
-    return sendJson(res, 200, pathname.endsWith('support-read') ? liveChat.supportRead(ctx, body) : liveChat.supportReply(ctx, body));
+    const hook = pathname.endsWith('support-read') ? liveChat.supportRead : pathname.endsWith('support-delete') ? liveChat.supportDelete : liveChat.supportReply;
+    return sendJson(res, 200, hook(ctx, body));
   }
   if (pathname === '/__test/sockets') {
     const rows = [];

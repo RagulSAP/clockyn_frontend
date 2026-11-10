@@ -8,6 +8,7 @@ import type { ChatItem } from '@/features/chat/types';
 import type { PickedAttachment } from '@/features/chat/hooks/usePickAttachment';
 import { createOptimisticItem, messageLogReducer, newClientId } from '@/features/chat/utils/messageLog';
 import { getErrorMessage } from '@/lib/api/errors';
+import { removeLiveChatMessageFromCache } from '@/lib/realtime/liveChatCache';
 import { liveChatSession } from '@/lib/realtime/liveChatSession';
 import { useChatSocket } from '@/lib/realtime/socket';
 import { queryKeys } from '@/lib/query/queryKeys';
@@ -36,7 +37,7 @@ export interface LiveChatState {
 
 /**
  * The open Live Chat conversation of the admin's organisation with Clockyn support: history, live updates
- * (`live_chat_message` / `live_chat_read` on the per-user socket), optimistic text / photo / file sends with retry,
+ * (`live_chat_message` / `live_chat_message_deleted` / `live_chat_read` on the per-user socket), optimistic text / photo / file sends with retry,
  * upload progress, read ticks, mark-read and the Support badge bookkeeping.
  */
 export function useLiveChat(): LiveChatState {
@@ -99,9 +100,15 @@ export function useLiveChat(): LiveChatState {
         }
         return;
       }
+      if (ev.type === 'live_chat_message_deleted') {
+        if (!ev.messageId || (ev.orgId && ev.orgId !== orgId)) return;
+        dispatch({ type: 'remove', messageId: ev.messageId });
+        removeLiveChatMessageFromCache(queryClient, userId, orgId, ev.messageId);
+        return;
+      }
       if (ev.type === 'live_chat_read' && ev.reader === 'support') dispatch({ type: 'own_read' });
     },
-    [orgId, markRead],
+    [orgId, userId, queryClient, markRead],
   );
   useChatSocket(enabled ? userId : null, onFrame, {
     onReconnect: () => {

@@ -81,6 +81,22 @@ describe('parseLiveChatSocketEvent', () => {
     });
   });
 
+  it('parses live_chat_message_deleted', () => {
+    expect(
+      parseLiveChatSocketEvent({
+        type: 'live_chat_message_deleted',
+        data: { org_id: 'org1', message_id: 'm7', last_message: 'Thanks', last_message_at: '2026-11-10T10:00:00Z' },
+      }),
+    ).toEqual({ type: 'live_chat_message_deleted', orgId: 'org1', messageId: 'm7', lastMessage: 'Thanks', lastMessageAt: '2026-11-10T10:00:00Z' });
+    expect(parseLiveChatSocketEvent(JSON.stringify({ type: 'live_chat_message_deleted', data: { message_id: 'm8' } }))).toEqual({
+      type: 'live_chat_message_deleted',
+      orgId: '',
+      messageId: 'm8',
+      lastMessage: '',
+      lastMessageAt: '',
+    });
+  });
+
   it('answers unknown for other frames and garbage', () => {
     expect(parseLiveChatSocketEvent({ type: 'new_message', data: {} })).toEqual({ type: 'unknown' });
     expect(parseLiveChatSocketEvent('not json')).toEqual({ type: 'unknown' });

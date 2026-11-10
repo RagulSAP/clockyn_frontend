@@ -92,6 +92,20 @@ function supportRead(c, body) {
   return { ok: true, marked };
 }
 
+/** Test hook: the admin console deletes a message; the org's admins get `live_chat_message_deleted` and history no longer has it. */
+function supportDelete(c, body) {
+  const orgId = D.resolveOrg(c.s, body.org_id);
+  const lc = c.s.liveChat;
+  const idx = lc.messages.findIndex((m) => m.org_id === orgId && m.message_id === body.message_id);
+  if (idx < 0) return { ok: false, error: 'no such message' };
+  lc.messages.splice(idx, 1);
+  const rest = orgMessages(c, orgId);
+  const last = rest[rest.length - 1];
+  const frame = { type: 'live_chat_message_deleted', data: { org_id: orgId, message_id: body.message_id, last_message: last ? last.message : '', last_message_at: last ? last.timestamp : '' } };
+  for (const uid of adminIds(c, orgId)) c.push(uid, frame);
+  return { ok: true };
+}
+
 function register(r) {
   r.get('/live-chat/messages/:org', (c) => {
     requireOrgAdmin(c, c.p.org, c.q.user_id);
@@ -135,4 +149,4 @@ function register(r) {
   });
 }
 
-module.exports = { register, supportReply, supportRead };
+module.exports = { register, supportReply, supportRead, supportDelete };
