@@ -2,7 +2,8 @@
  *
  * One WebSocket to the support inbox (`/ws/support-ops?admin_id=<operator e-mail>`) per tab that:
  *   - drives the sidebar badge `.nav-livechat-badge` and prefixes `document.title` with "(n) ",
- *   - plays a short chime (WebAudio, no asset; muted state in localStorage 'clockyn-livechat-mute'),
+ *   - plays a sound for each new message: the file assets/sounds/notification.mp3 when it exists (see assets/sounds/README.txt),
+ *     otherwise a short built-in chime (WebAudio, no asset). Muted state in localStorage 'clockyn-livechat-mute',
  *   - shows a browser Notification for an incoming ORG message when the tab is hidden / unfocused or another
  *     conversation is open (permission is requested from a button on the Live Chat page: browsers need a gesture),
  *   - re-broadcasts every frame as the `clockyn-livechat` CustomEvent (detail = the frame) so pages never open a second socket,
@@ -10,7 +11,7 @@
  *     reconciles the count every 60 s even while it is up: another console reading a thread sends no frame).
  *
  * Public API: window.ClockynLiveChat = { unread(), refreshUnread(), isConnected(), permission(), requestPermission(),
- *   isMuted(), setMuted(bool), setActiveOrg(orgId) }. The open conversation is also readable from
+ *   isMuted(), setMuted(bool), setActiveOrg(orgId), testSound() }. The open conversation is also readable from
  *   window.__clockynLiveChatActiveOrg (set by live_chat.html before this script has loaded).
  * Events on `document`: `clockyn-livechat` (frame), `clockyn-livechat-state` (detail = snapshot: unread, connected,
  *   permission, muted), `clockyn-livechat-open` (detail.org_id: a notification was clicked on the Live Chat page).
@@ -22,6 +23,8 @@
 
   var SELF_SRC = (document.currentScript && document.currentScript.src) || '';
   var MUTE_KEY = 'clockyn-livechat-mute';
+  var SOUND_FILE = 'assets/sounds/notification.mp3';
+  var SOUND_VOLUME = 0.8;
   var PING_MS = 25000;
   var POLL_MS = 20000;
   var RECONCILE_MS = 60000;
@@ -41,6 +44,8 @@
   var baseTitle = '';
   var seen = [];
   var audioCtx = null;
+  var sound = null;          /* HTMLAudioElement of the custom file, or null when there is none */
+  var soundFailed = false;   /* the file is missing or cannot be decoded: the built-in chime is used */
 
   function adminId() {
     try { return localStorage.getItem('admin_email') || ''; } catch (e) { return ''; }
@@ -127,9 +132,45 @@
     refreshTimer = setTimeout(fetchUnread, 1500);
   }
 
-  /* ── chime ── */
+  /* ── sound ── */
+  /* The custom file lives at <console root>/assets/sounds/notification.mp3 (found from this script's own address). It is loaded
+   * once at start so a missing file is known before the first message arrives. */
+  function soundUrl() {
+    if (typeof window.CLOCKYN_NOTIFY_SOUND === 'string' && window.CLOCKYN_NOTIFY_SOUND) return window.CLOCKYN_NOTIFY_SOUND;
+    return SELF_SRC ? SELF_SRC.replace(/js\/live-chat-notify\.js.*$/, SOUND_FILE) : '';
+  }
+
+  function loadSound() {
+    try {
+      var url = soundUrl();
+      if (!url || typeof window.Audio !== 'function') { soundFailed = true; return; }
+      sound = new window.Audio(url);
+      sound.preload = 'auto';
+      sound.volume = SOUND_VOLUME;
+      sound.addEventListener('error', function () { soundFailed = true; });
+    } catch (e) { soundFailed = true; }
+  }
+
   function chime() {
     if (isMuted()) return;
+    if (sound && !soundFailed) {
+      try {
+        sound.currentTime = 0;
+        var played = sound.play();
+        if (played && played.catch) {
+          played.catch(function (err) {
+            /* the browser blocked it until the person clicks on the page: stay silent, like the chime. Anything else: use the chime */
+            if (!err || err.name !== 'NotAllowedError') { soundFailed = true; synthChime(); }
+          });
+        }
+        return;
+      } catch (e) { soundFailed = true; }
+    }
+    synthChime();
+  }
+
+  /* the built-in two-note chime */
+  function synthChime() {
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
@@ -152,7 +193,7 @@
     } catch (e) { /* no audio */ }
   }
 
-  /* a click anywhere unlocks audio for later chimes */
+  /* a click anywhere unlocks audio for later sounds */
   function unlockAudio() {
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
@@ -283,6 +324,7 @@
   function init() {
     if (!loggedIn()) return;
     baseTitle = document.title.replace(/^\(\d+\+?\)\s+/, '');
+    loadSound();
     document.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
     document.addEventListener('keydown', unlockAudio, { once: true, passive: true });
     render();
@@ -302,7 +344,9 @@
     requestPermission: requestPermission,
     isMuted: isMuted,
     setMuted: setMuted,
-    setActiveOrg: function (orgId) { window.__clockynLiveChatActiveOrg = orgId || ''; }
+    setActiveOrg: function (orgId) { window.__clockynLiveChatActiveOrg = orgId || ''; },
+    /* plays the notification sound once (respects mute); useful to check a new file from the browser console */
+    testSound: function () { chime(); }
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
