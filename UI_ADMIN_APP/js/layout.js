@@ -6,7 +6,7 @@
  *   <script src="../js/layout.js"></script>
  *
  * `data-active` is one of: dashboard, organizations, users, subscriptions, payments, coupons, suggestions,
- * tickets, live_chat, videos, video_views, faqs, activity, settings. When it is missing the key is derived from the file name.
+ * tickets, live_chat, videos, video_views, clickstream, faqs, activity, settings. When it is missing the key is derived from the file name.
  * The markup is written synchronously (no flash) and before auth.js runs its DOMContentLoaded handler, so auth.js
  * finds the ids/classes it fills: .sidebar-logo-img, #sidebar-avatar, #sidebar-user-name, #sidebar-user-mobile,
  * #sidebar-user-role, .nav-users-badge, .nav-suggestion-badge, .nav-livechat-badge (filled by js/live-chat-notify.js, which
@@ -29,6 +29,7 @@
     live_chat: [["path",{"d":"M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"}],["path",{"d":"M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"}]],
     videos: [["path",{"d":"M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"}],["circle",{"cx":"12","cy":"12","r":"10"}]],
     video_views: [["path",{"d":"M3 3v16a2 2 0 0 0 2 2h16"}],["path",{"d":"M18 17V9"}],["path",{"d":"M13 17V5"}],["path",{"d":"M8 17v-3"}]],
+    clickstream: [["path",{"d":"M14 4.1 12 6"}],["path",{"d":"m5.1 8-2.9-.8"}],["path",{"d":"m6 12-1.9 2"}],["path",{"d":"M7.2 2.2 8 5.1"}],["path",{"d":"M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"}]],
     faqs: [["circle",{"cx":"12","cy":"12","r":"10"}],["path",{"d":"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"}],["path",{"d":"M12 17h.01"}]],
     activity: [["path",{"d":"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"}],["path",{"d":"M3 3v5h5"}],["path",{"d":"M12 7v5l4 2"}]],
     settings: [["path",{"d":"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"}],["circle",{"cx":"12","cy":"12","r":"3"}]],
@@ -50,6 +51,7 @@
       { key: 'live_chat', label: 'Live Chat', href: 'live_chat.html', badge: 'nav-badge nav-livechat-badge', badgeDisplay: 'none' },
       { key: 'videos', label: 'Video Hub', href: 'videos.html' },
       { key: 'video_views', label: 'Video Views', href: 'video_views.html' },
+      { key: 'clickstream', label: 'Clickstream', href: 'clickstream.html' },
       { key: 'faqs', label: 'FAQ Hub', href: 'faqs.html' }
     ] },
     { section: 'System', items: [

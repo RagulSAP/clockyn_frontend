@@ -36,7 +36,7 @@ SUGGESTED ORDER (the story of a new company: set up > staff start using it > dai
   Week 3 (CRM, chat):     V25 V26
   Week 4 (plans, help):   V27 V28
   Last:                   V29 (full end-to-end walkthrough, built from the approved videos above)
-  Done so far:            V01 to V07 only (V09 only exists as an old-style video, so it is still TODO)
+  Done so far:            V01 to V28 (V29, the full walkthrough, is still TODO)
 
 
 =============================================================================================
@@ -227,13 +227,19 @@ V25  How do I add leads and give them to my team?
      SLUG: crm-leads     WHO: Admin     ROLE: admin     LENGTH: ~30 to 60 s      PRIORITY: P2
      FLOW: CRM tab > Add lead (name, phone, category) > save > Assign To (staff) > status choices (new, contacted,
            interested, converted, not interested). Say how employees then see it in their CRM tab.
-     CAN RECORD: yes     STATUS: TODO
+     CAN RECORD: yes     STATUS: DONE (V25-crm-leads.mp4, ~2.2 min)
+     FILES: the real CRM has no "new/contacted/interested/converted/not interested" statuses. The employee sets Pending,
+           Working, Completed or Carry Forward (a reason and new date). Shown: admin Enter Leads > Save > View/Assign >
+           Assign to Aarav > employee My Leads > status Working. Employee side is a user switch (not filmed).
 
 V26  How do I chat with my team and send an announcement?
      SLUG: chat-and-announcements     WHO: Admin     ROLE: admin     LENGTH: ~30 to 60 s      PRIORITY: P2
      FLOW: Chat tab > open a staff member and send a message > Groups: create a group > Announcements: write a message
            and choose everyone, a branch, a department or selected staff > send. Employees see it in their Chat tab.
-     CAN RECORD: yes     STATUS: TODO
+     CAN RECORD: yes     STATUS: DONE (V26-chat-and-announcements.mp4, ~2.1 min)
+     FILES: real hub has 4 cards: Individual Chat, Group Chat, Announcement (All Staff / Select Staff) and Branch & Dept
+           (one branch or one department). Shown: message to Aarav, create group, announcement to all staff, branch
+           announcement, employee Chat tab and Broadcast. Select Staff and Department are narrated, not shown.
 
 =============================================================================================
 PART 4 - PLANS, PAYMENTS AND HELP (admin)
@@ -244,13 +250,20 @@ V27  How do I upgrade my plan and pay, and where are my invoices?
      FLOW: Settings > Your Plan & Validity (trial end date, staff limit) > Buy a Plan > choose a plan > coupon (optional)
            > Pay > success > Billing History > download invoice.
      CAN RECORD: partly (the payment window is stubbed in the web build: stop at "Pay", narrate the rest, end on the
-           invoice list)     STATUS: TODO
+           invoice list)     STATUS: DONE (V27-upgrade-plan-invoices.mp4, ~2.3 min)
+      FILES: recorded in the free-trial state (Settings > Your Plan & Validity > Plan Details > pick Prime 1 Month >
+            Continue to Pay > staff +3 > Continue to Pay > Payment Summary > Pay > Payment Successful > Download
+            Invoices > download). The payment is the mock: the real payment window is NOT shown. Real app has
+            Upgrade Plan / Renew Plan (locked during the trial) and a staff minimum equal to the current limit.
 
 V28  Where do I get help? (FAQ, videos, live chat and feature requests)
      SLUG: get-help-support     WHO: Admin and Employee     ROLE: admin     LENGTH: ~25 to 60 s     PRIORITY: P1
      FLOW: Support tab > FAQ (search "attendance", open an answer) > Videos > Live Chat (send a message) > Suggest a
            Feature. Say: these help pages and these videos are always in the Support tab.
-     CAN RECORD: yes     STATUS: TODO
+     CAN RECORD: yes     STATUS: DONE (V28-get-help-support.mp4, ~1.7 min)
+     FILES: the Support tab has only FAQ, Live Chat and Video Hub; Suggest a Feature (and the Support request form) are in
+           Settings > Beyond. Shown: FAQ topic + answer + search "shift", Video Hub list (not played), Live Chat message,
+           Suggest a Feature. Employees have no Support tab (admin only).
 
 
 =============================================================================================

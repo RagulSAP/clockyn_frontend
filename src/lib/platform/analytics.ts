@@ -7,6 +7,8 @@
  *  AppOpened (cold start) · LoginSuccess · CompleteRegistration · AttendanceMarked {action} · Subscribe.
  */
 
+import { trackTap } from '@/lib/analytics/tap';
+
 export type AnalyticsEvents = {
   AppOpened: undefined;
   LoginSuccess: undefined;
@@ -43,4 +45,6 @@ export function logEvent<E extends AnalyticsEventName>(
   } catch {
     /* analytics must never affect the app */
   }
+  // The same key actions also go to the Clickstream page (as `event:<Name>[:<action>]`), so conversions show next to the taps.
+  trackTap(typeof params?.action === 'string' ? `event:${name}:${params.action}` : `event:${name}`);
 }

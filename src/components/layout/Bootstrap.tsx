@@ -9,6 +9,7 @@ import { UpdatePrompt } from './bootstrap/UpdatePrompt';
 import { useBootstrapTeardown } from './bootstrap/useBootstrapTeardown';
 import { useLocationResume } from './bootstrap/useLocationResume';
 import { usePushEvents } from './bootstrap/usePushEvents';
+import { useClickstream } from './bootstrap/useClickstream';
 import { usePlanStatusRefresh } from './bootstrap/usePlanStatusRefresh';
 import { usePushRegistration } from './bootstrap/usePushRegistration';
 import { useSessionExpiry } from './bootstrap/useSessionExpiry';
@@ -30,6 +31,7 @@ import { useSessionWatcher } from './bootstrap/useSessionWatcher';
  *  - app-update check (start / foreground) and its modal
  *  - location resume for field staff (roles 2/3) who are still punched in
  *  - CRM tab badge for managers / staff (unseen leads; see features/crm/seenLeads)
+ *  - usage analytics: screen views and button taps for the Clickstream page of the admin web app (lib/analytics)
  *  - teardown registered with the auth store for sign-out
  */
 export function Bootstrap() {
@@ -45,5 +47,6 @@ export function Bootstrap() {
   usePushEvents();
   useLocationResume();
   useCrmBadgeSync();
+  useClickstream();
   return <UpdatePrompt />;
 }

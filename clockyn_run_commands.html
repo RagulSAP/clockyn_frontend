@@ -631,6 +631,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS support_faq_question_key ON clockyn_dev.suppor
       <li><b>Ship the app.</b> The FAQ screen is JavaScript only, so a normal build or update is enough.</li>
       <li><b>Edit later.</b> Inside the app the questions follow the <b>Sort order</b> number (low first), then the creation order; in the console use the up and down arrows on a question to move it within its category. A category appears where its first question is. The pencil next to a bucket or category name renames it for every question in it. To add a bucket, type a new bucket name when adding or editing a question; a bucket with no questions disappears. Answers are plain text: a new line is a line break, and steps are written as <code>1. ...</code> lines. Do not paste HTML.</li>
     </ol>
+
+    <h3 id="clickstream">Clickstream (how people use the app, shown in the admin web app)</h3>
+    <p>The app reports which <b>screens</b> people open and which <b>buttons</b> they tap (no typed text, names or numbers; the route pattern and the button label only). The admin web app shows it on the new <b>Clickstream</b> page: active people, stickiness, busiest hours, most used screens and buttons, journeys, drop-off funnels, feature adoption, revenue, help usage, and organizations that went quiet, with plain-language findings on top.</p>
+    <ol>
+      <li><b>Create the table once.</b> Run <code>C:\POC\clockyn_backend\migrations_app_event.sql</code> on the database (DBeaver, or <code>python migrate.py --all</code> from the backend folder). The same block is at the end of <code>clockyn_ddl_latest.sql</code>. Until it exists the app's events are dropped quietly and the page says it is not set up.
+        <div class="cmd"><pre>cd C:\POC\clockyn_backend
+python migrate.py --status
+python migrate.py --all</pre><button class="copy">Copy</button></div></li>
+      <li><b>Deploy the backend</b> (Express tab, "Releasing a new version later"). New routes: <code>POST /analytics/events</code> (app, any signed-in user, limited to 30 requests a minute per user) and <code>/gen-dashboard/clickstream/*</code> (web console, operator only).</li>
+      <li><b>Ship the app.</b> Tracking needs a new app build (the code is JavaScript only, so an update also works). Nothing appears until people use that build. To build without tracking set <code>EXPO_PUBLIC_ANALYTICS=off</code> in the EAS environment.</li>
+      <li><b>Open the page.</b> Admin web app, left menu, <b>Clickstream</b>. Filter by period, platform (Android, iPhone, web) and role. The <b>Live stream</b> tab shows the newest events with organization and person names (operators only).</li>
+      <li><b>Keep the table small.</b> Old events are not removed by themselves. Once a month (super admin) call <code>POST /gen-dashboard/clickstream/purge?days=180</code> to delete events older than 180 days (the smallest allowed value is 30).</li>
+      <li><b>Privacy.</b> Add "app usage (screens viewed and buttons tapped)" to the privacy policy and to the Google Play Data safety form and Apple's privacy answers (usage data, linked to the user's account, used for analytics).</li>
+    </ol>
   </section>
   </div>
   <div class="panel" role="tabpanel" id="tab-eas" aria-labelledby="btn-eas" hidden>

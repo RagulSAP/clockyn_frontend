@@ -208,6 +208,8 @@ function register(r) {
     c.s.videoViews.push({ video_id: v.id, video_name: v.video_name, user_id: c.b.user_id, org_id: c.b.org_id, viewed_at: T.isoNow() });
     return ok({});
   });
+  // Clickstream intake (the app reports screen views and taps; the mock only acknowledges them).
+  r.post('/analytics/events', (c) => ok({ stored: Array.isArray(c.b.events) ? c.b.events.length : 0 }));
   r.post('/support/:id/reply', (c) => {
     const t = c.s.tickets.find((x) => x.id === c.p.id);
     if (!t) return bizFail('Ticket not found');

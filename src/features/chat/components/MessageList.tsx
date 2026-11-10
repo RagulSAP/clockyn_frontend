@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { FlatList, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 
 import { EmptyState, ErrorState, IconButton, ImageViewer, SkeletonList, Text } from '@/components/ui';
 import { getErrorMessage } from '@/lib/api/errors';
@@ -51,8 +51,16 @@ export function MessageList({ items, isLoading, error, onReload, search = '', sh
     initialScrollDone.current = false;
   }, [searching]);
 
+  // Measured sizes of the list: `scrollToEnd` alone lands short on a virtualised list of rows with different heights
+  // (it aims at an estimated end), so the real end is computed from the measured content and viewport heights.
+  const contentHeight = useRef(0);
+  const viewHeight = useRef(0);
   const scrollToLatest = useCallback((animated: boolean) => {
-    listRef.current?.scrollToEnd({ animated });
+    const list = listRef.current;
+    if (!list) return;
+    const max = contentHeight.current - viewHeight.current;
+    if (max > 0) list.scrollToOffset({ offset: max, animated });
+    else list.scrollToEnd({ animated });
   }, []);
 
   // The list virtualises (only the first rows exist when it opens), so its content keeps growing for a moment: keep
@@ -65,11 +73,13 @@ export function MessageList({ items, isLoading, error, onReload, search = '', sh
     [],
   );
 
-  const onContentSizeChange = useCallback(() => {
+  const onContentSizeChange = useCallback((_w: number, h: number) => {
+    contentHeight.current = h;
     if (rows.length === 0) return;
     if (!initialScrollDone.current) {
       previousCount.current = rows.length;
       scrollToLatest(false);
+      requestAnimationFrame(() => scrollToLatest(false)); // once more after the rows below the first screen are laid out
       if (settleTimer.current) clearTimeout(settleTimer.current);
       settleTimer.current = setTimeout(() => {
         initialScrollDone.current = true;
@@ -80,6 +90,18 @@ export function MessageList({ items, isLoading, error, onReload, search = '', sh
     previousCount.current = rows.length;
     if (grew && (nearBottom.current || lastIsMine)) scrollToLatest(true);
   }, [rows.length, lastIsMine, scrollToLatest]);
+
+  // The visible area changed (the keyboard opened, the screen rotated): keep the latest message in view when the person
+  // was reading the end of the conversation (or the list is still opening).
+  const onLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      const h = e.nativeEvent.layout.height;
+      const changed = h !== viewHeight.current;
+      viewHeight.current = h;
+      if (changed && rows.length > 0 && (!initialScrollDone.current || nearBottom.current)) scrollToLatest(false);
+    },
+    [rows.length, scrollToLatest],
+  );
 
   const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
@@ -131,6 +153,7 @@ export function MessageList({ items, isLoading, error, onReload, search = '', sh
         keyExtractor={(row) => row.key}
         renderItem={renderItem}
         onContentSizeChange={onContentSizeChange}
+        onLayout={onLayout}
         onScroll={onScroll}
         scrollEventThrottle={64}
         keyboardShouldPersistTaps="handled"

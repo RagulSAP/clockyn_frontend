@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Clickstream</title>
+  <meta name="color-scheme" content="light dark" />
+  <script src="../js/theme.js"></script>
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    .i { width: 16px; height: 16px; flex-shrink: 0; display: block; }
+    .i-lg { width: 20px; height: 20px; }
+    .hamburger-btn .i { width: 18px; height: 18px; }
+    .filter-select { height: 40px; min-height: 0; width: auto; max-width: 200px; border-radius: var(--radius-md); padding: 0 14px; font-size: 14px; font-weight: 500; }
+    .num { font-variant-numeric: tabular-nums; }
+    #kpis .stat-val, #biz-kpis .stat-val { white-space: nowrap; font-size: 26px; }
+
+    /* ── layout helpers ── */
+    .cs-grid { display: grid; gap: 16px; margin-bottom: 16px; }
+    .cs-grid.two { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+    .cs-grid.even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cs-col { display: grid; gap: 16px; align-content: start; min-width: 0; }
+    .split-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+    .split-row .split-block + .split-block { margin-top: 0; }
+    @media (max-width: 900px) { .split-row { grid-template-columns: 1fr; gap: 18px; } }
+    .cs-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card { margin-bottom: 0; }
+    .card-body { padding: 16px 20px 20px; }
+    .card-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+    .stat-grid { margin-bottom: 16px; }
+    #kpis, #biz-kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    @media (max-width: 1280px) { #kpis, #biz-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    .stat-delta { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .stat-delta.up { color: var(--success); } .stat-delta.down { color: var(--danger); } .stat-delta.flat { color: var(--text-muted); }
+    .cs-note { font-size: 12px; color: var(--text-muted); margin: 0 0 16px; }
+
+    /* ── insights ── */
+    .insights { display: grid; gap: 10px; }
+    .insight { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+    .insight .dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; }
+    .insight.good .dot { background: var(--success-soft); color: var(--success); }
+    .insight.warn .dot { background: var(--warning-soft); color: var(--warning); }
+    .insight.info .dot { background: var(--info-soft); color: var(--info); }
+    .insight b { display: block; font-size: 13.5px; color: var(--text); line-height: 1.35; }
+    .insight span { display: block; font-size: 12.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.45; }
+
+    /* ── trend chart ── */
+    .chart-wrap { position: relative; }
+    .trend { width: 100%; height: auto; display: block; overflow: visible; }
+    .trend .grid { stroke: var(--border); stroke-width: 1; }
+    .trend .axis { fill: var(--text-muted); font-size: 11px; font-family: inherit; }
+    .trend .line-users { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+    .trend .area-sessions { fill: var(--info); opacity: .14; }
+    .trend .line-sessions { fill: none; stroke: var(--info); stroke-width: 1.5; opacity: .6; }
+    .trend .pt { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+    .trend .guide { stroke: var(--border-strong); stroke-dasharray: 3 3; }
+    .tip { position: absolute; pointer-events: none; transform: translate(-50%, -100%); background: var(--primary); color: var(--on-primary); border-radius: var(--radius-md); padding: 8px 10px; font-size: 12px; line-height: 1.5; white-space: nowrap; box-shadow: var(--shadow-md); opacity: 0; transition: opacity .12s; z-index: 5; }
+    .tip.on { opacity: 1; }
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+    /* ── heatmap ── */
+    .heat { display: grid; grid-template-columns: 34px repeat(24, minmax(0, 1fr)); gap: 3px; align-items: center; }
+    .heat .hl { font-size: 11px; color: var(--text-muted); }
+    .heat .hh { font-size: 10px; color: var(--text-muted); text-align: center; }
+    .heat .hc { aspect-ratio: 1; border-radius: 4px; background: var(--surface-muted); position: relative; min-width: 0; }
+    .heat .hc.on { background: var(--accent); }
+    .heat-legend { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--text-muted); margin-top: 12px; }
+    .heat-legend span { display: inline-block; width: 70px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--surface-muted), var(--accent)); }
+
+    /* ── bars ── */
+    .hbars { display: grid; gap: 10px; }
+    .hbar .row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 4px; }
+    .hbar .row b { color: var(--text); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hbar .row em { font-style: normal; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .track { height: 8px; border-radius: var(--radius-pill); background: var(--surface-muted); overflow: hidden; }
+    .track > span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .4s ease; }
+    .track.blue > span { background: var(--info); } .track.purple > span { background: var(--purple); } .track.warn > span { background: var(--warning); }
+    .stack { display: flex; height: 12px; border-radius: var(--radius-pill); overflow: hidden; background: var(--surface-muted); margin: 6px 0 12px; }
+    .stack > span { display: block; height: 100%; }
+    .c0 { background: var(--accent); } .c1 { background: var(--info); } .c2 { background: var(--purple); } .c3 { background: var(--warning); } .c4 { background: var(--cyan); } .c5 { background: var(--danger); }
+    .key { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--text-secondary); }
+    .key i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+    .split-title { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; margin: 0 0 4px; }
+    .split-block + .split-block { margin-top: 18px; }
+
+    /* ── funnels ── */
+    .funnel + .funnel { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+    .funnel h4 { font-size: 14px; color: var(--text); }
+    .funnel p { font-size: 12.5px; color: var(--text-muted); margin: 2px 0 12px; }
+    .fstep { display: grid; grid-template-columns: 150px minmax(0, 1fr) 96px; gap: 12px; align-items: center; margin-bottom: 8px; font-size: 13px; }
+    .fstep .nm { color: var(--text-secondary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fstep .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; }
+    .fstep .val small { display: block; font-weight: 500; color: var(--text-muted); font-size: 11.5px; }
+    .fbar { height: 22px; border-radius: 6px; background: var(--surface-muted); overflow: hidden; }
+    .fbar > span { display: block; height: 100%; border-radius: inherit; background: var(--accent); min-width: 2px; }
+    .fbar.s1 > span { opacity: .82; } .fbar.s2 > span { opacity: .66; } .fbar.s3 > span { opacity: .5; }
+
+    /* ── tables / lists ── */
+    .table-wrap { overflow-x: auto; }
+    .rtable td.when { font-size: 12.5px; color: var(--text-muted); white-space: nowrap; }
+    .cell-main { font-weight: 600; color: var(--text); font-size: 13.5px; min-width: 0; }
+    .cell-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; word-break: break-word; }
+    .mini-bar { height: 4px; width: 110px; margin-top: 6px; background: var(--surface-muted); border-radius: var(--radius-pill); overflow: hidden; }
+    .mini-bar > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+    .flow { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; }
+    .flow b { font-weight: 600; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .flow svg { color: var(--text-muted); flex-shrink: 0; }
+    .empty { padding: 28px 16px; text-align: center; color: var(--text-muted); font-size: 13.5px; }
+    .empty b { display: block; color: var(--text); font-size: 15px; margin-bottom: 4px; }
+    .mini-stat { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+    .mini-stat:last-child { border-bottom: 0; }
+    .mini-stat span { color: var(--text-muted); } .mini-stat b { color: var(--text); font-variant-numeric: tabular-nums; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    .toolbar input { height: 40px; flex: 1; min-width: 180px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 0 14px; font-size: 14px; }
+    .tag-evt { display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill); font-size: 11.5px; font-weight: 700; }
+    .tag-evt.screen { background: var(--info-soft); color: var(--info); } .tag-evt.click { background: var(--success-soft); color: var(--success); } .tag-evt.session { background: var(--surface-muted); color: var(--text-muted); }
+
+    @media (max-width: 1100px) { .cs-grid.two, .cs-grid.three { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) {
+      .cs-grid.even { grid-template-columns: 1fr; }
+      .fstep { grid-template-columns: 110px minmax(0, 1fr) 70px; }
+      .stat-grid, #kpis, #biz-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .stat-tile { padding: 14px 16px; } .stat-tile .stat-val { font-size: 24px; }
+      .page-header-actions { width: 100%; }
+      .filter-select { max-width: none; flex: 1 1 calc(50% - 8px); min-width: calc(50% - 8px); }
+      .page-header-actions .export-wrap { width: 100%; }
+      .page-header-actions .export-wrap > .btn { width: 100%; justify-content: center; }
+      .heat { grid-template-columns: 28px repeat(24, minmax(0, 1fr)); gap: 2px; }
+      .heat .hh { font-size: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar" id="app-sidebar" data-active="clickstream"></aside>
+  <script src="../js/layout.js"></script>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu">
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+      </button>
+      <span class="topbar-title">Clickstream</span>
+      <div class="topbar-actions">
+        <button type="button" class="icon-btn" onclick="load()" title="Refresh" aria-label="Refresh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        </button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-header">
+        <div>
+          <h1>Clickstream</h1>
+          <p>How people really use Clockyn: who is active, what they open and tap, where they drop off, and what to do about it</p>
+        </div>
+        <div class="page-header-actions">
+          <select class="filter-select" id="f-days" aria-label="Period" onchange="load()">
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+          </select>
+          <select class="filter-select" id="f-platform" aria-label="Platform" onchange="load()">
+            <option value="">All platforms</option>
+            <option value="android">Android</option>
+            <option value="ios">iPhone</option>
+            <option value="web">Web</option>
+          </select>
+          <select class="filter-select" id="f-role" aria-label="Role" onchange="load()">
+            <option value="">All roles</option>
+            <option value="1">Admins</option>
+            <option value="2">Managers</option>
+            <option value="3">Staff</option>
+          </select>
+          <div class="export-wrap">
+            <button type="button" class="btn btn-ghost" onclick="toggleExportMenu('cs-export-menu')" aria-haspopup="true">
+              <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
+              Export
+              <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="export-menu" id="cs-export-menu">
+              <button type="button" onclick="doExportExcel()">Export Excel</button>
+              <button type="button" onclick="doExportPDF()">Export PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Sections" style="margin-bottom:16px;">
+        <button type="button" class="tab active" id="tab-overview" role="tab" aria-selected="true" onclick="switchTab('overview')">Overview</button>
+        <button type="button" class="tab" id="tab-behaviour" role="tab" aria-selected="false" onclick="switchTab('behaviour')">Behaviour</button>
+        <button type="button" class="tab" id="tab-business" role="tab" aria-selected="false" onclick="switchTab('business')">Business</button>
+        <button type="button" class="tab" id="tab-stream" role="tab" aria-selected="false" onclick="switchTab('stream')">Live stream</button>
+      </div>
+
+      <div id="banner"></div>
+
+      <!-- ═════════ Overview ═════════ -->
+      <div id="pane-overview">
+        <div class="stat-grid" id="kpis"></div>
+        <div class="cs-grid two">
+          <div class="cs-col">
+            <div class="card">
+              <div class="card-header"><div><h3>Daily activity</h3><div class="card-sub">Active users and sessions per day (India time)</div></div></div>
+              <div class="card-body">
+                <div class="legend"><span><i style="background:var(--accent)"></i>Active users</span><span><i style="background:var(--info);opacity:.5"></i>Sessions</span></div>
+                <div class="chart-wrap" id="trend-wrap"><div class="skeleton" style="height:220px"></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div><h3>When they use it</h3><div class="card-sub">Sessions by weekday and hour (India time). The darkest cells are the best moments to send announcements and offers.</div></div></div>
+              <div class="card-body" id="heat"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div><h3>What stands out</h3><div class="card-sub">Plain-language findings from the data</div></div></div>
+            <div class="card-body"><div class="insights" id="insights"><div class="skeleton skeleton-line"></div></div></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><div><h3>Who uses the app</h3><div class="card-sub">Distinct people in the period, by platform, role and app version</div></div></div>
+          <div class="card-body split-row" id="splits"></div>
+        </div>
+      </div>
+
+      <!-- ═════════ Behaviour ═════════ -->
+      <div id="pane-behaviour" class="hidden">
+        <div class="cs-grid even">
+          <div class="card">
+            <div class="card-header"><div><h3>Most opened screens</h3><div class="card-sub">Views, people and average time on the screen</div></div></div>
+            <div class="table-wrap"><table class="rtable"><thead><tr><th>Screen</th><th>Views</th><th>People</th><th>Avg time</th></tr></thead><tbody id="screens-body"></tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div><h3>Most tapped buttons</h3><div class="card-sub">Which actions people take, and where</div></div></div>
+            <div class="table-wrap"><table class="rtable"><thead><tr><th>Button</th><th>Taps</th><th>People</th></tr></thead><tbody id="clicks-body"></tbody></table></div>
+          </div>
+        </div>
+        <div class="cs-grid even">
+          <div class="card">
+            <div class="card-header"><div><h3>Journeys</h3><div class="card-sub">The most common next step after each screen</div></div></div>
+            <div class="card-body" id="flows"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div><h3>Key actions</h3><div class="card-sub">Logins, registrations, punches and subscriptions reported by the app</div></div></div>
+            <div class="card-body" id="key-actions"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><div><h3>Where people drop off</h3><div class="card-sub">People who reached each step, in order, within the period</div></div></div>
+          <div class="card-body" id="funnels"></div>
+        </div>
+      </div>
+
+      <!-- ═════════ Business ═════════ -->
+      <div id="pane-business" class="hidden">
+        <div class="stat-grid" id="biz-kpis"></div>
+        <div class="cs-grid even">
+          <div class="card">
+            <div class="card-header"><div><h3>Feature adoption</h3><div class="card-sub">Organizations that used each area in the period (of all organizations)</div></div></div>
+            <div class="card-body" id="features"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div><h3>New organizations</h3><div class="card-sub">Sign-ups per day</div></div></div>
+            <div class="card-body"><div class="chart-wrap" id="signup-wrap"></div><div id="sources" style="margin-top:16px"></div></div>
+          </div>
+        </div>
+        <div class="cs-grid even">
+          <div class="card">
+            <div class="card-header"><div><h3>Customers and revenue</h3><div class="card-sub">Trials, paying organizations and checkout results</div></div></div>
+            <div class="card-body" id="money"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div><h3>Help and support</h3><div class="card-sub">Do people find answers on their own?</div></div></div>
+            <div class="card-body" id="support"></div>
+          </div>
+        </div>
+        <div class="cs-grid even">
+          <div class="card">
+            <div class="card-header"><div><h3>Most active organizations</h3><div class="card-sub">Candidates for case studies, reviews and upsell</div></div></div>
+            <div class="table-wrap"><table class="rtable"><thead><tr><th>Organization</th><th>People</th><th>Sessions</th><th>Events</th></tr></thead><tbody id="top-orgs"></tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div><h3>Gone quiet</h3><div class="card-sub">Active before, nothing in the last 7 days. Worth a call or a nudge.</div></div></div>
+            <div class="table-wrap"><table class="rtable"><thead><tr><th>Organization</th><th>Earlier events</th><th>Last seen</th></tr></thead><tbody id="risk-orgs"></tbody></table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═════════ Live stream ═════════ -->
+      <div id="pane-stream" class="hidden">
+        <div class="card">
+          <div class="card-header"><div><h3>Live stream</h3><div class="card-sub">The newest events, as they arrive (names are shown to operators only)</div></div><span class="badge badge-gray" id="stream-count">0 events</span></div>
+          <div class="toolbar">
+            <input type="text" id="stream-q" placeholder="Search screen, button, organization or person" aria-label="Search events" oninput="debouncedStream()" />
+            <select class="filter-select" id="stream-type" aria-label="Event type" onchange="loadStream()">
+              <option value="">All events</option><option value="screen">Screen views</option><option value="click">Taps</option><option value="session">Session starts</option>
+            </select>
+            <button type="button" class="btn btn-ghost" onclick="loadStream()">Refresh</button>
+          </div>
+          <div class="table-wrap"><table class="rtable"><thead><tr><th>Time (IST)</th><th>Event</th><th>What</th><th>Organization</th><th>Person</th><th>Device</th></tr></thead><tbody id="stream-body"></tbody></table></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/export.js"></script>
+  <script>
+    var adminEmail = localStorage.getItem('admin_email') || '';
+    var DATA = null;
+    var STREAM = [];
+    var activeTab = 'overview';
+
+    var ROLE = { 1: 'Admin', 2: 'Manager', 3: 'Staff' };
+    var PLATFORM = { android: 'Android', ios: 'iPhone', web: 'Web', unknown: 'Unknown' };
+    var DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    var ARROW = '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+
+    /* Friendly names of the app's screens (route patterns). Unknown routes get a readable fallback. */
+    var SCREENS = {
+      '/': 'Start', '/admin/home': 'Admin home', '/admin/overview': 'Overview', '/admin/more': 'More menu', '/admin/crm': 'CRM',
+      '/admin/chat': 'Chat hub', '/admin/help': 'Help tab', '/admin/settings': 'Settings tab',
+      '/admin/staff': 'Staff list', '/admin/staff/edit': 'Add / edit staff', '/admin/staff/detail': 'Staff details',
+      '/admin/branches': 'Branches', '/admin/branches/edit': 'Add / edit branch', '/admin/departments': 'Departments', '/admin/departments/edit': 'Add / edit department',
+      '/admin/managers': 'Managers', '/admin/managers/edit': 'Add / edit manager', '/admin/permissions': 'Permissions', '/admin/shifts': 'Shifts', '/admin/holidays': 'Holidays',
+      '/admin/attendance-rule': 'Attendance rules', '/admin/location': 'Live location', '/admin/devices': 'Devices',
+      '/admin/reports': 'Reports', '/admin/reports/staff-detailed': 'Staff detailed report', '/admin/reports/monthly-attendance': 'Monthly attendance report', '/admin/reports/late': 'Late report',
+      '/admin/reports/overtime': 'Overtime report', '/admin/reports/employee-details': 'Employee details report', '/admin/reports/employee-shifts': 'Employee shifts report',
+      '/admin/requests': 'Requests', '/admin/requests/leave': 'Leave requests', '/admin/requests/permission': 'Permission requests', '/admin/requests/shift-change': 'Shift change requests', '/admin/requests/device-change': 'Device change requests',
+      '/admin/payroll/monthly-salary': 'Monthly salary', '/admin/payroll/salary-sheet': 'Salary sheet', '/admin/payroll/payslips': 'Payslips', '/admin/payroll/payslips/edit': 'Payslip editor',
+      '/admin/payroll/bonus': 'Bonus', '/admin/payroll/incentive': 'Incentives', '/admin/payroll/overtime': 'Overtime pay', '/admin/payroll/hourly': 'Hourly pay', '/admin/payroll/daily-wages': 'Daily wages', '/admin/payroll/turnover': 'Turnover pay', '/admin/payroll/count-basis': 'Count-based pay',
+      '/admin/billing': 'Billing', '/admin/billing/upgrade': 'Choose a plan', '/admin/billing/checkout': 'Checkout', '/admin/billing/invoices': 'Invoices',
+      '/admin/company': 'Company', '/admin/company/edit': 'Edit company', '/admin/crm/leads': 'CRM leads', '/admin/crm/leads/edit': 'Add / edit lead',
+      '/admin/expenses/bills': 'Bills', '/admin/expenses/odometer': 'Odometer', '/admin/expenses/travel': 'Travel expenses',
+      '/admin/chat/announcements': 'Announcements', '/admin/chat/announcements-targeted': 'Targeted announcements', '/admin/chat/direct': 'Direct chat', '/admin/chat/groups': 'Group chat',
+      '/admin/help/faq': 'FAQ', '/admin/help/videos': 'Video Hub', '/admin/help/live-chat': 'Live chat with support', '/admin/support': 'Support', '/admin/suggest-feature': 'Suggest a feature',
+      '/staff/home': 'Staff home', '/staff/attendance': 'My attendance', '/staff/reports': 'My reports', '/staff/profile': 'Profile', '/staff/more': 'More menu', '/staff/settings': 'Settings tab',
+      '/staff/chat': 'Chat hub', '/staff/crm': 'CRM', '/staff/permissions': 'Permissions', '/staff/requests': 'Requests', '/staff/requests/leave': 'Leave request', '/staff/requests/permission': 'Permission request',
+      '/staff/requests/shift-change': 'Shift change request', '/staff/requests/device-change': 'Device change request', '/staff/expenses': 'Expenses',
+      '/index': 'Welcome', '/register': 'Register', '/admin-login': 'Admin sign-in', '/staff-login': 'Employee sign-in'
+    };
+
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function num(n) { return Number(n || 0).toLocaleString('en-IN'); }
+    function pct(a, b) { return b > 0 ? Math.round(1000 * a / b) / 10 : 0; }
+    function money(n) { return '₹' + Math.round(Number(n || 0)).toLocaleString('en-IN'); }
+    function secs(s) {
+      s = Math.round(Number(s || 0));
+      if (s < 60) return s + ' s';
+      var m = Math.floor(s / 60);
+      return m < 60 ? m + ' min ' + (s % 60 ? (s % 60) + ' s' : '') : Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
+    }
+    function pretty(path) {
+      return String(path || '').replace(/^\//, '').split('/').map(function (p) { return p.replace(/[-_]/g, ' '); }).join(' › ').replace(/^./, function (c) { return c.toUpperCase(); }) || 'Start';
+    }
+    function screenName(p) { return SCREENS[p] || pretty(p); }
+    function ist(iso) {
+      if (!iso) return '—';
+      var d = new Date(iso);
+      return isNaN(d) ? '—' : d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+    function ago(iso) {
+      var ms = Date.now() - new Date(iso).getTime();
+      var d = Math.floor(ms / 86400000);
+      return d < 1 ? 'today' : d === 1 ? 'yesterday' : d + ' days ago';
+    }
+    function delta(cur, prev) {
+      if (!prev && !cur) return '<span class="stat-delta flat">–</span>';
+      if (!prev) return '<span class="stat-delta up">▲ new</span>';
+      var p = Math.round(100 * (cur - prev) / prev);
+      if (p === 0) return '<span class="stat-delta flat">● same as before</span>';
+      return '<span class="stat-delta ' + (p > 0 ? 'up' : 'down') + '">' + (p > 0 ? '▲ ' : '▼ ') + Math.abs(p) + '% vs previous</span>';
+    }
+    function empty(title, text) { return '<div class="empty"><b>' + esc(title) + '</b>' + esc(text || '') + '</div>'; }
+    function rowEmpty(cols, title, text) { return '<tr><td colspan="' + cols + '">' + empty(title, text) + '</td></tr>'; }
+    function bars(items, cls) {
+      var max = items.reduce(function (m, i) { return Math.max(m, i.value); }, 1);
+      return '<div class="hbars">' + items.map(function (i) {
+        return '<div class="hbar"><div class="row"><b title="' + esc(i.label) + '">' + esc(i.label) + '</b><em>' + esc(i.text) + '</em></div><div class="track ' + (cls || '') + '"><span style="width:' + Math.max(2, Math.round(100 * i.value / max)) + '%"></span></div></div>';
+      }).join('') + '</div>';
+    }
+
+    async function call(path) {
+      var res = await fetch(API_BASE + path, { headers: { 'Content-Type': 'application/json', 'x-admin-id': adminEmail }, cache: 'no-store' });
+      var data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
+      if (!res.ok) throw new Error((data && typeof data.detail === 'string' && data.detail) || ('Request failed (' + res.status + ')'));
+      return data;
+    }
+
+    /* ───────────────────────── load ───────────────────────── */
+    async function load() {
+      var q = '?days=' + document.getElementById('f-days').value;
+      var pf = document.getElementById('f-platform').value, rf = document.getElementById('f-role').value;
+      if (pf) q += '&platform=' + encodeURIComponent(pf);
+      if (rf) q += '&role=' + encodeURIComponent(rf);
+      document.getElementById('banner').innerHTML = '';
+      try {
+        DATA = await call('/gen-dashboard/clickstream/summary' + q);
+      } catch (e) {
+        DATA = null;
+        document.getElementById('banner').innerHTML = '<div class="card" style="margin-bottom:16px">' + empty('Could not load the clickstream', e.message) + '</div>';
+        return;
+      }
+      if (!DATA.ready) {
+        document.getElementById('banner').innerHTML = '<div class="card" style="margin-bottom:16px">' + empty('Clickstream is not set up yet', DATA.message || 'Run migration 036_app_event.sql on the database.') + '</div>';
+        return;
+      }
+      if (!DATA.total_events_ever) {
+        document.getElementById('banner').innerHTML = '<div class="card" style="margin-bottom:16px">' + empty('No data yet', 'The app starts reporting once people use a build that includes the clickstream. Business insights below are already live.') + '</div>';
+      }
+      renderAll();
+      if (activeTab === 'stream') loadStream();
+    }
+
+    function renderAll() {
+      renderKpis(); renderTrend(); renderInsights(); renderSplits(); renderHeat();
+      renderScreens(); renderClicks(); renderFlows(); renderKeyActions(); renderFunnels();
+      renderBusiness();
+    }
+
+    /* ───────────────────────── overview ───────────────────────── */
+    function renderKpis() {
+      var k = DATA.kpis, p = DATA.previous, r = DATA.reach;
+      var tiles = [
+        ['Active people', num(k.users), delta(k.users, p.users), 'var(--success)'],
+        ['Active organizations', num(k.orgs), delta(k.orgs, p.orgs), 'var(--info)'],
+        ['Sessions', num(k.sessions), delta(k.sessions, p.sessions), ''],
+        ['Time per session', secs(k.avg_session_secs), delta(k.avg_session_secs, p.avg_session_secs), ''],
+        ['Screens per session', k.screens_per_session, delta(k.screens_per_session, p.screens_per_session), ''],
+        ['Daily stickiness', r.stickiness + '%', '<span class="stat-delta flat">' + num(r.dau) + ' today · ' + num(r.wau) + ' this week · ' + num(r.mau) + ' this month</span>', 'var(--purple)']
+      ];
+      document.getElementById('kpis').innerHTML = tiles.map(function (t) {
+        return '<div class="stat-tile"><div class="stat-label">' + t[0] + '</div><div class="stat-val num"' + (t[3] ? ' style="color:' + t[3] + '"' : '') + '>' + t[1] + '</div><div class="stat-sub">' + t[2] + '</div></div>';
+      }).join('');
+    }
+
+    function lineChart(rows, opts) {
+      var W = 800, H = 230, L = 40, R = 12, T = 12, B = 26;
+      var n = rows.length;
+      if (!n) return empty('No data in this period');
+      var max = rows.reduce(function (m, r) { return Math.max(m, r[opts.a], opts.b ? r[opts.b] : 0); }, 1);
+      var top = niceMax(max);
+      var X = function (i) { return L + (n === 1 ? (W - L - R) / 2 : i * (W - L - R) / (n - 1)); };
+      var Y = function (v) { return T + (H - T - B) * (1 - v / top); };
+      var svg = '<svg class="trend" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(opts.label) + '">';
+      for (var g = 0; g <= 4; g++) {
+        var v = top * g / 4, y = Y(v);
+        svg += '<line class="grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '"/><text class="axis" x="' + (L - 8) + '" y="' + (y + 4) + '" text-anchor="end">' + Math.round(v) + '</text>';
+      }
+      var every = Math.max(1, Math.ceil(n / 8));
+      for (var li = n - 1; li >= 0; li -= every) svg += '<text class="axis" x="' + X(li) + '" y="' + (H - 6) + '" text-anchor="' + (li === 0 ? 'start' : li === n - 1 ? 'end' : 'middle') + '">' + shortDay(rows[li].day) + '</text>';
+      if (opts.b) {
+        var area = 'M' + X(0) + ',' + Y(0) + rows.map(function (r, i) { return ' L' + X(i) + ',' + Y(r[opts.b]); }).join('') + ' L' + X(n - 1) + ',' + Y(0) + ' Z';
+        svg += '<path class="area-sessions" d="' + area + '"/><path class="line-sessions" d="M' + rows.map(function (r, i) { return X(i) + ',' + Y(r[opts.b]); }).join(' L') + '"/>';
+      }
+      svg += '<path class="line-users" d="M' + rows.map(function (r, i) { return X(i) + ',' + Y(r[opts.a]); }).join(' L') + '"/>';
+      if (n <= 31) rows.forEach(function (r, i) { svg += '<circle class="pt" cx="' + X(i) + '" cy="' + Y(r[opts.a]) + '" r="3"/>'; });
+      svg += '<line class="guide" id="' + opts.id + '-guide" x1="0" x2="0" y1="' + T + '" y2="' + (H - B) + '" style="display:none"/>';
+      svg += '<rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - T - B) + '" fill="transparent" data-chart="' + opts.id + '"/></svg><div class="tip" id="' + opts.id + '-tip"></div>';
+      return svg;
+    }
+    function niceMax(v) { var p = Math.pow(10, Math.floor(Math.log10(v))); var f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
+    function shortDay(iso) { var d = new Date(iso + 'T00:00:00'); return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); }
+
+    function attachChartHover(id, rows, lines) {
+      var wrap = document.getElementById(id + '-wrap'), rect = wrap.querySelector('[data-chart]');
+      if (!rect) return;
+      var tip = document.getElementById(id + '-tip'), guide = document.getElementById(id + '-guide');
+      var svg = wrap.querySelector('svg'), n = rows.length;
+      function move(ev) {
+        var box = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal;
+        var x = (ev.clientX - box.left) * vb.width / box.width;
+        var L = 40, R = 12;
+        var i = Math.round((x - L) / ((vb.width - L - R) / Math.max(1, n - 1)));
+        i = Math.max(0, Math.min(n - 1, i));
+        var cx = L + (n === 1 ? (vb.width - L - R) / 2 : i * (vb.width - L - R) / (n - 1));
+        guide.setAttribute('x1', cx); guide.setAttribute('x2', cx); guide.style.display = '';
+        tip.innerHTML = '<b>' + shortDay(rows[i].day) + '</b><br>' + lines(rows[i]).join('<br>');
+        tip.style.left = (cx * box.width / vb.width) + 'px'; tip.style.top = '8px'; tip.classList.add('on');
+      }
+      function leave() { tip.classList.remove('on'); guide.style.display = 'none'; }
+      rect.addEventListener('mousemove', move); rect.addEventListener('mouseleave', leave);
+      rect.addEventListener('touchstart', function (e) { move(e.touches[0]); }, { passive: true });
+    }
+
+    function renderTrend() {
+      var rows = DATA.daily;
+      document.getElementById('trend-wrap').innerHTML = lineChart(rows, { a: 'users', b: 'sessions', id: 'trend', label: 'Daily active people and sessions' });
+      attachChartHover('trend', rows, function (r) { return ['Active people: <b>' + num(r.users) + '</b>', 'Sessions: <b>' + num(r.sessions) + '</b>', 'Taps: <b>' + num(r.clicks) + '</b>']; });
+    }
+
+    function renderSplits() {
+      var s = DATA.splits;
+      function block(title, items, label) {
+        var total = items.reduce(function (t, i) { return t + i.users; }, 0);
+        if (!total) return '';
+        return '<div class="split-block"><div class="split-title">' + title + '</div><div class="stack">' + items.map(function (i, x) {
+          return '<span class="c' + (x % 6) + '" style="width:' + (100 * i.users / total) + '%" title="' + esc(label(i.key)) + '"></span>';
+        }).join('') + '</div><div class="key">' + items.map(function (i, x) {
+          return '<span><i class="c' + (x % 6) + '"></i>' + esc(label(i.key)) + ' · ' + num(i.users) + ' (' + Math.round(100 * i.users / total) + '%)</span>';
+        }).join('') + '</div></div>';
+      }
+      var html = block('Platform', s.platform, function (k) { return PLATFORM[k] || k; }) +
+        block('Role', s.role, function (k) { return ROLE[k] || 'Unknown'; }) +
+        block('App version', s.version, function (k) { return k === 'unknown' ? 'Unknown' : 'v' + k; });
+      document.getElementById('splits').innerHTML = html || empty('No data yet');
+    }
+
+    function renderHeat() {
+      var cells = {}, max = 0;
+      DATA.heatmap.forEach(function (c) { var d = (c.dow + 6) % 7; cells[d + ':' + c.hour] = c.sessions; max = Math.max(max, c.sessions); });
+      if (!max) { document.getElementById('heat').innerHTML = empty('No data yet'); return; }
+      var h = '<div class="heat"><span></span>';
+      for (var x = 0; x < 24; x++) h += '<span class="hh">' + (x % 3 === 0 ? x : '') + '</span>';
+      DOW.forEach(function (d, di) {
+        h += '<span class="hl">' + d + '</span>';
+        for (var hr = 0; hr < 24; hr++) {
+          var v = cells[di + ':' + hr] || 0;
+          h += '<span class="hc' + (v ? ' on' : '') + '" style="' + (v ? 'opacity:' + (0.18 + 0.82 * v / max).toFixed(2) : '') + '" title="' + d + ' ' + hr + ':00 · ' + v + ' sessions"></span>';
+        }
+      });
+      h += '</div><div class="heat-legend">Fewer<span></span>More sessions</div>';
+      document.getElementById('heat').innerHTML = h;
+    }
+
+    /* ───────────────────────── insights ───────────────────────── */
+    function buildInsights() {
+      var out = [], k = DATA.kpis, p = DATA.previous, r = DATA.reach, b = DATA.business || {};
+      function add(tone, title, text) { out.push({ tone: tone, title: title, text: text }); }
+
+      if (k.users || p.users) {
+        var ch = p.users ? Math.round(100 * (k.users - p.users) / p.users) : null;
+        if (ch === null) add('good', num(k.users) + ' people used the app', 'No activity was recorded in the period before, so this is a fresh start.');
+        else if (ch >= 10) add('good', 'Usage is growing: ' + ch + '% more active people', num(k.users) + ' this period against ' + num(p.users) + ' in the one before.');
+        else if (ch <= -10) add('warn', 'Usage dropped ' + Math.abs(ch) + '%', num(k.users) + ' active people against ' + num(p.users) + ' before. Check the "Gone quiet" list and recent releases.');
+        else add('info', 'Usage is steady', num(k.users) + ' active people, about the same as the period before.');
+      }
+      if (r.mau) {
+        if (r.stickiness >= 25) add('good', 'People come back often (' + r.stickiness + '% daily stickiness)', 'On an average day ' + r.stickiness + '% of monthly users are active. Good habit-forming product.');
+        else if (r.stickiness < 10) add('warn', 'Low daily habit (' + r.stickiness + '% stickiness)', 'Most people open the app only occasionally. Reminders, announcements and daily features (punch, requests) can raise this.');
+        else add('info', 'Stickiness is ' + r.stickiness + '%', 'Roughly ' + Math.round(r.stickiness * r.mau / 100) + ' people are active on a typical day.');
+      }
+      var busiest = null, hours = {};
+      DATA.heatmap.forEach(function (c) {
+        if (!busiest || c.sessions > busiest.sessions) busiest = c;
+        hours[c.hour] = (hours[c.hour] || 0) + c.sessions;
+      });
+      if (busiest && busiest.sessions) {
+        var bh = Object.keys(hours).reduce(function (a, h2) { return hours[h2] > (hours[a] || 0) ? h2 : a; }, '0');
+        add('info', 'Busiest time: ' + DOW[(busiest.dow + 6) % 7] + ' around ' + hourLabel(busiest.hour), 'Overall the app is busiest at ' + hourLabel(+bh) + '. Send announcements, offers and tips just before this window.');
+      }
+      var content = DATA.screens.filter(function (s) { return ['/admin/home', '/staff/home', '/', '/index'].indexOf(s.screen) < 0; })[0];
+      if (content) add('info', 'Most used area: ' + screenName(content.screen), num(content.views) + ' views by ' + num(content.users) + ' people, about ' + secs(content.avg_secs) + ' each time.');
+      var plat = DATA.splits.platform, ptotal = plat.reduce(function (t, i) { return t + i.users; }, 0);
+      if (ptotal && plat[0]) add('info', Math.round(100 * plat[0].users / ptotal) + '% of people use ' + (PLATFORM[plat[0].key] || plat[0].key), 'Aim your store listing, screenshots and ads at this platform first.');
+      var ver = DATA.splits.version, vtotal = ver.reduce(function (t, i) { return t + i.users; }, 0);
+      if (vtotal && ver.length > 1) {
+        var latest = ver.map(function (v) { return v.key; }).filter(function (v) { return v !== 'unknown'; }).sort(compareVersions).pop();
+        var onLatest = (ver.filter(function (v) { return v.key === latest; })[0] || { users: 0 }).users;
+        if (onLatest / vtotal < 0.7) add('warn', 'Only ' + Math.round(100 * onLatest / vtotal) + '% are on the newest version (v' + latest + ')', 'Older versions are still in use. Consider an update prompt or a push notification.');
+      }
+      var worst = null;
+      DATA.funnels.forEach(function (f) {
+        for (var i = 1; i < f.steps.length; i++) {
+          var a = f.steps[i - 1].users, c = f.steps[i].users;
+          if (a >= 5) { var drop = 100 * (a - c) / a; if (!worst || drop > worst.drop) worst = { drop: drop, f: f, from: f.steps[i - 1], to: f.steps[i] }; }
+        }
+      });
+      if (worst && worst.drop >= 40) add('warn', Math.round(worst.drop) + '% drop between "' + worst.from.label + '" and "' + worst.to.label + '"', 'In the "' + worst.f.title + '" journey. A tip, a video or a nudge at this step could win these people back.');
+      var up = DATA.funnels.filter(function (f) { return f.key === 'upgrade'; })[0];
+      if (up && up.steps[0].users >= 3) add(up.steps[2].users ? 'good' : 'warn', up.steps[0].users + ' people looked at billing, ' + up.steps[2].users + ' reached checkout', 'Follow up with the organizations that browsed plans but did not pay.');
+      if (DATA.at_risk_orgs.length) add('warn', DATA.at_risk_orgs.length + ' organization' + (DATA.at_risk_orgs.length > 1 ? 's' : '') + ' went quiet', 'They were active recently and have not opened the app for 7+ days. Biggest: ' + DATA.at_risk_orgs[0].org_name + '.');
+      if (k.users && (r.new_users || r.returning_users)) add('info', num(r.new_users) + ' new and ' + num(r.returning_users) + ' returning people', r.new_users > r.returning_users ? 'Mostly new faces: onboarding quality matters most right now.' : 'Mostly returning people: retention is carrying usage.');
+      if (b.features && b.orgs_total) {
+        var low = b.features.filter(function (f) { return f.key !== 'attendance'; }).sort(function (x, y) { return x.orgs - y.orgs; })[0];
+        if (low) add('info', 'Least adopted: ' + low.label.toLowerCase(), pct(low.orgs, b.orgs_total) + '% of organizations used it. A short video or in-app tip is the cheapest way to lift it.');
+      }
+      if (b.orders && b.orders.created >= 3) add(b.orders.paid / b.orders.created >= 0.5 ? 'good' : 'warn', Math.round(100 * b.orders.paid / b.orders.created) + '% of checkouts were paid', b.orders.paid + ' of ' + b.orders.created + ' orders. ' + (b.orders.paid / b.orders.created < 0.5 ? 'Look at payment failures and the checkout screen.' : 'Healthy payment completion.'));
+      if (b.video && b.video.views) add('info', num(b.video.views) + ' help-video views from ' + num(b.video.orgs) + ' organizations', 'Top video: ' + ((b.video.top[0] || {}).name || '—') + '. Make more videos like it.');
+      return out;
+    }
+    function hourLabel(h) { var s = h % 12 === 0 ? 12 : h % 12; return s + (h < 12 ? ' AM' : ' PM'); }
+    function compareVersions(a, b) {
+      var x = String(a).split('.').map(Number), y = String(b).split('.').map(Number);
+      for (var i = 0; i < Math.max(x.length, y.length); i++) { var d = (x[i] || 0) - (y[i] || 0); if (d) return d; }
+      return 0;
+    }
+    function renderInsights() {
+      var list = buildInsights();
+      var mark = { good: '✓', warn: '!', info: 'i' };
+      document.getElementById('insights').innerHTML = list.length ? list.slice(0, 9).map(function (i) {
+        return '<div class="insight ' + i.tone + '"><div class="dot">' + mark[i.tone] + '</div><div><b>' + esc(i.title) + '</b><span>' + esc(i.text) + '</span></div></div>';
+      }).join('') : empty('Nothing to report yet', 'Insights appear as soon as people use the app.');
+    }
+
+    /* ───────────────────────── behaviour ───────────────────────── */
+    function renderScreens() {
+      var rows = DATA.screens, max = rows.reduce(function (m, r) { return Math.max(m, r.views); }, 1);
+      document.getElementById('screens-body').innerHTML = rows.length ? rows.map(function (r) {
+        return '<tr><td><div class="cell-main">' + esc(screenName(r.screen)) + '</div><div class="cell-sub">' + esc(r.screen) + '</div><div class="mini-bar"><span style="width:' + Math.round(100 * r.views / max) + '%"></span></div></td><td class="num">' + num(r.views) + '</td><td class="num">' + num(r.users) + '</td><td class="num">' + (r.avg_secs ? secs(r.avg_secs) : '—') + '</td></tr>';
+      }).join('') : rowEmpty(4, 'No screen views yet');
+    }
+    function renderClicks() {
+      var rows = DATA.clicks, max = rows.reduce(function (m, r) { return Math.max(m, r.clicks); }, 1);
+      document.getElementById('clicks-body').innerHTML = rows.length ? rows.map(function (r) {
+        return '<tr><td><div class="cell-main">' + esc(r.target) + '</div><div class="cell-sub">on ' + esc(r.screen ? screenName(r.screen) : 'unknown screen') + '</div><div class="mini-bar"><span style="width:' + Math.round(100 * r.clicks / max) + '%"></span></div></td><td class="num">' + num(r.clicks) + '</td><td class="num">' + num(r.users) + '</td></tr>';
+      }).join('') : rowEmpty(3, 'No taps yet');
+    }
+    function renderFlows() {
+      var rows = DATA.flows;
+      document.getElementById('flows').innerHTML = rows.length ? bars(rows.map(function (f) {
+        return { label: screenName(f.from) + '  →  ' + screenName(f.to), value: f.count, text: num(f.count) + ' times' };
+      }), 'blue') : empty('No journeys yet', 'They appear once people move between screens.');
+    }
+    function actionLabel(a) {
+      var m = { 'AppOpened': 'App opened', 'LoginSuccess': 'Signed in', 'CompleteRegistration': 'Completed registration', 'Subscribe': 'Subscribed to a plan', 'AttendanceMarked:checkin': 'Punched in', 'AttendanceMarked:checkout': 'Punched out' };
+      var key = String(a).replace(/^event:/, '');
+      return m[key] || key.replace(/:/g, ' · ');
+    }
+    function renderKeyActions() {
+      var rows = DATA.key_actions;
+      document.getElementById('key-actions').innerHTML = rows.length ? bars(rows.map(function (a) {
+        return { label: actionLabel(a.action), value: a.count, text: num(a.count) + ' · ' + num(a.users) + ' people · ' + num(a.orgs) + ' orgs' };
+      }), 'purple') : empty('No key actions yet', 'Sign-ins, punches and subscriptions appear after the next app release is in use.');
+    }
+    function renderFunnels() {
+      document.getElementById('funnels').innerHTML = DATA.funnels.map(function (f) {
+        var first = f.steps[0].users;
+        return '<div class="funnel"><h4>' + esc(f.title) + '</h4><p>' + esc(f.description) + '</p>' + f.steps.map(function (s, i) {
+          var prev = i ? f.steps[i - 1].users : s.users;
+          var w = first ? Math.round(100 * s.users / first) : 0;
+          var note = i ? (prev ? Math.round(100 * s.users / prev) + '% of previous' : '') : (first ? '100%' : '');
+          return '<div class="fstep"><span class="nm" title="' + esc(s.screen) + '">' + esc(s.label) + '</span><div class="fbar s' + i + '"><span style="width:' + w + '%"></span></div><span class="val">' + num(s.users) + '<small>' + note + '</small></span></div>';
+        }).join('') + '</div>';
+      }).join('');
+    }
+
+    /* ───────────────────────── business ───────────────────────── */
+    function renderBusiness() {
+      var b = DATA.business || {}, o = b.orders || {};
+      var tiles = [
+        ['New organizations', num(b.new_orgs), delta(b.new_orgs, b.new_orgs_previous), 'var(--info)'],
+        ['Staff added', num(b.staff_added), '<span class="stat-delta flat">in this period</span>', ''],
+        ['On free trial', num(b.trials_active), '<span class="stat-delta flat">right now</span>', 'var(--warning)'],
+        ['Paying organizations', num(b.paid_active), '<span class="stat-delta flat">active subscriptions</span>', 'var(--success)'],
+        ['Revenue', money(o.revenue), delta(o.revenue, o.revenue_previous), ''],
+        ['Checkout completion', o.created ? Math.round(100 * o.paid / o.created) + '%' : '—', '<span class="stat-delta flat">' + num(o.paid) + ' of ' + num(o.created) + ' orders</span>', '']
+      ];
+      document.getElementById('biz-kpis').innerHTML = tiles.map(function (t) {
+        return '<div class="stat-tile"><div class="stat-label">' + t[0] + '</div><div class="stat-val num"' + (t[3] ? ' style="color:' + t[3] + '"' : '') + '>' + t[1] + '</div><div class="stat-sub">' + t[2] + '</div></div>';
+      }).join('');
+
+      var feats = (b.features || []).slice().sort(function (x, y) { return y.orgs - x.orgs; });
+      document.getElementById('features').innerHTML = feats.length && b.orgs_total ? bars(feats.map(function (f) {
+        return { label: f.label, value: f.orgs, text: pct(f.orgs, b.orgs_total) + '% · ' + num(f.orgs) + ' orgs · ' + num(f.records) + ' records' };
+      })) : empty('No data yet');
+
+      var sig = (b.signup_daily || []).map(function (s) { return { day: s.day, users: s.count, sessions: 0 }; });
+      document.getElementById('signup-wrap').innerHTML = sig.length ? lineChart(sig, { a: 'users', id: 'signup', label: 'New organizations per day' }) : empty('No sign-ups in this period');
+      if (sig.length) attachChartHover('signup', sig, function (r) { return ['New organizations: <b>' + num(r.users) + '</b>']; });
+      var src = b.install_sources || [];
+      document.getElementById('sources').innerHTML = src.length ? '<div class="split-title">Where new admins came from</div>' + bars(src.map(function (s) { return { label: s.key, value: s.count, text: num(s.count) }; }), 'purple') : '';
+
+      var mix = b.plan_mix || [];
+      document.getElementById('money').innerHTML =
+        '<div class="mini-stat"><span>Revenue this period</span><b>' + money(o.revenue) + '</b></div>' +
+        '<div class="mini-stat"><span>Revenue in the period before</span><b>' + money(o.revenue_previous) + '</b></div>' +
+        '<div class="mini-stat"><span>Orders started / paid</span><b>' + num(o.created) + ' / ' + num(o.paid) + '</b></div>' +
+        '<div class="mini-stat"><span>Trials running / paying organizations</span><b>' + num(b.trials_active) + ' / ' + num(b.paid_active) + '</b></div>' +
+        (mix.length ? '<div class="split-title" style="margin-top:16px">Active plans</div>' + bars(mix.map(function (m) { return { label: m.plan, value: m.orgs, text: num(m.orgs) + ' orgs' }; }), 'blue') : '');
+
+      var v = b.video || { top: [] }, lc = b.live_chat || {};
+      document.getElementById('support').innerHTML =
+        '<div class="mini-stat"><span>Help video views</span><b>' + num(v.views) + ' · ' + num(v.orgs) + ' orgs</b></div>' +
+        '<div class="mini-stat"><span>Organizations who wrote to live chat</span><b>' + num(lc.orgs) + ' · ' + num(lc.messages) + ' messages</b></div>' +
+        (v.top.length ? '<div class="split-title" style="margin-top:16px">Most watched videos</div>' + bars(v.top.map(function (t) { return { label: t.name, value: t.views, text: num(t.views) + ' views' }; }), 'warn') : '');
+
+      document.getElementById('top-orgs').innerHTML = DATA.top_orgs.length ? DATA.top_orgs.map(function (r) {
+        return '<tr><td><div class="cell-main">' + esc(r.org_name) + '</div><div class="cell-sub">last seen ' + esc(ago(r.last_seen)) + '</div></td><td class="num">' + num(r.users) + '</td><td class="num">' + num(r.sessions) + '</td><td class="num">' + num(r.events) + '</td></tr>';
+      }).join('') : rowEmpty(4, 'No activity yet');
+      document.getElementById('risk-orgs').innerHTML = DATA.at_risk_orgs.length ? DATA.at_risk_orgs.map(function (r) {
+        return '<tr><td><div class="cell-main">' + esc(r.org_name) + '</div><div class="cell-sub">' + num(r.users) + ' people</div></td><td class="num">' + num(r.events) + '</td><td class="when">' + esc(ago(r.last_seen)) + '</td></tr>';
+      }).join('') : rowEmpty(3, 'Nobody has gone quiet', 'Every recently active organization is still active.');
+    }
+
+    /* ───────────────────────── live stream ───────────────────────── */
+    var streamTimer = null;
+    function debouncedStream() { clearTimeout(streamTimer); streamTimer = setTimeout(loadStream, 300); }
+    async function loadStream() {
+      var q = '?limit=200';
+      var t = document.getElementById('stream-type').value, s = document.getElementById('stream-q').value.trim();
+      if (t) q += '&event_type=' + encodeURIComponent(t);
+      if (s) q += '&q=' + encodeURIComponent(s);
+      var body = document.getElementById('stream-body');
+      try { STREAM = await call('/gen-dashboard/clickstream/events' + q); } catch (e) { STREAM = []; body.innerHTML = rowEmpty(6, 'Could not load events', e.message); return; }
+      document.getElementById('stream-count').textContent = num(STREAM.length) + ' events';
+      body.innerHTML = STREAM.length ? STREAM.map(function (r) {
+        var what = r.event_type === 'screen' ? screenName(r.screen) : r.event_type === 'click' ? (String(r.target || '').indexOf('event:') === 0 ? actionLabel(r.target) : r.target) + (r.screen ? ' · on ' + screenName(r.screen) : '') : 'Opened the app';
+        return '<tr><td class="when">' + esc(ist(r.event_time)) + '</td><td><span class="tag-evt ' + esc(r.event_type) + '">' + esc(r.event_type === 'click' ? 'tap' : r.event_type) + '</span></td><td><div class="cell-main">' + esc(what) + '</div></td><td>' + esc(r.org_name || '—') + '</td><td>' + esc(r.user_name || '—') + '<div class="cell-sub">' + esc(ROLE[r.role_id] || '') + '</div></td><td class="when">' + esc((PLATFORM[r.platform] || '—') + (r.app_version ? ' · v' + r.app_version : '')) + '</td></tr>';
+      }).join('') : rowEmpty(6, 'No events', 'Nothing matches this filter yet.');
+    }
+
+    /* ───────────────────────── tabs, export, shell ───────────────────────── */
+    function switchTab(tab) {
+      activeTab = tab;
+      ['overview', 'behaviour', 'business', 'stream'].forEach(function (t) {
+        document.getElementById('pane-' + t).classList.toggle('hidden', t !== tab);
+        var b = document.getElementById('tab-' + t);
+        b.classList.toggle('active', t === tab); b.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      });
+      if (tab === 'stream') loadStream();
+    }
+
+    function today() { return new Date().toISOString().slice(0, 10); }
+    function exportSet() {
+      if (!DATA && activeTab !== 'stream') return null;
+      if (activeTab === 'behaviour') return { name: 'Screens_and_taps', title: 'Clockyn — Most opened screens', cols: [{ key: 'screen', label: 'Screen' }, { key: 'route', label: 'Route' }, { key: 'views', label: 'Views' }, { key: 'users', label: 'People' }, { key: 'avg', label: 'Avg time (s)' }],
+        rows: DATA.screens.map(function (r) { return { screen: screenName(r.screen), route: r.screen, views: r.views, users: r.users, avg: r.avg_secs }; }) };
+      if (activeTab === 'business') return { name: 'Feature_adoption', title: 'Clockyn — Feature adoption', cols: [{ key: 'label', label: 'Feature' }, { key: 'orgs', label: 'Organizations' }, { key: 'pct', label: '% of organizations' }, { key: 'records', label: 'Records' }],
+        rows: ((DATA.business || {}).features || []).map(function (f) { return { label: f.label, orgs: f.orgs, pct: pct(f.orgs, DATA.business.orgs_total), records: f.records }; }) };
+      if (activeTab === 'stream') return { name: 'Events', title: 'Clockyn — Clickstream events', cols: [{ key: 'time', label: 'Time (IST)' }, { key: 'type', label: 'Event' }, { key: 'what', label: 'What' }, { key: 'org', label: 'Organization' }, { key: 'user', label: 'Person' }, { key: 'device', label: 'Device' }],
+        rows: STREAM.map(function (r) { return { time: ist(r.event_time), type: r.event_type, what: r.event_type === 'screen' ? screenName(r.screen) : (r.target || ''), org: r.org_name || '', user: r.user_name || '', device: (PLATFORM[r.platform] || '') + (r.app_version ? ' v' + r.app_version : '') }; }) };
+      return { name: 'Daily_activity', title: 'Clockyn — Daily activity', cols: [{ key: 'day', label: 'Day' }, { key: 'users', label: 'Active people' }, { key: 'sessions', label: 'Sessions' }, { key: 'events', label: 'Events' }, { key: 'clicks', label: 'Taps' }], rows: DATA.daily };
+    }
+    function doExportExcel() { var e = exportSet(); if (e) exportExcel(e.rows, e.cols, 'Clockyn_Clickstream_' + e.name + '_' + today()); }
+    function doExportPDF() { var e = exportSet(); if (e) exportPDF(e.rows, e.cols, 'Clockyn_Clickstream_' + e.name + '_' + today(), e.title); }
+
+    function handleLogout() { showLogoutModal(); }
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+
+    load();
+  </script>
+
+</body>
+</html>

@@ -14,6 +14,8 @@ export const env = {
   androidStoreUrl: read(process.env.EXPO_PUBLIC_ANDROID_STORE_URL),
   iosStoreUrl: read(process.env.EXPO_PUBLIC_IOS_STORE_URL),
   /** Employee Access (staff / manager sign-in) is for the Android / iOS app only. Set to `true` ONLY for the browser test build. */
+  /** Usage analytics (screen views and button taps, no typed text). Set `off` to switch it off for a build. */
+  analyticsEnabled: !['off', 'false', '0'].includes(read(process.env.EXPO_PUBLIC_ANALYTICS).toLowerCase()),
   allowWebEmployee: read(process.env.EXPO_PUBLIC_ALLOW_WEB_EMPLOYEE).toLowerCase() === 'true',
 } as const;
 

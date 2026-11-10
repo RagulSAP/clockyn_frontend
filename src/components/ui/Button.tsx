@@ -1,5 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, View, type StyleProp, type ViewStyle } from 'react-native';
+import { trackTap } from '@/lib/analytics/tap';
 import { elevation, radii, spacing, useTheme, type ColorTokens } from '@/theme';
 import { Icon } from './Icon';
 import type { IconName } from './icons';
@@ -78,6 +79,7 @@ export function Button({
   const handlePress = () => {
     if (inactive) return;
     if (!noHaptic && (variant === 'primary' || variant === 'danger' || variant === 'success')) haptic('light');
+    trackTap(title);
     onPress?.();
   };
 
@@ -166,7 +168,14 @@ export function IconButton({
   return (
     <Touchable
       testID={testID}
-      onPress={onPress}
+      onPress={
+        onPress
+          ? () => {
+              trackTap(accessibilityLabel);
+              onPress();
+            }
+          : undefined
+      }
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
