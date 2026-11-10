@@ -34,6 +34,7 @@
   h1 { font-size: 1.7rem; margin: 4px 0 4px; }
   h2 { font-size: 1.3rem; margin: 0 0 12px; }
   h3 { font-size: 1.05rem; margin: 20px 0 8px; }
+  h4 { font-size: .95rem; margin: 16px 0 6px; }
   p { margin: 8px 0; }
   .sub { color: var(--muted); margin: 0 0 16px; }
   .pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
@@ -643,7 +644,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS support_faq_question_key ON clockyn_dev.suppor
       <li><b>Android:</b> nothing else for test builds (EAS creates the signing key). To publish on Google Play you need a Play Console account.</li>
       <li><b>iOS:</b> an Apple Developer account (paid) is required for any build you install on a phone.</li>
       <li>The backend must be reachable over <b>HTTPS</b> from a phone. Release builds block plain <code>http://</code>, and <code>localhost</code> never works on a phone.</li>
-      <li>Firebase (for push): an Android app and an iOS app with the same id as the app (default <code>com.clockyn.app</code>), and the two files <code>google-services.json</code> and <code>GoogleService-Info.plist</code>. For iOS also upload an APNs key in Firebase.</li>
+      <li>Firebase (for push): an Android app and an iOS app with the same id as the app (default <code>com.clockyn.app</code>), and the two files <code>google-services.json</code> and <code>GoogleService-Info.plist</code>. <code>google-services.json</code> is now committed in the repository, so Android builds find it by themselves; <code>GoogleService-Info.plist</code> is still needed for iOS. For iOS also upload an APNs key in Firebase.</li>
     </ul>
 
     <h3>Step 1: install the EAS tool and log in</h3>
@@ -670,21 +671,72 @@ eas env:create --name GOOGLE_SERVICE_INFO_PLIST --type file --value ./GoogleServ
     <p>For Android maps add <code>GOOGLE_MAPS_API_KEY</code> the same way. Skip any of these you are not using yet; the app still builds without push or maps.</p>
 
     <h3>Step 4: build</h3>
+    <p>Run these from <code>C:\POC\clockyn_frontend</code>. Each profile uses the EAS environment of the same name (Step 3), so the variables must exist there.</p>
     <table>
-      <tr><th>Goal</th><th>Command</th></tr>
-      <tr><td>Test on your own Android phone (development build, connects to your PC)</td><td><code>eas build --profile development --platform android</code></td></tr>
-      <tr><td>Test on an iPhone (development build; register the phone first)</td><td><code>eas device:create</code> then <code>eas build --profile development --platform ios</code></td></tr>
-      <tr><td>Share a test build with colleagues (Android APK)</td><td><code>eas build --profile preview --platform android</code></td></tr>
-      <tr><td>Play Store release (Android app bundle)</td><td><code>eas build --profile production --platform android</code></td></tr>
-      <tr><td>App Store release (iOS)</td><td><code>eas build --profile production --platform ios</code></td></tr>
+      <tr><th>Profile</th><th>Platform</th><th>Command</th><th>What you get</th></tr>
+      <tr><td><b>development</b></td><td>Android</td><td><code>eas build --profile development --platform android</code></td><td>APK with the dev menu. Connects to your PC (<code>npx expo start --dev-client -c</code>).</td></tr>
+      <tr><td><b>development</b></td><td>iOS (real iPhone)</td><td><code>eas device:create</code> (once per phone), then <code>eas build --profile development --platform ios</code></td><td>Dev build for registered iPhones.</td></tr>
+      <tr><td><b>development</b></td><td>iOS (simulator, Mac only)</td><td><code>eas build --profile development-simulator --platform ios</code></td><td>Build for the iOS simulator.</td></tr>
+      <tr><td><b>preview</b></td><td>Android</td><td><code>eas build --profile preview --platform android</code></td><td>Standalone APK to share with colleagues. No PC needed.</td></tr>
+      <tr><td><b>preview</b></td><td>iOS</td><td><code>eas device:create</code> (once per phone), then <code>eas build --profile preview --platform ios</code></td><td>Standalone build for registered iPhones only.</td></tr>
+      <tr><td><b>production</b></td><td>Android</td><td><code>eas build --profile production --platform android</code></td><td>App bundle (.aab) for Google Play. It cannot be installed directly.</td></tr>
+      <tr><td><b>production</b></td><td>iOS</td><td><code>eas build --profile production --platform ios</code></td><td>Build for App Store Connect / TestFlight.</td></tr>
     </table>
-    <div class="cmd"><pre>cd C:\POC\clockyn_frontend
-eas build --profile development --platform android</pre><button class="copy">Copy</button></div>
-    <p>When it finishes, EAS shows an install link and a QR code (internal profiles). Install it on the phone, then run <code>npx expo start --dev-client -c</code> on your PC (section 6).</p>
+
+    <h4>Copy and run</h4>
+    <div class="cmd"><pre># ---------- DEVELOPMENT ----------
+cd C:\POC\clockyn_frontend
+eas build --profile development --platform android
+eas build --profile development --platform ios
+eas build --profile development-simulator --platform ios
+
+# ---------- PREVIEW ----------
+eas build --profile preview --platform android
+eas build --profile preview --platform ios
+
+# ---------- PRODUCTION ----------
+eas build --profile production --platform android
+eas build --profile production --platform ios
+
+# ---------- BOTH PLATFORMS AT ONCE ----------
+eas build --profile development --platform all
+eas build --profile preview --platform all
+eas build --profile production --platform all</pre><button class="copy">Copy</button></div>
+
+    <h4>Clean build (<code>--clear-cache</code>)</h4>
+    <p>Add <code>--clear-cache</code> when a build behaves differently than expected after you changed native things: a new package, <code>google-services.json</code>, <code>app.config.ts</code>, a plugin, or an EAS environment variable. It is slower, because nothing from the earlier build is reused.</p>
+    <div class="cmd"><pre># ---------- DEVELOPMENT ----------
+eas build --profile development --platform android --clear-cache
+eas build --profile development --platform ios --clear-cache
+eas build --profile development-simulator --platform ios --clear-cache
+
+# ---------- PREVIEW ----------
+eas build --profile preview --platform android --clear-cache
+eas build --profile preview --platform ios --clear-cache
+
+# ---------- PRODUCTION ----------
+eas build --profile production --platform android --clear-cache
+eas build --profile production --platform ios --clear-cache</pre><button class="copy">Copy</button></div>
+
+    <h4>Check and download builds</h4>
+    <div class="cmd"><pre>eas build:list --limit 5
+eas build:view
+eas build:download --platform android --profile preview
+eas env:list --environment preview</pre><button class="copy">Copy</button></div>
+    <p>The last command shows which variables the <code>preview</code> environment really has (use <code>development</code> or <code>production</code> for the others). A variable added to only one environment is not used by the other profiles.</p>
+
+    <p>When a build finishes, EAS shows an install link and a QR code (development and preview). Install it on the phone. For a development build, then run <code>npx expo start --dev-client -c</code> on your PC (section 6). Uninstall an older Clockyn first if the phone refuses the install (a different signing key).</p>
     <ul>
       <li>The first Android build asks to <b>generate a keystore</b>: answer yes and let EAS keep it. Do not lose access to this Expo account, because the key belongs to the app.</li>
       <li>The first iOS build asks for your Apple login and creates the certificates for you.</li>
       <li>The <code>production</code> profile bumps the build number automatically (<code>autoIncrement</code>).</li>
+      <li><b>iOS preview and development</b> builds install only on iPhones registered with <code>eas device:create</code>. Register the phone before you build, otherwise the build does not include it.</li>
+    </ul>
+
+    <h4>See why a preview or production build crashes</h4>
+    <ul>
+      <li><b>Android, with the phone on USB (debugging on):</b> open the app so it crashes, then run <code>adb logcat -b crash -d</code>. The first lines name the cause.</li>
+      <li><b>EAS Observe:</b> the app reports crashes and errors to Expo. Open your project on expo.dev, then <b>Observe</b>, then Errors. Native crash reporting is still in preview, and an app that crashes on every launch may not get its report sent.</li>
     </ul>
 
     <h3>Step 5: publish to the stores (later)</h3>
@@ -706,6 +758,7 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
     <h2>Troubleshooting</h2>
     <table>
       <tr><th>Symptom</th><th>Likely cause and fix</th></tr>
+      <tr><td>The preview or production app closes the moment it opens (the development build works)</td><td>Find the cause with <code>adb logcat -b crash -d</code> (phone on USB) or in EAS Observe. Usual causes: <code>google-services.json</code> missing from the build, a variable set in the wrong EAS environment (check with <code>eas env:list --environment preview</code>), or an <code>http://</code> backend address (release builds block it). After fixing, build again with <code>--clear-cache</code>.</td></tr>
       <tr><td>The app still talks to the old backend</td><td>No <code>.env</code>, or the bundler was not restarted. Set <code>EXPO_PUBLIC_API_BASE_URL</code> and run <code>npx expo start -c</code>.</td></tr>
       <tr><td>Phone cannot reach <code>http://192.168.x.x:8080</code></td><td>Start the backend with <code>--host 0.0.0.0</code>, allow port 8080 in the Windows firewall, and keep the phone on the same Wi-Fi.</td></tr>
       <tr><td>Backend: <code>server closed the connection unexpectedly</code></td><td>The database instance is unhealthy or unreachable. Check it in the RDS console (status, security group, logs).</td></tr>

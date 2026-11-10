@@ -48,6 +48,13 @@ describe('validateStaffForm', () => {
     expect(validateStaffForm({ ...valid, email: 'asha@example.com' }, { emailRequired: true })).toEqual({});
     expect(validateStaffForm({ ...valid, email: 'nope' })).toEqual({}); // optional otherwise
   });
+
+  it('e-mail sign-in deployments make the phone number optional (email is mandatory instead)', () => {
+    const noPhone = { ...valid, phone: '', email: 'asha@example.com' };
+    expect(validateStaffForm(noPhone, { emailRequired: true })).toEqual({});
+    expect(validateStaffForm({ ...noPhone, email: '' }, { emailRequired: true })).toEqual({ email: 'Please input email address' });
+    expect(validateStaffForm(noPhone)).toEqual({ phone: 'Please input phone number' }); // mobile sign-in still needs it
+  });
 });
 
 describe('input helpers', () => {

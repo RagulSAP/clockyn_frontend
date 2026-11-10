@@ -1,0 +1,39 @@
+{
+  "slug": "add-staff",
+  "question": "How do I add a new staff member?",
+  "introIcon": "user-plus",
+  "badge": "Under a minute",
+  "watermark": "AuroCloud Technologies",
+  "voice": "Microsoft David Desktop",
+  "rate": 0,
+  "music": "generated",
+  "musicLufs": -28,
+  "scenes": [
+    {
+      "pill": "",
+      "caption": "How do I add a new <em>staff member</em>? It takes under a minute.",
+      "narration": "How do I add a new staff member? It takes under a minute."
+    },
+    {
+      "pill": "",
+      "caption": "On Home, find Manage and tap <em>Add</em> on the Staff card.",
+      "narration": "On Home, find Manage and tap Add on the Staff card.",
+      "startMark": "s2_start",
+      "anchors": [{ "mark": "s2_tap", "at": 3.0 }]
+    },
+    {
+      "pill": "",
+      "caption": "Fill in the name, phone, email, branch, department and gender.",
+      "narration": "Fill in the name, phone, email, branch, department and gender.",
+      "startMark": "s3_start",
+      "anchors": [{ "mark": "s3_end", "at": "realtime" }]
+    },
+    {
+      "pill": "",
+      "caption": "Tap <em>Add Staff</em>. Your employee can then sign in on their phone.",
+      "narration": "Tap Add Staff. Your employee can then sign in on their phone.",
+      "anchors": [{ "mark": "s4_tap", "at": 1.4 }]
+    }
+  ],
+  "endMark": "s4_end"
+}

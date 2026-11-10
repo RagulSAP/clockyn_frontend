@@ -96,7 +96,7 @@ export function StaffFormSections({
           />
           <TextField
             label="Phone Number"
-            required
+            required={!emailRequired}
             value={values.phone}
             onChangeText={(t) => setField('phone', t)}
             placeholder="Enter phone number"

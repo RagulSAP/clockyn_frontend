@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
+import { ObserveRoot, useObserve } from 'expo-observe';
 import { Stack, type NativeStackNavigationOptions } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -46,10 +47,14 @@ function useAppReady(): boolean {
 function RootContent() {
   const { isDark } = useTheme();
   const ready = useAppReady();
+  const { markInteractive } = useObserve();
 
   useEffect(() => {
-    if (ready) SplashScreen.hideAsync().catch(() => undefined);
-  }, [ready]);
+    if (!ready) return;
+    SplashScreen.hideAsync().catch(() => undefined);
+    // EAS Observe: startup is finished, the app can take input (only the first call per session is recorded).
+    markInteractive();
+  }, [ready, markInteractive]);
 
   return (
     <>
@@ -66,7 +71,10 @@ function RootContent() {
   );
 }
 
-export default function RootLayout() {
+// EAS Observe (crash + performance reporting) wraps the root; see https://docs.expo.dev/eas/observe/get-started/
+export default ObserveRoot.wrap(RootLayout);
+
+function RootLayout() {
   return (
     <GestureRoot style={styles.fill}>
       <SafeAreaProvider>

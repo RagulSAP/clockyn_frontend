@@ -6,7 +6,7 @@
 
 const OTP = '123456';
 
-const ORG = { id: 'org-0001', name: 'Acme Traders' };
+const ORG = { id: 'org-0001', name: process.env.VIDEO_ORG_NAME || 'Acme Traders' };
 
 /** Sign-in identities. `mobile` is what the login screens take; ids are what the API and the session use. */
 const USERS = {

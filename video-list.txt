@@ -1,0 +1,282 @@
+CLOCKYN TUTORIAL VIDEO LIST
+===========================
+29 videos (28 topics + 1 final walkthrough) for people who have never used Clockyn. Not one video per FAQ: each video answers the one question
+a new Admin or Employee asks at that moment. Make them with the skill "clockyn-screen-video" (SKILL.md in this folder).
+
+HOW TO USE THIS FILE (for Copilot)
+- The user picks videos by ID (for example "make V07"). Make ONE video per request, never all at once.
+- Use the TITLE as config.json "question" (it is also the Video Hub name). Use SLUG as config.json "slug".
+- The FLOW lines are a storyboard, not final wording. BEFORE writing narration, read the real screens
+  (src/features/<feature>/screens, e2e/specs) and use the exact labels and testIDs that exist. If the real
+  app differs from the FLOW, follow the real app and tell the user.
+- Video LENGTH has NO limit. The "~25 to 60 s" estimates in this list are only a starting guess. The goal is that the end user can do the task after watching, so cover everything they need (all required fields and
+  steps, the important optional parts, the result they should see, and the usual next action). If that needs 90 s or 3 minutes, make it that long. Never cut content to save time.
+- Before recording, write down what a first-time user must know for this question and check every item is in the video.
+- One main question and one clear outcome per video. Split into several videos only along natural tasks, and only when each part still fully answers its own question.
+- NO step numbers in the video: never say "Step one / Step two", never write them in captions, keep the top-right label empty.
+- SIGN-IN IS BY E-MAIL. Employees (and managers) sign in with their e-mail address. In every video: e-mail is REQUIRED, phone number is OPTIONAL, say "sign in with the email address", and record with `mock.setState({ userAuth: 'email' })`. Always run `npm run e2e:build` first so the video shows the current form (an old build still shows a red star on Phone Number).
+- COMPANY NAME IS "AuroCloud" in EVERY video (past and future). Record with the environment variable VIDEO_ORG_NAME=AuroCloud (the mock server reads it
+  in e2e/mock-server/fixtures.js; without it the screens show "Acme Traders"). In V01 type "AuroCloud" as the company name. After rendering,
+  look at the stills for any leftover "Acme Traders" / "Sunrise Traders".
+- ROLE = the role to log in as in the recording (loginAs): admin | manager | staff | fieldStaff.
+- CAN RECORD: yes = plain app screens; partly = something in the flow cannot be shown in the web build
+  (camera, GPS, payment gateway, push notification, OS permission pop-ups): show everything up to that point, narrate
+  the rest, and say what is missing in the hand-over; no = needs a real phone, skip until the user asks.
+- STATUS: DONE (file exists), REQUESTED (user already asked Copilot for it), TODO.
+- Videos are for the Video Hub (web console > Video Hub > Upload video, MP4 up to 500 MB, name up to 150 chars).
+
+SUGGESTED ORDER (the story of a new company: set up > staff start using it > daily running > pay > CRM/chat > plan/help)
+  Week 1 (set up):        V01 V02 V03 V04 V05 V06 V07                       (all DONE)
+  Week 1 (employees):     V16 V17 V18 V19                                    first login > face > punch > fixes
+  Week 2 (daily use):     V08 V09 V20 V21 V10 V22                            admin sees attendance > employee checks own,
+                                                                             applies leave > admin approves (V21 before V10),
+                                                                             new phone (V22, the admin approval is in V10)
+  Week 3 (pay):           V11 V12 V13 V23 V14 V15 V24                        set up salary > monthly salary > payslips >
+                                                                             employee payslip > bonus/advance > expenses
+  Week 3 (CRM, chat):     V25 V26
+  Week 4 (plans, help):   V27 V28
+  Last:                   V29 (full end-to-end walkthrough, built from the approved videos above)
+  Done so far:            V01 to V07 only (V09 only exists as an old-style video, so it is still TODO)
+
+
+=============================================================================================
+PART 1 - ADMIN (owner / HR): set up the company and run it
+=============================================================================================
+
+--- Get started ---------------------------------------------------------------------------
+
+V01  How do I register my company and log in to Clockyn?
+     SLUG: register-and-login     WHO: Admin     ROLE: new user     LENGTH: ~28 to 60 s     PRIORITY: P1
+     FLOW: Open app > Admin Portal > enter e-mail > Get OTP > enter the 6-digit code > (new e-mail) Register
+           Company: company name, address, state, district, pincode, first branch > finish > Home opens.
+           Mention the 1-month free trial.
+     CAN RECORD: yes (mock OTP is 123456; register a fresh e-mail (demo@clockyn.in))     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V01-register-and-login.mp4
+
+V02  What is on the Home screen and what do the bottom tabs do?
+     SLUG: home-tour     WHO: Admin     ROLE: admin     LENGTH: ~25 to 60 s     PRIORITY: P1
+     FLOW: Home: today's attendance cards (present, late, working) > Quick Actions (Staff Location, View Reports,
+           Requests) > Manage cards (Staff, Branches, Departments) > bottom tabs: Home, CRM, Chat, Settings, Support.
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V02-home-tour.mp4
+
+V03  How do I add my branches and departments?
+     SLUG: add-branch-department     WHO: Admin     ROLE: admin     LENGTH: ~25 to 60 s     PRIORITY: P1
+     FLOW: Home > Manage > Branches "+ Add" (name, address, map location, radius) > save > Departments "+ Add" > save.
+           Say why: staff are assigned to a branch and department, and punch-in is checked against the branch location.
+     CAN RECORD: yes (map tiles are stubbed in the web build: narrate, do not zoom on the map)     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V03-add-branch-department.mp4
+
+V04  How do I add a new staff member?
+     SLUG: add-staff     WHO: Admin     ROLE: admin     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V04-add-staff.mp4 (new full walkthrough; the old C:\POC\clockyn_faq_videos\faq-add-staff-v2.mp4 has the old look)
+
+V05  How do I add a manager and choose what they can do?
+     SLUG: add-manager-permissions     WHO: Admin     ROLE: admin     LENGTH: ~28 to 60 s      PRIORITY: P2
+     FLOW: Settings > Managers > Add > name, phone, branch scope > pick permissions (for example Requests, Reports)
+           > save > open the manager and show the permission list. Say: a manager only sees what you allow.
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V05-add-manager-permissions.mp4 (real app: you pick an EXISTING staff member, not a new name/phone)
+
+V06  How do I set up shifts, weekly offs and holidays?
+     SLUG: shifts-offs-holidays     WHO: Admin     ROLE: admin     LENGTH: ~30 to 60 s      PRIORITY: P1
+     FLOW: Settings > Shifts > Add New Shift (name, start time, end time) > Assign Staff > Off Days (for example Sunday)
+           > Holidays > Add Holiday (name, date) > save.
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V06-shifts-offs-holidays.mp4 (real app: Off Days and Holidays are both under Settings > Company Settings > Holiday Management)
+
+V07  How do I decide when an employee is marked late or absent?
+     SLUG: attendance-rules     WHO: Admin     ROLE: admin     LENGTH: ~25 to 60 s     PRIORITY: P2
+     FLOW: Settings > Attendance Rule > Late Punch-In Count, Punch Allowed / No Punch / Block Attendance options >
+           save. Explain each option in plain words (what the employee will see).
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V07-attendance-rules.mp4 (real app: the Attendance Rule screen only has Late Punch-In Count 1-10 and Consider As = Half Day or Leave; there are no Punch Allowed / No Punch / Block Attendance options there, those belong to holidays and are in V06)
+
+--- Daily attendance ----------------------------------------------------------------------
+
+V08  How do I see who is present, late or absent today?
+     SLUG: todays-attendance     WHO: Admin     ROLE: admin     LENGTH: ~22 to 60 s      PRIORITY: P1
+     FLOW: Home attendance cards (Present, Late Punched-In, Working, Absent) > tap a card to open the list > open one
+           employee to see punch times. Optional: Staff Location (live map; needs the Elite plan).
+     CAN RECORD: yes (map is stubbed)     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V08-todays-attendance.mp4 (real app: the rings are Total Staff, Absent, Late Punched-In, Punched-In, Working, Punched Out; shows Acme Traders, to be re-recorded as AuroCloud)
+
+V09  How do I check employee attendance and download a report?
+     SLUG: check-attendance-download-report     WHO: Admin     ROLE: admin     LENGTH: as long as needed     PRIORITY: P1
+     FLOW: Home > View Reports > Attendance Report > pick a date range / branch > see each employee's days (present,
+           late, absent, leave) > open one employee > Export / Download. End on the table (the browser download shows no message).
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V09-check-attendance-download-report.mp4 (real app: View Reports > Generate tab > Attendance Reports: Monthly Summary, Staff-wise Detailed Report, Late Report, Overtime Report; Export gives PDF / DOC / Excel / CSV; Monthly Summary makes a PDF per person or for All Staff; every report is saved under View Reports). Company shown as AuroCloud.
+     NOTE: the old video C:\POC\clockyn_faq_videos\check-attendance-download-report.mp4 is in the old style and is replaced by this one.
+
+V10  How do I approve or reject leave, permission and shift-change requests?
+     SLUG: approve-requests     WHO: Admin / Manager     ROLE: admin     LENGTH: ~28 to 60 s      PRIORITY: P1
+     FLOW: Home > Quick Actions > Requests (red badge = pending) > pick a type (Leave, Permission, Shift Change,
+           Device Change) > open a request > Approve (or Reject with a reason) > status changes. Mention that the
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V10-approve-requests.mp4 (real app: Reject asks for confirmation only, there is no reason field; each decision can be changed later; Device Change approval is narrated as letting the employee sign in on the new phone). Company shown as AuroCloud.
+
+--- Pay and expenses ----------------------------------------------------------------------
+
+V11  How do I set up salary for my staff?
+     SLUG: setup-salary     WHO: Admin     ROLE: admin     LENGTH: ~30 to 60 s     PRIORITY: P2
+     FLOW: Reports/Payroll > pick a pay type (monthly, daily wages or hourly) > create a wage template > assign it to
+           staff > View Staff Salary (salary sheet) to check.
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V11-setup-salary.mp4 (real app: Settings > Salary Structure > Monthly Fixed / Daily Wages / Hourly Calculation / Incentive-OT-Bonus; "Fine / Deduction" is Coming soon; wage templates are a single amount (Day Pay N, Hour-Pay-N) then Assign Staff; the salary sheet's Type badge is a view/export override only). Company shown as AuroCloud.
+
+V12  How do I see monthly salary and download it?
+     SLUG: monthly-salary-download     WHO: Admin     ROLE: admin     LENGTH: ~25 to 60 s      PRIORITY: P2
+     FLOW: Reports > Salary Reports > Monthly Salary > choose month > see each employee's payable amount > Export >
+           Download as Excel.
+     CAN RECORD: yes (the download shows no message in the browser; end on the table)     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V12-monthly-salary-download.mp4 (real app: Monthly Salary is a pay list: stat cards, Payment Progress, Pay / Pay Selected / Pay All with a confirmation; the download is on View Staff Salary > Export (PDF / DOC / Excel), not on Monthly Salary). Company shown as AuroCloud.
+
+V13  How do I create and share payslips?
+     SLUG: payslips     WHO: Admin     ROLE: admin     LENGTH: ~28 to 60 s      PRIORITY: P2
+     FLOW: Payroll > Payslips > create payslip (earnings, deductions) > assign to staff > employee sees it under Payslip.
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V13-payslips.mp4 (real app: Settings > Salary Structure > Monthly Fixed > Add; Basic Salary and House Rent Allowance required, EPF / Professional Tax / Health Insurance optional, custom earning and deduction rows; Assign Staff has a preview (eye) and Branch / Department filters; one payslip per person; the employee sees it from Home > Attendance > Payslip). Company shown as AuroCloud.
+
+V14  How do I add a bonus, an advance or an incentive?
+     SLUG: bonus-advance-incentive     WHO: Admin     ROLE: admin     LENGTH: ~25 to 60 s      PRIORITY: P3
+     FLOW: Payroll > Bonus / Advance > pick staff > amount and note > save > it shows in that month's salary.
+           Then Incentive and Overtime in one sentence each.
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V14-bonus-advance-incentive.mp4 (real app: an advance is added per person on Staff Details > Advance tab (Add Advance / View Advance), amount and date, no note field; Bonus, Overtime and Incentive are templates under Settings > Salary Structure > Incentive / OT / Bonus: Bonus = % of Basic Salary for a month and year, Overtime = duration plus amount, Incentive = Count Basis or Turnover Basis; each is then assigned to staff). Company shown as AuroCloud.
+
+V15  How do I review my team's expense claims?
+     SLUG: review-expenses     WHO: Admin     ROLE: admin     LENGTH: ~25 to 60 s      PRIORITY: P3
+     FLOW: Expenses > Bills / Travel / Odometer > open a claim > approve or reject.
+     CAN RECORD: yes (receipt photos are placeholders)     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V15-review-expenses.mp4 (real app: Settings > Expenses & Allowances > Odometer / Travel Ticket / Other Bills; Odometer has the per-km allowance rate (editable, whole rupees) and amount = distance x rate; approving or rejecting asks for confirmation and a decision cannot be changed later; there is no reject reason; date filter; the photos are placeholder images). Company shown as AuroCloud.
+
+=============================================================================================
+PART 2 - EMPLOYEE (staff): first day to daily use
+=============================================================================================
+Employee screens open only in the Android / iOS app in production. In the web build used for recording the
+e2e build turns them on (EXPO_PUBLIC_ALLOW_WEB_EMPLOYEE=true). Do not show a browser address bar.
+
+V16  How do I log in to Clockyn as an employee for the first time?
+     SLUG: employee-first-login     WHO: Employee     ROLE: none (login screen)     LENGTH: ~25 to 60 s     PRIORITY: P1
+     FLOW: Install the app >      Employee Access > enter the e-mail address your company added > OTP > Home opens.
+                Say: if the e-mail is not accepted, ask the admin to add you.
+     CAN RECORD: yes (mock OTP 123456)     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V16-employee-first-login.mp4 (also covers the permission guide, the employee Home, logout, and the "There is no user with this email address" message)
+
+V17  How do I set up my face for attendance?
+     SLUG: setup-face     WHO: Employee     ROLE: staff     LENGTH: ~28 to 60 s     PRIORITY: P1
+     FLOW: Home > Register Face > allow camera > look at the camera in good light > capture > success message.
+           Say why: your face is your punch-in.
+     CAN RECORD: partly (the web build uses a fake camera; show the screens and the success state)
+     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V17-setup-face.mp4 (real app: the button is Setup Face, it takes 4 guided photos, a preview with Retake / Register Face, then Face Registered > Get Started; also shows the failure message and the tips sheet)
+
+V18  How do I punch in and punch out?
+     SLUG: punch-in-out     WHO: Employee     ROLE: staff     LENGTH: ~28 to 60 s     PRIORITY: P1
+     FLOW: Home > Punch In > face check + location check > "Punched in" with the time > later Punch Out > day total
+           shown. Say: you must be at your branch location.
+     CAN RECORD: partly (fake camera and fixed location; the real GPS and face match cannot be shown)
+     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V18-punch-in-out.mp4 (real app: the session limit is a company setting, default 3 a day, so the Limit Reached state is narrated, not shown)
+
+V19  What if punch-in does not work? (location, camera and permission fixes)
+     SLUG: fix-punch-in-problems     WHO: Employee     ROLE: staff     LENGTH: ~28 to 60 s     PRIORITY: P1
+     FLOW: Settings > App Permissions > Camera, Location, Notifications > "Open Settings" to switch them on >
+           come back and punch in again. Also: face not recognised -> re-register face; wrong branch -> ask admin.
+           Do not film OS pop-ups (not possible); show the in-app permission screen only.
+     CAN RECORD: partly     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V19-fix-punch-in-problems.mp4 (real app: there is no re-register button for employees, so it shows the retry hint and the tips sheet instead)
+
+V20  How do I check my own attendance for the month?
+     SLUG: my-attendance     WHO: Employee     ROLE: staff     LENGTH: ~22 to 60 s      PRIORITY: P2
+     FLOW: Home > Attendance Calendar > pick month > tap a day to see punch times > colours (present, late, leave, holiday).
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V20-my-attendance.mp4 (real app: legend is Present, Absent, Leave, Half Day, Sunday and late days say Late; there is no holiday colour; the calendar also has Advance Salary and Payslip buttons, so those are covered here too. Recorded on the 15th of the month so the calendar has history.) Company shown as AuroCloud.
+
+V21  How do I apply for leave or permission?
+     SLUG: apply-leave-permission     WHO: Employee     ROLE: staff     LENGTH: ~28 to 60 s      PRIORITY: P1
+     FLOW: More > Requests > New Request > Leave Request (dates, reason) > Submit > My Requests shows Pending.
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V21-apply-leave-permission.mp4 (real app: Home > Requests > Leave Request (multi-date calendar, reason), Permission (date, start and end time up to 6 h, reason), Shift Change (New Request / My Requests tabs), Device Change mentioned; the hub says requests go to the manager). Company shown as AuroCloud.
+
+V22  I got a new phone. How do I move my account?
+     SLUG: new-phone-device-change     WHO: Employee     ROLE: none (login screen)     LENGTH: ~25 to 60 s     PRIORITY: P2
+     FLOW: Login on the new phone > "this device is not registered" message > Device Change Request > reason > submit >
+           admin approves (show in V10) > log in again.
+     CAN RECORD: yes (mock has a device-change flow)     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V22-new-phone-device-change.mp4 (real app: on a new phone the sign-in shows "You are logging in from a different device" with a Request Access button, which opens the Device Change Request screen; after the admin approves, the same e-mail shows "Your device change request was approved. Please log in again with OTP on your new device"; the admin approval itself is shown off-screen here and in V10). Company shown as AuroCloud.
+
+V23  Where do I see my payslip, salary and advances?
+     SLUG: my-payslip     WHO: Employee     ROLE: staff     LENGTH: ~22 to 60 s      PRIORITY: P3
+     FLOW: Settings or More > Payslip > month > earnings and deductions > Bonus / Advance list.
+     CAN RECORD: yes     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V23-my-payslip.mp4 (real app: the employee opens it from Home > Attendance, under the calendar: Payslip and Advance Salary (sheet title Bonus / Advance); the payslip shows the assigned template for the current month, net pay in words; there is no month picker). Company shown as AuroCloud.
+
+V24  How do I submit an expense or travel claim?
+     SLUG: submit-expense     WHO: Employee     ROLE: staff / fieldStaff     LENGTH: ~28 to 60 s      PRIORITY: P3
+     FLOW: More > Expenses > Bills (amount, photo) or Travel / Odometer > submit > status Pending.
+     CAN RECORD: partly (photo capture is a fake image)     STATUS: DONE
+     FILES: C:\POC\clockyn_videos\week1-setup\V24-submit-expense.mp4 (real app: Home > Expenses (quick action) > Odometer / Travel Tickets / Other Bills; travel and bills need a photo and an amount, odometer needs a start reading then a stop reading, each with a photo and KM; the browser file picker stands in for the phone camera, so the photo is a placeholder image). Company shown as AuroCloud.
+
+=============================================================================================
+PART 3 - CRM AND CHAT (admin and employees)
+=============================================================================================
+
+V25  How do I add leads and give them to my team?
+     SLUG: crm-leads     WHO: Admin     ROLE: admin     LENGTH: ~30 to 60 s      PRIORITY: P2
+     FLOW: CRM tab > Add lead (name, phone, category) > save > Assign To (staff) > status choices (new, contacted,
+           interested, converted, not interested). Say how employees then see it in their CRM tab.
+     CAN RECORD: yes     STATUS: TODO
+
+V26  How do I chat with my team and send an announcement?
+     SLUG: chat-and-announcements     WHO: Admin     ROLE: admin     LENGTH: ~30 to 60 s      PRIORITY: P2
+     FLOW: Chat tab > open a staff member and send a message > Groups: create a group > Announcements: write a message
+           and choose everyone, a branch, a department or selected staff > send. Employees see it in their Chat tab.
+     CAN RECORD: yes     STATUS: TODO
+
+=============================================================================================
+PART 4 - PLANS, PAYMENTS AND HELP (admin)
+=============================================================================================
+
+V27  How do I upgrade my plan and pay, and where are my invoices?
+     SLUG: upgrade-plan-invoices     WHO: Admin     ROLE: admin     LENGTH: ~30 to 60 s      PRIORITY: P1
+     FLOW: Settings > Your Plan & Validity (trial end date, staff limit) > Buy a Plan > choose a plan > coupon (optional)
+           > Pay > success > Billing History > download invoice.
+     CAN RECORD: partly (the payment window is stubbed in the web build: stop at "Pay", narrate the rest, end on the
+           invoice list)     STATUS: TODO
+
+V28  Where do I get help? (FAQ, videos, live chat and feature requests)
+     SLUG: get-help-support     WHO: Admin and Employee     ROLE: admin     LENGTH: ~25 to 60 s     PRIORITY: P1
+     FLOW: Support tab > FAQ (search "attendance", open an answer) > Videos > Live Chat (send a message) > Suggest a
+           Feature. Say: these help pages and these videos are always in the Support tab.
+     CAN RECORD: yes     STATUS: TODO
+
+
+=============================================================================================
+FINAL VIDEO - FULL WALKTHROUGH (make LAST, only after V01-V28 are done)
+=============================================================================================
+
+V29  Clockyn end-to-end walkthrough (admin setup > employee daily use > manager review)
+     SLUG: full-walkthrough     WHO: Admin, Manager and Employee     ROLE: admin, then staff     LENGTH: as long as needed
+     FLOW: One continuous story that follows the order of V01-V28: register and sign in > Home > branches and
+           departments > add staff and manager > shifts, offs, holidays > attendance rules > employee sets up face and
+           punches in/out > attendance review and corrections > leave > salary and payslips > reports > CRM and chat >
+           plan and support. Re-uses the already-approved scenes; chapter title cards between sections; no step numbers.
+     CAN RECORD: yes (recorded in several parts and joined into one MP4)     STATUS: TODO
+
+
+=============================================================================================
+LATER / ONLY IF ASKED (do not make now)
+=============================================================================================
+  - Staff Location live map and field-staff trail (needs real GPS data)
+  - Overtime and count-basis / turnover payroll types in detail
+  - Reports in detail: Late Report, Overtime Report, Employee Shifts report, Employee Details
+  - Company profile edit, theme (Light / Dark / System), account deletion request, privacy policy
+  - Bulk staff import, multiple companies
+  - Anything that needs a real phone: push notifications, biometric lock, real payment, real GPS, OS permission pop-ups
+
+CHECKLIST BEFORE HANDING OVER ANY VIDEO
+  [ ] Narration uses the exact on-screen labels   [ ] Everything the end user needs is covered (length is whatever that takes)   [ ] Stills checked frame by frame
+  [ ] Watermark and (empty) top-right label as set in config.json   [ ] Temporary recording spec deleted
+  [ ] Said what was not shown (partly-recordable parts) and that the audio was not listened to

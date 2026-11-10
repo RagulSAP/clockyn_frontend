@@ -66,11 +66,12 @@ export const EMAIL_INVALID_MESSAGE = 'Enter a valid email address';
 /**
  * Required-field validation (v1 has no phone format rule; its e-mail was optional).
  * `emailRequired`: the deployment signs in by e-mail (backend `USER_AUTH=email`), so a staff member without a valid e-mail
- * could never sign in.
+ * could never sign in. In that mode the phone number is only contact data, so it becomes optional (the e-mail is mandatory instead).
  */
 export function validateStaffForm(values: StaffFormValues, opts: { emailRequired?: boolean } = {}): StaffFormErrors {
   const errors: StaffFormErrors = {};
   for (const { field, message } of STAFF_REQUIRED) {
+    if (field === 'phone' && opts.emailRequired) continue;
     if (values[field].trim() === '') errors[field] = message;
   }
   if (opts.emailRequired) {

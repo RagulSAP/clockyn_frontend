@@ -1,0 +1,122 @@
+/**
+ * TEMPORARY recording spec. Copy to  e2e/specs/zz-record-<slug>.spec.ts , edit the "FLOW" section, run (see SKILL.md step 4), then DELETE it.
+ * It drives the REAL app (web build, phone viewport, mock backend), records a CDP screencast, every tap position and named "marks".
+ * Output: $VIDEO_WORK_DIR/live/f00000.jpg ... and live/live.json  (frames, taps, marks, viewport).
+ *
+ * The example flow below is "add a staff member"; replace it with the flow of your video. Rules that keep the video looking right:
+ *  - Always tap through tap()/type()/pick() so the finger marker lands where the tap really happened (it waits for the element to stop moving).
+ *  - Take a mark() for every moment config.json refers to (startMark / anchors[].mark / endMark).
+ *  - Only use real labels/testIDs you have verified in the app; the narration must describe exactly what the screen shows.
+ */
+import * as fs from 'fs';
+
+import { BRANCHES, DEPARTMENTS, expect, loginAs, test, visit } from '../support';
+
+const WORK = process.env.VIDEO_WORK_DIR;
+const OUT = `${WORK}/live`;
+
+test('record the flow', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'phone', 'phone viewport only (390x844, 3x)');
+  test.skip(!WORK, 'set VIDEO_WORK_DIR to the work folder');
+  test.setTimeout(180_000);
+  fs.rmSync(OUT, { recursive: true, force: true });
+  fs.mkdirSync(OUT, { recursive: true });
+
+  // ── start state: log in as the role the video is for ('admin' | 'manager' | 'staff' | 'fieldStaff') and open the first screen
+  await loginAs(page, 'admin');
+  await visit(page, '/admin/home');
+  await expect(page.getByTestId('admin-home')).toBeVisible();
+  await expect(page.getByTestId('manage-add-staff')).toBeVisible();
+  await page.waitForTimeout(1800); // entrance animations finished, so the first frame is calm
+
+  // ── recorder (do not change)
+  const frames: { f: string; ts: number }[] = [];
+  const taps: { t: number; x: number; y: number }[] = [];
+  const marks: Record<string, number> = {};
+  const mark = (name: string) => void (marks[name] = Date.now() / 1000);
+
+  const cdp = await page.context().newCDPSession(page);
+  let n = 0;
+  cdp.on('Page.screencastFrame', (fr: { data: string; sessionId: number; metadata: { timestamp?: number } }) => {
+    const f = `f${String(n++).padStart(5, '0')}.jpg`;
+    fs.writeFileSync(`${OUT}/${f}`, Buffer.from(fr.data, 'base64'));
+    frames.push({ f, ts: fr.metadata.timestamp ?? Date.now() / 1000 });
+    void cdp.send('Page.screencastFrameAck', { sessionId: fr.sessionId }).catch(() => undefined);
+  });
+  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: 1170, maxHeight: 2532, everyNthFrame: 1 });
+  await page.waitForTimeout(300);
+
+  // ── helpers (do not change). Tap position is read when the element has STOPPED moving: scrolls and sheet slide-ups shift it.
+  const stableBox = async (loc: ReturnType<typeof page.getByTestId>) => {
+    let prev = await loc.boundingBox();
+    for (let i = 0; i < 40; i++) {
+      await page.waitForTimeout(40);
+      const cur = await loc.boundingBox();
+      if (prev && cur && Math.abs(cur.x - prev.x) < 0.5 && Math.abs(cur.y - prev.y) < 0.5 && Math.abs(cur.height - prev.height) < 0.5) return cur;
+      prev = cur;
+    }
+    return prev!;
+  };
+  /** tap a testID (string) or any locator, e.g. page.getByRole('radio', { name: 'Female' }) */
+  const tap = async (id: string | ReturnType<typeof page.getByRole>) => {
+    const loc = typeof id === 'string' ? page.getByTestId(id) : id;
+    const b = await stableBox(loc.first());
+    taps.push({ t: Date.now() / 1000, x: b.x + b.width / 2, y: b.y + b.height / 2 });
+    await loc.first().click();
+  };
+  /** tap a text field and type into it like a person (visible typing) */
+  const type = async (id: string, text: string) => {
+    await tap(id);
+    await page.getByTestId(id).pressSequentially(text, { delay: 26 });
+  };
+  /** open a dropdown/sheet by testID and choose an option (radio) by its label */
+  const pick = async (trigger: string, option: string) => {
+    await tap(trigger);
+    await tap(page.getByRole('radio', { name: option }));
+    await page.waitForTimeout(110);
+  };
+  /** smooth scroll so the element is centred (a jump looks bad in the video). Wait ~1.4 s after a long scroll. */
+  const scrollTo = (id: string) => page.evaluate((tid) => document.querySelector(`[data-testid="${tid}"]`)!.scrollIntoView({ block: 'center', behavior: 'smooth' }), id);
+  const smoothTo = async (id: string) => {
+    await scrollTo(id);
+    await page.waitForTimeout(450);
+  };
+
+  // ═════════════════════ FLOW: replace from here to the "end" mark ═════════════════════
+  // Scene 2 of config.json: Home -> Manage -> Add Staff. The tap is narrated `at` seconds after the scene starts (config.json), so pace the recording about the same; the render re-times small differences.
+  mark('s2_start');
+  await page.waitForTimeout(1000);
+  await scrollTo('manage-add-staff'); // scroll down to the Manage cards (~1.4 s)
+  await page.waitForTimeout(2400);
+  mark('s2_tap');
+  await tap('manage-add-staff');
+  await page.waitForURL(/\/admin\/staff\/edit/);
+  await expect(page.getByTestId('staff-name')).toBeVisible();
+  await page.waitForTimeout(500);
+
+  // Scene 3: fill the form
+  mark('s3_start');
+  await type('staff-name', 'Priya Sharma');
+  await type('staff-phone', '9876543210');
+  await type('staff-email', 'priya@acme.in');
+  await smoothTo('staff-branch'); // the Assignment fields are below the fold
+  await pick('staff-branch', BRANCHES.hq.name);
+  await pick('staff-dept', DEPARTMENTS.sales.name);
+  await pick('staff-gender', 'Female');
+  mark('s3_end');
+
+  // Scene 4: submit (leave a calm 1.9 s so the finger can travel to the button while the form rests, then tap)
+  await page.waitForTimeout(1900);
+  mark('s4_tap');
+  await tap('staff-submit');
+  await page.waitForURL(/\/admin\/home/);
+  await expect(page.getByText('Staff added successfully!').first()).toBeVisible();
+  await page.waitForTimeout(3700); // hold the result on screen
+  mark('s4_end');
+  // ═════════════════════ end of FLOW ═════════════════════
+
+  await cdp.send('Page.stopScreencast');
+  await page.waitForTimeout(200);
+  fs.writeFileSync(`${OUT}/live.json`, JSON.stringify({ frames, taps, marks, viewport: page.viewportSize()!, dpr: 3 }));
+  console.log(`RECORDED ${frames.length} frames; ${taps.length} taps; marks ${JSON.stringify(marks)}`);
+});
