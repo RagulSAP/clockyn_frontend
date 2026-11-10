@@ -758,6 +758,71 @@ eas env:list --environment preview</pre><button class="copy">Copy</button></div>
 eas submit --platform ios --profile production</pre><button class="copy">Copy</button></div>
     <p>Android needs a Google Play service-account key, and the very first upload of a new app must be done by hand in Play Console. iOS uses your App Store Connect login. Before submitting, make sure the privacy policy link (<code>EXPO_PUBLIC_PRIVACY_POLICY_URL</code>) and the account-deletion information page are set.</p>
 
+    <h3 id="fcm">Push notifications (Firebase Cloud Messaging), step by step</h3>
+    <p>A push needs three things to line up: the <b>app</b> carries the Firebase file of your project and registers its device token, the <b>backend</b> holds a key of the same project and sends through Google, and the <b>phone</b> allows notifications. If any one is missing, the app keeps working but nothing arrives. Do the steps in this order.</p>
+
+    <h4>Part A. Firebase project and the Android app (once)</h4>
+    <ol>
+      <li>Open the <a href="https://console.firebase.google.com" target="_blank" rel="noopener">Firebase console</a> and use the project of the app (it is <code>clockyn-aurocloud</code> today). Use <b>one</b> project for the app and the backend; a key from another project makes Google reject every push.</li>
+      <li><b>Project settings</b> (gear icon), <b>General</b>, <b>Your apps</b>: there must be an <b>Android</b> app whose package name is exactly <code>com.clockyn.app</code> (the <code>APP_ID</code> of the app). Add it if it is missing.</li>
+      <li>On that app click <b>google-services.json</b> to download it and put it in <code>C:\POC\clockyn_frontend</code> (it is already committed there, so only replace it if you changed the Firebase app). <code>app.config.ts</code> picks it up by itself; nothing else to edit.</li>
+      <li><b>Project settings</b>, <b>Cloud Messaging</b>: <b>Firebase Cloud Messaging API (V1)</b> must say <b>Enabled</b>. If it does not, open the three-dot menu there, <b>Manage API in Google Cloud Console</b>, and click <b>Enable</b>.</li>
+    </ol>
+
+    <h4>Part B. The backend key (once, then after every key change)</h4>
+    <ol>
+      <li><b>Project settings</b>, <b>Service accounts</b>, <b>Generate new private key</b>. A <code>.json</code> file downloads. It is a password for sending pushes as your project: never commit it to git and never send it in chat.</li>
+      <li>Open the file. You need five values from it:
+        <table>
+          <tr><th>Backend setting</th><th>Value in the JSON file</th></tr>
+          <tr><td><code>FCM_PROJECT_ID</code></td><td><code>project_id</code></td></tr>
+          <tr><td><code>FCM_CLIENT_EMAIL</code></td><td><code>client_email</code></td></tr>
+          <tr><td><code>FCM_PRIVATE_KEY_ID</code></td><td><code>private_key_id</code></td></tr>
+          <tr><td><code>FCM_CLIENT_ID</code></td><td><code>client_id</code></td></tr>
+          <tr><td><code>FCM_PRIVATE_KEY</code></td><td><code>private_key</code>: copy it as <b>one line, exactly as it is written between the quotes, with the <code>\n</code> signs left in</b> (it starts with <code>-----BEGIN PRIVATE KEY-----\n</code>). The backend turns them back into line breaks</td></tr>
+        </table></li>
+      <li><b>On AWS (Express service).</b> Open <b>Secrets Manager</b>, the secret <code>clockyn/backend</code>, <b>Retrieve secret value</b>, <b>Edit</b>, and add the five rows above (the key names are the left column). Save. Then add them to the <code>"secrets"</code> list of <code>primary.json</code> (Express tab, Step 4), next to the others, and send the complete file again (Express tab, "Releasing a new version later"):
+        <div class="cmd"><pre>    { "name": "FCM_PROJECT_ID", "valueFrom": "YOUR_SECRET_ARN:FCM_PROJECT_ID::" },
+    { "name": "FCM_CLIENT_EMAIL", "valueFrom": "YOUR_SECRET_ARN:FCM_CLIENT_EMAIL::" },
+    { "name": "FCM_PRIVATE_KEY_ID", "valueFrom": "YOUR_SECRET_ARN:FCM_PRIVATE_KEY_ID::" },
+    { "name": "FCM_CLIENT_ID", "valueFrom": "YOUR_SECRET_ARN:FCM_CLIENT_ID::" },
+    { "name": "FCM_PRIVATE_KEY", "valueFrom": "YOUR_SECRET_ARN:FCM_PRIVATE_KEY::" }</pre><button class="copy">Copy</button></div>
+        A secret that is in Secrets Manager but not in <code>primary.json</code> is <b>not</b> given to the container. Optional: <code>FCM_ANDROID_CHANNEL_ID</code> (leave it out; the default <code>attendance_notifications</code> is the channel the app creates).</li>
+      <li><b>On your PC (local backend only).</b> Put the same five lines in the backend <code>.env</code>, or save the downloaded file as <code>C:\POC\clockyn_backend\firebase-service-account.json</code> (or point <code>FCM_SERVICE_ACCOUNT_PATH</code> at it). Both are for development; never commit the file.</li>
+      <li>Check it after the deploy: in CloudWatch, log group <code>/ecs/clockyn-backend</code>, search <code>[FCM] not configured</code>. If that line appears, a setting is missing or misspelled.</li>
+    </ol>
+
+    <h4>Part C. iPhone (only if you ship iOS)</h4>
+    <ol>
+      <li>Firebase, <b>Project settings</b>, <b>Your apps</b>: add an <b>iOS</b> app with the bundle id <code>com.clockyn.app</code> and download <code>GoogleService-Info.plist</code>.</li>
+      <li><b>Project settings</b>, <b>Cloud Messaging</b>, <b>Apple app configuration</b>: upload an <b>APNs Authentication Key</b> (.p8) made in your Apple Developer account (Certificates, Identifiers &amp; Profiles, Keys, enable Apple Push Notifications service). Enter its Key ID and your Team ID. Without it iPhones never receive a push.</li>
+      <li>Give the plist to EAS as a file variable (Step 3 above):
+        <div class="cmd"><pre>eas env:create --name GOOGLE_SERVICE_INFO_PLIST --type file --value ./GoogleService-Info.plist --environment production --visibility secret</pre><button class="copy">Copy</button></div></li>
+    </ol>
+
+    <h4>Part D. Build the app again and allow notifications</h4>
+    <ol>
+      <li>Any change to <code>google-services.json</code> or to the Firebase plugin needs a new native build, not only an update. Build with the cache cleared (Step 4 above), for example:
+        <div class="cmd"><pre>eas build --profile preview --platform android --clear-cache</pre><button class="copy">Copy</button></div></li>
+      <li>Install the new build. If an older Clockyn is on the phone, uninstall it first.</li>
+      <li>Open the app and <b>sign in</b>, then tap <b>Allow</b> on the notification question (Android 13 and later ask once; if you tapped Don't allow, turn it on in Android Settings, Apps, Clockyn, Notifications). The app sends its device token to the backend when you sign in and every time it comes to the front.</li>
+    </ol>
+
+    <h4>Part E. Test it</h4>
+    <ol>
+      <li>Sign in on the phone as the <b>organization admin</b>, then press the Home button so the app is in the background (a push is shown by the phone only when the app is not open on that screen).</li>
+      <li>From the admin web app, <b>Live Chat</b>, send the organization a message. A notification should appear within a few seconds. Tapping it opens the chat.</li>
+      <li>Not arriving? Look in the backend logs (CloudWatch <code>/ecs/clockyn-backend</code>), search <code>[Notify]</code> and <code>[FCM]</code>:
+        <table>
+          <tr><th>Log line</th><th>Meaning and fix</th></tr>
+          <tr><td><code>[FCM] not configured</code></td><td>Part B is incomplete on the server: a secret is missing from <code>primary.json</code> or misspelled. Fix it and release again.</td></tr>
+          <tr><td><code>[Notify] no push token registered for N user(s)</code></td><td>The phone never sent a token: notifications were denied, the build has no <code>google-services.json</code>, or nobody signed in on it. Repeat Part D. You can also look at the table <code>clockyn_dev.user_push_tokens</code> for the admin's <code>user_id</code>.</td></tr>
+          <tr><td><code>[Notify][FCM] status=200</code></td><td>Google accepted the push. If the phone still shows nothing, check its notification settings and battery saver for Clockyn.</td></tr>
+          <tr><td><code>[Notify][FCM] failed: 403</code> or <code>SENDER_ID_MISMATCH</code></td><td>The service-account key is from a different Firebase project than the app's <code>google-services.json</code>. Generate the key in the same project (Part A, step 1).</td></tr>
+          <tr><td><code>[Notify][FCM] failed: 404</code> or <code>UNREGISTERED</code></td><td>The token is old (app reinstalled). Open the app once; it registers a new one and the old one is removed automatically.</td></tr>
+        </table></li>
+    </ol>
+
     <h3>Before a real release, check</h3>
     <ul>
       <li>The backend is deployed on AWS with its environment variables set (database, SES sender, <code>TRUST_PROXY=1</code>, <code>AUTH_TOKEN_SECRET</code>, <code>RAZORPAY_WEBHOOK_SECRET</code>) and the IAM role attached.</li>
@@ -773,6 +838,7 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
     <table>
       <tr><th>Symptom</th><th>Likely cause and fix</th></tr>
       <tr><td>The preview or production app closes the moment it opens (the development build works)</td><td>Find the cause with <code>adb logcat -b crash -d</code> (phone on USB) or in EAS Observe. Usual causes: <code>google-services.json</code> missing from the build, a variable set in the wrong EAS environment (check with <code>eas env:list --environment preview</code>), or an <code>http://</code> backend address (release builds block it). After fixing, build again with <code>--clear-cache</code>.</td></tr>
+      <tr><td>Push notifications do not arrive</td><td>Follow the Expo build tab, "Push notifications (Firebase Cloud Messaging), step by step". Most often the <code>FCM_*</code> secrets are missing from <code>primary.json</code> on the server, or the phone never registered a token.</td></tr>
       <tr><td>The app still talks to the old backend</td><td>No <code>.env</code>, or the bundler was not restarted. Set <code>EXPO_PUBLIC_API_BASE_URL</code> and run <code>npx expo start -c</code>.</td></tr>
       <tr><td>Phone cannot reach <code>http://192.168.x.x:8080</code></td><td>Start the backend with <code>--host 0.0.0.0</code>, allow port 8080 in the Windows firewall, and keep the phone on the same Wi-Fi.</td></tr>
       <tr><td>Backend: <code>server closed the connection unexpectedly</code></td><td>The database instance is unhealthy or unreachable. Check it in the RDS console (status, security group, logs).</td></tr>
