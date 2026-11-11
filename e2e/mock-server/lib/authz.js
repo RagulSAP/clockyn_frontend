@@ -15,7 +15,7 @@ const EXPIRES_IN = 7776000;
 
 const PUBLIC_EXACT = new Set([
   '/auth/config', '/auth/generate-otp', '/auth/validate-otp', '/auth/verify-device-token', '/auth/login', '/auth/employee-login',
-  '/auth/register', '/version/check', '/health', '/ready', '/',
+  '/auth/register', '/referral/validate', '/version/check', '/health', '/ready', '/',
 ]);
 const PUBLIC_PREFIXES = ['/auth/check-mobile/', '/auth/check-email/', '/auth/org-logo/', '/profile-photo/', '/files/', '/static/', '/uploads/', '/webhook/'];
 

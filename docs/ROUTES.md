@@ -37,6 +37,7 @@ Route files go in `src/app/<path>.tsx` (tab roots in `src/app/{admin,staff}/(tab
 | support / suggest_feature | `/admin/support`, `/admin/suggest-feature` | features/settings | 04/support, 04/suggest_feature | B5 |
 | other_apps | **dropped** (cross-promotes other products by name) | – | 04/other_apps | – |
 | subscription / upgrade_plan / payment_summary / invoices | `/admin/billing`, `/admin/billing/upgrade`, `/admin/billing/checkout`, `/admin/billing/invoices` | features/billing | 04/… | B5 |
+| refer_and_earn (new in Clockyn) | `/admin/referral` | features/referral | – (org admin only) | – |
 | monthly_fixed / add_payslip | `/admin/payroll/payslips`, `/admin/payroll/payslips/edit` | features/payroll | 05/monthly_fixed, 05/add_payslip | B6 |
 | daily_wages, hourly_charges, overtime, bonus, count_basis, turnover | `/admin/payroll/{daily-wages,hourly,overtime,bonus,count-basis,turnover}` | features/payroll | 05/… | B6 |
 | incentive | `/admin/payroll/incentive` | features/payroll | 05/incentive | B6 |

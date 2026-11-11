@@ -1,6 +1,6 @@
 import type { OrderQuote } from '@/types/api/billing';
 
-import { quoteBadgeLabel, quoteDiscountLabel, quoteNotice, quoteToTotals, withServerQuote } from '../utils/serverQuote';
+import { quoteBadgeLabel, quoteDiscountLabel, quoteNotice, quoteReferralLabel, quoteReferralPercent, quoteToTotals, withServerQuote } from '../utils/serverQuote';
 import { buildQuote } from '../utils/quote';
 
 const base: OrderQuote = {
@@ -8,6 +8,7 @@ const base: OrderQuote = {
   staffCharge: 7200, credit: 0, afterCredit: 7200, couponCode: null, couponApplied: false, couponMessage: null, discountPercent: null,
   discountAmount: 0, subtotal: 7200, gstPercent: 18, gst: 1296, grandTotal: 8496, amountPaise: 849600, currency: 'INR',
   validFrom: '2026-11-02', validTill: '2027-11-02', resultingStaffLimit: 15, payable: true,
+  referralApplied: false, referralPercent: null, referralMessage: null, referral: null,
 };
 const flat: OrderQuote = { ...base, couponCode: 'FLAT500', couponApplied: true, discountAmount: 500, subtotal: 6700, gst: 1206, grandTotal: 7906 };
 const percent: OrderQuote = { ...base, couponCode: 'SAVE10', couponApplied: true, discountPercent: 10, discountAmount: 720, subtotal: 6480, gst: 1166, grandTotal: 7646 };
@@ -48,5 +49,28 @@ describe('server quote helpers', () => {
     expect(merged.plan.amount).toBe(45);
     expect(merged.plan.id).toBe(22);
     expect(withServerQuote(local, { ...base, validTill: null }).validTill).toBe(local.validTill);
+  });
+
+  describe('referral reward', () => {
+    const offer = { availableCount: 2, eligible: true, percent: 10, message: null };
+    const reward: OrderQuote = { ...base, discountPercent: 10, discountAmount: 720, subtotal: 6480, gst: 1166, grandTotal: 7646, referralApplied: true, referralPercent: 10, referral: offer };
+
+    it('quoteToTotals shows the reward as the discount (amount and percent); a reward that is not applied discounts nothing', () => {
+      expect(quoteToTotals(reward)).toEqual({ staffCharge: 7200, afterCredit: 7200, discountPercent: 10, discountAmount: 720, subtotal: 6480, gst: 1166, grandTotal: 7646 });
+      expect(quoteToTotals({ ...reward, referralApplied: false, couponApplied: false }).discountAmount).toBe(0);
+    });
+
+    it('labels the row "Referral reward (10%)"; percent falls back to the offer and is left out when unknown', () => {
+      expect(quoteReferralLabel(reward)).toBe('Referral reward (10%)');
+      expect(quoteReferralLabel({ ...reward, referralPercent: null })).toBe('Referral reward (10%)');
+      expect(quoteReferralLabel({ ...reward, referralPercent: null, referral: null })).toBe('Referral reward');
+      expect(quoteReferralPercent(null)).toBeNull();
+      expect(quoteReferralPercent({ ...base, referralPercent: 0 })).toBeNull();
+    });
+
+    it('the reward never produces a coupon label, badge or notice', () => {
+      expect(quoteDiscountLabel(reward)).toBeUndefined();
+      expect(quoteNotice(reward)).toBeNull();
+    });
   });
 });

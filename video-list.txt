@@ -1,6 +1,6 @@
 CLOCKYN TUTORIAL VIDEO LIST
 ===========================
-29 videos (28 topics + 1 final walkthrough) for people who have never used Clockyn. Not one video per FAQ: each video answers the one question
+30 videos (29 topics + 1 final walkthrough) for people who have never used Clockyn. Not one video per FAQ: each video answers the one question
 a new Admin or Employee asks at that moment. Make them with the skill "clockyn-screen-video" (SKILL.md in this folder).
 
 HOW TO USE THIS FILE (for Copilot)
@@ -34,9 +34,9 @@ SUGGESTED ORDER (the story of a new company: set up > staff start using it > dai
   Week 3 (pay):           V11 V12 V13 V23 V14 V15 V24                        set up salary > monthly salary > payslips >
                                                                              employee payslip > bonus/advance > expenses
   Week 3 (CRM, chat):     V25 V26
-  Week 4 (plans, help):   V27 V28
+  Week 4 (plans, help):   V27 V28 V30                                        V30 = Refer & Earn (added after V29; not in the V29 walkthrough)
   Last:                   V29 (full end-to-end walkthrough, built from the approved videos above)
-  Done so far:            V01 to V29 (all DONE)
+  Done so far:            V01 to V30 (all DONE). Nothing left to make (V30 was added after V29 and is not in the V29 walkthrough)
 
 
 =============================================================================================
@@ -264,6 +264,47 @@ V28  Where do I get help? (FAQ, videos, live chat and feature requests)
      FILES: the Support tab has only FAQ, Live Chat and Video Hub; Suggest a Feature (and the Support request form) are in
            Settings > Beyond. Shown: FAQ topic + answer + search "shift", Video Hub list (not played), Live Chat message,
            Suggest a Feature. Employees have no Support tab (admin only).
+
+V30  How do I refer another company and get 10% off my plan?
+     SLUG: refer-and-earn     WHO: Admin     ROLE: admin     LENGTH: as long as needed     PRIORITY: P2
+     FLOW: Settings > Refer & Earn (the row right after Your Plan & Validity, subtitle "Get 10% off for every friend") > the
+           "10% off for you and your friend" card with my 6-character code (tap the code to copy) > buttons Share, WhatsApp,
+           SMS, Copy code and the "Copy message" link > "How it works": Share your code / They sign up / You both save >
+           "Your rewards": Available, Pending, Used counts (and "Referral reward from <company>" if my company was referred) >
+           "Organisations you referred": each company with "Joined <date>", a Signed up or Paid chip and "Reward: Pending
+           (Unlocks when they pay) / Available / Used (plan and rupees off) / Void" > then Settings > Your Plan & Validity >
+           Plan Details > pick Prime (or Elite) > Continue to Pay > staff count > Continue to Pay > Payment Summary: the
+           "Referral reward - 10% off" card sits directly UNDER the coupon box, with "N available" and Apply > Apply turns it
+           green ("Applied - 1 of N reward", button becomes Remove) and the price breakdown shows "Referral reward (10%)" with
+           the new total > stop at Pay. Say: it works only on Prime and Elite (not Core, where Apply is greyed out with the
+           reason), it is for a first plan after the free trial or a renewal (not for adding staff), one reward is used per
+           purchase, a coupon and a reward cannot be used together (applying one removes the other), and with 2 referred
+           companies you can use a 10% reward on two separate renewals. The friend's reward is ready right away; yours unlocks
+           when they pay their first plan.
+           The code is typed by the NEW company on the register screen, in the optional "Referral code (optional)" card
+           ("Referred by <company>" appears when it is right). V01 does NOT show it, so either show that card briefly at the
+           end of V30 (register a fresh e-mail like V01, enter K7M2QX) or say it is on the register screen.
+     CAN RECORD: partly (the share sheet, WhatsApp and SMS app and the payment window are not available in the web build: show
+           the buttons, narrate what opens, stop at "Pay". Mock: org-0001 already has code K7M2QX and three seeded referred
+           companies (Used, Available, Pending); the Apply card needs Prime or Elite selected and an available reward, and the
+           mock decides eligibility by plan name. The SMS button shows on the web only on a touch device, so record with touch
+           emulation or narrate it. Run `npm run e2e:build` first so the build includes Refer & Earn)
+     STATUS: DONE (V30-refer-and-earn.mp4, ~3.6 min)
+     FILES: C:\POC\clockyn_videos\week1-setup\V30-refer-and-earn.mp4 (spec + config: C:\POC\clockyn_videos\source\examples\v30-refer-and-earn.*). Recorded in the free-trial
+           state with Prime picked; the mock has 1 available reward. Shown: Settings > Refer & Earn row (after Your Plan & Validity) > hero card with code
+           K7M2QX > Copy code (Copied) > Copy message (Message copied) > How it works > Your rewards (Available / Pending / Used + the note where to apply)
+           > Organisations you referred (Signed up / Paid, Reward: Pending / Available / Used) > back to Settings > Your Plan & Validity > Plan Details >
+           Prime > Continue to Pay > staff +2 > Continue to Pay > Payment Summary: the Referral reward - 10% off card under the coupon box (1 available)
+           > Apply > green Applied and the Referral reward (10%) line with the new total > end at Pay (not tapped) > sign out > Admin Portal > e-mail +
+           code > register screen: the optional Referral code card, K7M2QX typed, "Referred by AuroCloud". Narrated, NOT shown: Share, WhatsApp and SMS
+           (the share sheet / apps cannot open in the web build; the buttons are shown, not tapped), the greyed-out Apply on Core, the coupon / reward
+           exclusion, the 2-reward / 2-renewals rule, the Pay window and the reward turning Used. Real UI differs from the FLOW only in wording: the card title is
+           "Referral reward - 10% off" with an em dash and the register card is titled "Referral code" (field: "Referral code (optional)").
+           The mock's seeded referred company "Sunrise Traders" (Used reward) shows in the referred list; VIDEO_ORG_NAME does not rename it. Company shown as AuroCloud.
+     NOTE: the screens are built (src/features/referral, src/features/billing/components/ReferralRewardCard.tsx). Re-read them
+           for the exact labels right before writing narration. Needs company name AuroCloud and e-mail sign-in like every video:
+           check the seeded referred company names in e2e/mock-server/routes/referral.js do not show unwanted names in the stills.
+           Not included in the V29 walkthrough (V29 was made before this feature).
 
 
 =============================================================================================

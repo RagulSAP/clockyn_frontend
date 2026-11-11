@@ -32,7 +32,7 @@ describe('SettingsScreen', () => {
     await renderScreen(<SettingsScreen />);
     expect(screen.getByText('Settings')).toBeTruthy();
     expect(screen.getByText('Acme Traders')).toBeTruthy();
-    const titles = ['Your Plan & Validity', 'Company Settings', 'Salary Structure', 'Attendance & Devices', 'View & Download Reports', 'Managers', 'Expenses & Allowances', 'Appearance', 'Beyond'];
+    const titles = ['Your Plan & Validity', 'Refer & Earn', 'Company Settings', 'Salary Structure', 'Attendance & Devices', 'View & Download Reports', 'Managers', 'Expenses & Allowances', 'Appearance', 'Beyond'];
     for (const t of titles) expect(screen.getByText(t)).toBeTruthy();
     expect(screen.queryByText('Our Other Applications')).toBeNull();
     expect(screen.getByText('Light')).toBeTruthy();
@@ -44,6 +44,8 @@ describe('SettingsScreen', () => {
     await renderScreen(<SettingsScreen />);
     await fireEvent.press(screen.getByTestId('section-header-plan'));
     expect(mockPush).toHaveBeenLastCalledWith(routes.admin.billing.overview);
+    await fireEvent.press(screen.getByTestId('section-header-referral'));
+    expect(mockPush).toHaveBeenLastCalledWith(routes.admin.referral);
     await fireEvent.press(screen.getByTestId('section-header-reports'));
     expect(mockPush).toHaveBeenLastCalledWith(routes.admin.reports.hub);
     await fireEvent.press(screen.getByTestId('section-header-roles'));
@@ -121,5 +123,12 @@ describe('SettingsScreen', () => {
     await fireEvent.press(logoutButtons[logoutButtons.length - 1]);
     await waitFor(() => expect(mockSignOut).toHaveBeenCalledTimes(1));
     expect(mockPush).not.toHaveBeenCalledWith(routes.welcome);
+  });
+
+  it('Refer & Earn is shown to the organisation admin only (managers do not get the row)', async () => {
+    signInTestAdmin({ roleId: 2 });
+    await renderScreen(<SettingsScreen />);
+    expect(screen.getByText('Your Plan & Validity')).toBeTruthy();
+    expect(screen.queryByText('Refer & Earn')).toBeNull();
   });
 });

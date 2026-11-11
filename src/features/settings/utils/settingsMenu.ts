@@ -5,7 +5,7 @@
 import { routes, type AppRoute } from '@/config/routes';
 import type { IconName } from '@/components/ui';
 
-export type SectionId = 'plan' | 'company' | 'salary' | 'attendance' | 'reports' | 'roles' | 'expenses' | 'appearance' | 'beyond';
+export type SectionId = 'plan' | 'referral' | 'company' | 'salary' | 'attendance' | 'reports' | 'roles' | 'expenses' | 'appearance' | 'beyond';
 
 export type MenuAction =
   | { type: 'route'; route: AppRoute }
@@ -46,6 +46,7 @@ const go = (id: string, title: string, route: AppRoute): MenuLeaf => ({ id, titl
 
 export const SETTINGS_SECTIONS: readonly MenuSection[] = [
   { id: 'plan', title: 'Your Plan & Validity', subtitle: 'Manage subscription', icon: 'credit-card', kind: 'link', route: routes.admin.billing.overview },
+  { id: 'referral', title: 'Refer & Earn', subtitle: 'Get 10% off for every friend', icon: 'gift', kind: 'link', route: routes.admin.referral },
   {
     id: 'company',
     title: 'Company Settings',
@@ -125,7 +126,7 @@ export const SETTINGS_SECTIONS: readonly MenuSection[] = [
 
 /** Sections shown in the two columns of the desktop layout. */
 export const DESKTOP_COLUMNS: readonly (readonly SectionId[])[] = [
-  ['plan', 'company', 'salary', 'attendance'],
+  ['plan', 'referral', 'company', 'salary', 'attendance'],
   ['reports', 'roles', 'expenses', 'appearance', 'beyond'],
 ];
 

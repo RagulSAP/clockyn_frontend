@@ -71,6 +71,7 @@ const PUBLIC_EXACT = new Set([
   '/auth/login',
   '/auth/employee-login',
   '/auth/register',
+  '/referral/validate',
   '/version/check',
   '/health',
   '/ready',

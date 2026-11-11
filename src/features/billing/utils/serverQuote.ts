@@ -14,8 +14,9 @@ export function quoteToTotals(q: OrderQuote): Totals {
   return {
     staffCharge: q.staffCharge,
     afterCredit: q.afterCredit,
-    discountPercent: q.discountPercent ?? 0,
-    discountAmount: q.couponApplied ? q.discountAmount : 0,
+    discountPercent: q.referralApplied ? (q.referralPercent ?? 0) : (q.discountPercent ?? 0),
+    // `discountAmount` is the coupon's OR the referral reward's discount (never both: the server rejects the combination).
+    discountAmount: q.couponApplied || q.referralApplied ? q.discountAmount : 0,
     subtotal: q.subtotal,
     gst: q.gst,
     grandTotal: q.grandTotal,
@@ -59,4 +60,16 @@ export function quoteBadgeLabel(q: OrderQuote, coupon: Coupon | null): string | 
 export function quoteNotice(q: OrderQuote): string | null {
   if (!q.couponCode || q.couponApplied) return null;
   return q.couponMessage ?? 'This coupon cannot be applied.';
+}
+
+/** Percent of the referral reward the quote talks about (`referral_percent`, else the offer's), or `null` when unknown. */
+export function quoteReferralPercent(q: OrderQuote | null | undefined): number | null {
+  const p = q?.referralPercent ?? q?.referral?.percent ?? null;
+  return p !== null && p > 0 ? p : null;
+}
+
+/** Label of the referral discount row (`Referral reward (10%)`). */
+export function quoteReferralLabel(q: OrderQuote): string {
+  const p = quoteReferralPercent(q);
+  return p === null ? 'Referral reward' : `Referral reward (${p}%)`;
 }

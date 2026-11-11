@@ -12,6 +12,8 @@ export interface QuoteParams {
   staffLimit: number;
   couponCode: string | null;
   mode: OrderMode;
+  /** Price with one referral reward (never together with a coupon). Left out / false = no reward. */
+  applyReferral?: boolean;
 }
 
 type Result = { key: string; quote: OrderQuote | null };
@@ -45,7 +47,7 @@ export function useServerQuote(params: QuoteParams | null, enabled = true, debou
     const mine = ++seq.current;
     const controller = new AbortController();
     const run = async (): Promise<void> => {
-      const q = await billingApi.quote({ userId, orgId, planId: p.planId, staffLimit: p.staffLimit, couponCode: p.couponCode, mode: p.mode }, { signal: controller.signal });
+      const q = await billingApi.quote({ userId, orgId, planId: p.planId, staffLimit: p.staffLimit, couponCode: p.couponCode, mode: p.mode, applyReferral: p.applyReferral === true }, { signal: controller.signal });
       if (mine !== seq.current || controller.signal.aborted) return; // stale: inputs changed meanwhile
       setResult({ key, quote: q });
     };
@@ -69,7 +71,7 @@ export function useServerQuote(params: QuoteParams | null, enabled = true, debou
       const l = latest.current;
       if (!l.params) return Promise.resolve(null);
       const p = { ...l.params, ...over };
-      return billingApi.quote({ userId: l.userId, orgId: l.orgId, planId: p.planId, staffLimit: p.staffLimit, couponCode: p.couponCode, mode: p.mode });
+      return billingApi.quote({ userId: l.userId, orgId: l.orgId, planId: p.planId, staffLimit: p.staffLimit, couponCode: p.couponCode, mode: p.mode, applyReferral: p.applyReferral === true });
     },
     [],
   );

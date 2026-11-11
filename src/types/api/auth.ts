@@ -81,6 +81,8 @@ export interface RegisterCompanyInput {
   state?: string;
   district?: string;
   pincode?: number;
+  /** Optional 6-character code of the organisation that referred this one (omitted when empty). */
+  referralCode?: string;
 }
 
 export interface RegisterCompanyResult {

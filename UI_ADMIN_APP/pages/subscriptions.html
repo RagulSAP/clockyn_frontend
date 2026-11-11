@@ -58,6 +58,8 @@
     .org-main { display: block; font-size: 13.5px; font-weight: 600; color: var(--text); }
     td .badge { max-width: 100%; }
     td .badge .coupon-code { overflow: hidden; text-overflow: ellipsis; }
+    .disc-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; max-width: 100%; }
+    .ref-sub { display: block; max-width: 100%; font-size: 11.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .contact-email { font-size: 12.5px; color: var(--text-secondary); }
     .contact-phone { font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
     .expiring { color: var(--warning); font-weight: 600; }
@@ -236,12 +238,12 @@
           <table class="data">
             <thead><tr>
               <th style="width:20%">Organization</th>
-              <th style="width:19%">Contact</th>
+              <th style="width:17%">Contact</th>
               <th style="width:12%">Plan</th>
               <th class="num" style="width:7%">Staff</th>
               <th style="width:11%">Valid till</th>
               <th style="width:10%">Status</th>
-              <th style="width:15%">Coupon</th>
+              <th style="width:17%">Coupon / Referral</th>
               <th class="num" style="width:96px">Invoice</th>
             </tr></thead>
             <tbody id="org-sub-body">
@@ -266,6 +268,7 @@
       pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
       trash: '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
       fileDown: '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/>',
+      gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>',
       tag: '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>',
       layers: '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>',
       alert: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
@@ -420,7 +423,7 @@
     function renderOrgSubs() {
       var q = (document.getElementById('org-sub-search').value || '').toLowerCase();
       var filtered = orgSubData.filter(function(o){
-        return !q || (o.org_name||'').toLowerCase().includes(q) || (o.admin_email||'').toLowerCase().includes(q) || (o.coupon_code||'').toLowerCase().includes(q);
+        return !q || (o.org_name||'').toLowerCase().includes(q) || (o.admin_email||'').toLowerCase().includes(q) || (o.coupon_code||'').toLowerCase().includes(q) || (o.referral_with_org_name||'').toLowerCase().includes(q);
       });
       var tbody = document.getElementById('org-sub-body');
       if (!filtered.length) {
@@ -437,7 +440,9 @@
           : '<span class="badge badge-dot badge-red">' + escHtml(o.status || '—') + '</span>';
         var couponBadge = o.coupon_code
           ? '<span class="badge badge-purple" title="' + escHtml(o.coupon_code) + '">' + ico('tag') + '<span class="coupon-code">' + escHtml(o.coupon_code) + '</span></span>'
-          : '<span class="muted">—</span>';
+          : '';
+        var discountCell = couponBadge + referralInfo(o);
+        if (!discountCell) discountCell = '<span class="muted">—</span>';
         var invBtn = o.invoice_number && o.invoice_user_id
           ? '<button type="button" class="pdf-btn" data-user="' + escHtml(String(o.invoice_user_id||'')) + '" data-org="' + escHtml(String(o.org_id||'')) + '" data-inv="' + escHtml(String(o.invoice_number||'')) + '" onclick="downloadOrgInvoice(this.dataset.user, this.dataset.org, this.dataset.inv)" title="Download invoice PDF" aria-label="Download invoice PDF">' + ico('fileDown') + 'PDF</button>'
           : '<span class="muted">—</span>';
@@ -448,10 +453,23 @@
           + '<td data-label="Staff" class="num td-primary">' + escHtml(String(o.staff_limit||'—')) + '</td>'
           + '<td data-label="Valid till" class="nowrap ' + (isExpiring ? 'expiring' : 'muted') + '"' + (isExpiring ? ' title="Expires soon"' : '') + '>' + escHtml(validTill) + '</td>'
           + '<td data-label="Status">' + statusBadge + '</td>'
-          + '<td data-label="Coupon">' + couponBadge + '</td>'
+          + '<td data-label="Coupon / Referral"><div class="disc-cell">' + discountCell + '</div></td>'
           + '<td data-label="" class="num c-actions" onclick="event.stopPropagation()">' + invBtn + '</td>'
           + '</tr>';
       }).join('');
+    }
+
+    /* Referral reward used on the latest invoice. The keys come from newer backends: when they are absent nothing is shown. */
+    function referralInfo(o) {
+      if (!o.referral_applied) return '';
+      var amt = (o.referral_discount != null && o.referral_discount !== '' && !isNaN(Number(o.referral_discount)))
+        ? ' −₹' + Number(o.referral_discount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '';
+      var rel = o.referral_with_org_name
+        ? (o.referral_role === 'referrer' ? 'Referrer of ' : o.referral_role === 'referred' ? 'Referred by ' : 'Referral with ') + o.referral_with_org_name
+        : '';
+      var tip = 'Referral reward applied' + (amt ? ': ' + amt.trim().replace('−', '') + ' off' : '') + (rel ? ' · ' + rel : '');
+      return '<span class="badge badge-green" title="' + escHtml(tip) + '">' + ico('gift') + '<span class="coupon-code">Referral' + escHtml(amt) + '</span></span>'
+        + (rel ? '<span class="ref-sub" title="' + escHtml(rel) + '">' + escHtml(rel) + '</span>' : '');
     }
 
     function downloadOrgInvoice(userId, orgId, invoiceNumber) {

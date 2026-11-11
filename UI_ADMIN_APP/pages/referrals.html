@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Referrals</title>
+  <meta name="color-scheme" content="light dark" />
+  <script src="../js/theme.js"></script>
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    /* ── icons (Lucide, inline) ── */
+    .ico { width: 18px; height: 18px; flex: none; display: block; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .ico-sm { width: 15px; height: 15px; }
+    .ico-xs { width: 13px; height: 13px; }
+
+    /* ── KPI tiles ── */
+    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .kpis .stat-tile { position: relative; min-width: 0; }
+    .kpis .stat-val { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .kpis .stat-label { padding-right: 40px; }
+    .stat-ico { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; background: var(--surface-muted); color: var(--text-secondary); }
+    .stat-ico.tone-success { background: var(--success-soft); color: var(--success); }
+    .stat-ico.tone-warning { background: var(--warning-soft); color: var(--warning); }
+    .stat-ico.tone-info { background: var(--info-soft); color: var(--info); }
+    .stat-ico.tone-purple { background: var(--purple-soft); color: var(--purple); }
+    .kpis .skeleton.sk-val { height: 30px; width: 60%; margin: 2px 0; }
+
+    .card + .card { margin-top: 24px; }
+    .card-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .card-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+    .muted { color: var(--text-muted); }
+    .nowrap { white-space: nowrap; }
+    .trunc { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── Top referrers ── */
+    .top-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; padding: 18px 20px 20px; }
+    .top-item { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 4px 12px; align-items: center; padding: 14px 16px; background: var(--surface-muted); border: 1px solid var(--border); border-radius: var(--radius-md); min-width: 0; }
+    .top-rank { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); grid-row: 1 / span 3; align-self: start; }
+    .top-item:nth-child(1) .top-rank { background: var(--warning-soft); color: var(--warning); border-color: transparent; }
+    .top-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .top-name { font-size: 13.5px; font-weight: 700; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .top-stats { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .top-stats b { color: var(--text); font-weight: 700; }
+    .top-track { height: 6px; border-radius: var(--radius-pill); background: var(--border); overflow: hidden; }
+    .top-track .fill { display: flex; height: 100%; border-radius: var(--radius-pill); overflow: hidden; }
+    .top-track .paid { background: var(--success); }
+    .top-track .rest { flex: 1; background: var(--info); opacity: .5; }
+    .top-skel { height: 82px; border-radius: var(--radius-md); }
+
+    .code-chip { display: inline-flex; align-items: center; max-width: 100%; font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; letter-spacing: 0.5px; color: var(--text-secondary); background: var(--surface); border: 1px dashed var(--border-strong); border-radius: var(--radius-xs); padding: 1px 7px; line-height: 1.5; flex: none; }
+    .top-item .code-chip { background: var(--surface-muted); }
+
+    /* ── Toolbar ── */
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    .search-box { position: relative; flex: 1 1 260px; min-width: 0; max-width: 420px; }
+    .search-box .ico { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; width: 16px; height: 16px; }
+    .search-box input { width: 100%; height: 40px; min-height: 0; padding: 0 14px 0 36px; font-size: 14px; border-radius: var(--radius-md); }
+    .filter-select { height: 40px; min-height: 0; width: auto; border-radius: var(--radius-md); padding: 0 14px; font-size: 14px; font-weight: 500; }
+    .toolbar .count { margin-left: auto; }
+
+    /* ── Referral table ── */
+    table.data { table-layout: fixed; min-width: 1000px; }
+    table.data td { overflow: hidden; vertical-align: top; }
+    .cell-main { font-size: 13.5px; font-weight: 600; color: var(--text); display: block; }
+    .cell-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; display: block; font-variant-numeric: tabular-nums; }
+    .cell-sub.trunc { display: block; }
+    .cell-main.wrap { overflow-wrap: anywhere; }
+    .org-line { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; min-width: 0; max-width: 100%; }
+    .rw { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .rw-sub { font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.45; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+    .rw-sub b { color: var(--text-secondary); font-weight: 600; }
+    .badge.badge-void { background: var(--surface-muted); color: var(--text-muted); text-decoration: line-through; }
+    .void-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: var(--radius-xs); background: none; color: var(--text-muted); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease); }
+    .void-btn:hover, .void-btn:focus-visible { background: var(--danger-soft); color: var(--danger); }
+    .void-btn .void-txt { display: none; }
+
+    tbody tr.state-row:hover { background: none; }
+    .state-row td { padding: 0; }
+    .sk-stack { display: grid; gap: 18px; padding: 24px 20px; }
+    .sk-stack .skeleton-line { height: 14px; }
+    .state-row .empty-state { padding: 44px 24px; }
+    .empty-state .empty-icon .ico { width: 24px; height: 24px; }
+    .empty-icon.is-error { background: var(--danger-soft); color: var(--danger); }
+
+    /* ── Confirm dialog ── */
+    .modal-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.55; overflow-wrap: anywhere; }
+    .modal-sub b { color: var(--text); font-weight: 600; }
+    .modal-note { margin-top: 10px; font-size: 12.5px; color: var(--text-muted); }
+
+    /* ── Toast (colour comes from the shared #toast rules; the page JS sets the green / red background inline) ── */
+    #toast { position: fixed; bottom: 20px; right: 20px; max-width: min(420px, calc(100vw - 32px)); padding: 12px 18px; font-size: 13.5px; font-weight: 600; z-index: 9999; opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .25s; pointer-events: none; }
+
+    @media (max-width: 1280px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+    /* tablets and phones: every row becomes a compact card */
+    @media (max-width: 1100px) {
+      table.data { table-layout: auto; min-width: 0; }
+      table.data thead { display: none; }
+      table.data, table.data tbody { display: block; width: 100%; }
+      table.data tbody tr:not(.state-row) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 16px; padding: 16px; border-bottom: 1px solid var(--border); }
+      table.data tbody tr.state-row { display: block; padding: 0; }
+      table.data td { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; padding: 0; border: 0; text-align: left; overflow: visible; }
+      table.data td::before { content: attr(data-label); font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); }
+      table.data td[data-label=""]::before { display: none; }
+      table.data td.c-main { grid-column: 1 / -1; grid-row: 1; padding-right: 96px; }
+      table.data td.c-status { grid-column: 2; grid-row: 1; justify-self: end; align-self: start; }
+      table.data td.c-reward { grid-column: 1 / -1; }
+      table.data .state-row td { display: block; padding: 0; }
+      .void-btn { width: auto; height: 28px; padding: 0 10px; border-color: var(--border); }
+      .void-btn .void-txt { display: inline; }
+    }
+    @media (max-width: 760px) {
+      .kpis { gap: 12px; }
+      .kpis .stat-tile { padding: 14px 16px; } .kpis .stat-tile .stat-val { font-size: 24px; }
+      .kpis .stat-label { padding-right: 0; }
+      .stat-ico { display: none; }
+      .toolbar { padding: 12px 16px; }
+      .search-box { flex-basis: 100%; max-width: none; }
+      .filter-select { flex: 1 1 140px; }
+      .toolbar .count { margin-left: 0; }
+      .top-list { grid-template-columns: 1fr; padding: 14px 16px 16px; }
+      .page-header-actions { width: 100%; }
+      .page-header-actions .btn, .page-header-actions .export-wrap { flex: 1 1 0; }
+      .page-header-actions .export-wrap > .btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar" id="app-sidebar" data-active="referrals"></aside>
+  <script src="../js/layout.js"></script>
+
+  <!-- Void confirmation -->
+  <div id="void-modal" class="modal-overlay" onclick="if (event.target === this) closeVoid()">
+    <div class="modal-box modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="void-title" aria-describedby="void-text">
+      <div class="modal-header">
+        <h2 id="void-title">Void this reward?</h2>
+        <button type="button" class="modal-close" onclick="closeVoid()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <p class="modal-sub" id="void-text"></p>
+      <p class="modal-note">A voided reward can no longer be used at checkout. This cannot be undone.</p>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="void-cancel" onclick="closeVoid()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="void-confirm" onclick="confirmVoid()"><svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>Void reward</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" type="button" onclick="toggleSidebar()" title="Menu" aria-label="Open menu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button>
+      <span class="topbar-title">Referrals</span>
+      <div class="topbar-actions">
+        <button type="button" class="icon-btn" onclick="loadPage()" title="Refresh" aria-label="Refresh"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-header">
+        <div>
+          <h1>Referrals</h1>
+          <p>Refer &amp; Earn: who referred whom, which rewards are earned, and how much discount has been given.</p>
+        </div>
+        <div class="page-header-actions">
+          <button type="button" class="btn btn-ghost" onclick="loadPage()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Refresh</button>
+          <div class="export-wrap">
+            <button type="button" class="btn btn-ghost" id="export-btn" onclick="toggleExportMenu('ref-export-menu')" aria-haspopup="true">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
+              Export
+              <svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="export-menu" id="ref-export-menu">
+              <button type="button" onclick="doExportExcel()">Export Excel</button>
+              <button type="button" onclick="doExportPDF()">Export PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI tiles -->
+      <div class="stat-grid kpis" id="kpis"></div>
+
+      <!-- Top referrers -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><h3>Top referrers</h3></div>
+            <div class="card-sub">Organizations that brought in the most sign-ups. The green part of each bar is the share that went on to pay.</div>
+          </div>
+        </div>
+        <div class="top-list" id="top-list"></div>
+      </div>
+
+      <!-- Referrals table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <h3>All referrals</h3>
+            <span id="ref-count" class="badge badge-gray"></span>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-box">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+            <input type="search" id="ref-search" placeholder="Search organization or referral code…" aria-label="Search referrals" autocomplete="off" oninput="onSearchInput()" />
+          </div>
+          <select class="filter-select" id="ref-status" aria-label="Status" onchange="loadReferrals()">
+            <option value="all">All statuses</option>
+            <option value="signed_up">Signed up</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr>
+              <th style="width:19%">Referrer</th>
+              <th style="width:17%">Referred org</th>
+              <th style="width:11%">Signed up</th>
+              <th style="width:10%">Status</th>
+              <th style="width:21%">Referrer reward</th>
+              <th style="width:22%">Referred reward</th>
+            </tr></thead>
+            <tbody id="ref-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/export.js"></script>
+  <script>
+    var adminEmail = localStorage.getItem('admin_email') || '';
+    /* same rule as faqs.html: role_id 1 is a super operator. The server still decides (require_operator_super). */
+    var isSuper = localStorage.getItem('gen_admin_role') === '1';
+    var SUMMARY = null, TOP = [], ROWS = [], loadSeq = 0, searchTimer = null, pendingVoid = null, voidOpener = null;
+
+    /* Lucide icon paths for markup built in JS */
+    var ICONS = {
+      users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
+      badgeCheck: '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
+      percent: '<line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+      rupee: '<path d="M6 3h12"/><path d="M6 8h12"/><path d="m6 13 8.5 8"/><path d="M6 13h3"/><path d="M9 13c6.667 0 6.667-10 0-10"/>',
+      gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>',
+      circleCheck: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+      hourglass: '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+      receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
+      ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
+      inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+      alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>'
+    };
+    function ico(name, cls) { return '<svg class="ico ' + (cls || 'ico-sm') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>'; }
+
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+    function num(n) { return Number(n || 0).toLocaleString('en-IN'); }
+    function money(n) { return '₹' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+    function fmtDate(iso) {
+      if (!iso) return '';
+      var d = new Date(iso);
+      return isNaN(d) ? '' : d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    function fmtDateTime(iso) {
+      if (!iso) return '';
+      var d = new Date(iso);
+      return isNaN(d) ? '' : d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) + ' IST';
+    }
+
+    /* ── Toast ── */
+    function showToast(msg, ok) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = ok === false ? '#dc2626' : '#238636';
+      t.style.opacity = '1'; t.style.transform = 'translateY(0)';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function () { t.style.opacity = '0'; t.style.transform = 'translateY(8px)'; }, ok === false ? 4200 : 2500);
+    }
+
+    /* ── API ── */
+    function detailText(data) {
+      if (!data) return '';
+      if (typeof data.detail === 'string') return data.detail;
+      if (data.detail && typeof data.detail.message === 'string') return data.detail.message;
+      if (typeof data.message === 'string') return data.message;
+      if (Array.isArray(data.detail)) return data.detail.map(function (d) { return d.msg || ''; }).filter(Boolean).join('; ');
+      return '';
+    }
+    async function call(method, path) {
+      var res = await fetch(API_BASE + path, { method: method, headers: { 'Content-Type': 'application/json', 'x-admin-id': adminEmail }, cache: 'no-store' });
+      var data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
+      if (!res.ok) {
+        var err = new Error(detailText(data) || ('Request failed (' + res.status + ')'));
+        err.status = res.status;
+        throw err;
+      }
+      return data;
+    }
+
+    /* ── Skeletons / states ── */
+    function kpiSkeleton() {
+      var tiles = ['Total referrals', 'Converted (paid)', 'Conversion rate', 'Discount given', 'Rewards issued', 'Available', 'Pending', 'Used'];
+      document.getElementById('kpis').innerHTML = tiles.map(function (t) {
+        return '<div class="stat-tile"><div class="stat-label">' + t + '</div><div class="skeleton sk-val"></div></div>';
+      }).join('');
+    }
+    function topSkeleton() { document.getElementById('top-list').innerHTML = '<div class="skeleton top-skel"></div><div class="skeleton top-skel"></div><div class="skeleton top-skel"></div>'; }
+    function stateRow(html) { return '<tr class="state-row"><td colspan="6">' + html + '</td></tr>'; }
+    function skeletonRows() {
+      var w = [100, 92, 96, 88, 94];
+      return stateRow('<div class="sk-stack">' + w.map(function (x) { return '<div class="skeleton skeleton-line" style="width:' + x + '%"></div>'; }).join('') + '</div>');
+    }
+    function emptyState(title, text, icon, retry) {
+      return '<div class="empty-state"><div class="empty-icon' + (icon === 'alert' ? ' is-error' : '') + '">' + ico(icon, '') + '</div><h3>' + esc(title) + '</h3>'
+        + (text ? '<p>' + esc(text) + '</p>' : '')
+        + (retry ? '<button type="button" class="btn btn-ghost btn-sm" onclick="loadPage()" style="margin-top:8px;">Try again</button>' : '') + '</div>';
+    }
+
+    /* ── KPIs ── */
+    function renderKpis() {
+      var none = !SUMMARY, s = SUMMARY || {};
+      var total = Number(s.total_referrals || 0), conv = Number(s.converted || 0);
+      var rate = total ? Math.round(1000 * conv / total) / 10 : 0;
+      var tiles = [
+        ['Total referrals', num(total), 'Organizations that signed up with a code', 'users', ''],
+        ['Converted (paid)', num(conv), 'Referred orgs that bought a plan', 'badgeCheck', 'tone-success'],
+        ['Conversion rate', rate + '%', num(conv) + ' of ' + num(total) + ' signed-up orgs', 'percent', 'tone-info'],
+        ['Discount given', money(s.discount_given), 'Total value of rewards used', 'rupee', 'tone-purple'],
+        ['Rewards issued', num(s.rewards_issued), 'Both sides of every referral', 'gift', ''],
+        ['Available', num(s.rewards_available), 'Ready to use at checkout', 'circleCheck', 'tone-success'],
+        ['Pending', num(s.rewards_pending), 'Waiting for the first paid plan', 'hourglass', 'tone-warning'],
+        ['Used', num(s.rewards_used), 'Already applied to a purchase', 'receipt', 'tone-info']
+      ];
+      document.getElementById('kpis').innerHTML = tiles.map(function (t) {
+        return '<div class="stat-tile"><span class="stat-ico ' + t[4] + '" aria-hidden="true">' + ico(t[3], '') + '</span><div class="stat-label">' + t[0] + '</div><div class="stat-val">' + (none ? '—' : esc(t[1])) + '</div><div class="stat-sub">' + (none ? '&nbsp;' : esc(t[2])) + '</div></div>';
+      }).join('');
+    }
+
+    /* ── Top referrers ── */
+    function renderTop() {
+      var box = document.getElementById('top-list');
+      if (!TOP.length) {
+        box.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:32px 24px;"><div class="empty-icon">' + ico('users', '') + '</div><h3>No referrers yet</h3><p>Organizations will show up here as soon as someone signs up with their code.</p></div>';
+        return;
+      }
+      var max = TOP.reduce(function (m, r) { return Math.max(m, Number(r.referrals || 0)); }, 1);
+      box.innerHTML = TOP.map(function (r, i) {
+        var refs = Number(r.referrals || 0), conv = Math.min(Number(r.converted || 0), refs);
+        var w = Math.max(4, Math.round(100 * refs / max)), wPaid = refs ? Math.round(100 * conv / refs) : 0;
+        return '<div class="top-item">'
+          + '<span class="top-rank" aria-hidden="true">' + (i + 1) + '</span>'
+          + '<div class="top-head"><span class="top-name" title="' + esc(r.org_name) + '">' + esc(r.org_name || '—') + '</span>' + (r.code ? '<span class="code-chip" title="Referral code">' + esc(r.code) + '</span>' : '') + '</div>'
+          + '<div class="top-stats"><span><b>' + num(refs) + '</b> referral' + (refs === 1 ? '' : 's') + '</span><span><b>' + num(conv) + '</b> paid</span></div>'
+          + '<div class="top-track" role="img" aria-label="' + conv + ' of ' + refs + ' referrals paid"><span class="fill" style="width:' + w + '%"><span class="paid" style="width:' + wPaid + '%"></span><span class="rest"></span></span></div>'
+          + '</div>';
+      }).join('');
+    }
+
+    /* ── Referral rows ── */
+    var REWARD = {
+      pending:   { cls: 'badge-orange', label: 'Pending' },
+      available: { cls: 'badge-green',  label: 'Available' },
+      used:      { cls: 'badge-purple', label: 'Used' },
+      'void':    { cls: 'badge-void',   label: 'Void' }
+    };
+    function rewardStatus(rw) { return rw && rw.status ? String(rw.status).toLowerCase() : ''; }
+
+    function rewardCell(row, which) {
+      var rw = row[which];
+      var st = rewardStatus(rw);
+      if (!rw || !REWARD[st]) return '<span class="muted">—</span>';
+      var who = which === 'referrer_reward' ? row.referrer_org_name : row.referred_org_name;
+      var role = which === 'referrer_reward' ? 'referrer' : 'referred';
+      var html = '<div class="rw"><span class="badge badge-dot ' + REWARD[st].cls + '">' + REWARD[st].label + '</span>';
+      if (isSuper && (st === 'available' || st === 'pending')) {
+        html += '<button type="button" class="void-btn" data-ref="' + esc(row.referral_id) + '" data-which="' + which + '" title="Void this reward" aria-label="Void ' + role + ' reward of ' + esc(who || '') + '">' + ico('ban', 'ico-xs') + '<span class="void-txt">Void</span></button>';
+      }
+      html += '</div>';
+      var sub = '';
+      if (st === 'used') {
+        var parts = [];
+        if (rw.plan_name) parts.push('<b>' + esc(rw.plan_name) + '</b>');
+        if (rw.discount_amount != null) parts.push('−' + money(rw.discount_amount));
+        if (rw.invoice_number) parts.push(esc(rw.invoice_number));
+        if (parts.length) sub = '<div class="rw-sub" title="' + esc(rw.used_at ? 'Used on ' + fmtDateTime(rw.used_at) : '') + '">' + parts.join(' · ') + '</div>';
+      } else if (st === 'pending') {
+        sub = '<div class="rw-sub">Unlocks on first paid plan</div>';
+      }
+      return html + sub;
+    }
+
+    function renderRows() {
+      var tbody = document.getElementById('ref-body');
+      var q = document.getElementById('ref-search').value.trim(), st = document.getElementById('ref-status').value;
+      document.getElementById('ref-count').textContent = ROWS.length + (ROWS.length === 1 ? ' referral' : ' referrals');
+      if (!ROWS.length) {
+        tbody.innerHTML = stateRow((q || st !== 'all')
+          ? emptyState('No matching referrals', 'Try a different search or status.', 'inbox')
+          : emptyState('No referrals yet', 'Referrals will appear here once a new organization signs up with a referral code.', 'gift'));
+        return;
+      }
+      tbody.innerHTML = ROWS.map(function (r) {
+        var paid = r.status === 'paid';
+        var status = '<span class="badge badge-dot ' + (paid ? 'badge-green' : 'badge-blue') + '">' + (paid ? 'Paid' : 'Signed up') + '</span>';
+        var when = fmtDate(r.signed_up_at) || '—';
+        var whenSub = paid && r.qualified_at ? '<span class="cell-sub nowrap" title="' + esc(fmtDateTime(r.qualified_at)) + '">Paid ' + esc(fmtDate(r.qualified_at)) + '</span>' : '';
+        return '<tr>'
+          + '<td data-label="" class="c-main"><div class="org-line"><span class="cell-main wrap" title="' + esc(r.referrer_org_name) + '">' + esc(r.referrer_org_name || '—') + '</span>' + (r.code ? '<span class="code-chip" title="Referral code used">' + esc(r.code) + '</span>' : '') + '</div></td>'
+          + '<td data-label="Referred org"><span class="cell-main wrap" title="' + esc(r.referred_org_name) + '">' + esc(r.referred_org_name || '—') + '</span></td>'
+          + '<td data-label="Signed up"><span class="nowrap" title="' + esc(fmtDateTime(r.signed_up_at)) + '">' + esc(when) + '</span>' + whenSub + '</td>'
+          + '<td data-label="" class="c-status">' + status + '</td>'
+          + '<td data-label="Referrer reward" class="c-reward">' + rewardCell(r, 'referrer_reward') + '</td>'
+          + '<td data-label="Referred reward" class="c-reward">' + rewardCell(r, 'referred_reward') + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    /* ── Load ── */
+    async function loadReferrals() {
+      var mySeq = ++loadSeq;
+      var status = document.getElementById('ref-status').value;
+      var q = document.getElementById('ref-search').value.trim();
+      var path = '/gen-dashboard/referrals?status=' + encodeURIComponent(status) + (q ? '&q=' + encodeURIComponent(q) : '');
+      document.getElementById('ref-body').innerHTML = skeletonRows();
+      try {
+        var data = await call('GET', path);
+        if (mySeq !== loadSeq) return;                         /* a newer request is in flight: ignore this answer */
+        SUMMARY = data.summary || {}; TOP = data.top_referrers || []; ROWS = data.referrals || [];
+        renderKpis(); renderTop(); renderRows();
+      } catch (e) {
+        if (mySeq !== loadSeq) return;
+        SUMMARY = null; TOP = []; ROWS = [];
+        renderKpis();
+        document.getElementById('top-list').innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:32px 24px;"><div class="empty-icon is-error">' + ico('alert', '') + '</div><h3>Couldn’t load top referrers</h3></div>';
+        document.getElementById('ref-count').textContent = '';
+        document.getElementById('ref-body').innerHTML = stateRow(emptyState('Couldn’t load referrals', e.message || 'Check your connection and try again.', 'alert', true));
+      }
+    }
+    function loadPage() { loadReferrals(); }
+    function onSearchInput() { clearTimeout(searchTimer); searchTimer = setTimeout(loadReferrals, 350); }
+
+    /* ── Void (styled confirmation, same pattern as coupons.html) ── */
+    document.getElementById('ref-body').addEventListener('click', function (e) {
+      var btn = e.target.closest('button.void-btn');
+      if (!btn) return;
+      var row = ROWS.filter(function (r) { return String(r.referral_id) === btn.getAttribute('data-ref'); })[0];
+      if (!row) return;
+      openVoid(row, btn.getAttribute('data-which'), btn);
+    });
+    function openVoid(row, which, opener) {
+      var rw = row[which];
+      if (!rw) return;
+      var isReferrer = which === 'referrer_reward';
+      var owner = isReferrer ? row.referrer_org_name : row.referred_org_name;
+      pendingVoid = { rewardId: rw.reward_id, owner: owner };
+      voidOpener = opener || null;
+      document.getElementById('void-text').innerHTML = 'Void the <b>' + esc(rewardStatus(rw)) + '</b> 10% reward of <b>' + esc(owner || 'this organization') + '</b> ('
+        + (isReferrer ? 'referrer of ' + esc(row.referred_org_name || 'this org') : 'referred by ' + esc(row.referrer_org_name || 'this org')) + ')?';
+      document.getElementById('void-modal').classList.add('open');
+      document.getElementById('void-cancel').focus();
+    }
+    function closeVoid() {
+      document.getElementById('void-modal').classList.remove('open');
+      pendingVoid = null;
+      if (voidOpener && document.contains(voidOpener)) voidOpener.focus();
+      voidOpener = null;
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && document.getElementById('void-modal').classList.contains('open')) closeVoid();
+    });
+    async function confirmVoid() {
+      if (!pendingVoid) return;
+      var job = pendingVoid, btn = document.getElementById('void-confirm');
+      btn.classList.add('is-loading');
+      try {
+        await call('POST', '/gen-dashboard/referrals/rewards/' + encodeURIComponent(job.rewardId) + '/void');
+        closeVoid();
+        showToast('Reward voided');
+        loadReferrals();
+      } catch (e) {
+        closeVoid();
+        var msg = e.status === 403 ? 'Only a super operator can void rewards.' : (e.message || 'Could not void the reward.');
+        showToast(msg, false);
+        if (e.status === 409) loadReferrals();                  /* it was already used / voided: show the current state */
+      } finally {
+        btn.classList.remove('is-loading');
+      }
+    }
+
+    /* ── Export (current table, flattened) ── */
+    var COLS = [
+      { key: 'referrer', label: 'Referrer' }, { key: 'code', label: 'Code' }, { key: 'referred', label: 'Referred org' },
+      { key: 'signed_up', label: 'Signed up' }, { key: 'status', label: 'Status' },
+      { key: 'ref_reward', label: 'Referrer reward' }, { key: 'ref_detail', label: 'Referrer reward detail' },
+      { key: 'red_reward', label: 'Referred reward' }, { key: 'red_detail', label: 'Referred reward detail' }
+    ];
+    function rewardText(rw) { return rw && rw.status ? (REWARD[rewardStatus(rw)] || { label: rw.status }).label : '—'; }
+    function rewardDetail(rw) {
+      if (!rw || rewardStatus(rw) !== 'used') return '';
+      return [rw.plan_name, rw.discount_amount != null ? '-' + money(rw.discount_amount) : '', rw.invoice_number].filter(Boolean).join(' · ');
+    }
+    function exportRows() {
+      return ROWS.map(function (r) {
+        return {
+          referrer: r.referrer_org_name || '', code: r.code || '', referred: r.referred_org_name || '', signed_up: fmtDate(r.signed_up_at),
+          status: r.status === 'paid' ? 'Paid' : 'Signed up',
+          ref_reward: rewardText(r.referrer_reward), ref_detail: rewardDetail(r.referrer_reward),
+          red_reward: rewardText(r.referred_reward), red_detail: rewardDetail(r.referred_reward)
+        };
+      });
+    }
+    function exportReady(libs) {
+      if (!ROWS.length) { showToast('Nothing to export', false); return false; }
+      if (libs.some(function (l) { return typeof window[l] === 'undefined'; })) { showToast('Export library did not load. Check your connection.', false); return false; }
+      return true;
+    }
+    function doExportExcel() { document.getElementById('ref-export-menu').classList.remove('open'); if (exportReady(['XLSX'])) exportExcel(exportRows(), COLS, 'Clockyn_Referrals_' + new Date().toISOString().slice(0, 10)); }
+    function doExportPDF() { document.getElementById('ref-export-menu').classList.remove('open'); if (exportReady(['jspdf'])) exportPDF(exportRows(), COLS, 'Clockyn_Referrals_' + new Date().toISOString().slice(0, 10), 'Clockyn - Referrals'); }
+
+    function handleLogout() { showLogoutModal(); }
+    function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open'); }
+    function closeSidebar() { document.querySelector('.sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('open'); }
+
+    kpiSkeleton(); topSkeleton();
+    loadReferrals();
+  </script>
+
+</body>
+</html>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 
-import { authApi } from '@/api';
+import { authApi, referralApi } from '@/api';
 import { renderThemed } from '@/components/ui/testing/testUtils';
 import { useAuthStore } from '@/store/auth';
 
@@ -41,6 +41,7 @@ jest.mock('@/api', () => ({
     checkMobileExists: jest.fn().mockResolvedValue(false),
     checkEmailExists: jest.fn().mockResolvedValue(false),
   },
+  referralApi: { validateCode: jest.fn() },
   homeApi: {},
   companyApi: {},
   attendanceApi: {},
@@ -195,6 +196,30 @@ describe('RegisterScreen', () => {
     await fireEvent.changeText(screen.getByTestId('reg-pan'), 'ABCDE1234F');
     expect(screen.queryByText('Invalid PAN format (e.g., ABCDE1234F)')).toBeNull();
     expect(screen.getByText('Hide Additional Details')).toBeTruthy();
+  });
+
+  it('has an optional, secondary "Referral code" field that upper-cases and caps at 6', async () => {
+    await renderThemed(<RegisterScreen />);
+    expect(screen.getByText('Referral code (optional)')).toBeTruthy();
+    await fireEvent.changeText(screen.getByTestId('reg-referral-code'), 'k7m-2qx9');
+    expect(screen.getByTestId('reg-referral-code').props.value).toBe('K7M2QX');
+  });
+
+  it('shows "Referred by <org>" for a valid code and the server message for a bad one', async () => {
+    const validate = referralApi.validateCode as jest.Mock;
+    validate.mockResolvedValueOnce({ valid: true, referrerOrgName: 'Zed Corp', message: '' });
+    await renderThemed(<RegisterScreen />);
+    await fireEvent.changeText(screen.getByTestId('reg-referral-code'), 'k7m2qx');
+    await fireEvent(screen.getByTestId('reg-referral-code'), 'blur');
+    expect(await screen.findByText('Referred by Zed Corp')).toBeTruthy();
+    expect(validate).toHaveBeenCalledTimes(1);
+    expect(validate).toHaveBeenCalledWith('K7M2QX');
+
+    validate.mockResolvedValueOnce({ valid: false, referrerOrgName: '', message: 'This referral code is not valid' });
+    await fireEvent.changeText(screen.getByTestId('reg-referral-code'), 'ZZZ999');
+    expect(await screen.findByText('This referral code is not valid')).toBeTruthy();
+    expect(screen.queryByText('Referred by Zed Corp')).toBeNull();
+    expect(screen.getByTestId('register-submit')).toBeDisabled();
   });
 
   it('only digits are kept in the pincode and an invalid one shows an inline message after leaving the field', async () => {

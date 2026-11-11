@@ -5,6 +5,7 @@ const { fail, bizFail } = require('../lib/http');
 const D = require('../domain');
 const T = require('../lib/time');
 const authz = require('../lib/authz');
+const referral = require('./referral');
 
 const PURPOSES = ['registration', 'login', 'delete_account', 'update_email'];
 const ok = (extra) => ({ success: true, ...extra });
@@ -148,6 +149,7 @@ function register(r) {
     for (const f of ['name', 'mobile_number', 'email', 'org_name']) if (!String(b[f] || '').trim()) fail(422, `${f} is required`);
     if (c.s.users.some((u) => u.mobile_number === normMobile(b.mobile_number))) fail(400, 'Mobile number already registered');
     if (c.s.users.some((u) => String(u.email).toLowerCase() === String(b.email).toLowerCase())) fail(400, 'Email already registered');
+    referral.assertReferralCode(c.s, b.referral_code);
     const seq = (c.s.seq.org += 1);
     const orgId = `org-${String(seq).padStart(4, '0')}`;
     const userId = `adm-${String(seq).padStart(4, '0')}`;
@@ -162,6 +164,7 @@ function register(r) {
       c.s.departments.push({ dept_id: `dept-${c.s.seq.dept}`, dept_name: typeof name === 'string' ? name : name.dept_name || name.name, org_id: orgId });
     }
     c.s.registered.push({ user_id: userId, org_id: orgId });
+    referral.referralAtSignup(c.s, b.referral_code, { org_id: orgId, org_name: b.org_name });
     return ok({ message: 'Registration successful!', user_id: userId, org_id: orgId, org_name: b.org_name, role_id: 1, org_logo: null, ...authz.issueToken(c.s, userId) });
   });
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -17,9 +17,11 @@ import { patchSession, useSession } from '@/store/auth';
 import { spacing } from '@/theme';
 
 import { CouponSection } from '../components/CouponSection';
+import { ReferralRewardCard } from '../components/ReferralRewardCard';
 import { PriceBreakdown } from '../components/PriceBreakdown';
 import { PurchaseUnavailable } from '../components/PurchaseUnavailable';
 import { useCoupon } from '../hooks/useCoupon';
+import { useReferralReward } from '../hooks/useReferralReward';
 import { useServerQuote } from '../hooks/useServerQuote';
 import { useBillingState, usePlanCatalogue, useSubscription } from '../hooks/useBillingData';
 import {
@@ -32,8 +34,9 @@ import {
 import { capitalize, planFeatureIds } from '../utils/planState';
 import { calcTotals, parsePurchaseMode } from '../utils/pricing';
 import { canPurchase } from '../utils/platformPolicy';
+import { isReferralOrderError, referralRefusal } from '../utils/referral';
 import { buildQuote, initialStaffLimit, resolveQuoteSource } from '../utils/quote';
-import { quoteBadgeLabel, quoteDiscountLabel, quoteNotice, quoteToTotals, withServerQuote } from '../utils/serverQuote';
+import { quoteBadgeLabel, quoteDiscountLabel, quoteNotice, quoteReferralLabel, quoteReferralPercent, quoteToTotals, withServerQuote } from '../utils/serverQuote';
 
 const first = (v: string | string[] | undefined): string | undefined => (Array.isArray(v) ? v[0] : v);
 
@@ -96,14 +99,23 @@ export default function CheckoutScreen() {
   );
 
   // The server prices the order: when `POST /orders/quote` answers, its breakdown replaces the local numbers (flat /
-  // capped / minimum-amount coupons); without an answer (older server, network) the local numbers stay exactly as before.
+  // capped / minimum-amount coupons, referral reward); without an answer (older server, network) the local numbers stay.
+  // A referral reward and a coupon exclude each other: `referral.applyReferral` is false while a coupon is applied.
   const couponName = couponState.coupon?.name ?? null;
+  const referral = useReferralReward({
+    enabled: !noCoupon && canPurchase(),
+    hasCoupon: couponName !== null,
+    clearCoupon: couponState.remove,
+  });
+  const applyReferral = referral.applyReferral;
   const quoteParams = useMemo(
-    () => (quote ? { planId: quote.plan.id, staffLimit: quote.chargedStaff, couponCode: couponName, mode } : null),
-    [quote, couponName, mode],
+    () => (quote ? { planId: quote.plan.id, staffLimit: quote.chargedStaff, couponCode: couponName, mode, applyReferral } : null),
+    [quote, couponName, mode, applyReferral],
   );
   const serverQuote = useServerQuote(quoteParams, canPurchase());
   const sq = serverQuote.quote;
+  const { observeQuote } = referral;
+  useEffect(() => observeQuote(sq), [sq, observeQuote]);
   const totals = useMemo(() => (sq && localTotals ? quoteToTotals(sq) : localTotals), [sq, localTotals]);
   const shownQuote = useMemo(() => (quote && sq ? withServerQuote(quote, sq) : quote), [quote, sq]);
 
@@ -171,6 +183,12 @@ export default function CheckoutScreen() {
         toast.error(live.couponMessage || 'This coupon cannot be applied.');
         return;
       }
+      if (live && applyReferral && !live.referralApplied) {
+        const message = referralRefusal(live);
+        referral.refuse(message);
+        toast.error(message);
+        return;
+      }
       const outcome = await runCheckout(deps, {
         userId: session.userId,
         orgId: session.orgId,
@@ -181,16 +199,20 @@ export default function CheckoutScreen() {
         planName: capitalize(quote.plan.name),
         amount: live ? live.grandTotal : totals.grandTotal,
         staffLimit: quote.chargedStaff,
-        couponCode: couponState.coupon?.name ?? null,
+        couponCode: applyReferral ? null : (couponState.coupon?.name ?? null),
         mode,
+        applyReferral,
       });
       await handleOutcome(outcome, quote.plan.id);
     } catch (e) {
-      toast.error(getErrorMessage(e, 'Failed to create order'));
+      const message = getErrorMessage(e, 'Failed to create order');
+      // A 400 on an order with a reward (`referral_not_applicable` &c.; the code is not readable in browsers): the reward is gone (used up, wrong plan): drop it, which re-quotes.
+      if (applyReferral && isReferralOrderError(e)) referral.refuse(message);
+      toast.error(message);
     } finally {
       setStage('idle');
     }
-  }, [stage, quote, totals, session, deps, couponState.coupon, couponName, serverQuote, mode, handleOutcome, toast]);
+  }, [stage, quote, totals, session, deps, couponState.coupon, couponName, applyReferral, referral, serverQuote, mode, handleOutcome, toast]);
 
   const retryVerification = useCallback(async () => {
     if (!pending || !quote || stage !== 'idle') return;
@@ -274,6 +296,9 @@ export default function CheckoutScreen() {
     </Card>
   ) : null;
 
+  const referralPercent = quoteReferralPercent(sq) ?? (referral.offer?.percent || null);
+  const referralDiscount = sq?.referralApplied ? { label: quoteReferralLabel(sq), amount: sq.discountAmount } : null;
+
   const breakdown = (
     <PriceBreakdown
       quote={shownQuote ?? quote}
@@ -281,20 +306,34 @@ export default function CheckoutScreen() {
       coupon={couponState.coupon}
       discountLabel={sq ? quoteDiscountLabel(sq) : undefined}
       totalLoading={serverQuote.loading}
+      referralDiscount={referralDiscount}
       couponSlot={
         noCoupon ? null : (
-          <CouponSection
-            coupon={couponState.coupon}
-            input={couponState.input}
-            error={couponState.error}
-            applying={couponState.applying}
-            onChangeInput={couponState.changeInput}
-            onApply={() => void couponState.apply((code) => serverQuote.preview({ couponCode: code }))}
-            badgeLabel={sq ? quoteBadgeLabel(sq, couponState.coupon) : undefined}
-            notice={sq ? quoteNotice(sq) : null}
-            onRemove={couponState.remove}
-            mailBody={mailBody}
-          />
+          <View style={{ gap: spacing.md }}>
+            <CouponSection
+              coupon={couponState.coupon}
+              input={couponState.input}
+              error={couponState.error}
+              applying={couponState.applying}
+              onChangeInput={couponState.changeInput}
+              // The coupon is priced WITHOUT the reward (one replaces the other once it sticks).
+              onApply={() => void couponState.apply((code) => serverQuote.preview({ couponCode: code, applyReferral: false }))}
+              badgeLabel={sq ? quoteBadgeLabel(sq, couponState.coupon) : undefined}
+              notice={sq ? quoteNotice(sq) : null}
+              onRemove={couponState.remove}
+              mailBody={mailBody}
+            />
+            {referral.visible && referral.offer ? (
+              <ReferralRewardCard
+                offer={referral.offer}
+                applied={applyReferral}
+                percent={referralPercent}
+                note={referral.note}
+                onApply={referral.apply}
+                onRemove={referral.remove}
+              />
+            ) : null}
+          </View>
         )
       }
     />

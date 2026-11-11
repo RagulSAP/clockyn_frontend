@@ -318,6 +318,18 @@ async function main() {
   await call('POST', '/__test/state', { body: { coupon: { max_discount: null, min_amount: null, discount_type: 'percent' } } });
   await call('POST', '/orders/quote', { body: { user_id: ADM, org_id: ORG, plan_id: 2, staff_limit: 50, mode: 'bogus' }, expect: 400 });
   await call('POST', '/orders/create', { body: { user_id: ADM, org_id: ORG, plan_id: 2, amount: 1000, staff_limit: 30, mode: 'bogus' }, expect: 400 });
+  // referral reward: 10 % of the staff charge after credit, Prime / Elite only, never with a coupon, strict on create
+  await call('POST', '/orders/quote', { body: { user_id: ADM, org_id: ORG, plan_id: 2, staff_limit: 50, apply_referral: true }, check: (j) => {
+    const q = j.data;
+    const disc = Math.round(q.after_credit * 0.1);
+    return q.referral_applied === true && q.coupon_applied === false && q.discount_amount === disc && q.grand_total === (q.after_credit - disc) + Math.round((q.after_credit - disc) * 0.18)
+      && q.referral.eligible === true && q.referral.available_count >= 1 && q.referral.percent === 10 && q.referral_percent === 10 && q.referral_message === null ? null : `referral quote ${JSON.stringify(q).slice(0, 260)}`;
+  } });
+  await call('POST', '/orders/quote', { body: { user_id: ADM, org_id: ORG, plan_id: 1, staff_limit: 50, apply_referral: true }, check: (j) => (j.data.referral_applied === false && j.data.discount_amount === 0 && j.data.referral.eligible === false && /Prime and Elite/.test(j.data.referral_message || '') ? null : `core referral quote ${JSON.stringify(j.data).slice(0, 260)}`) });
+  await call('POST', '/orders/quote', { body: { user_id: ADM, org_id: ORG, staff_limit: 5, mode: 'upgrade', apply_referral: true }, check: (j) => (j.data.referral_applied === false && j.data.referral.eligible === false && /upgrades/.test(j.data.referral_message || '') ? null : 'upgrade referral quote') });
+  await call('POST', '/orders/quote', { body: { user_id: ADM, org_id: ORG, plan_id: 2, staff_limit: 50, coupon_code: 'welcome10', apply_referral: true }, expect: 400 });
+  await call('POST', '/orders/create', { body: { user_id: ADM, org_id: ORG, plan_id: 2, amount: 1000, staff_limit: 30, coupon_code: 'WELCOME10', apply_referral: true, mode: 'new' }, expect: 400 });
+  await call('POST', '/orders/create', { body: { user_id: ADM, org_id: ORG, plan_id: 1, amount: 1000, staff_limit: 30, apply_referral: true, mode: 'new' }, expect: 400 });
   const od = await call('POST', '/orders/create', { body: { user_id: ADM, org_id: ORG, plan_id: 2, amount: 1000, staff_limit: 30, coupon_code: null, mode: 'new' }, check: (j) => (j.checkout.order_id && j.amount === 1000 && j.checkout.amount === 1000 ? null : 'order (amount is in rupees)') });
   await call('POST', '/payments/verify', { body: { user_id: ADM, email: 'a@b.test', razorpay_order_id: od.order_id, razorpay_payment_id: 'pay_1', razorpay_signature: 'sig' }, check: isOk });
   await call('GET', `/plans/plan-status/${ORG}`, { check: (j) => (j.plan_id === 2 ? null : 'plan after purchase') });

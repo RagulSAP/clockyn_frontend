@@ -216,6 +216,11 @@ export const queryKeys = {
     firstPayment: (orgId: Scope) => ['billing', s(orgId), 'first-payment'] as const,
   },
 
+  referral: {
+    all: (orgId: Scope) => ['referral', s(orgId)] as const,
+    mine: (orgId: Scope) => ['referral', s(orgId), 'mine'] as const,
+  },
+
   support: {
     all: (userId: Scope) => ['support', s(userId)] as const,
     subjects: () => ['support', '', 'subjects'] as const,

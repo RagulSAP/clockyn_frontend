@@ -11,6 +11,7 @@ import { spacing } from '@/theme';
 import { ContactOtpField } from '../components/ContactOtpField';
 import { DynamicStringList } from '../components/DynamicStringList';
 import { LogoPicker } from '../components/LogoPicker';
+import { ReferralCodeInput } from '../components/ReferralCodeInput';
 import { useAuthMode } from '../hooks/useAuthMode';
 import { useRegistration } from '../hooks/useRegistration';
 import { PIN_LENGTH } from '../utils/validation';
@@ -166,6 +167,10 @@ function RegisterForm({ mode }: { mode: UserAuthMode }) {
             onRemove={(i) => reg.removeFromList('departments', i)}
             testID="reg-departments"
           />
+        </FormSection>
+
+        <FormSection title="Referral code" description="Optional. Got a code from a friend? You both get 10% off Prime and Elite plans.">
+          <ReferralCodeInput field={reg.referral} />
         </FormSection>
 
         <FormSection title="More details" description="Optional statutory and business information.">

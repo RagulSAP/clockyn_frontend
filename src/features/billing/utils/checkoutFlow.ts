@@ -30,6 +30,8 @@ export interface CheckoutContext {
   couponCode: string | null;
   /** Purchase kind (`new` | `renew` | `upgrade`), sent with the order. */
   mode?: OrderMode;
+  /** Redeem a referral reward on this order (then `couponCode` must be null). */
+  applyReferral?: boolean;
 }
 
 export interface PendingVerification {
@@ -85,6 +87,7 @@ export async function runCheckout(deps: CheckoutDeps, ctx: CheckoutContext, onOr
     staffLimit: ctx.staffLimit,
     couponCode: ctx.couponCode,
     mode: ctx.mode,
+    ...(ctx.applyReferral ? { applyReferral: true } : {}),
   });
   onOrderCreated?.();
 

@@ -19,6 +19,7 @@ import type {
   InvoiceRef,
   OrderQuote,
   QuoteOrderInput,
+  ReferralOffer,
   VerifiedPayment,
   VerifyPaymentInput,
 } from '@/types/api/billing';
@@ -103,6 +104,15 @@ export async function validateCoupon(couponName: string): Promise<Coupon> {
   return { ...coupon, name: coupon.name || name };
 }
 
+/**
+ * `apply_referral: true` only when asked AND no coupon travels with it: the server answers 400 to the combination (on quote
+ * and create), so the client never sends both (the screen already makes them exclusive; this is the last line of defence).
+ */
+function referralFlag(input: { applyReferral?: boolean; couponCode?: string | null }): { apply_referral?: true } {
+  const hasCoupon = !!input.couponCode && input.couponCode.trim() !== '';
+  return input.applyReferral && !hasCoupon ? { apply_referral: true } : {};
+}
+
 /** `POST /orders/create` — creates the payment order for a plan purchase / renewal; returns what the checkout needs. */
 export async function createOrder(input: CreateOrderInput): Promise<CheckoutOrder> {
   const body = await api.post<unknown>('/orders/create', {
@@ -113,6 +123,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CheckoutOrde
     staff_limit: input.staffLimit,
     coupon_code: input.couponCode && input.couponCode.trim() !== '' ? input.couponCode.trim() : null,
     mode: input.mode,
+    ...referralFlag(input),
   });
   ensureSuccess(body, 'Failed to create order');
   const order = mapCheckoutOrder(body);
@@ -155,6 +166,21 @@ export function mapOrderQuote(input: unknown): OrderQuote | null {
     validTill: dateOnly(r.valid_till) ?? null,
     resultingStaffLimit: optNum(r.resulting_staff_limit) ?? null,
     payable: r.payable === undefined ? grandTotal > 0 : bool(r.payable),
+    referralApplied: bool(r.referral_applied),
+    referralPercent: optNum(r.referral_percent) ?? null,
+    referralMessage: optStr(r.referral_message) ?? null,
+    referral: mapReferralOffer(r.referral, optNum(r.referral_percent)),
+  };
+}
+
+/** Maps the `referral` block of a quote; `null` when the server does not send one (older servers). */
+function mapReferralOffer(input: unknown, fallbackPercent: number | undefined): ReferralOffer | null {
+  if (!isRecord(input)) return null;
+  return {
+    availableCount: Math.max(0, Math.trunc(num(input.available_count))),
+    eligible: bool(input.eligible),
+    percent: num(input.percent, fallbackPercent ?? 0),
+    message: optStr(input.message) ?? null,
   };
 }
 
@@ -162,7 +188,8 @@ export function mapOrderQuote(input: unknown): OrderQuote | null {
  * `POST /orders/quote` — the price breakdown the server will charge (plan, staff, coupon, mode). NEVER throws: a server
  * without the route (404 / 405), a network failure, a timeout, an abort or any other error answers `null` and the
  * caller falls back to its local pricing. A coupon the server cannot use comes back INSIDE the quote
- * (`couponApplied: false`, `couponMessage`).
+ * (`couponApplied: false`, `couponMessage`); so does a referral reward it cannot use (`referralApplied: false`,
+ * `referralMessage`). `apply_referral` is sent only when true (the server default is false).
  */
 export async function quote(input: QuoteOrderInput, opts: { signal?: AbortSignal } = {}): Promise<OrderQuote | null> {
   try {
@@ -175,6 +202,7 @@ export async function quote(input: QuoteOrderInput, opts: { signal?: AbortSignal
         staff_limit: input.staffLimit,
         coupon_code: input.couponCode && input.couponCode.trim() !== '' ? input.couponCode.trim() : null,
         mode: input.mode,
+        ...referralFlag(input),
       },
       opts.signal ? { signal: opts.signal } : {},
     );

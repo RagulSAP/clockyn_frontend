@@ -22,6 +22,8 @@ export interface CreateOrderInput {
   couponCode?: string | null;
   /** Sent as `mode` so the server prices the same purchase kind the screen showed. Omitted by older callers. */
   mode?: OrderMode;
+  /** Redeem one referral reward on this purchase (never together with a coupon). Sent as `apply_referral` only when true. */
+  applyReferral?: boolean;
 }
 
 /** Input of `billingApi.quote` (`POST /orders/quote`). `staffLimit` is the EXTRA staff for `mode: 'upgrade'`. */
@@ -33,6 +35,19 @@ export interface QuoteOrderInput {
   staffLimit: number;
   couponCode?: string | null;
   mode?: OrderMode;
+  /** Price the order with one referral reward (`apply_referral`); sent only when true. */
+  applyReferral?: boolean;
+}
+
+/** What the server says about the organisation's referral rewards for THIS quote (`referral` block of the quote). */
+export interface ReferralOffer {
+  /** Rewards the organisation can still redeem (one per purchase). */
+  availableCount: number;
+  /** Whether a reward can be used on this plan + mode. */
+  eligible: boolean;
+  percent: number;
+  /** Why it cannot be used (`eligible: false`), e.g. "Referral rewards are valid on Prime and Elite plans only". */
+  message: string | null;
 }
 
 /**
@@ -67,6 +82,13 @@ export interface OrderQuote {
   resultingStaffLimit: number | null;
   /** False when the total is 0 (nothing to charge). */
   payable: boolean;
+  /** A referral reward discounts this quote (`discountAmount` is then the referral discount and no coupon applies). */
+  referralApplied: boolean;
+  referralPercent: number | null;
+  /** The server's reason when a requested reward could not be used. */
+  referralMessage: string | null;
+  /** `null` for servers that do not know referrals. */
+  referral: ReferralOffer | null;
 }
 
 /** Everything the checkout sheet needs; maps 1:1 onto `openCheckout` options. */

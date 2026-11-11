@@ -90,7 +90,10 @@ export function isRegisterReady(values: RegisterValues, contact: RegisterContact
 }
 
 /** The registration request (v1 payload quirks live in `toRegisterBody`: GST goes out twice, optional ids only when set). */
-export function buildRegisterInput(values: RegisterValues, contact: { mobile: string; email: string; deviceToken?: string | null }): RegisterCompanyInput {
+export function buildRegisterInput(
+  values: RegisterValues,
+  contact: { mobile: string; email: string; deviceToken?: string | null; referralCode?: string },
+): RegisterCompanyInput {
   const orgName = values.orgName.trim();
   const branches = cleanNames(values.branches);
   const departments = cleanNames(values.departments);
@@ -115,5 +118,6 @@ export function buildRegisterInput(values: RegisterValues, contact: { mobile: st
     state: values.state.trim(),
     district: values.district.trim(),
     pincode: parseInt(values.pincode, 10),
+    referralCode: contact.referralCode ? contact.referralCode : undefined,
   };
 }

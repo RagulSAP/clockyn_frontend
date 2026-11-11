@@ -12,7 +12,8 @@ const q = (grandTotal: number, over: Partial<OrderQuote> = {}): OrderQuote => ({
   mode: 'new', planId: 22, planName: 'prime', pricePerStaffMonth: 40, chargedStaff: 15, chargedMonths: 12, termMonths: 12,
   staffCharge: 7200, credit: 0, afterCredit: 7200, couponCode: null, couponApplied: false, couponMessage: null, discountPercent: null,
   discountAmount: 0, subtotal: 7200, gstPercent: 18, gst: 1296, grandTotal, amountPaise: grandTotal * 100, currency: 'INR',
-  validFrom: null, validTill: null, resultingStaffLimit: null, payable: grandTotal > 0, ...over,
+  validFrom: null, validTill: null, resultingStaffLimit: null, payable: grandTotal > 0,
+  referralApplied: false, referralPercent: null, referralMessage: null, referral: null, ...over,
 });
 
 interface Deferred {
@@ -77,6 +78,19 @@ describe('useServerQuote', () => {
     expect(calls[1].input).toMatchObject({ staffLimit: 18 });
     await act(async () => calls[1].resolve(q(9000)));
     expect(result.current.quote?.grandTotal).toBe(9000);
+  });
+
+  it('sends applyReferral (default false), re-quotes when the choice flips and lets preview() override it', async () => {
+    const { result, rerender } = await renderHook((p: QuoteParams) => useServerQuote(p, true, DEBOUNCE), { initialProps: base });
+    expect(calls[0].input).toMatchObject({ applyReferral: false });
+    await act(async () => calls[0].resolve(q(8496)));
+    await rerender({ ...base, applyReferral: true });
+    await waitFor(() => expect(calls).toHaveLength(2));
+    expect(calls[1].input).toMatchObject({ applyReferral: true });
+    await act(async () => calls[1].resolve(q(7646, { referralApplied: true })));
+    expect(result.current.quote?.referralApplied).toBe(true);
+    void result.current.preview({ couponCode: 'SAVE10', applyReferral: false });
+    expect(calls[2].input).toMatchObject({ couponCode: 'SAVE10', applyReferral: false });
   });
 
   it('falls back when the server has no quote route: quote stays null and loading ends', async () => {

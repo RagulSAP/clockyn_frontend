@@ -77,7 +77,7 @@ const isOnlineIn = (t, userId) => !!(t.sockets.get(userId) && [...t.sockets.get(
 
 // ─── routes ──────────────────────────────────────────────────────────────────────────────────────────
 const router = new Router();
-for (const mod of ['auth', 'home', 'org', 'staff', 'attendance', 'requests', 'expenses', 'comms', 'liveChat', 'crm', 'payroll', 'reports', 'billing']) {
+for (const mod of ['auth', 'home', 'org', 'staff', 'attendance', 'requests', 'expenses', 'comms', 'liveChat', 'crm', 'payroll', 'reports', 'billing', 'referral']) {
   require(`./routes/${mod}`).register(router);
 }
 

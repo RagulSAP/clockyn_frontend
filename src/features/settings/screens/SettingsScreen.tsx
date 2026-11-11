@@ -5,7 +5,7 @@ import { Screen, useBreakpoint } from '@/components/layout';
 import { BottomSheet, Card, ListItem, SegmentedControl, useConfirm, useToast, Text, Icon, Reveal } from '@/components/ui';
 import { useOrgPlan } from '@/hooks';
 import { useAppRouter } from '@/lib/navigation';
-import { signOut, useSession } from '@/store/auth';
+import { signOut, useRole, useSession } from '@/store/auth';
 import { radii, spacing, useThemePreference, type ThemePreference } from '@/theme';
 
 import { MenuChildren, SectionCard } from '../components/SectionCard';
@@ -32,6 +32,7 @@ export default function SettingsScreen() {
   const toast = useToast();
   const confirm = useConfirm();
   const session = useSession();
+  const role = useRole();
   const plan = useOrgPlan();
   const { isDesktop } = useBreakpoint();
   const { preference, setPreference } = useThemePreference();
@@ -40,6 +41,8 @@ export default function SettingsScreen() {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [incentiveOpen, setIncentiveOpen] = useState(false);
 
+  // Refer & Earn belongs to the organisation admin (billing-style rows are never shown to managers).
+  const sections = useMemo(() => SETTINGS_SECTIONS.filter((s) => s.id !== 'referral' || role === 1), [role]);
   const gate = useMemo(() => salaryGate(plan.status), [plan.status]);
 
   const toggleSection = useCallback((id: SectionId) => {
@@ -118,7 +121,7 @@ export default function SettingsScreen() {
     );
   };
 
-  const byId = (id: SectionId) => SETTINGS_SECTIONS.find((s) => s.id === id);
+  const byId = (id: SectionId) => sections.find((s) => s.id === id);
 
   return (
     <Screen title="Settings" subtitle={session?.orgName || undefined} hideBack edges={['top']} large testID="settings-screen">
@@ -134,7 +137,7 @@ export default function SettingsScreen() {
           ))}
         </View>
       ) : (
-        <Reveal style={{ gap: spacing.md }}>{SETTINGS_SECTIONS.map(renderSection)}</Reveal>
+        <Reveal style={{ gap: spacing.md }}>{sections.map(renderSection)}</Reveal>
       )}
 
       <BottomSheet visible={incentiveOpen} onClose={() => setIncentiveOpen(false)} title="Select Incentive Type" size="sm" testID="incentive-sheet">

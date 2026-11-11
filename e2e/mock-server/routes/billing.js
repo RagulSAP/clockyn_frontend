@@ -13,6 +13,36 @@ const MIN_STAFF = 10;
 const CREDIT_BASELINE_STAFF = 10;
 const RENEW_MONTHS = 12;
 
+// ── referral rewards (contract: referral_contract.md) ──────────────────────────────────────────────────────────────
+// A reward is usable once, on `new` / `renew` of Prime or Elite (the real server keys this on plan ids 2/3 in one constant; the
+// mock keys on the plan NAME because its catalogues carry several ids per tier), never together with a coupon, 10 % of the staff
+// charge after plan credit. Availability reads the Refer & Earn state (`s.referral`, routes/referral.js) when it exists; before
+// that page is first opened the seed has exactly ONE available reward. Paying with a reward uses it up (`/payments/verify`).
+const REFERRAL_PERCENT = 10;
+const REFERRAL_PLANS = ['prime', 'elite'];
+const REFERRAL_SEED_AVAILABLE = 1;
+
+function referralRewardsOf(s, orgId) {
+  const r = s.referral;
+  if (!r) return null;
+  const rows = (r.rows && r.rows[orgId]) || [];
+  return rows.map((x) => x.reward).concat(r.mine && r.mine[orgId] ? [r.mine[orgId]] : []).filter(Boolean);
+}
+
+function referralAvailable(s, orgId) {
+  const rewards = referralRewardsOf(s, orgId);
+  if (rewards) return rewards.filter((x) => x.status === 'available').length;
+  return Math.max(0, REFERRAL_SEED_AVAILABLE - (s.referralConsumed || 0));
+}
+
+/** Marks one available reward as used by the paid order (no-op for the pre-page seed, which only counts). */
+function consumeReferral(s, orgId, order) {
+  const rewards = referralRewardsOf(s, orgId);
+  const reward = rewards && rewards.find((x) => x.status === 'available');
+  if (reward) Object.assign(reward, { status: 'used', used_at: T.isoNow(), plan_name: order.plan_name, discount_amount: order.referral_discount });
+  else s.referralConsumed = (s.referralConsumed || 0) + 1;
+}
+
 function addMonths(dateStr, n) {
   const p = T.parseDate(dateStr);
   const total = p.year * 12 + (p.month - 1) + Math.trunc(n);
@@ -89,6 +119,36 @@ function computeQuote(s, b) {
     couponMessage = 'Coupons do not apply to adding staff';
   }
 
+  // Referral reward: eligibility is for THIS plan + mode; `apply_referral` asks to use it (together with a coupon it is a
+  // 400, like the real server; any other refusal is reported in `referral_message` on the quote, /orders/create answers 400).
+  const orgId = D.resolveOrg(s, b.org_id);
+  const available = referralAvailable(s, orgId);
+  let referralEligible = true;
+  let referralNote = null;
+  if (mode === 'upgrade') {
+    referralEligible = false;
+    referralNote = 'Referral rewards do not apply to staff upgrades';
+  } else if (!REFERRAL_PLANS.includes(String(plan.plan_name).toLowerCase())) {
+    referralEligible = false;
+    referralNote = 'Referral rewards are valid on Prime and Elite plans only';
+  } else if (available < 1) {
+    referralEligible = false;
+    referralNote = 'No referral reward available';
+  }
+  const wantReferral = b.apply_referral === true || b.apply_referral === 'true';
+  let referralApplied = false;
+  let referralMessage = null;
+  let referralDiscount = 0;
+  if (wantReferral) {
+    if (code) fail(400, 'Use either a coupon or a referral reward, not both'); // like the real server: quote AND create answer 400
+    else if (!referralEligible) referralMessage = referralNote;
+    else {
+      referralApplied = true;
+      referralDiscount = Math.max(0, Math.min(Math.round((afterCredit * REFERRAL_PERCENT) / 100), afterCredit));
+    }
+  }
+  if (referralApplied) discountAmount = referralDiscount;
+
   const subtotal = Math.max(0, afterCredit - discountAmount);
   const gst = Math.round(subtotal * GST_RATE);
   const grandTotal = subtotal + gst;
@@ -123,6 +183,10 @@ function computeQuote(s, b) {
     has_current_plan: hasCurrentPlan,
     is_plan_expired: expired,
     payable: grandTotal > 0,
+    referral_applied: referralApplied,
+    referral_percent: REFERRAL_PERCENT,
+    referral_message: referralMessage,
+    referral: { available_count: available, eligible: referralEligible, percent: REFERRAL_PERCENT, message: referralEligible ? null : referralNote },
   };
 }
 
@@ -151,13 +215,21 @@ function register(r) {
     const amount = Number(c.b.amount);
     if (!Number.isFinite(amount) || amount <= 0) return bizFail('Invalid amount');
     if (c.b.mode !== undefined && c.b.mode !== null && !['new', 'renew', 'upgrade'].includes(c.b.mode)) fail(400, 'mode must be one of new, upgrade, renew');
+    // Strict like the real server: a reward that cannot be used (or is combined with a coupon) refuses the order; the total is the
+    // server's, not the posted one.
+    let referralQuote = null;
+    if (c.b.apply_referral === true || c.b.apply_referral === 'true') {
+      if (c.b.coupon_code && String(c.b.coupon_code).trim() !== '') fail(400, 'Use either a coupon or a referral reward, not both');
+      referralQuote = computeQuote(c.s, c.b);
+      if (!referralQuote.referral_applied) fail(400, referralQuote.referral_message || referralQuote.referral.message || 'No referral reward available');
+    }
     const u = D.user(c.s, c.b.user_id) || {};
     c.s.seq.order += 1;
     const orderId = `order_mock_${c.s.seq.order}`;
-    const order = { order_id: orderId, plan_id: plan.plan_id, amount, staff_limit: Number(c.b.staff_limit) || c.s.subscription.staff_limit, user_id: c.b.user_id, org_id: c.b.org_id, coupon: c.b.coupon_code, mode: c.b.mode || null };
+    const order = { order_id: orderId, plan_id: plan.plan_id, plan_name: plan.plan_name, amount: referralQuote ? referralQuote.grand_total : amount, staff_limit: Number(c.b.staff_limit) || c.s.subscription.staff_limit, user_id: c.b.user_id, org_id: c.b.org_id, coupon: c.b.coupon_code, mode: c.b.mode || null, referral: !!referralQuote, referral_discount: referralQuote ? referralQuote.discount_amount : 0 };
     (c.s.orders = c.s.orders || []).push(order);
     // Like the real server: `amount` is in RUPEES (the app converts to paise for the payment sheet).
-    const checkout = { order_id: orderId, key_id: 'rzp_test_mockkey', amount, currency: 'INR', prefill: { name: u.name || '', email: u.email || '', contact: u.mobile_number || '' }, notes: { org_id: String(c.b.org_id || ''), plan_id: String(plan.plan_id) } };
+    const checkout = { order_id: orderId, key_id: 'rzp_test_mockkey', amount: order.amount, currency: 'INR', prefill: { name: u.name || '', email: u.email || '', contact: u.mobile_number || '' }, notes: { org_id: String(c.b.org_id || ''), plan_id: String(plan.plan_id) } };
     return ok({ order_id: orderId, key_id: checkout.key_id, amount: checkout.amount, currency: 'INR', order_name: `${plan.plan_name} plan`, is_first_payment: c.s.invoices.length === 0, checkout });
   });
 
@@ -169,6 +241,7 @@ function register(r) {
     const validTill = T.addDays(T.today(), 30 * plan.plan_month);
     c.s.subscription = { plan_id: plan.plan_id, start_date: T.today(), end_date: validTill, staff_limit: order.staff_limit, status: 'ACTIVE' };
     c.s.flags.plan = plan.plan_id === 1 ? 'core' : plan.plan_id === 2 ? 'prime' : 'elite';
+    if (order.referral) consumeReferral(c.s, D.resolveOrg(c.s, order.org_id), order);
     c.s.seq.invoice += 1;
     c.s.invoices.unshift({ invoice_number: `INV-2026-${String(1000 + c.s.seq.invoice)}`, payment_date: T.isoNow(), plan_name: plan.plan_name, staff_count: order.staff_limit, total_amount: order.amount, valid_till: validTill, user_id: order.user_id, org_id: order.org_id });
     return ok({ message: 'Payment verified successfully', valid_till: validTill, plan_id: plan.plan_id });

@@ -74,6 +74,14 @@ describe('runCheckout', () => {
     expect(deps.createOrder).toHaveBeenCalledWith(expect.objectContaining({ planId: 22, mode: 'renew' }));
   });
 
+  it('carries apply_referral (and no coupon) when a referral reward is redeemed, and omits it otherwise', async () => {
+    const deps = makeDeps();
+    await runCheckout(deps, { ...ctx, couponCode: null, mode: 'new', applyReferral: true });
+    expect(deps.createOrder).toHaveBeenLastCalledWith({ userId: 'u1', orgId: 'o1', planId: 22, amount: 8496, staffLimit: 15, couponCode: null, mode: 'new', applyReferral: true });
+    await runCheckout(deps, { ...ctx, applyReferral: false });
+    expect((deps.createOrder as unknown as jest.Mock).mock.calls[1][0]).not.toHaveProperty('applyReferral');
+  });
+
   it('creates the order with the grand total, pays, verifies and reports success', async () => {
     const deps = makeDeps();
     const created = jest.fn();

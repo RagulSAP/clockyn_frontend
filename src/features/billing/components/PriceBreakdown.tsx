@@ -61,10 +61,12 @@ export type PriceBreakdownProps = {
   discountLabel?: string;
   /** The server quote is loading: the grand total shows a spinner (the rest keeps its numbers). */
   totalLoading?: boolean;
+  /** Referral reward applied by the server: shown in the coupon discount's place (`Referral reward (10%)  − ₹X`). */
+  referralDiscount?: { label: string; amount: number } | null;
 };
 
-/** Staff charge → credit → coupon → subtotal → GST → grand total, exactly as the pricing rules compute them. */
-export function PriceBreakdown({ quote, totals, coupon, couponSlot, footer, discountLabel, totalLoading }: PriceBreakdownProps) {
+/** Staff charge → credit → coupon / referral reward → subtotal → GST → grand total, exactly as the pricing rules compute them. */
+export function PriceBreakdown({ quote, totals, coupon, couponSlot, footer, discountLabel, totalLoading, referralDiscount }: PriceBreakdownProps) {
   const { plan } = quote;
   const staffSub = quote.isStaffUpgrade
     ? `${quote.chargedStaff} extra staff × ${formatINR(plan.amount)}/staff × ${quote.chargedMonths} months`
@@ -88,6 +90,9 @@ export function PriceBreakdown({ quote, totals, coupon, couponSlot, footer, disc
           tone="success"
           testID="row-discount"
         />
+      ) : null}
+      {referralDiscount && !quote.noCoupon ? (
+        <Row label={referralDiscount.label} value={`− ${formatINR(referralDiscount.amount)}`} tone="success" testID="row-referral-discount" />
       ) : null}
       <Divider />
       <Row label="Subtotal" value={formatINR(totals.subtotal)} testID="row-subtotal" />

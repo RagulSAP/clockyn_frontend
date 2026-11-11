@@ -8,10 +8,11 @@ import { DESKTOP_COLUMNS, INCENTIVE_OPTIONS, SETTINGS_SECTIONS, isMenuGroup } fr
 import { replyAuthorLabel, ticketSubmitError, validateSuggestion, validateTicket } from '../utils/support';
 
 describe('settings menu (settings §3.1)', () => {
-  it('has the 8 spec sections in order, with Appearance added before Beyond', () => {
-    expect(SETTINGS_SECTIONS.map((s) => s.id)).toEqual(['plan', 'company', 'salary', 'attendance', 'reports', 'roles', 'expenses', 'appearance', 'beyond']);
+  it('has the spec sections in order, with Refer & Earn after the plan row and Appearance before Beyond', () => {
+    expect(SETTINGS_SECTIONS.map((s) => s.id)).toEqual(['plan', 'referral', 'company', 'salary', 'attendance', 'reports', 'roles', 'expenses', 'appearance', 'beyond']);
     expect(SETTINGS_SECTIONS.map((s) => s.title)).toEqual([
       'Your Plan & Validity',
+      'Refer & Earn',
       'Company Settings',
       'Salary Structure',
       'Attendance & Devices',
@@ -26,6 +27,7 @@ describe('settings menu (settings §3.1)', () => {
   it('plain rows navigate to the right routes', () => {
     const route = (id: string) => SETTINGS_SECTIONS.find((s) => s.id === id)?.route;
     expect(route('plan')).toBe(routes.admin.billing.overview);
+    expect(route('referral')).toBe(routes.admin.referral);
     expect(route('reports')).toBe(routes.admin.reports.hub);
     expect(route('roles')).toBe(routes.admin.managers.list);
   });

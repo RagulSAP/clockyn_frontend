@@ -23,6 +23,7 @@ import {
 } from '../utils/registerForm';
 import { PIN_LENGTH, REGISTER_GUARD_MESSAGE, cinError, digitsOnly, gstError, isValidMobile, normalizeEmail, normalizeStatutoryId, panError, tanError } from '../utils/validation';
 import { useContactOtp, type ContactOtp } from './useContactOtp';
+import { REFERRAL_SHORT_MESSAGE, useReferralCode, type ReferralCodeField } from './useReferralCode';
 
 export const REGISTER_NETWORK_MESSAGE = 'Failed to save data - Server not reachable';
 export const REGISTER_FAILED_MESSAGE = 'Failed to save data in database';
@@ -35,6 +36,8 @@ export interface Registration {
   mobile: ContactOtp;
   email: ContactOtp;
   logo: PickedImage | null;
+  /** Optional referral code field (checked on blur; a rejected code blocks Register). */
+  referral: ReferralCodeField;
   loading: boolean;
   ready: boolean;
   /** Blocking inline errors, only for fields the user already left. */
@@ -94,7 +97,8 @@ export function useRegistration(
   });
 
   const mobileOk = mobile.needsOtp ? mobile.verified : isValidMobile(mobile.value) && !mobile.error && !mobile.checking;
-  const ready = isRegisterReady(values, { mobile: mobile.value, mobileVerified: mobileOk, emailVerified: email.verified });
+  const referral = useReferralCode();
+  const ready = isRegisterReady(values, { mobile: mobile.value, mobileVerified: mobileOk, emailVerified: email.verified }) && !referral.blocking;
 
   const setField = useCallback((field: TextField, text: string) => setValues((v) => ({ ...v, [field]: normalizeField(field, text) })), []);
   const touch = useCallback((field: RequiredField) => setTouched((t) => (t[field] ? t : { ...t, [field]: true })), []);
@@ -124,14 +128,22 @@ export function useRegistration(
   const submit = useCallback(() => {
     if (loading) return;
     if (!ready) {
-      toast.error(REGISTER_GUARD_MESSAGE);
+      toast.error(referral.blocking ? referral.error || REFERRAL_SHORT_MESSAGE : REGISTER_GUARD_MESSAGE);
       return;
     }
     setLoading(true);
     void (async () => {
       try {
+        // A rejected referral code stops here with a clear message; nothing the user typed is cleared.
+        const referralCheck = await referral.ensure();
+        if (!referralCheck.ok) {
+          toast.error(`${referralCheck.message}. Fix it or clear the referral code to continue.`);
+          return;
+        }
         const deviceToken = await getDeviceToken(mode === 'email' ? email.value : mobile.value);
-        const result = await authApi.registerCompany(buildRegisterInput(values, { mobile: mobile.value, email: email.value, deviceToken }));
+        const result = await authApi.registerCompany(
+          buildRegisterInput(values, { mobile: mobile.value, email: email.value, deviceToken, referralCode: referral.value }),
+        );
         const orgName = result.orgName || values.orgName.trim();
         const orgId = result.orgId || result.userId;
 
@@ -156,12 +168,15 @@ export function useRegistration(
         router.goHome(session.roleId);
         toast.success(`Awesome! Welcome to ${orgName}`);
       } catch (e) {
-        toast.error(e instanceof ApiError && e.isNetwork ? REGISTER_NETWORK_MESSAGE : getErrorMessage(e, REGISTER_FAILED_MESSAGE));
+        const message = e instanceof ApiError && e.isNetwork ? REGISTER_NETWORK_MESSAGE : getErrorMessage(e, REGISTER_FAILED_MESSAGE);
+        // The server refused the code itself (e.g. it was checked while offline): show it under the field too.
+        if (referral.value && e instanceof ApiError && e.status === 400 && /referral/i.test(message)) referral.reject(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
     })();
-  }, [email.value, loading, logo, mobile.value, mode, ready, router, toast, values]);
+  }, [email.value, loading, logo, mobile.value, mode, ready, referral, router, toast, values]);
 
   const fieldErrors = useMemo(() => {
     const all = requiredErrors(values);
@@ -175,5 +190,5 @@ export function useRegistration(
     [values.cin, values.gst, values.pan, values.tan],
   );
 
-  return { values, mobile, email, logo, loading, ready, fieldErrors, statutoryErrors, setField, touch, addToList, updateInList, removeFromList, pickLogo, submit };
+  return { values, mobile, email, logo, referral, loading, ready, fieldErrors, statutoryErrors, setField, touch, addToList, updateInList, removeFromList, pickLogo, submit };
 }

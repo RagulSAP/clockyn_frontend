@@ -49,6 +49,7 @@ export const routes = {
       checkout: '/admin/billing/checkout',
       invoices: '/admin/billing/invoices',
     },
+    referral: '/admin/referral', // Refer & Earn (org admin)
     support: '/admin/support',
     suggestFeature: '/admin/suggest-feature',
     more: '/admin/more', // privacy policy + request account deletion

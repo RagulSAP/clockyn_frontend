@@ -109,6 +109,7 @@ export function toRegisterBody(input: RegisterCompanyInput): Record<string, unkn
     state: input.state,
     district: input.district,
     pincode: input.pincode,
+    referral_code: input.referralCode,
   };
   for (const [k, v] of Object.entries(optional)) {
     if (v !== undefined && v !== '') body[k] = v;

@@ -6,7 +6,7 @@
  *   <script src="../js/layout.js"></script>
  *
  * `data-active` is one of: dashboard, organizations, users, subscriptions, payments, coupons, suggestions,
- * tickets, live_chat, videos, video_views, clickstream, faqs, activity, settings. When it is missing the key is derived from the file name.
+ * tickets, live_chat, videos, video_views, clickstream, faqs, referrals, activity, settings. When it is missing the key is derived from the file name.
  * The markup is written synchronously (no flash) and before auth.js runs its DOMContentLoaded handler, so auth.js
  * finds the ids/classes it fills: .sidebar-logo-img, #sidebar-avatar, #sidebar-user-name, #sidebar-user-mobile,
  * #sidebar-user-role, .nav-users-badge, .nav-suggestion-badge, .nav-livechat-badge (filled by js/live-chat-notify.js, which
@@ -22,6 +22,7 @@
     organizations: [["path",{"d":"M10 12h4"}],["path",{"d":"M10 8h4"}],["path",{"d":"M14 21v-3a2 2 0 0 0-4 0v3"}],["path",{"d":"M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"}],["path",{"d":"M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"}]],
     users: [["path",{"d":"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"}],["path",{"d":"M16 3.128a4 4 0 0 1 0 7.744"}],["path",{"d":"M22 21v-2a4 4 0 0 0-3-3.87"}],["circle",{"cx":"9","cy":"7","r":"4"}]],
     subscriptions: [["rect",{"width":"8","height":"4","x":"8","y":"2","rx":"1","ry":"1"}],["path",{"d":"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"}],["path",{"d":"M12 11h4"}],["path",{"d":"M12 16h4"}],["path",{"d":"M8 11h.01"}],["path",{"d":"M8 16h.01"}]],
+    referrals: [["rect",{"x":"3","y":"8","width":"18","height":"4","rx":"1"}],["path",{"d":"M12 8v13"}],["path",{"d":"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"}],["path",{"d":"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"}]],
     payments: [["rect",{"width":"20","height":"14","x":"2","y":"5","rx":"2"}],["line",{"x1":"2","x2":"22","y1":"10","y2":"10"}],["path",{"d":"M6 14h2"}]],
     coupons: [["path",{"d":"M2 9a3 3 0 1 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"}],["path",{"d":"M9 9h.01"}],["path",{"d":"m15 9-6 6"}],["path",{"d":"M15 15h.01"}]],
     suggestions: [["path",{"d":"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"}],["path",{"d":"M9 18h6"}],["path",{"d":"M10 22h4"}]],
@@ -44,6 +45,7 @@
       { key: 'organizations', label: 'Organizations', href: 'organizations.html' },
       { key: 'users', label: 'Users', href: 'users.html', badge: 'nav-badge nav-users-badge', badgeDisplay: 'none' },
       { key: 'subscriptions', label: 'Subscriptions', href: 'subscriptions.html' },
+      { key: 'referrals', label: 'Referrals', href: 'referrals.html' },
       { key: 'payments', label: 'Payments', href: 'payments.html' },
       { key: 'coupons', label: 'Coupons', href: 'coupons.html' },
       { key: 'suggestions', label: 'Suggestions', href: 'suggestions.html', badge: 'nav-badge nav-suggestion-badge', badgeDisplay: 'none' },

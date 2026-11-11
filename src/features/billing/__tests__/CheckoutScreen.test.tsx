@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 
 import { routes } from '@/config/routes';
+import { ApiError } from '@/lib/api/errors';
 import { addMonthsStr, todayIST } from '@/lib/datetime';
 import { useAuthStore } from '@/store/auth';
 import type { Plan, Subscription } from '@/types/api/plans';
@@ -367,6 +368,210 @@ describe('CheckoutScreen', () => {
       expect(await screen.findByText('SAVE10 (10% off)')).toBeTruthy();
       expect(mockApi.validateCoupon).toHaveBeenCalledWith('save10');
       expect(screen.getByTestId('row-grand-total')).toHaveTextContent('₹7,646');
+    });
+  });
+
+  describe('referral reward (apply_referral) next to the coupon box', () => {
+    const offer = { availableCount: 2, eligible: true, percent: 10, message: null };
+    const base = {
+      mode: 'new', planId: 22, planName: 'prime', pricePerStaffMonth: 40, chargedStaff: 15, chargedMonths: 12, termMonths: 12,
+      staffCharge: 7200, credit: 0, afterCredit: 7200, couponCode: null, couponApplied: false, couponMessage: null, discountPercent: null,
+      discountAmount: 0, subtotal: 7200, gstPercent: 18, gst: 1296, grandTotal: 8496, amountPaise: 849600, currency: 'INR',
+      validFrom: '2026-11-02', validTill: '2027-11-02', resultingStaffLimit: 15, payable: true,
+      referralApplied: false, referralPercent: 10, referralMessage: null, referral: offer,
+    };
+    const withReward = { ...base, discountPercent: 10, discountAmount: 720, subtotal: 6480, gst: 1166, grandTotal: 7646, referralApplied: true };
+    const couponQuote = { ...base, couponCode: 'SAVE10', couponApplied: true, discountPercent: 10, discountAmount: 720, subtotal: 6480, gst: 1166, grandTotal: 7646 };
+    const coreMessage = 'Referral rewards are valid on Prime and Elite plans only';
+    type QuoteInput = { applyReferral?: boolean; couponCode?: string | null };
+    const lastQuoteInput = (): QuoteInput => mockApi.quote.mock.calls[mockApi.quote.mock.calls.length - 1][0] as QuoteInput;
+    const everyQuote = (check: (i: QuoteInput) => boolean): boolean => mockApi.quote.mock.calls.every((c) => check(c[0] as QuoteInput));
+
+    /** A server that prices the reward (10 %), or refuses it when `eligible` is false. */
+    function serverWith(over: { eligible?: boolean; count?: number } = {}) {
+      const eligible = over.eligible ?? true;
+      const ref = { ...offer, eligible, availableCount: over.count ?? 2, message: eligible ? null : coreMessage };
+      mockApi.quote.mockImplementation(async (input: QuoteInput) => {
+        if (input.couponCode) return { ...couponQuote, couponCode: input.couponCode, referral: ref };
+        if (input.applyReferral) return eligible ? { ...withReward, referral: ref } : { ...base, referral: ref, referralMessage: coreMessage };
+        return { ...base, referral: ref };
+      });
+    }
+
+    it('shows the reward card beside the coupon box with the count; Apply discounts 10 % from the server quote, Remove restores it', async () => {
+      serverWith();
+      await renderScreen(<CheckoutScreen />);
+      expect(await screen.findByTestId('referral-reward-card')).toBeTruthy();
+      expect(screen.getByTestId('coupon-section')).toBeTruthy();
+      expect(screen.getByTestId('referral-title')).toHaveTextContent('Referral reward — 10% off');
+      expect(screen.getByTestId('referral-available')).toHaveTextContent('2 available');
+      expect(screen.getByTestId('referral-apply')).toBeEnabled();
+      expect(screen.queryByTestId('row-referral-discount')).toBeNull();
+      await fireEvent.press(screen.getByTestId('referral-apply'));
+      expect(await screen.findByTestId('referral-remove')).toBeTruthy();
+      await waitFor(() => expect(screen.getByTestId('row-grand-total')).toHaveTextContent('₹7,646'));
+      expect(screen.getByText('Referral reward (10%)')).toBeTruthy();
+      expect(screen.getByTestId('row-referral-discount')).toHaveTextContent('− ₹720');
+      expect(screen.getByTestId('row-subtotal')).toHaveTextContent('₹6,480');
+      expect(screen.getByTestId('referral-applied')).toHaveTextContent(/Applied ✓/);
+      expect(screen.getByText('Pay ₹7,646')).toBeTruthy();
+      expect(lastQuoteInput()).toMatchObject({ applyReferral: true, couponCode: null });
+      await fireEvent.press(screen.getByTestId('referral-remove'));
+      await waitFor(() => expect(screen.getByTestId('row-grand-total')).toHaveTextContent('₹8,496'));
+      expect(screen.queryByTestId('row-referral-discount')).toBeNull();
+      expect(screen.getByTestId('referral-apply')).toBeTruthy();
+      await waitFor(() => expect(lastQuoteInput().applyReferral).toBe(false));
+    });
+
+    it('Pay creates the order with apply_referral and NO coupon, for the server total', async () => {
+      serverWith();
+      mockApi.createOrder.mockResolvedValue({ ...order, amount: 7646 });
+      await renderScreen(<CheckoutScreen />);
+      await fireEvent.press(await screen.findByTestId('referral-apply'));
+      await waitFor(() => expect(screen.getByTestId('row-grand-total')).toHaveTextContent('₹7,646'));
+      await fireEvent.press(screen.getByTestId('pay-button'));
+      await screen.findByText('Payment Successful!');
+      expect(mockApi.createOrder).toHaveBeenCalledWith({ userId: 'user-1', orgId: 'org-1', planId: 22, amount: 7646, staffLimit: 15, couponCode: null, mode: 'new', applyReferral: true });
+    });
+
+    it('without a reward the order carries no apply_referral flag', async () => {
+      serverWith();
+      await renderScreen(<CheckoutScreen />);
+      await screen.findByTestId('referral-apply');
+      await fireEvent.press(screen.getByTestId('pay-button'));
+      await screen.findByText('Payment Successful!');
+      expect(mockApi.createOrder.mock.calls[0][0]).not.toHaveProperty('applyReferral');
+    });
+
+    it('renewals offer the reward too', async () => {
+      serverWith();
+      mockParams = { mode: 'renew' };
+      mockApi.getSubscription.mockResolvedValue({ ...noPlanSub, planId: 2, planName: 'Prime', planAmount: 40, planMonths: 12, startDate: '2026-08-01', endDate: '2099-02-10', staffLimit: 12, status: 'ACTIVE' });
+      await renderScreen(<CheckoutScreen />);
+      expect(await screen.findByTestId('referral-reward-card')).toBeTruthy();
+      await fireEvent.press(screen.getByTestId('referral-apply'));
+      await waitFor(() => expect(mockApi.quote).toHaveBeenLastCalledWith(expect.objectContaining({ mode: 'renew', applyReferral: true }), expect.anything()));
+    });
+
+    it('Core (not eligible): the card is disabled and shows the server reason; nothing can be applied', async () => {
+      serverWith({ eligible: false });
+      await renderScreen(<CheckoutScreen />);
+      expect(await screen.findByTestId('referral-reward-card')).toBeTruthy();
+      expect(screen.getByTestId('referral-apply')).toBeDisabled();
+      expect(screen.getByTestId('referral-message')).toHaveTextContent(coreMessage);
+      await fireEvent.press(screen.getByTestId('referral-apply'));
+      expect(everyQuote((i) => !i.applyReferral)).toBe(true);
+      expect(screen.queryByTestId('referral-remove')).toBeNull();
+    });
+
+    it('a reward the server refuses once requested (plan switched to Core) is dropped with the server message', async () => {
+      mockApi.quote.mockImplementation(async (input: QuoteInput) =>
+        input.applyReferral ? { ...base, referralMessage: coreMessage, referral: { ...offer, eligible: false, message: coreMessage } } : { ...base },
+      );
+      await renderScreen(<CheckoutScreen />);
+      await fireEvent.press(await screen.findByTestId('referral-apply'));
+      expect(await screen.findByTestId('referral-note')).toHaveTextContent(coreMessage);
+      expect(screen.queryByTestId('referral-remove')).toBeNull();
+      expect(screen.queryByTestId('row-referral-discount')).toBeNull();
+      await waitFor(() => expect(lastQuoteInput().applyReferral).toBe(false));
+      expect(screen.getByTestId('row-grand-total')).toHaveTextContent('₹8,496');
+    });
+
+    it("applying a reward removes the coupon (with the \"can't be combined\" note); applying a coupon removes the reward", async () => {
+      serverWith();
+      mockApi.validateCoupon.mockResolvedValue({ id: 1, name: 'SAVE10', discountPercent: 10 });
+      await renderScreen(<CheckoutScreen />);
+      await screen.findByTestId('referral-apply');
+      // coupon first, then the reward: the coupon goes
+      await fireEvent.changeText(screen.getByTestId('coupon-input'), 'save10');
+      await fireEvent.press(screen.getByTestId('coupon-apply'));
+      expect(await screen.findByTestId('coupon-badge')).toBeTruthy();
+      await fireEvent.press(screen.getByTestId('referral-apply'));
+      expect(await screen.findByTestId('referral-remove')).toBeTruthy();
+      expect(screen.queryByTestId('coupon-badge')).toBeNull();
+      expect(screen.getByTestId('referral-note')).toHaveTextContent("A coupon and a referral reward can't be combined");
+      await waitFor(() => expect(lastQuoteInput()).toMatchObject({ applyReferral: true, couponCode: null }));
+      // now a coupon: the reward goes
+      await fireEvent.changeText(screen.getByTestId('coupon-input'), 'save10');
+      await fireEvent.press(screen.getByTestId('coupon-apply'));
+      expect(await screen.findByTestId('coupon-badge')).toBeTruthy();
+      await waitFor(() => expect(screen.queryByTestId('referral-remove')).toBeNull());
+      expect(screen.getByTestId('referral-apply')).toBeTruthy();
+      expect(screen.getByTestId('referral-note')).toHaveTextContent("A coupon and a referral reward can't be combined");
+      await waitFor(() => expect(lastQuoteInput()).toMatchObject({ applyReferral: false, couponCode: 'save10' }));
+      expect(screen.queryByTestId('row-referral-discount')).toBeNull();
+      // the coupon was previewed WITHOUT the reward
+      expect(mockApi.quote.mock.calls.some((c) => (c[0] as QuoteInput).couponCode === 'save10' && (c[0] as QuoteInput).applyReferral === false)).toBe(true);
+      // removing the coupon clears the stale note
+      await fireEvent.press(screen.getByTestId('coupon-remove'));
+      await waitFor(() => expect(screen.queryByTestId('referral-note')).toBeNull());
+    });
+
+    it('is hidden when no reward is available', async () => {
+      serverWith({ count: 0 });
+      await renderScreen(<CheckoutScreen />);
+      await screen.findByText('Prime Plan');
+      await waitFor(() => expect(mockApi.quote).toHaveBeenCalled());
+      await waitFor(() => expect(screen.getByTestId('row-grand-total')).toHaveTextContent('₹8,496'));
+      await screen.findByTestId('coupon-section');
+      expect(screen.queryByTestId('referral-reward-card')).toBeNull();
+    });
+
+    it('is hidden when the server sends no referral block (older server)', async () => {
+      mockApi.quote.mockImplementation(async () => ({ ...base, referral: null }));
+      await renderScreen(<CheckoutScreen />);
+      await screen.findByText('Prime Plan');
+      await waitFor(() => expect(mockApi.quote).toHaveBeenCalled());
+      await waitFor(() => expect(screen.getByTestId('row-grand-total')).toHaveTextContent('₹8,496'));
+      expect(screen.queryByTestId('referral-reward-card')).toBeNull();
+    });
+
+    it('capacity upgrades show no reward card and never ask for one', async () => {
+      serverWith();
+      mockParams = { mode: 'upgrade', staff: '20' };
+      mockApi.getSubscription.mockResolvedValue({ ...noPlanSub, planId: 3, planName: 'Prime', planAmount: 40, planMonths: 12, endDate: '2099-02-10', staffLimit: 12, status: 'ACTIVE' });
+      await renderScreen(<CheckoutScreen />);
+      await screen.findByTestId('price-breakdown');
+      await waitFor(() => expect(mockApi.quote).toHaveBeenCalled());
+      expect(screen.queryByTestId('referral-reward-card')).toBeNull();
+      expect(everyQuote((i) => !i.applyReferral)).toBe(true);
+    });
+
+    it('without a quote route (local pricing) there is no reward card', async () => {
+      mockApi.quote.mockResolvedValue(null);
+      await renderScreen(<CheckoutScreen />);
+      await screen.findByText('Prime Plan');
+      expect(screen.queryByTestId('referral-reward-card')).toBeNull();
+      expect(screen.getByTestId('row-grand-total')).toHaveTextContent('₹8,496');
+    });
+
+    it('create answers 400 (plain-text detail, no readable code): the message is shown, the reward is dropped and the quote refreshed', async () => {
+      serverWith();
+      mockApi.createOrder.mockRejectedValue(
+        new ApiError({ status: 400, detail: 'No referral reward available', raw: { detail: 'No referral reward available' } }),
+      );
+      await renderScreen(<CheckoutScreen />);
+      await fireEvent.press(await screen.findByTestId('referral-apply'));
+      await waitFor(() => expect(screen.getByTestId('row-grand-total')).toHaveTextContent('₹7,646'));
+      await fireEvent.press(screen.getByTestId('pay-button'));
+      expect((await screen.findAllByText('No referral reward available')).length).toBeGreaterThanOrEqual(1);
+      expect(mockOpenCheckout).not.toHaveBeenCalled();
+      await waitFor(() => expect(screen.queryByTestId('referral-remove')).toBeNull());
+      await waitFor(() => expect(lastQuoteInput().applyReferral).toBe(false));
+      await waitFor(() => expect(screen.getByTestId('row-grand-total')).toHaveTextContent('₹8,496'));
+      await waitFor(() => expect(screen.getByTestId('pay-button')).toBeEnabled());
+    });
+
+    it('Pay right after Apply asks the server first: a reward it will not price blocks the order with its message', async () => {
+      mockApi.quote.mockImplementation(async (input: QuoteInput) =>
+        input.applyReferral ? { ...base, referralMessage: 'No referral reward available', referral: { ...offer, availableCount: 0, eligible: false, message: 'No referral reward available' } } : { ...base },
+      );
+      await renderScreen(<CheckoutScreen />);
+      await fireEvent.press(await screen.findByTestId('referral-apply'));
+      await fireEvent.press(screen.getByTestId('pay-button'));
+      expect((await screen.findAllByText('No referral reward available')).length).toBeGreaterThanOrEqual(1);
+      expect(mockApi.createOrder).not.toHaveBeenCalled();
+      await waitFor(() => expect(screen.queryByTestId('referral-remove')).toBeNull());
     });
   });
 

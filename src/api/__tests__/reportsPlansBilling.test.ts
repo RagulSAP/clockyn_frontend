@@ -255,11 +255,60 @@ describe('billing: server quote (POST /orders/quote)', () => {
       staffCharge: 7200, credit: 0, afterCredit: 7200, couponCode: 'FLAT500', couponApplied: true, couponMessage: null,
       discountPercent: null, discountAmount: 500, subtotal: 6700, gstPercent: 18, gst: 1206, grandTotal: 7906, amountPaise: 790600,
       currency: 'INR', validFrom: '2026-11-02', validTill: '2027-11-02', resultingStaffLimit: 15, payable: true,
+      // an older server sends no referral fields: defaults, no offer
+      referralApplied: false, referralPercent: null, referralMessage: null, referral: null,
     });
     // numeric strings (decimal columns) are numbers too; a percent coupon keeps its percent; an unusable coupon carries its message
     const s = mapOrderQuote({ data: { ...wire, grand_total: '7906.00', discount_percent: '10', coupon_applied: false, coupon_message: 'Invalid or expired coupon', mode: 'renew' } });
     expect(s).toMatchObject({ grandTotal: 7906, discountPercent: 10, couponApplied: false, couponMessage: 'Invalid or expired coupon', mode: 'renew' });
     expect(typeof s?.grandTotal).toBe('number');
+  });
+
+  it('maps the referral reward fields (applied reward, percent, message and the offer block)', () => {
+    const applied = mapOrderQuote({
+      data: {
+        ...wire, coupon_code: null, coupon_applied: false, discount_percent: 10, discount_amount: 720,
+        referral_applied: true, referral_percent: 10, referral_message: null,
+        referral: { available_count: 2, eligible: true, percent: 10, message: null },
+      },
+    });
+    expect(applied).toMatchObject({
+      referralApplied: true, referralPercent: 10, referralMessage: null,
+      referral: { availableCount: 2, eligible: true, percent: 10, message: null },
+    });
+    const refused = mapOrderQuote({
+      data: {
+        ...wire, referral_applied: false, referral_percent: '10', referral_message: 'Referral rewards are valid on Prime and Elite plans only',
+        referral: { available_count: '1', eligible: false, message: 'Referral rewards are valid on Prime and Elite plans only' },
+      },
+    });
+    expect(refused).toMatchObject({
+      referralApplied: false, referralPercent: 10, referralMessage: 'Referral rewards are valid on Prime and Elite plans only',
+      referral: { availableCount: 1, eligible: false, percent: 10, message: 'Referral rewards are valid on Prime and Elite plans only' },
+    });
+    // a malformed block is no offer; a negative count is clamped
+    expect(mapOrderQuote({ data: { ...wire, referral: 'x' } })?.referral).toBeNull();
+    expect(mapOrderQuote({ data: { ...wire, referral: { available_count: -3 } } })?.referral).toMatchObject({ availableCount: 0, eligible: false });
+  });
+
+  it('apply_referral is sent to /orders/quote and /orders/create only when true', async () => {
+    mocked.post.mockResolvedValue({ success: true, data: wire });
+    await quote({ userId: 'u', orgId: 'org', planId: 22, staffLimit: 15, couponCode: null, mode: 'new', applyReferral: true });
+    expect(mocked.post).toHaveBeenLastCalledWith('/orders/quote', expect.objectContaining({ apply_referral: true, coupon_code: null }), {});
+    await quote({ userId: 'u', orgId: 'org', planId: 22, staffLimit: 15, applyReferral: false });
+    expect(mocked.post.mock.calls[mocked.post.mock.calls.length - 1][1]).not.toHaveProperty('apply_referral');
+    mocked.post.mockResolvedValue({ success: true, order_id: 'o1', key_id: 'k1', amount: 590, currency: 'INR' });
+    await createOrder({ userId: 'u', orgId: 'org', planId: 2, amount: 590, staffLimit: 10, couponCode: null, mode: 'renew', applyReferral: true });
+    expect(mocked.post).toHaveBeenLastCalledWith('/orders/create', expect.objectContaining({ apply_referral: true, coupon_code: null, mode: 'renew' }));
+    await createOrder({ userId: 'u', orgId: 'org', planId: 2, amount: 590, staffLimit: 10 });
+    expect(mocked.post.mock.calls[mocked.post.mock.calls.length - 1][1]).not.toHaveProperty('apply_referral');
+    // a coupon and a reward are never sent together (the server answers 400 on quote and create): the coupon wins
+    await createOrder({ userId: 'u', orgId: 'org', planId: 2, amount: 590, staffLimit: 10, couponCode: 'SAVE10', applyReferral: true });
+    expect(mocked.post.mock.calls[mocked.post.mock.calls.length - 1][1]).toMatchObject({ coupon_code: 'SAVE10' });
+    expect(mocked.post.mock.calls[mocked.post.mock.calls.length - 1][1]).not.toHaveProperty('apply_referral');
+    mocked.post.mockResolvedValue({ success: true, data: wire });
+    await quote({ userId: 'u', orgId: 'org', planId: 22, staffLimit: 15, couponCode: 'SAVE10', applyReferral: true });
+    expect(mocked.post.mock.calls[mocked.post.mock.calls.length - 1][1]).not.toHaveProperty('apply_referral');
   });
 
   it('is null when the payload has no total (the caller keeps its local numbers)', () => {
