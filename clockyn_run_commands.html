@@ -77,6 +77,7 @@
       <button class="tab" role="tab" id="btn-videos" data-tab="videos" aria-controls="tab-videos" aria-selected="false">Support</button>
       <button class="tab" role="tab" id="btn-eas" data-tab="eas" aria-controls="tab-eas" aria-selected="false">Expo build</button>
       <button class="tab" role="tab" id="btn-fcm" data-tab="fcm" aria-controls="tab-fcm" aria-selected="false">Push (FCM)</button>
+      <button class="tab" role="tab" id="btn-maps" data-tab="maps" aria-controls="tab-maps" aria-selected="false">Maps key</button>
       <button class="tab" role="tab" id="btn-trouble" data-tab="trouble" aria-controls="tab-trouble" aria-selected="false">Troubleshooting</button>
     </div>
     <button class="theme" id="themeBtn" type="button" aria-label="Switch between light and dark theme">Dark mode</button>
@@ -84,7 +85,7 @@
 </header>
 <main class="wrap">
   <h1>How to run it, set up AWS and deploy</h1>
-  <p class="sub">Commands for Windows PowerShell. Click <b>Copy</b> on any block. Paths assume <code>C:\POC\clockyn_frontend</code> (app) and <code>C:\POC\clockyn_backend</code> (backend). Written 2026-11-03, updated 2026-11-08 (ECS Express Mode deploy, Video Hub, Live Chat, FAQ Hub).</p>
+  <p class="sub">Commands for Windows PowerShell. Click <b>Copy</b> on any block. Paths assume <code>C:\POC\clockyn_frontend</code> (app) and <code>C:\POC\clockyn_backend</code> (backend). Written 2026-11-03, updated 2026-11-11 (ECS Express Mode deploy, Video Hub, Live Chat, FAQ Hub, Maps key).</p>
   <div class="panel" role="tabpanel" id="tab-run" aria-labelledby="btn-run" hidden>
   <nav class="pills">
     <a href="#quick">Quick reference</a>
@@ -683,7 +684,7 @@ eas env:create --name EXPO_PUBLIC_IOS_STORE_URL --value your-app-store-link --en
     <p>For push, upload the Firebase files as <b>file</b> variables (they are not in git):</p>
     <div class="cmd"><pre>eas env:create --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --environment production --visibility secret
 eas env:create --name GOOGLE_SERVICE_INFO_PLIST --type file --value ./GoogleService-Info.plist --environment production --visibility secret</pre><button class="copy">Copy</button></div>
-    <p>For Android maps add <code>GOOGLE_MAPS_API_KEY</code> the same way. Skip any of these you are not using yet; the app still builds without push or maps.</p>
+    <p>For Android maps add <code>GOOGLE_MAPS_API_KEY</code> the same way. The <b>Maps key</b> tab shows how to create the key and gives the exact command. Skip any of these you are not using yet; the app still builds without push or maps (the map area then shows "Map unavailable").</p>
 
     <h3>Step 4: build</h3>
     <p>Run these from <code>C:\POC\clockyn_frontend</code>. Each profile uses the EAS environment of the same name (Step 3), so the variables must exist there.</p>
@@ -836,12 +837,98 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
     </ol>
   </section>
   </div>
+  <div class="panel" role="tabpanel" id="tab-maps" aria-labelledby="btn-maps" hidden>
+  <section id="maps">
+    <h2>Google Maps key for Android <span class="tag">Google Cloud console + EAS + one app build</span></h2>
+    <p>The Android app draws its maps (branch picker, staff location, visit trail) with <b>Google Maps</b>, and Google only serves map tiles to an app that carries a valid key. The key is read from the variable <code>GOOGLE_MAPS_API_KEY</code> <b>when the app is built</b> (<code>app.config.ts</code>). iPhones use Apple Maps and the web version uses Leaflet, so neither needs a key. Do the steps in this order.</p>
+    <div class="box warn"><strong>Why a development build can show the map and a preview build not.</strong> Each EAS profile has its own variables (Expo build tab, Step 3) and the local <code>.env</code> file is never uploaded to EAS. A key that exists only in one environment, or only on your PC, is missing from the other builds. Expo Go also ships a key of its own, so it always shows maps. A build without a key shows "Map unavailable: this build has no Google Maps key" instead of a map.</div>
+
+    <h3>Step 1. Choose the Google Cloud project and billing</h3>
+    <ol>
+      <li>Open the <a href="https://console.cloud.google.com" target="_blank" rel="noopener">Google Cloud console</a> and sign in with the company Google account.</li>
+      <li>In the project picker at the top, select the project of the app. The Firebase project (<code>clockyn-aurocloud</code>) is also a Google Cloud project, so you can use it and keep everything in one place. Or create a new project (<b>New project</b>) named for example <code>clockyn-maps</code>.</li>
+      <li><b>Billing.</b> Google requires a billing account on the project before the Maps SDK works, even though there is a monthly free usage allowance. Open <b>Billing</b>, link or create a billing account (a card is asked once). Check the current free allowance and prices on the Google Maps Platform pricing page before you go live.</li>
+    </ol>
+
+    <h3>Step 2. Turn on the Maps SDK for Android</h3>
+    <ol>
+      <li>Open <b>APIs &amp; Services</b>, then <b>Library</b>.</li>
+      <li>Search <b>Maps SDK for Android</b>, open it and click <b>Enable</b>. (Not "Maps JavaScript API" and not "Maps SDK for iOS".)</li>
+    </ol>
+
+    <h3>Step 3. Create the key</h3>
+    <ol>
+      <li><b>APIs &amp; Services</b>, <b>Credentials</b>, <b>Create credentials</b>, <b>API key</b>. A key that starts with <code>AIza</code> is shown. Copy it and keep it ready (do not send it in chat or commit it to git).</li>
+      <li>Click <b>Edit API key</b> (or the key's name) and rename it <code>Clockyn Android Maps</code>.</li>
+      <li>Do not close the page yet: Step 4 restricts the key. An unrestricted key can be copied out of the app and used by anyone, and you pay for their use.</li>
+    </ol>
+
+    <h3>Step 4. Get the signing fingerprint (SHA-1) of the build</h3>
+    <p>Google ties the key to the app by its <b>package name</b> and the <b>SHA-1 fingerprint</b> of the certificate that signed the build. Package name: <code>com.clockyn.app</code> (the <code>APP_ID</code> in <code>app.config.ts</code>). Get the SHA-1 that EAS signs with:</p>
+    <div class="cmd"><pre>cd C:\POC\clockyn_frontend
+eas credentials --platform android</pre><button class="copy">Copy</button></div>
+    <ol>
+      <li>Choose the build profile (<b>preview</b>), then the keystore entry. The screen lists the keystore with its <b>SHA1 Fingerprint</b>, a line of 20 pairs like <code>AB:CD:12:...</code>. Copy it. <b>Less certain:</b> the menu wording changes between EAS versions; the same value is on expo.dev, your project, <b>Credentials</b>, Android, the application identifier, the keystore.</li>
+      <li>By default EAS uses <b>one keystore for all profiles</b> of the app, so development and preview usually give the same SHA-1. If <code>eas credentials</code> shows a different one for another profile, copy each of them.</li>
+      <li>No keystore yet? The first Android build asks to generate one (Expo build tab, Step 4). Build once, then come back here.</li>
+    </ol>
+
+    <h3>Step 5. Restrict the key</h3>
+    <ol>
+      <li>Back on the key's page, under <b>Application restrictions</b> choose <b>Android apps</b>.</li>
+      <li><b>Add an item</b>: Package name <code>com.clockyn.app</code>, SHA-1 certificate fingerprint = the value from Step 4. Add one item per SHA-1 you have (same package name, different fingerprint).</li>
+      <li>Under <b>API restrictions</b> choose <b>Restrict key</b> and tick only <b>Maps SDK for Android</b>.</li>
+      <li><b>Save</b>. The change can take a few minutes to apply.</li>
+    </ol>
+
+    <h3>Step 6. Give the key to the builds</h3>
+    <p>Create the variable in every EAS environment you build (replace <code>PASTE_THE_KEY</code>). The variable is read during the build, so it must exist before you build:</p>
+    <div class="cmd"><pre>cd C:\POC\clockyn_frontend
+eas env:create --name GOOGLE_MAPS_API_KEY --value PASTE_THE_KEY --environment preview --visibility secret
+eas env:create --name GOOGLE_MAPS_API_KEY --value PASTE_THE_KEY --environment development --visibility secret
+eas env:create --name GOOGLE_MAPS_API_KEY --value PASTE_THE_KEY --environment production --visibility secret</pre><button class="copy">Copy</button></div>
+    <p>Check that it is there (the value of a secret is hidden, only the name is listed):</p>
+    <div class="cmd"><pre>eas env:list --environment preview</pre><button class="copy">Copy</button></div>
+    <p><b>For builds on your own PC</b> (<code>npx expo run:android</code>), put the key in the app's <code>.env</code> file (it is gitignored) and prebuild again:</p>
+    <div class="cmd"><pre>GOOGLE_MAPS_API_KEY=PASTE_THE_KEY</pre><button class="copy">Copy</button></div>
+    <p>Older EAS versions use <code>eas secret:create</code> instead of <code>eas env:create</code>.</p>
+
+    <h3>Step 7. Build again and test</h3>
+    <p>The key is baked into the app at build time, so an update alone is not enough; build a new APK. Add <code>--clear-cache</code> so the old manifest is not reused:</p>
+    <div class="cmd"><pre>eas build --profile preview --platform android --clear-cache</pre><button class="copy">Copy</button></div>
+    <ol>
+      <li>Install the new APK (uninstall the old Clockyn first if the phone refuses it).</li>
+      <li>Sign in and open <b>Staff location</b> (or the branch picker). Map tiles and the markers should appear within a few seconds.</li>
+    </ol>
+    <table>
+      <tr><th>What you see</th><th>Meaning and fix</th></tr>
+      <tr><td>"Map unavailable: this build has no Google Maps key"</td><td>The variable is missing in the EAS environment of that profile, or you built before adding it. Check <code>eas env:list --environment preview</code>, then build again.</td></tr>
+      <tr><td>Grey or empty map (maybe the Google logo), markers missing</td><td>Google refused the key. Check, in this order: the Maps SDK for Android is enabled (Step 2); billing is linked (Step 1); the package name is exactly <code>com.clockyn.app</code> and the SHA-1 is that of this build's keystore (Step 5); wait a few minutes after saving. To see Google's reason connect the phone by USB and run <code>adb logcat | findstr /i Authorization</code>, then open the map. The Maps SDK logs "Authorization failure" with the package name and SHA-1 it received, which you can compare with the key's restriction.</td></tr>
+      <tr><td>Works in preview but not after a Play Store install</td><td>See Step 8: the Play Store signs with its own key.</td></tr>
+    </table>
+
+    <h3>Step 8. Before publishing on Google Play</h3>
+    <ol>
+      <li>With <b>Play App Signing</b> (the default) Google signs the app you download from the store with a key of its own, so its SHA-1 differs from the EAS keystore. In Play Console open your app, <b>Test and release</b>, <b>Setup</b>, <b>App signing</b>, and copy the <b>SHA-1</b> of the <b>App signing key certificate</b>.</li>
+      <li>On the key in Google Cloud (Step 5) <b>add one more item</b>: package <code>com.clockyn.app</code> with that SHA-1. Keep the EAS one as well, so preview builds keep working.</li>
+    </ol>
+
+    <h3>Good to know</h3>
+    <ul>
+      <li>The key ends up inside the app package, so it can be extracted. That is normal for Android maps keys; the package + SHA-1 restriction and the API restriction (Step 5) are what protect it. Never skip them.</li>
+      <li>Set a <b>budget alert</b> (Billing, Budgets &amp; alerts) so a surprise cost is noticed early.</li>
+      <li>To replace a leaked key: create a new key (Step 3 to 5), update the EAS variable (<code>eas env:update</code>, or delete and create again), build again, then delete the old key in Google Cloud.</li>
+      <li>You do not need a key for the admin web app or for the app's web version; both use Leaflet.</li>
+    </ul>
+  </section>
+  </div>
   <div class="panel" role="tabpanel" id="tab-trouble" aria-labelledby="btn-trouble" hidden>
   <section id="trouble">
     <h2>Troubleshooting</h2>
     <table>
       <tr><th>Symptom</th><th>Likely cause and fix</th></tr>
       <tr><td>The preview or production app closes the moment it opens (the development build works)</td><td>Find the cause with <code>adb logcat -b crash -d</code> (phone on USB) or in EAS Observe. Usual causes: <code>google-services.json</code> missing from the build, a variable set in the wrong EAS environment (check with <code>eas env:list --environment preview</code>), or an <code>http://</code> backend address (release builds block it). After fixing, build again with <code>--clear-cache</code>.</td></tr>
+      <tr><td>The map (branch picker, staff location) is blank or says "Map unavailable" in a preview or production build, but works in a development build</td><td>Follow the <b>Maps key</b> tab. "Map unavailable" means the key was not in that build's EAS environment (<code>eas env:list --environment preview</code>). A grey or empty map means the key is there but Google rejects it: the package name or SHA-1 on the key does not match the build, or "Maps SDK for Android" is not enabled.</td></tr>
       <tr><td>Push notifications do not arrive</td><td>Follow the <b>Push (FCM)</b> tab, step by step. Most often the <code>FCM_*</code> secrets are missing from <code>primary.json</code> on the server, or the phone never registered a token.</td></tr>
       <tr><td>The app still talks to the old backend</td><td>No <code>.env</code>, or the bundler was not restarted. Set <code>EXPO_PUBLIC_API_BASE_URL</code> and run <code>npx expo start -c</code>.</td></tr>
       <tr><td>Phone cannot reach <code>http://192.168.x.x:8080</code></td><td>Start the backend with <code>--host 0.0.0.0</code>, allow port 8080 in the Windows firewall, and keep the phone on the same Wi-Fi.</td></tr>
@@ -883,7 +970,7 @@ eas submit --platform ios --profile production</pre><button class="copy">Copy</b
 </main>
 <script>
 (function () {
-  var TABS = ['run', 'rekognition', 'ecs', 'videos', 'eas', 'fcm', 'trouble'].map(function (x) { return x; });
+  var TABS = ['run', 'rekognition', 'ecs', 'videos', 'eas', 'fcm', 'maps', 'trouble'].map(function (x) { return x; });
   var root = document.documentElement;
 
   /* ---------- tabs ---------- */
