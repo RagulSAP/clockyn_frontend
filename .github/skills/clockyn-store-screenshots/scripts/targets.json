@@ -1,0 +1,41 @@
+{
+  "_note": "Store screenshot sizes: the ONE place to edit when a store changes its rules. Checked 2026-11-12 against Google's Play Console help page and several current third-party guides; Apple's own page could not be opened, so re-check https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications before each release and edit this file if a size changed.",
+  "stores": {
+    "play": {
+      "label": "Google Play Console",
+      "uploadPath": "Play Console > your app > Grow users > Store presence > Main store listing > Graphics",
+      "format": "PNG (24-bit, no transparency) or JPEG",
+      "minCount": 2,
+      "maxCount": 8,
+      "maxBytes": 8388608,
+      "rule": "each side 320-3840 px, long side at most 2x the short side",
+      "targets": [
+        { "id": "phone",     "label": "Phone",             "formFactor": "phone",  "deviceStyle": "android", "width": 1080, "height": 1920, "required": true,  "note": "2 to 8 screenshots. 1080x1920 (9:16) is the recommended size." },
+        { "id": "tablet-7",  "label": "7-inch tablet",     "formFactor": "tablet", "deviceStyle": "tablet",  "width": 1200, "height": 1920, "required": false, "note": "Optional but recommended: improves the listing on tablets." },
+        { "id": "tablet-10", "label": "10-inch tablet",    "formFactor": "tablet", "deviceStyle": "tablet",  "width": 1600, "height": 2560, "required": false, "note": "Optional. Sources disagree on the exact size (1600x2560 or 1920x1200); this one satisfies Google's side and ratio rule." }
+      ],
+      "graphics": [
+        { "id": "feature-graphic", "label": "Feature graphic", "width": 1024, "height": 500, "required": true, "note": "Required to publish. JPEG or 24-bit PNG, no transparency." },
+        { "id": "app-icon-512",    "label": "App icon",        "width": 512,  "height": 512, "required": true, "note": "32-bit PNG, up to 1024 KB, uploaded in the Console (the icon inside the app is separate)." }
+      ]
+    },
+    "appstore": {
+      "label": "Apple App Store Connect",
+      "uploadPath": "App Store Connect > your app > the version > Previews and Screenshots",
+      "format": "PNG or JPEG, flattened (no transparency)",
+      "minCount": 1,
+      "maxCount": 10,
+      "maxBytes": 8388608,
+      "rule": "exact pixel sizes only (a size that is not on the list is rejected)",
+      "targets": [
+        { "id": "iphone-6.9", "label": "iPhone 6.9-inch", "formFactor": "phone",  "deviceStyle": "iphone", "width": 1320, "height": 2868, "alsoAccepted": [[1290, 2796], [1260, 2736]], "required": true,  "note": "Required for iPhone. Apple scales this set down to the smaller iPhone sizes." },
+        { "id": "iphone-6.5", "label": "iPhone 6.5-inch", "formFactor": "phone",  "deviceStyle": "iphone", "width": 1284, "height": 2778, "alsoAccepted": [[1242, 2688]], "required": false, "note": "Optional. Only needed if you do not upload the 6.9-inch set." },
+        { "id": "ipad-13",    "label": "iPad 13-inch",    "formFactor": "tablet", "deviceStyle": "ipad",   "width": 2064, "height": 2752, "alsoAccepted": [[2048, 2732]], "required": "if the app runs on iPad", "note": "Required while app.config.ts has ios.supportsTablet: true. Apple scales it down to the smaller iPad sizes." },
+        { "id": "ipad-11",    "label": "iPad 11-inch",    "formFactor": "tablet", "deviceStyle": "ipad",   "width": 1668, "height": 2420, "alsoAccepted": [[1668, 2388], [1640, 2360], [1488, 2266]], "required": false, "note": "Optional." }
+      ],
+      "graphics": [
+        { "id": "app-icon-1024", "label": "App icon (reference)", "width": 1024, "height": 1024, "required": false, "note": "Apple takes the 1024x1024 icon from the app build (assets/icon.png), not from this upload. Made here only so you can compare." }
+      ]
+    }
+  }
+}

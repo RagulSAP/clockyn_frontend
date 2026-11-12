@@ -1,0 +1,181 @@
+{
+  "app": {
+    "name": "Clockyn",
+    "tagline": "Attendance and payroll for your team",
+    "logo": "assets/icon.png"
+  },
+  "brand": {
+    "accent": "#06C270",
+    "flow": true,
+    "sequence": [
+      "midnight",
+      "forest",
+      "midnight",
+      "forest",
+      "midnight",
+      "forest",
+      "midnight",
+      "forest"
+    ]
+  },
+  "capture": {
+    "orgName": "AuroCloud",
+    "settleMs": 1600,
+    "phone": {
+      "width": 390,
+      "height": 844,
+      "scale": 3
+    },
+    "tablet": {
+      "width": 1032,
+      "height": 1376,
+      "scale": 2
+    },
+    "allowInternet": true
+  },
+  "stores": [
+    "play",
+    "appstore"
+  ],
+  "includeOptionalSizes": true,
+  "shots": [
+    {
+      "id": "punch",
+      "role": "staff",
+      "route": "staff.home",
+      "eyebrow": "Attendance",
+      "headline": "Punch in with <em>one tap</em>",
+      "sub": "Quick, face-verified attendance from any phone",
+      "layout": "center",
+      "callouts": [
+        {
+          "text": "Face verified",
+          "icon": "check",
+          "x": 0.95,
+          "y": 0.5
+        }
+      ],
+      "forms": [
+        "phone"
+      ]
+    },
+    {
+      "id": "dashboard",
+      "role": "admin",
+      "route": "admin.home",
+      "waitFor": "admin-home",
+      "eyebrow": "Dashboard",
+      "headline": "Your whole team, <em>at a glance</em>",
+      "sub": "Present, late and absent, live",
+      "layout": "tilt"
+    },
+    {
+      "id": "location",
+      "role": "admin",
+      "route": "admin.location",
+      "eyebrow": "Live location",
+      "headline": "See where field staff <em>are now</em>",
+      "sub": "Real-time locations on a map",
+      "layout": "center",
+      "callouts": [
+        {
+          "text": "Live",
+          "icon": "pin",
+          "x": 0.9,
+          "y": 0.8
+        }
+      ],
+      "steps": [
+        {
+          "waitForMap": true,
+          "optional": true
+        },
+        {
+          "wait": 1500
+        }
+      ]
+    },
+    {
+      "id": "payroll",
+      "role": "admin",
+      "route": "admin.payroll.salarySheet",
+      "eyebrow": "Payroll",
+      "headline": "Salary sheets <em>made for you</em>",
+      "sub": "Wages, overtime and deductions calculated",
+      "layout": "duo",
+      "secondary": "reports"
+    },
+    {
+      "id": "requests",
+      "role": "admin",
+      "route": "admin.requests.hub",
+      "eyebrow": "Requests",
+      "headline": "Approve leave in <em>one tap</em>",
+      "sub": "Leave, permission and shift changes in one place",
+      "layout": "center",
+      "forms": [
+        "phone"
+      ]
+    },
+    {
+      "id": "reports",
+      "role": "admin",
+      "route": "admin.reports.hub",
+      "eyebrow": "Reports",
+      "headline": "Reports ready <em>to share</em>",
+      "sub": "Download attendance and salary reports",
+      "layout": "tilt"
+    },
+    {
+      "id": "chat",
+      "role": "admin",
+      "route": "admin.comms.groups",
+      "eyebrow": "Team chat",
+      "headline": "Keep your team <em>connected</em>",
+      "sub": "Chat, groups and announcements",
+      "layout": "center",
+      "forms": [
+        "phone"
+      ]
+    },
+    {
+      "id": "refer",
+      "role": "admin",
+      "route": "admin.referral",
+      "eyebrow": "Refer and earn",
+      "headline": "Invite a friend. <em>Both save 10%</em>",
+      "sub": "Share your code in a tap",
+      "layout": "center",
+      "callouts": [
+        {
+          "text": "10% off",
+          "icon": "gift",
+          "x": 0.92,
+          "y": 0.2
+        }
+      ]
+    }
+  ],
+  "featureGraphic": {
+    "headline": "Attendance and payroll, <em>simplified</em>",
+    "sub": "Face punch  |  Live location  |  Payroll",
+    "shots": [
+      "punch",
+      "dashboard"
+    ]
+  },
+  "listing": {
+    "play": {
+      "title": "Clockyn: Attendance & Payroll",
+      "shortDescription": "Face attendance, live staff location, payroll and leave approvals in one app.",
+      "fullDescription": "Edit this text. Lead with the outcome for a business owner, then list the features that are really in the app."
+    },
+    "appstore": {
+      "name": "Clockyn",
+      "subtitle": "Attendance, payroll & team",
+      "promoText": "Run attendance, payroll and leave approvals from your phone. Start with a free trial.",
+      "keywords": "attendance,payroll,staff,employee,hrms,leave,salary,geofence,face,biometric,workforce",
+      "description": "Edit this text."
+    }
+  }
+}

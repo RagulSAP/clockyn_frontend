@@ -1,0 +1,103 @@
+/**
+ * TEMPORARY capture spec for the store screenshots. run.ps1 copies it to e2e/specs/zz-store-shots.spec.ts, runs it and deletes it again.
+ * It opens each screen listed in config.json -> "shots" in the REAL app (web build, mock backend), phone-size and tablet-size, and saves a clean
+ * full-screen picture of each one: $STORE_WORK_DIR/raw/<phone|tablet>/<id>.png . compose.mjs then turns those into the marketing images.
+ *
+ * Nothing is drawn or faked: every picture is the app itself. A shot that cannot be opened is recorded in raw/report/<form>-<id>.json and the rest continue.
+ * Shot fields used here: id, role, route (a registry key such as "admin.home" OR a path such as "/admin/home"), params, waitFor (testID),
+ * theme ("light" | "dark"), steps[], forms[]. See SKILL.md for the step list.
+ */
+import * as fs from 'fs';
+
+import { expect, loginAs, presetTheme, test, visit } from '../support';
+import { routes } from '../../src/config/routes';
+
+const WORK = process.env.STORE_WORK_DIR as string;
+const CFG = JSON.parse(fs.readFileSync(`${WORK}/config.json`, 'utf8'));
+const FORMS = ['phone', 'tablet'] as const;
+const ONLY = (process.env.STORE_ONLY ?? '').split(',').map((x) => x.trim()).filter(Boolean);   // -Only on run.ps1: recapture just these shot ids
+
+type Step = Record<string, unknown>;
+type Shot = { id: string; role?: 'admin' | 'manager' | 'staff' | 'fieldStaff'; route: string; params?: Record<string, string>; waitFor?: string; theme?: 'light' | 'dark'; steps?: Step[]; forms?: string[]; settleMs?: number };
+
+/** "admin.staff.list" -> "/admin/staff/list" from the app's own route registry; a string that starts with "/" is used as it is. */
+function resolveRoute(route: string): string {
+  if (route.startsWith('/')) return route;
+  let node: unknown = routes;
+  for (const part of route.split('.')) node = (node as Record<string, unknown>)?.[part];
+  if (typeof node !== 'string') throw new Error(`unknown route key "${route}" (see src/config/routes.ts)`);
+  return node;
+}
+
+const report: Record<string, { ok: boolean; error?: string; warn?: string[] }> = {};
+
+// The e2e harness normally answers every external host (map tiles, geocoding) with a stub, so maps are a blank block. For store pictures
+// the map must be real: let those requests through (needs internet access on this PC). capture.allowInternet=false keeps the stubs.
+test.use({ stubExternal: CFG.capture?.allowInternet === false });
+const settle = Number(CFG.capture?.settleMs ?? 1600);
+
+for (const form of FORMS) {
+  const size = CFG.capture?.[form] ?? (form === 'phone' ? { width: 390, height: 844, scale: 3 } : { width: 1032, height: 1376, scale: 2 });
+
+  test.describe(`store shots: ${form}`, () => {
+    test.use({ viewport: { width: size.width, height: size.height }, deviceScaleFactor: size.scale, hasTouch: true, isMobile: form === 'phone' });
+
+    for (const shot of CFG.shots as Shot[]) {
+      if (shot.forms && !shot.forms.includes(form)) continue;
+      if (ONLY.length && !ONLY.includes(shot.id)) continue;
+      test(`${form} / ${shot.id}`, async ({ page }, testInfo) => {
+        // the browser project is only a carrier: run once, under the phone project (the viewport above decides the size)
+        test.skip(testInfo.project.name !== 'phone', 'runs once, under the phone project');
+        test.setTimeout(120_000);
+        const outDir = `${WORK}/raw/${form}`;
+        fs.mkdirSync(outDir, { recursive: true });
+        const key = `${form}/${shot.id}`;
+        const warns: string[] = [];
+        try {
+          await presetTheme(page, shot.theme ?? 'light');
+          await page.emulateMedia({ colorScheme: shot.theme ?? 'light', reducedMotion: 'reduce' });
+          await loginAs(page, shot.role ?? 'admin');
+          await visit(page, resolveRoute(shot.route), shot.params ?? {});
+          if (shot.waitFor) await expect(page.getByTestId(shot.waitFor)).toBeVisible({ timeout: 20_000 });
+          await page.waitForTimeout(600);
+
+          for (const step of shot.steps ?? []) {
+            if (typeof step.tap === 'string') await page.getByTestId(step.tap).first().click();
+            else if (typeof step.tapText === 'string') await page.getByText(step.tapText, { exact: true }).first().click();
+            else if (step.fill) {
+              const f = step.fill as { id: string; text: string };
+              await page.getByTestId(f.id).fill(f.text);
+            } else if (typeof step.scrollTo === 'string') await page.getByTestId(step.scrollTo).first().scrollIntoViewIfNeeded();
+            else if (typeof step.scrollBy === 'number') await page.mouse.wheel(0, step.scrollBy);
+            else if (typeof step.hide === 'string') await page.addStyleTag({ content: `${step.hide}{display:none !important}` });
+            else if (step.waitForMap) {
+              // map screens: wait until at least one tile PICTURE really loaded (a tile server needs internet access).
+              // A map without tiles is a grey or purple block: never use it. With "optional": true the shot is still taken, but a warning is recorded.
+              await page.waitForFunction(() => Array.from(document.querySelectorAll('.leaflet-tile')).some((t) => (t as HTMLImageElement).complete && (t as HTMLImageElement).naturalWidth > 0), undefined, { timeout: 15_000 }).catch((err) => {
+                if (!step.optional) throw err;
+                warns.push('map tiles did not load (no internet access to the tile server?): the map in this picture is blank, do not use it');
+              });
+            } else if (typeof step.waitFor === 'string') await expect(page.getByTestId(step.waitFor)).toBeVisible({ timeout: 15_000 });
+            else if (typeof step.wait === 'number') await page.waitForTimeout(step.wait);
+            else throw new Error(`unknown step ${JSON.stringify(step)}`);
+            await page.waitForTimeout(250);
+          }
+
+          // calm picture: no caret, no focus ring, no toast, animations finished
+          await page.addStyleTag({ content: '*{caret-color:transparent !important} :focus{outline:none !important} *::-webkit-scrollbar{display:none}' });
+          await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur?.());
+          await page.waitForTimeout(shot.settleMs ?? settle);
+          await page.screenshot({ path: `${outDir}/${shot.id}.png`, animations: 'disabled', caret: 'hide' });
+          report[key] = { ok: true, ...(warns.length ? { warn: warns } : {}) };
+        } catch (e) {
+          report[key] = { ok: false, error: String((e as Error).message ?? e).split('\n')[0] };
+          throw e;
+        } finally {
+          // one small file per shot (the tests run in parallel, so a shared file would lose entries)
+          fs.mkdirSync(`${WORK}/raw/report`, { recursive: true });
+          fs.writeFileSync(`${WORK}/raw/report/${form}-${shot.id}.json`, JSON.stringify(report[key] ?? { ok: false, error: 'not finished' }, null, 2));
+        }
+      });
+    }
+  });
+}
