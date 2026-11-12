@@ -63,7 +63,7 @@ function createState() {
   const s = {
     createdAt: T.isoNow(),
     seq: { user: 100, branch: 200, dept: 200, shift: 10, req: 1000, expense: 100, reading: 100, lead: 100, category: 100, msg: 1000, group: 10, ann: 10, payslip: 10, wage: 10, inc: 10, advance: 10, holiday: 10, ticket: 10, invoice: 10, order: 10, cfr: 10, org: 1 },
-    flags: { plan: 'elite', latencyMs: 0, failNext: [], forceLogout: [], faceMismatch: false, otp: F.OTP, locationLogStatus: null, userAuth: 'otp', requireAuth: false },
+    flags: { plan: 'elite', latencyMs: 0, failNext: [], forceLogout: [], faceMismatch: false, otp: F.OTP, locationLogStatus: null, userAuth: 'otp', requireAuth: /^(1|true|yes|on)$/i.test(process.env.MOCK_REQUIRE_AUTH || '') },
     otp: {}, // contact -> { attempts }
     tokens: {}, // access_token -> { userId, revoked } (see lib/authz.js)
     orgs: [],

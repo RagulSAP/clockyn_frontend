@@ -295,7 +295,10 @@ const server = http.createServer(async (req, res) => {
     T.clock.offsetMs = t.clockOffsetMs;
 
     // Bearer-token gate (only when the spec turned `requireAuth` on): 401 before anything else, like the real middleware.
-    const denied = authz.authFailure(t.state, pathname, authz.bearerOf(req));
+    // MOCK_REQUIRE_AUTH runs: the spec helpers that talk to the mock directly (they send `x-e2e-tenant`, the app never does) set up
+    // and read data without a token; every request of the app itself is gated.
+    const harnessCall = authz.seedTokensOn() && !!req.headers['x-e2e-tenant'];
+    const denied = harnessCall ? null : authz.authFailure(t.state, pathname, authz.bearerOf(req), req.method);
     if (denied) {
       entry.status = denied.status;
       sendJson(res, denied.status, { detail: denied.detail });

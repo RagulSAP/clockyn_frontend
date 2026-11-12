@@ -45,7 +45,6 @@ describe('public paths', () => {
     '/version/check',
     '/health',
     '/ready',
-    '/files/logo/x.png',
     '/webhook/razorpay',
     '/auth/login?x=1',
     '/auth/login/',
@@ -116,7 +115,6 @@ describe('Authorization header', () => {
     useAuthStore.setState({ session: session() });
     expect(authHeadersFor(`${env.apiBaseUrl}/reports/x`)).toEqual({ Authorization: 'Bearer tok-1' });
     expect(authHeadersFor('https://s3.example.com/f.pdf')).toEqual({});
-    expect(authHeadersFor(`${env.apiBaseUrl}/files/a.png`)).toEqual({});
   });
 });
 

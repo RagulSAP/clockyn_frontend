@@ -6,6 +6,7 @@ import { badges, resetBadges } from '@/store/badges';
 import type { SupportVideo } from '@/types/api/support';
 
 import { renderScreen, signInTestAdmin } from '../../settings/__tests__/testHelpers';
+import { videoFrameSize } from '../components/VideoPlayerModal';
 import SupportHubScreen from '../screens/SupportHubScreen';
 import VideoHubScreen from '../screens/VideoHubScreen';
 
@@ -112,6 +113,26 @@ describe('Video Hub access', () => {
   });
 });
 
+describe('videoFrameSize', () => {
+  it('fits a portrait phone recording inside a narrow card that keeps its shape', () => {
+    const { width, height } = videoFrameSize(390, 844, 47, 34, 9 / 16);
+    expect(width).toBeLessThanOrEqual(390 - 32);
+    expect(Math.abs(width / height - 9 / 16)).toBeLessThan(0.01);
+    expect(height).toBeLessThan(844 - 47 - 34); // leaves room for the header and the margins
+  });
+
+  it('keeps the card to a comfortable width on a wide window', () => {
+    expect(videoFrameSize(1400, 900, 0, 0, 9 / 16).width).toBeLessThanOrEqual(400);
+    expect(videoFrameSize(1400, 900, 0, 0, 16 / 9).width).toBeLessThanOrEqual(760);
+  });
+
+  it('makes a landscape video wider than tall, and survives a missing size', () => {
+    const landscape = videoFrameSize(390, 844, 0, 0, 16 / 9);
+    expect(landscape.width).toBeGreaterThan(landscape.height);
+    expect(videoFrameSize(390, 844, 0, 0, Number.NaN).width).toBeGreaterThan(0);
+  });
+});
+
 describe('VideoHubScreen', () => {
   it('lists the videos the server returns', async () => {
     mockListVideos.mockResolvedValue([video('1', 'Getting started'), video('2', 'Mark attendance')]);
@@ -127,6 +148,15 @@ describe('VideoHubScreen', () => {
     expect(await screen.findByTestId('video-player')).toBeTruthy();
     expect(screen.getByTestId('video-view')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('video-player-close'));
+    await waitFor(() => expect(screen.queryByTestId('video-player')).toBeNull());
+  });
+
+  it('closes the video when the dimmed backdrop outside the card is tapped', async () => {
+    mockListVideos.mockResolvedValue([video('1', 'Getting started')]);
+    await renderScreen(<VideoHubScreen />);
+    await fireEvent.press(await screen.findByTestId('video-1'));
+    expect(await screen.findByText('Guide video')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('video-player-backdrop'));
     await waitFor(() => expect(screen.queryByTestId('video-player')).toBeNull());
   });
 

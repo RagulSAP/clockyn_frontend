@@ -89,6 +89,8 @@ async function loadAndPopulateProfile() {
 }
 
 function logout() {
+  // Operator token (js/operator-session.js): drop it with everything else, from sessionStorage and localStorage
+  if (window.ClockynOperator) window.ClockynOperator.clear();
   localStorage.removeItem('gen_admin_id');
   localStorage.removeItem('gen_admin_role');
   localStorage.removeItem('admin_email');
@@ -158,6 +160,9 @@ function showLogoutModal() {
 function checkSession() {
   const adminId = localStorage.getItem('gen_admin_id');
   if (!adminId) return logout();
+
+  // The operator token has a server-side lifetime: once it has passed, the session is over (sends the person to login with a message)
+  if (window.ClockynOperator && window.ClockynOperator.isExpired()) return window.ClockynOperator.expire();
 
   // Skip timeout if remember me is enabled
   if (localStorage.getItem('remember_me') === '1') return;

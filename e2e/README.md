@@ -20,6 +20,7 @@ npm run e2e:typecheck     # tsc for e2e/ (root `tsc --noEmit` excludes e2e)
 
 Env: `MOCK_PORT` (8787), `E2E_WEB_PORT` (8788, + the next `E2E_WEB_PORTS`-1 ports, default 8), `E2E_WORKERS` (default 4, 2 on CI, max = web ports),
 `E2E_API_BASE_URL` (build against another API origin), `E2E_BUILD_CLEAR=1` (clear the Metro cache), `E2E_WEB_ROOT` (serve another export).
+`MOCK_REQUIRE_AUTH=1` (mock server env): enforce bearer tokens on every non-public route from the start, like `REQUIRE_AUTH=1` on the real backend (public list mirrors `core_functions/auth_policy.py`; `loginAs` seeds a session token; spec helpers that call the mock directly send `x-e2e-tenant` and are let through; the specs of `q4-auth-token` that test a tokenless session expect it OFF). See `docs/REQUIRE_AUTH_ROLLOUT.md`.
 Artifacts (all git-ignored under `e2e/.artifacts/`): `web-dist/`, `screenshots/<project>/<route>.png` (smoke), `test-results/` (failure screenshots + traces), `report/`.
 
 ## Architecture
@@ -105,6 +106,14 @@ test('admin approves a pending leave', async ({ page, mock }) => {
 * **Page issue collector** (automatic): the test **fails at teardown** on any uncaught page error, `console.error`, failed local request, or mock answer 404/405/5xx. Intentional ones:
   `issues.allow(/regex/)` inside the test (e.g. after `failNext`), or add a justified entry to `support/allowlist.json`; `test.use({ failOnPageIssues: false })` to opt out. Failure screenshots/traces are automatic.
 * Route smoke covers every path of `src/config/routes.ts`; adding a route to the app without a case in `support/routeCases.ts` fails `00-smoke` ("registry coverage").
+
+## Admin web console checks (`e2e/console/`, separate from the app harness above)
+
+`npm run e2e:console` runs Playwright against `UI_ADMIN_APP` (served as-is by `e2e/console/server.js`, with `/js/config.js` pointing `API_BASE` at an operator-API mock,
+`e2e/console/operator-mock.js`; ports `CONSOLE_WEB_PORT` 8890 / `CONSOLE_API_PORT` 8891). It covers the operator session token (`js/operator-session.js`): login stores the token
+(sessionStorage, or localStorage with Remember me), API calls and the live-chat socket carry it, a 401 returns to login with a message, a 403 does not log out, logout / idle logout /
+expiry clear it, and an old backend (no `access_token`) still works. `npm run e2e:console:static` checks script order and fetch bypasses in every page. Mock control: `POST /__op/state`
+`{mode:'token'|'old', enforce, expiresIn, force:{path,status,body}, revoke, reset}`, `GET /__op/requests` (the token itself is never recorded).
 
 ## Known limitations
 

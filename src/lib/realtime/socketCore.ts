@@ -5,7 +5,9 @@
  * Differences from the v1 sockets (fixed here):
  *  - reconnects ALWAYS (v1 chat/group sockets never reconnected), with exponential backoff + jitter;
  *  - the CONNECTING state is respected (no second socket when the app returns to the foreground);
- *  - `close()` cancels every timer and detaches every handler (no leaks, no zombie reconnects).
+ *  - `close()` cancels every timer and detaches every handler (no leaks, no zombie reconnects);
+ *  - close code 4401 (the server refused the `?token=`): no reconnect with that same token (no loop against the server);
+ *    a later reconnect (foreground) happens only once the session holds a different token.
  */
 import { wsBaseUrl } from '@/config/env';
 import { getAccessToken } from '@/store/auth';
@@ -20,6 +22,9 @@ export type BackoffOptions = {
   /** Random spread, 0..1 (0.2 = +-20 %). */
   jitter: number;
 };
+
+/** Close code the backend uses when the handshake token is missing, invalid, expired or revoked (REQUIRE_AUTH=1). */
+export const WS_CLOSE_UNAUTHORIZED = 4401;
 
 export const DEFAULT_BACKOFF: BackoffOptions = { baseMs: 1000, maxMs: 30000, factor: 2, jitter: 0.2 };
 
@@ -96,6 +101,8 @@ export function createSocket(options: CreateSocketOptions): ManagedSocket {
   let closedByUser = false;
   let attempt = 0;
   let everOpened = false;
+  /** Token the server refused with 4401; connecting again with the same one would only be refused again. */
+  let rejectedToken: string | null = null;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   let pingTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -126,9 +133,12 @@ export function createSocket(options: CreateSocketOptions): ManagedSocket {
   const connect = () => {
     if (closedByUser || !Impl) return;
     if (ws && (ws.readyState === READY_OPEN || ws.readyState === READY_CONNECTING)) return;
+    const token = tokenOf() ?? '';
+    if (rejectedToken !== null && token === rejectedToken) return;
+    rejectedToken = null;
     let socket: WebSocket;
     try {
-      socket = new Impl(buildSocketUrl(path, baseUrl, tokenOf()));
+      socket = new Impl(buildSocketUrl(path, baseUrl, token));
     } catch {
       scheduleReconnect();
       return;
@@ -186,8 +196,10 @@ export function createSocket(options: CreateSocketOptions): ManagedSocket {
       ws = null;
       if (pingTimer) clearInterval(pingTimer);
       pingTimer = null;
-      const willReconnect = !closedByUser;
-      onClose?.({ willReconnect, code: (event as { code?: number } | undefined)?.code });
+      const code = (event as { code?: number } | undefined)?.code;
+      if (code === WS_CLOSE_UNAUTHORIZED && !closedByUser) rejectedToken = token;
+      const willReconnect = !closedByUser && rejectedToken === null;
+      onClose?.({ willReconnect, code });
       if (willReconnect) scheduleReconnect();
     };
   };

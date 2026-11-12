@@ -1,6 +1,7 @@
 /* Clockyn admin: Live Chat notifier. Injected by js/layout.js on EVERY page that renders the sidebar (never on login).
  *
- * One WebSocket to the support inbox (`/ws/support-ops?admin_id=<operator e-mail>`) per tab that:
+ * One WebSocket to the support inbox (`/ws/support-ops?token=<operator session token>`, `?admin_id=<operator e-mail>` against an old
+ * backend / legacy mode; see js/operator-session.js) per tab that:
  *   - drives the sidebar badge `.nav-livechat-badge` and prefixes `document.title` with "(n) ",
  *   - plays a sound for each new message: the file assets/sounds/notification.mp3 when it exists (see assets/sounds/README.txt),
  *     otherwise a short built-in chime (WebAudio, no asset). Muted state in localStorage 'clockyn-livechat-mute',
@@ -116,6 +117,7 @@
     render();
   }
 
+  /* the global fetch wrapper (js/operator-session.js) adds `Authorization: Bearer <token>`; x-admin-id stays for the legacy mode */
   function headers() { return { 'x-admin-id': adminId() }; }
 
   function fetchUnread() {
@@ -253,9 +255,12 @@
   }
 
   /* ── socket ── */
+  /* js/operator-session.js builds the address: ?token=<operator session token>, or ?admin_id=<e-mail> when there is no token
+   * (old backend / legacy mode). The same helper is used on every reconnect, so a renewed token is picked up. */
   function wsUrl() {
     var base = apiBase();
     if (!base || !adminId()) return '';
+    if (window.ClockynOperator && typeof window.ClockynOperator.wsUrl === 'function') return window.ClockynOperator.wsUrl('/ws/support-ops');
     return base.replace(/^http/i, 'ws') + '/ws/support-ops?admin_id=' + encodeURIComponent(adminId());
   }
 

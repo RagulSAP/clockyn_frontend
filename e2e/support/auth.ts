@@ -37,6 +37,8 @@ export interface SessionSeed {
   deviceToken?: string;
   isActive?: number;
   name?: string;
+  /** Bearer token (set by `loginAs` only when the mock runs with MOCK_REQUIRE_AUTH=1). */
+  accessToken?: string;
 }
 
 export interface LoginAsOptions {
@@ -108,8 +110,12 @@ export async function sessionFor(role: Role, opts: LoginAsOptions = {}, page?: P
 export async function loginAs(page: Page, role: Role, opts: LoginAsOptions = {}): Promise<SessionSeed> {
   const u = USERS[role];
   const session = await sessionFor(role, opts, page);
+  // MOCK_REQUIRE_AUTH=1 (the mock enforces Bearer tokens like REQUIRE_AUTH=1 on the real backend): a seeded session needs a token.
+  const persisted: SessionSeed = /^(1|true|yes|on)$/i.test(process.env.MOCK_REQUIRE_AUTH || '') && !session.accessToken
+    ? { ...session, accessToken: `tok-seed-${session.userId}` }
+    : session;
   const items: Record<string, string> = {
-    [STORAGE.auth]: JSON.stringify({ state: { session }, version: 1 }),
+    [STORAGE.auth]: JSON.stringify({ state: { session: persisted }, version: 1 }),
     [STORAGE.lastLoginAt]: String(opts.freshLogin ? Date.now() : Date.now() - 11 * 60_000),
     [STORAGE.rateAppDone]: 'true',
     ...(opts.theme ? { [STORAGE.themePreference]: opts.theme } : {}),

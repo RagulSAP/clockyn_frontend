@@ -76,7 +76,7 @@ const PUBLIC_EXACT = new Set([
   '/health',
   '/ready',
 ]);
-const PUBLIC_PREFIXES = ['/auth/check-mobile/', '/auth/check-email/', '/auth/org-logo/', '/files/', '/static/', '/uploads/', '/webhook/'];
+const PUBLIC_PREFIXES = ['/auth/check-mobile/', '/auth/check-email/', '/auth/org-logo/', '/webhook/'];
 
 /** Server-relative path (no query / hash) for a client path or an absolute URL on the API host; null for foreign hosts. */
 function serverPath(path: string): string | null {

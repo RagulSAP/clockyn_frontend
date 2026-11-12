@@ -78,6 +78,7 @@
       <button class="tab" role="tab" id="btn-eas" data-tab="eas" aria-controls="tab-eas" aria-selected="false">Expo build</button>
       <button class="tab" role="tab" id="btn-fcm" data-tab="fcm" aria-controls="tab-fcm" aria-selected="false">Push (FCM)</button>
       <button class="tab" role="tab" id="btn-maps" data-tab="maps" aria-controls="tab-maps" aria-selected="false">Maps key</button>
+      <button class="tab" role="tab" id="btn-env" data-tab="env" aria-controls="tab-env" aria-selected="false">Environment variables</button>
       <button class="tab" role="tab" id="btn-trouble" data-tab="trouble" aria-controls="tab-trouble" aria-selected="false">Troubleshooting</button>
     </div>
     <button class="theme" id="themeBtn" type="button" aria-label="Switch between light and dark theme">Dark mode</button>
@@ -85,7 +86,7 @@
 </header>
 <main class="wrap">
   <h1>How to run it, set up AWS and deploy</h1>
-  <p class="sub">Commands for Windows PowerShell. Click <b>Copy</b> on any block. Paths assume <code>C:\POC\clockyn_frontend</code> (app) and <code>C:\POC\clockyn_backend</code> (backend). Written 2026-11-03, updated 2026-11-11 (ECS Express Mode deploy, Video Hub, Live Chat, FAQ Hub, Maps key).</p>
+  <p class="sub">Commands for Windows PowerShell. Click <b>Copy</b> on any block. Paths assume <code>C:\POC\clockyn_frontend</code> (app) and <code>C:\POC\clockyn_backend</code> (backend). Written 2026-11-03, updated 2026-11-12 (ECS Express Mode deploy, Video Hub, Live Chat, FAQ Hub, Maps key, login enforcement, Environment variables).</p>
   <div class="panel" role="tabpanel" id="tab-run" aria-labelledby="btn-run" hidden>
   <nav class="pills">
     <a href="#quick">Quick reference</a>
@@ -392,7 +393,7 @@ aws logs put-retention-policy --log-group-name /ecs/clockyn-backend --retention-
   ]
 }</pre><button class="copy">Copy</button></div>
     <p>Add the other settings from the backend <code>.env</code> the same way (for example <code>SELLER_NAME</code>, <code>SELLER_GSTIN</code>, <code>SUPPORT_EMAIL</code>, <code>ANDROID_STORE_URL</code>, <code>IOS_STORE_URL</code>, <code>CORS_ALLOWED_ORIGINS</code>). <code>CORS_ALLOWED_ORIGINS</code> is a comma list of exact origins; once it is set, only those sites can call the API from a browser, so include the admin web app's address (see the Video Hub tab). The secret reference format <code>SECRET_ARN:KEY::</code> is the standard ECS one; if the service fails to start with a secrets error, check these ARNs first.</p>
-    <div class="box danger"><strong>Do NOT add</strong> <code>OTP_BYPASS</code>, <code>REQUIRE_AUTH</code>, or any AWS access key. Leave <code>REQUIRE_AUTH</code> out until the app has been tested end to end.</div>
+    <div class="box danger"><strong>Do NOT add</strong> <code>OTP_BYPASS</code> or any AWS access key. <code>REQUIRE_AUTH</code>, <code>OPERATOR_ENFORCE</code> and <code>OPERATOR_LEGACY_ADMIN_ID</code> are added too, but only at the end and in a fixed order: follow <b>Switch on login enforcement</b> below. Switching them on early locks the admin console out.</div>
     <p>Create the service (PowerShell, in the same folder). It runs <b>1 vCPU and 2 GB</b>, one task, health check on <code>/health</code>:</p>
     <div class="cmd"><pre>cd C:\POC\clockyn_backend
 aws ecs create-express-gateway-service `
@@ -466,6 +467,36 @@ docker push "${REPO}:2"</pre><button class="copy">Copy</button></div>
         Always send the complete file (image, settings and secrets). Do not rely on a partial update keeping your other settings. Express releases with a <b>canary</b>: it starts the new task, watches it, then moves traffic, and rolls back by itself if the 5XX alarm fires.</li>
       <li><b>Roll back by hand:</b> put the previous image tag back in <code>primary.json</code> and run the same command.</li>
     </ol>
+
+    <h3 id="enforce">Switch on login enforcement <span class="tag">security finding S-01 and S-02</span></h3>
+    <p>Until these are on, the server lets a request through without a login token, and the admin console proves who the operator is only by their e-mail header. Switching them on has three settings, and the <b>order matters</b>. The longer checklist and smoke test are in <code>docs\REQUIRE_AUTH_ROLLOUT.md</code> in the app folder.</p>
+    <table>
+      <tr><th>Setting</th><th>What it does</th></tr>
+      <tr><td><code>REQUIRE_AUTH=1</code></td><td>Every route that is not public needs the app's login token (no token: 401). The chat sockets need <code>?token=</code>. The service refuses to start if <code>AUTH_TOKEN_SECRET</code> is missing or shorter than 32 characters.</td></tr>
+      <tr><td><code>OPERATOR_ENFORCE=1</code></td><td>The admin console routes need an operator credential (the console's session token or the operator key).</td></tr>
+      <tr><td><code>OPERATOR_LEGACY_ADMIN_ID=0</code></td><td>Turns off the old "operator e-mail in a header" login. Only the session token and the key work.</td></tr>
+    </table>
+    <h4>Before you start (once)</h4>
+    <ul>
+      <li><code>AUTH_TOKEN_SECRET</code> is in Secrets Manager (a random string of 32 or more characters, the same on every task) and in the <code>"secrets"</code> list of <code>primary.json</code>. Do not change it later: that signs everyone out.</li>
+      <li><code>OPERATOR_API_KEY</code> (24 or more characters) is in the secret and in <code>primary.json</code>. Keep it for scripts only; never put it in the console's JavaScript.</li>
+      <li>Migration 033 (<code>users.auth_epoch</code>) is applied. Take a database snapshot.</li>
+    </ul>
+    <h4>The order</h4>
+    <ol>
+      <li><b>Release the new backend with none of the three settings.</b> It accepts both the old and the new operator login, so nothing breaks. In CloudWatch (<code>/ecs/clockyn-backend</code>) you will now see lines that start with <code>SECURITY:</code>; they list what is still switched off.</li>
+      <li><b>Publish the updated console</b> (the <code>UI_ADMIN_APP</code> folder) wherever it is hosted, press Ctrl+F5, sign in once with the e-mail code and open a few pages (Organizations, Subscriptions, Live Chat). They should all load.</li>
+      <li><b>Publish the new app build</b> and raise the minimum supported version (the <code>/version/check</code> table) so old builds are asked to update. Old builds have no token and would get 401 everywhere after the switch. Let the staff sign in once so every active phone holds a token.</li>
+      <li><b>Test on staging first</b> with the three lines and a real phone build (smoke test in <code>docs\REQUIRE_AUTH_ROLLOUT.md</code>).</li>
+      <li><b>Production:</b> add these three lines to the <code>"environment"</code> list of <code>primary.json</code>, then send the complete file (the release command above):
+        <div class="cmd"><pre>    { "name": "REQUIRE_AUTH", "value": "1" },
+    { "name": "OPERATOR_ENFORCE", "value": "1" },
+    { "name": "OPERATOR_LEGACY_ADMIN_ID", "value": "0" },</pre><button class="copy">Copy</button></div></li>
+      <li><b>Check:</b> sign in to the app and the console, and open chat and a report. A call without a token must now answer 401:
+        <div class="cmd"><pre>curl.exe -i https://YOUR-SERVICE-ADDRESS/gen-dashboard/organizations</pre><button class="copy">Copy</button></div></li>
+      <li><b>Roll back:</b> remove the three lines and send the file again. Do not change <code>AUTH_TOKEN_SECRET</code> while rolling back.</li>
+    </ol>
+    <p>On your own PC the same three lines go in the backend <code>.env</code>, but leave them off for normal local testing (the local test server and some tests assume they are off).</p>
 
     <h3>Good to know</h3>
     <ul>
@@ -541,7 +572,7 @@ CREATE INDEX IF NOT EXISTS idx_support_video_view_viewed_at ON clockyn_dev.suppo
     <h3>Step 5: Run the admin web app on your PC</h3>
     <div class="cmd"><pre>cd C:\POC\clockyn_frontend\UI_ADMIN_APP
 python -m http.server 5500</pre><button class="copy">Copy</button></div>
-    <p>Folder layout of <code>UI_ADMIN_APP</code>: <code>pages\</code> (all screens), <code>css\</code>, <code>js\</code> (<code>config.js</code>, <code>auth.js</code>, <code>theme.js</code>, <code>export.js</code>), <code>assets\images\</code>, and an <code>index.html</code> that opens the login page. Run the server from the <code>UI_ADMIN_APP</code> folder so those paths resolve.</p>
+    <p>Folder layout of <code>UI_ADMIN_APP</code>: <code>pages\</code> (all screens), <code>css\</code>, <code>js\</code> (<code>config.js</code>, <code>operator-session.js</code> (operator login token, added to every API call), <code>auth.js</code>, <code>theme.js</code>, <code>export.js</code>), <code>assets\images\</code>, and an <code>index.html</code> that opens the login page. Run the server from the <code>UI_ADMIN_APP</code> folder so those paths resolve.</p>
     <p>Open <code>http://localhost:5500/</code> (it opens <code>pages/login.html</code>) and sign in with your email. The API address is the first line of <code>js\config.js</code>: set <code>API_BASE</code> to your Express address (or <code>http://localhost:8080</code> for a local backend).</p>
 
     <h3>Step 6: Upload and manage videos</h3>
@@ -922,6 +953,328 @@ eas env:create --name GOOGLE_MAPS_API_KEY --value PASTE_THE_KEY --environment pr
     </ul>
   </section>
   </div>
+  <div class="panel" role="tabpanel" id="tab-env" aria-labelledby="btn-env" hidden>
+  <section id="env">
+    <h2>Environment variables <span class="tag">app + backend, placeholders only</span></h2>
+    <p>Every setting the app and the backend read, with a placeholder where your own value goes. Replace the words in capitals (<code>YOUR_...</code>) with your value. <b>Never save real values in this file or in git.</b> It also shows where each value belongs.</p>
+    <table>
+      <tr><th>Where it goes</th><th>Meaning</th></tr>
+      <tr><td><b>Public (in the app)</b></td><td><code>EXPO_PUBLIC_*</code> values are packed into the app and anyone can read them. Never put a secret there. Set them in <code>.env</code> on your PC and as EAS variables for each build profile.</td></tr>
+      <tr><td><b>Setting</b></td><td>Not secret. Backend: the <code>"environment"</code> list of <code>primary.json</code> (Express tab, Step 4). App build: an EAS variable (<code>eas env:create</code>, Expo build tab, Step 3).</td></tr>
+      <tr><td><b>Secret</b></td><td>Backend: the secret <code>clockyn/backend</code> in AWS Secrets Manager, plus a row in the <code>"secrets"</code> list of <code>primary.json</code> (a secret that is only in Secrets Manager is not given to the container). App build: an EAS variable with <code>--visibility secret</code>.</td></tr>
+      <tr><td><b>Local only</b></td><td>Only for running on your own PC (the backend <code>.env</code>). Never on the server and never in git.</td></tr>
+    </table>
+    <div class="box warn"><strong>The EAS build reads variables at build time.</strong> A variable added later needs a new build, and each environment (development, preview, production) has its own list. Check with <code>eas env:list --environment preview</code>. A local <code>.env</code> file is never uploaded to EAS.</div>
+    <h3 id="env-app">Part 1. The app (C:\POC\clockyn_frontend)</h3>
+    <p>On your PC copy <code>.env.example</code> to <code>.env</code> and fill it in. For EAS builds create the same names as EAS variables.</p>
+    <h4>Where the app finds the backend and your links</h4>
+<table>
+<tr><th>Variable</th><th>Placeholder value</th><th>Needed?</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>EXPO_PUBLIC_API_BASE_URL</code></td><td><code>https://YOUR-BACKEND-ADDRESS</code></td><td>Required</td><td>Public (in the app)</td><td>HTTPS address of the backend, no slash at the end. Release builds block http://. Set it in every EAS environment you build.</td></tr>
+<tr><td><code>EXPO_PUBLIC_SUPPORT_EMAIL</code></td><td><code>support@YOUR-DOMAIN.com</code></td><td>Recommended</td><td>Public (in the app)</td><td>Support address shown in the app.</td></tr>
+<tr><td><code>EXPO_PUBLIC_SALES_EMAIL</code></td><td><code>sales@YOUR-DOMAIN.com</code></td><td>Optional</td><td>Public (in the app)</td><td>Sales address shown in the app.</td></tr>
+<tr><td><code>EXPO_PUBLIC_PRIVACY_POLICY_URL</code></td><td><code>https://YOUR-DOMAIN.com/privacy</code></td><td>Required</td><td>Public (in the app)</td><td>Public privacy policy page. Both stores need it.</td></tr>
+<tr><td><code>EXPO_PUBLIC_WEB_PORTAL_URL</code></td><td><code>https://YOUR-WEB-PORTAL</code></td><td>Optional</td><td>Public (in the app)</td><td>Web portal link (for example where plans are bought on iPhone).</td></tr>
+<tr><td><code>EXPO_PUBLIC_ANDROID_STORE_URL</code></td><td><code>https://play.google.com/store/apps/details?id=com.clockyn.app</code></td><td>Recommended</td><td>Public (in the app)</td><td>Play Store listing, used by the rate and update prompts.</td></tr>
+<tr><td><code>EXPO_PUBLIC_IOS_STORE_URL</code></td><td><code>https://apps.apple.com/app/idYOUR_APP_ID</code></td><td>Recommended</td><td>Public (in the app)</td><td>App Store listing.</td></tr>
+<tr><td><code>EXPO_PUBLIC_ANALYTICS</code></td><td><code>(empty)</code></td><td>Optional</td><td>Public (in the app)</td><td>Leave empty = usage analytics on (screen views and taps, no typed text). Write off to switch it off for that build.</td></tr>
+<tr><td><code>EXPO_PUBLIC_ALLOW_WEB_EMPLOYEE</code></td><td><code>(empty)</code></td><td>Dev only</td><td>Public (in the app)</td><td>Leave empty. true lifts the staff-sign-in block in a browser; only the automated browser tests set it.</td></tr>
+</table>
+    <h4>Native build identity (app.config.ts, read when you build)</h4>
+<table>
+<tr><th>Variable</th><th>Placeholder value</th><th>Needed?</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>APP_ID</code></td><td><code>com.clockyn.app</code></td><td>Required</td><td>Setting</td><td>Android package name and iOS bundle id. Must match the Firebase apps and the Play / App Store listing. Default com.clockyn.app.</td></tr>
+<tr><td><code>EAS_PROJECT_ID</code></td><td><code>YOUR-EAS-PROJECT-ID</code></td><td>Required</td><td>Setting</td><td>Printed by eas init. Set it in every EAS environment.</td></tr>
+<tr><td><code>GOOGLE_MAPS_API_KEY</code></td><td><code>YOUR_ANDROID_MAPS_KEY</code></td><td>Required</td><td>Secret</td><td>Android Google Maps key, restricted to com.clockyn.app + the signing SHA-1 (Maps key tab). Without it the map shows Map unavailable.</td></tr>
+<tr><td><code>GOOGLE_SERVICES_JSON</code></td><td><code>./google-services.json</code></td><td>Recommended</td><td>Setting</td><td>Firebase Android file (push). On EAS create it as a file variable. Already committed in the repo.</td></tr>
+<tr><td><code>GOOGLE_SERVICE_INFO_PLIST</code></td><td><code>./GoogleService-Info.plist</code></td><td>Optional</td><td>Setting</td><td>Firebase iOS file (push). Needed only for iOS builds. On EAS create it as a file variable.</td></tr>
+</table>
+    <h4>Copy into the app <code>.env</code></h4>
+    <div class="cmd"><pre>EXPO_PUBLIC_API_BASE_URL=https://YOUR-BACKEND-ADDRESS
+EXPO_PUBLIC_SUPPORT_EMAIL=support@YOUR-DOMAIN.com
+EXPO_PUBLIC_SALES_EMAIL=sales@YOUR-DOMAIN.com
+EXPO_PUBLIC_PRIVACY_POLICY_URL=https://YOUR-DOMAIN.com/privacy
+EXPO_PUBLIC_WEB_PORTAL_URL=https://YOUR-WEB-PORTAL
+EXPO_PUBLIC_ANDROID_STORE_URL=https://play.google.com/store/apps/details?id=com.clockyn.app
+EXPO_PUBLIC_IOS_STORE_URL=https://apps.apple.com/app/idYOUR_APP_ID
+EXPO_PUBLIC_ANALYTICS=
+EXPO_PUBLIC_ALLOW_WEB_EMPLOYEE=
+APP_ID=com.clockyn.app
+EAS_PROJECT_ID=YOUR-EAS-PROJECT-ID
+GOOGLE_MAPS_API_KEY=YOUR_ANDROID_MAPS_KEY
+GOOGLE_SERVICES_JSON=./google-services.json
+GOOGLE_SERVICE_INFO_PLIST=./GoogleService-Info.plist</pre><button class="copy">Copy</button></div>
+    <div class="box ok"><strong>Note.</strong> The current <code>.env.example</code> lists <code>EXPO_PUBLIC_API_BASE_URL</code> twice (an old App Runner address and an empty line). Keep one line with your own HTTPS address.</div>
+    <h4>For an EAS build (one environment at a time)</h4>
+    <div class="cmd"><pre>eas env:create --name EXPO_PUBLIC_API_BASE_URL --value https://YOUR-BACKEND-ADDRESS --environment production --visibility plaintext
+eas env:create --name EAS_PROJECT_ID --value YOUR-EAS-PROJECT-ID --environment production --visibility plaintext
+eas env:create --name EXPO_PUBLIC_PRIVACY_POLICY_URL --value https://YOUR-DOMAIN.com/privacy --environment production --visibility plaintext
+eas env:create --name GOOGLE_MAPS_API_KEY --value YOUR_ANDROID_MAPS_KEY --environment production --visibility secret
+eas env:create --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --environment production --visibility secret</pre><button class="copy">Copy</button></div>
+    <p>Repeat with <code>--environment preview</code> and <code>--environment development</code>. The Expo build tab has the full steps.</p>
+    <h4>Testing and recording only (never needed for a real build)</h4>
+    <table><tr><th>Variable</th><th>Example</th><th>What it does</th></tr>
+      <tr><td><code>E2E_ARTIFACTS</code></td><td><code>.artifacts-mine</code></td><td>Folder for browser-test output. Use a different one per parallel run.</td></tr>
+      <tr><td><code>E2E_WORKERS</code></td><td><code>2</code></td><td>How many browser tests run at once.</td></tr>
+      <tr><td><code>E2E_WEB_PORT / E2E_WEB_PORTS</code></td><td><code>18081</code></td><td>Port(s) of the web build served to the tests.</td></tr>
+      <tr><td><code>E2E_WEB_ROOT</code></td><td><code>dist</code></td><td>Folder of the web build the tests serve.</td></tr>
+      <tr><td><code>E2E_API_BASE_URL</code></td><td><code>http://127.0.0.1:18787</code></td><td>Where the tests send API calls (the test backend).</td></tr>
+      <tr><td><code>E2E_BUILD_CLEAR</code></td><td><code>1</code></td><td>Clear the cache when npm run e2e:build builds.</td></tr>
+      <tr><td><code>MOCK_PORT</code></td><td><code>18787</code></td><td>Port of the built-in test backend.</td></tr>
+      <tr><td><code>MOCK_REQUIRE_AUTH</code></td><td><code>1</code></td><td>Makes the test backend demand a Bearer token like production with REQUIRE_AUTH=1.</td></tr>
+      <tr><td><code>VIDEO_ORG_NAME</code></td><td><code>YOUR COMPANY NAME</code></td><td>Company name shown while recording the guide videos.</td></tr>
+      <tr><td><code>TZ</code></td><td><code>Asia/Kolkata</code></td><td>Time zone the test runs use.</td></tr>
+    </table>
+    <h3 id="env-backend">Part 2. The backend (C:\POC\clockyn_backend)</h3>
+    <p>On your PC these go in the backend <code>.env</code>. On the server the <b>Setting</b> rows go in the <code>"environment"</code> list of <code>primary.json</code> and the <b>Secret</b> rows in Secrets Manager plus the <code>"secrets"</code> list (Express tab, Step 3 and Step 4). The full description of every variable is in the backend <code>README.md</code>.</p>
+    <h4>Database</h4>
+    <p>Required for everything. The password is a secret.</p>
+<table>
+<tr><th>Variable</th><th>Placeholder value</th><th>Needed?</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>DB_HOST</code></td><td><code>YOUR-RDS-ENDPOINT</code></td><td>Required</td><td>Setting</td><td>Database address.</td></tr>
+<tr><td><code>DB_PORT</code></td><td><code>5432</code></td><td>Optional</td><td>Setting</td><td>Default 5432.</td></tr>
+<tr><td><code>DB_NAME</code></td><td><code>YOUR_DATABASE_NAME</code></td><td>Required</td><td>Setting</td><td>Database name.</td></tr>
+<tr><td><code>DB_USER</code></td><td><code>YOUR_DB_USER</code></td><td>Required</td><td>Setting</td><td>Use the restricted app user, not the master user.</td></tr>
+<tr><td><code>DB_PASSWORD</code></td><td><code>YOUR_DB_PASSWORD</code></td><td>Required</td><td>Secret</td><td>Database password.</td></tr>
+<tr><td><code>DB_SCHEMA</code></td><td><code>clockyn_dev</code></td><td>Required</td><td>Setting</td><td>The only schema Clockyn writes to. Letters, digits and underscore only.</td></tr>
+<tr><td><code>PGSSLMODE</code></td><td><code>require</code></td><td>Recommended</td><td>Setting</td><td>Encrypts the database connection. Later move to verify-full with the AWS RDS certificate.</td></tr>
+<tr><td><code>RUN_MIGRATIONS</code></td><td><code>1</code></td><td>Optional</td><td>Setting</td><td>1 applies pending migrations/NNN_*.sql when the service starts. Default off.</td></tr>
+</table>
+    <h4>Sign-in and access control</h4>
+    <p>Read the Express tab, Switch on login enforcement, before changing the three OPERATOR / REQUIRE_AUTH lines.</p>
+<table>
+<tr><th>Variable</th><th>Placeholder value</th><th>Needed?</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>USER_AUTH</code></td><td><code>email</code></td><td>Required</td><td>Setting</td><td>email = e-mail address + code by SES. otp = mobile number + SMS code (MSG91). Default otp.</td></tr>
+<tr><td><code>AUTH_TOKEN_SECRET</code></td><td><code>YOUR_RANDOM_STRING_32_OR_MORE_CHARACTERS</code></td><td>Required</td><td>Secret</td><td>Signs the login tokens. Same value on every task. Changing it signs everyone out.</td></tr>
+<tr><td><code>AUTH_TOKEN_TTL_DAYS</code></td><td><code>90</code></td><td>Optional</td><td>Setting</td><td>App login lifetime in days (1 to 3650). Default 90.</td></tr>
+<tr><td><code>REQUIRE_AUTH</code></td><td><code>1</code></td><td>Recommended</td><td>Setting</td><td>Every non-public route needs a login token. Turn on only in the order described in the Express tab.</td></tr>
+<tr><td><code>OPERATOR_API_KEY</code></td><td><code>YOUR_RANDOM_STRING_24_OR_MORE_CHARACTERS</code></td><td>Recommended</td><td>Secret</td><td>Key for scripts and break-glass access to the admin routes (header X-Operator-Key). Never put it in the console&#x27;s JavaScript.</td></tr>
+<tr><td><code>OPERATOR_ENFORCE</code></td><td><code>1</code></td><td>Recommended</td><td>Setting</td><td>Admin console routes demand a credential. Unset follows REQUIRE_AUTH.</td></tr>
+<tr><td><code>OPERATOR_LEGACY_ADMIN_ID</code></td><td><code>0</code></td><td>Recommended</td><td>Setting</td><td>0 turns off the old operator-e-mail header login. Default 1 (accepted).</td></tr>
+<tr><td><code>OPERATOR_TOKEN_TTL_HOURS</code></td><td><code>12</code></td><td>Optional</td><td>Setting</td><td>Admin console session length in hours (1 to 72). Default 12.</td></tr>
+<tr><td><code>AUTH_EPOCH_CACHE_SECONDS</code></td><td><code>30</code></td><td>Optional</td><td>Setting</td><td>How long a user&#x27;s revoke / role state is cached. 0 = off. Default 30.</td></tr>
+<tr><td><code>OTP_BYPASS</code></td><td><code>(leave unset)</code></td><td>Dev only</td><td>Local only</td><td>Enables the fixed code 123456 for the review phone numbers. Never set in production.</td></tr>
+<tr><td><code>OTP_MAX_PER_HOUR</code></td><td><code>5</code></td><td>Optional</td><td>Setting</td><td>Sign-in codes per contact per hour. Default 5.</td></tr>
+<tr><td><code>OTP_MIN_GAP_SECONDS</code></td><td><code>30</code></td><td>Optional</td><td>Setting</td><td>Minimum seconds between two codes. Default 30.</td></tr>
+<tr><td><code>CORS_ALLOWED_ORIGINS</code></td><td><code>https://YOUR-ADMIN-SITE,https://YOUR-OTHER-SITE</code></td><td>Recommended</td><td>Setting</td><td>Exact web origins allowed to call the API from a browser. Unset or * allows every site.</td></tr>
+<tr><td><code>TRUST_PROXY</code></td><td><code>1</code></td><td>Required</td><td>Setting</td><td>1 behind the load balancer so rate limits see the real client address.</td></tr>
+<tr><td><code>TRUSTED_PROXY_HOPS</code></td><td><code>1</code></td><td>Optional</td><td>Setting</td><td>How many proxies sit in front. Default 1.</td></tr>
+<tr><td><code>APP_ENV</code></td><td><code>production</code></td><td>Recommended</td><td>Setting</td><td>production makes FACE_BACKEND=mock refuse to start. Nothing else reads it.</td></tr>
+<tr><td><code>ENFORCE_SINGLE_DEVICE</code></td><td><code>1</code></td><td>Optional</td><td>Setting</td><td>Managers and staff keep one device. Default off.</td></tr>
+<tr><td><code>REQUESTS_ENFORCE_ACTOR</code></td><td><code>1</code></td><td>Optional</td><td>Setting</td><td>Only an admin or an allowed manager can approve a request. Default off (logged only).</td></tr>
+<tr><td><code>ENFORCE_MANAGER_SCOPE</code></td><td><code>1</code></td><td>Optional</td><td>Setting</td><td>Managers see only their own team&#x27;s data, decided on the server. Default off.</td></tr>
+<tr><td><code>BILLING_ENFORCE_ORG_OWNER</code></td><td><code>1</code></td><td>Optional</td><td>Setting</td><td>Checks the org belongs to the admin who buys. Default on; 0 turns it off.</td></tr>
+<tr><td><code>ACCOUNT_DELETE_ANONYMISE</code></td><td><code>1</code></td><td>Optional</td><td>Setting</td><td>Account deletion anonymises in place instead of a hard delete. Default off.</td></tr>
+<tr><td><code>CRM_CARRY_FORWARD_UNASSIGN</code></td><td><code>(leave unset)</code></td><td>Optional</td><td>Setting</td><td>Older carry-forward behaviour for leads. Default off.</td></tr>
+</table>
+    <h4>Limits and abuse protection</h4>
+    <p>All have safe defaults.</p>
+<table>
+<tr><th>Variable</th><th>Placeholder value</th><th>Needed?</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>RATE_LIMIT_ENABLED</code></td><td><code>1</code></td><td>Optional</td><td>Setting</td><td>0 switches every rate limit off. Default on.</td></tr>
+<tr><td><code>RATE_LIMIT_AUTH_LOGIN</code></td><td><code>30/60</code></td><td>Optional</td><td>Setting</td><td>One of many RATE_LIMIT_&lt;RULE&gt; settings, written count/seconds or off. Rules are listed in the backend README.</td></tr>
+<tr><td><code>UPLOAD_MAX_MB</code></td><td><code>10</code></td><td>Optional</td><td>Setting</td><td>Largest image or receipt upload in MB. Default 10.</td></tr>
+<tr><td><code>CHAT_UPLOAD_MAX_MB</code></td><td><code>25</code></td><td>Optional</td><td>Setting</td><td>Largest chat attachment in MB. Default 25.</td></tr>
+<tr><td><code>SIGNED_URL_TTL_SECONDS</code></td><td><code>900</code></td><td>Optional</td><td>Setting</td><td>Life of signed invoice links (60 to 86400). Default 900.</td></tr>
+</table>
+    <h4>E-mail, SMS and WhatsApp</h4>
+    <p>E-mail is required when USER_AUTH=email. The MSG91 ones are needed only for SMS or WhatsApp.</p>
+<table>
+<tr><th>Variable</th><th>Placeholder value</th><th>Needed?</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>EMAIL_USER</code></td><td><code>your-verified-sender@YOUR-DOMAIN.com</code></td><td>Required</td><td>Setting</td><td>SES-verified sender address.</td></tr>
+<tr><td><code>AWS_SES_REGION</code></td><td><code>ap-south-1</code></td><td>Required</td><td>Setting</td><td>Region of the SES account.</td></tr>
+<tr><td><code>MSG91_AUTH_KEY</code></td><td><code>YOUR_MSG91_AUTH_KEY</code></td><td>Optional</td><td>Secret</td><td>SMS code sending (USER_AUTH=otp).</td></tr>
+<tr><td><code>MSG91_TEMPLATE_ID</code></td><td><code>YOUR_MSG91_TEMPLATE_ID</code></td><td>Optional</td><td>Setting</td><td>Approved SMS template (USER_AUTH=otp).</td></tr>
+<tr><td><code>MSG91_WHATSAPP_AUTH_KEY</code></td><td><code>YOUR_MSG91_WHATSAPP_KEY</code></td><td>Optional</td><td>Secret</td><td>WhatsApp staff invitations.</td></tr>
+<tr><td><code>MSG91_WHATSAPP_NUMBER</code></td><td><code>91XXXXXXXXXX</code></td><td>Optional</td><td>Setting</td><td>Sending WhatsApp number.</td></tr>
+<tr><td><code>MSG91_WHATSAPP_TEMPLATE</code></td><td><code>YOUR_APPROVED_TEMPLATE_NAME</code></td><td>Optional</td><td>Setting</td><td>No default: must be approved at the provider. Unset = no invitation.</td></tr>
+</table>
+    <h4>AWS storage and face recognition</h4>
+    <p>On the server the permissions come from the IAM role, so no AWS key is set there.</p>
+<table>
+<tr><th>Variable</th><th>Placeholder value</th><th>Needed?</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>AWS_S3_REGION</code></td><td><code>ap-south-1</code></td><td>Required</td><td>Setting</td><td>Region of the bucket.</td></tr>
+<tr><td><code>S3_BUCKET_NAME</code></td><td><code>YOUR_BUCKET_NAME</code></td><td>Required</td><td>Setting</td><td>Bucket for photos, receipts, videos and chat files.</td></tr>
+<tr><td><code>AWS_ACCESS_KEY_ID</code></td><td><code>YOUR_ACCESS_KEY_ID</code></td><td>Dev only</td><td>Local only</td><td>Only for running the backend on your PC. Never on ECS (the role is used).</td></tr>
+<tr><td><code>AWS_SECRET_ACCESS_KEY</code></td><td><code>YOUR_SECRET_ACCESS_KEY</code></td><td>Dev only</td><td>Local only</td><td>Only for your PC. Never on ECS and never in git.</td></tr>
+<tr><td><code>FACE_BACKEND</code></td><td><code>rekognition</code></td><td>Required</td><td>Setting</td><td>rekognition (default) or mock (local development only).</td></tr>
+<tr><td><code>REKOGNITION_REGION</code></td><td><code>ap-south-1</code></td><td>Recommended</td><td>Setting</td><td>Default is AWS_S3_REGION, else ap-south-1.</td></tr>
+<tr><td><code>REKOGNITION_COLLECTION_ID</code></td><td><code>clockyn-faces-dev</code></td><td>Recommended</td><td>Setting</td><td>Face collection name. Default clockyn-faces.</td></tr>
+<tr><td><code>REKOGNITION_THRESHOLD</code></td><td><code>90</code></td><td>Optional</td><td>Setting</td><td>Match threshold 0 to 100. Default 90. Lower a little if the right person is rejected.</td></tr>
+<tr><td><code>REKOGNITION_MAX_RETRIES</code></td><td><code>3</code></td><td>Optional</td><td>Setting</td><td>Retries on throttling (1 to 10). Default 3.</td></tr>
+<tr><td><code>REKOGNITION_AUTO_CREATE</code></td><td><code>(leave unset)</code></td><td>Optional</td><td>Setting</td><td>1 creates a missing collection automatically (needs extra IAM permission). Default off.</td></tr>
+<tr><td><code>FACE_PRECHECK</code></td><td><code>(leave unset)</code></td><td>Optional</td><td>Setting</td><td>Refuse photos that cannot hold a face before calling AWS. Default on for Rekognition.</td></tr>
+<tr><td><code>FACE_ANTISPOOF</code></td><td><code>(leave unset)</code></td><td>Optional</td><td>Setting</td><td>Photo-of-a-photo check. Default off.</td></tr>
+<tr><td><code>FACE_DARK_THRESHOLD</code></td><td><code>45</code></td><td>Optional</td><td>Setting</td><td>Minimum brightness 0 to 255. Default 45.</td></tr>
+<tr><td><code>FACE_BLUR_THRESHOLD</code></td><td><code>40</code></td><td>Optional</td><td>Setting</td><td>Minimum sharpness. Default 40.</td></tr>
+<tr><td><code>FACE_MIN_SIDE</code></td><td><code>200</code></td><td>Optional</td><td>Setting</td><td>Minimum shorter side in pixels. Default 200.</td></tr>
+<tr><td><code>FACE_MAX_WIDTH</code></td><td><code>640</code></td><td>Optional</td><td>Setting</td><td>Width photos are scaled to for the local quality checks (160 to 2048). Default 640.</td></tr>
+<tr><td><code>FACE_MAX_CONCURRENCY</code></td><td><code>8</code></td><td>Optional</td><td>Setting</td><td>Face operations at once per instance (1 to 16). Default 8.</td></tr>
+<tr><td><code>FACE_ATTEMPT_LOG</code></td><td><code>1</code></td><td>Optional</td><td>Setting</td><td>0 stops writing the face attempt log. Default on.</td></tr>
+<tr><td><code>FACE_MOCK_ALWAYS_MATCH</code></td><td><code>(leave unset)</code></td><td>Dev only</td><td>Local only</td><td>With FACE_BACKEND=mock every photo matches. Development only.</td></tr>
+<tr><td><code>FACE_SIMILARITY_THRESHOLD</code></td><td><code>(do not use)</code></td><td>Dev only</td><td>Local only</td><td>Deprecated and ignored. Use REKOGNITION_THRESHOLD.</td></tr>
+</table>
+    <h4>Payments</h4>
+    <p>The Razorpay key id and secret are NOT environment variables: they are stored in the database table gen_razorpay_key.</p>
+<table>
+<tr><th>Variable</th><th>Placeholder value</th><th>Needed?</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>RAZORPAY_WEBHOOK_SECRET</code></td><td><code>YOUR_RANDOM_WEBHOOK_SECRET</code></td><td>Required</td><td>Secret</td><td>Must equal the secret in the Razorpay dashboard webhook. Unset = the webhook answers 503.</td></tr>
+</table>
+    <h4>Push notifications (Firebase)</h4>
+    <p>All five identify the same Firebase project as google-services.json. See the Push (FCM) tab.</p>
+<table>
+<tr><th>Variable</th><th>Placeholder value</th><th>Needed?</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>FCM_PROJECT_ID</code></td><td><code>YOUR_FIREBASE_PROJECT_ID</code></td><td>Recommended</td><td>Secret</td><td>project_id from the service-account file.</td></tr>
+<tr><td><code>FCM_CLIENT_EMAIL</code></td><td><code>firebase-adminsdk-xxxxx@YOUR_PROJECT.iam.gserviceaccount.com</code></td><td>Recommended</td><td>Secret</td><td>client_email from the file.</td></tr>
+<tr><td><code>FCM_PRIVATE_KEY_ID</code></td><td><code>YOUR_PRIVATE_KEY_ID</code></td><td>Recommended</td><td>Secret</td><td>private_key_id from the file.</td></tr>
+<tr><td><code>FCM_CLIENT_ID</code></td><td><code>YOUR_CLIENT_ID</code></td><td>Recommended</td><td>Secret</td><td>client_id from the file.</td></tr>
+<tr><td><code>FCM_PRIVATE_KEY</code></td><td><code>-----BEGIN PRIVATE KEY-----\nYOUR_KEY\n-----END PRIVATE KEY-----\n</code></td><td>Recommended</td><td>Secret</td><td>private_key as ONE line, with the \n signs kept.</td></tr>
+<tr><td><code>FCM_ANDROID_CHANNEL_ID</code></td><td><code>attendance_notifications</code></td><td>Optional</td><td>Setting</td><td>Android notification channel. Leave the default.</td></tr>
+<tr><td><code>FCM_SERVICE_ACCOUNT_PATH</code></td><td><code>C:\POC\clockyn_backend\firebase-service-account.json</code></td><td>Dev only</td><td>Local only</td><td>Local alternative to the five values above. Never commit the file.</td></tr>
+</table>
+    <h4>Brand, invoices and store links</h4>
+    <p>Printed on invoices and e-mails, and returned by the version check.</p>
+<table>
+<tr><th>Variable</th><th>Placeholder value</th><th>Needed?</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>APP_NAME</code></td><td><code>Clockyn</code></td><td>Optional</td><td>Setting</td><td>Product name in e-mails, invoices and the API title. Default Clockyn.</td></tr>
+<tr><td><code>SUPPORT_EMAIL</code></td><td><code>support@YOUR-DOMAIN.com</code></td><td>Optional</td><td>Setting</td><td>Shown in OTP and invoice e-mails.</td></tr>
+<tr><td><code>SUPPORT_URL</code></td><td><code>https://YOUR-DOMAIN.com/support</code></td><td>Optional</td><td>Setting</td><td>Shown in e-mails.</td></tr>
+<tr><td><code>WEBSITE_URL</code></td><td><code>https://YOUR-DOMAIN.com</code></td><td>Optional</td><td>Setting</td><td>Shown in e-mails.</td></tr>
+<tr><td><code>SELLER_NAME</code></td><td><code>YOUR LEGAL COMPANY NAME</code></td><td>Required</td><td>Setting</td><td>Legal entity on invoices. Defaults to APP_NAME.</td></tr>
+<tr><td><code>SELLER_ADDRESS</code></td><td><code>YOUR REGISTERED ADDRESS</code></td><td>Required</td><td>Setting</td><td>Registered address on invoices.</td></tr>
+<tr><td><code>SELLER_GSTIN</code></td><td><code>YOUR_GSTIN</code></td><td>Required</td><td>Setting</td><td>GST number on invoices.</td></tr>
+<tr><td><code>SELLER_CIN</code></td><td><code>YOUR_CIN</code></td><td>Optional</td><td>Setting</td><td>Company identification number.</td></tr>
+<tr><td><code>SELLER_EMAIL</code></td><td><code>billing@YOUR-DOMAIN.com</code></td><td>Optional</td><td>Setting</td><td>Billing e-mail on invoices.</td></tr>
+<tr><td><code>SELLER_PHONE</code></td><td><code>+91XXXXXXXXXX</code></td><td>Optional</td><td>Setting</td><td>Phone on invoices.</td></tr>
+<tr><td><code>SELLER_SAC</code></td><td><code>998314</code></td><td>Optional</td><td>Setting</td><td>SAC code on invoice items. Default 998314.</td></tr>
+<tr><td><code>SELLER_PLACE_OF_SUPPLY</code></td><td><code>YOUR STATE</code></td><td>Optional</td><td>Setting</td><td>Place of supply text. Default empty (shown as N/A).</td></tr>
+<tr><td><code>BRAND_LOGO_FILE</code></td><td><code>brand_logo.png</code></td><td>Optional</td><td>Setting</td><td>Logo file name inside static/. Default brand_logo.png.</td></tr>
+<tr><td><code>BRAND_SIGNATURE_FILE</code></td><td><code>signature.png</code></td><td>Optional</td><td>Setting</td><td>Signature image inside static/. Default signature.png.</td></tr>
+<tr><td><code>ANDROID_STORE_URL</code></td><td><code>https://play.google.com/store/apps/details?id=com.clockyn.app</code></td><td>Recommended</td><td>Setting</td><td>Returned by the version check and used in the WhatsApp invitation. (APP_PLAY_STORE_LINK is the old name, still accepted.)</td></tr>
+<tr><td><code>IOS_STORE_URL</code></td><td><code>https://apps.apple.com/app/idYOUR_APP_ID</code></td><td>Recommended</td><td>Setting</td><td>Same for iPhone. (APP_APP_STORE_LINK is the old name.)</td></tr>
+<tr><td><code>DEFAULT_ODOMETER_RATE</code></td><td><code>3</code></td><td>Optional</td><td>Setting</td><td>Rupees per km used by payroll when no rate is set. Default 3.</td></tr>
+</table>
+    <h4>Meta (only if you use it)</h4>
+    <p>Skip these unless you really send events to Meta. If used, declare it in the store privacy forms.</p>
+<table>
+<tr><th>Variable</th><th>Placeholder value</th><th>Needed?</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>META_APP_ID</code></td><td><code>YOUR_META_APP_ID</code></td><td>Optional</td><td>Setting</td><td>Meta app id.</td></tr>
+<tr><td><code>META_CLIENT_TOKEN</code></td><td><code>YOUR_META_CLIENT_TOKEN</code></td><td>Optional</td><td>Secret</td><td>Meta client token.</td></tr>
+<tr><td><code>META_ACCESS_TOKEN</code></td><td><code>YOUR_SYSTEM_USER_TOKEN</code></td><td>Optional</td><td>Secret</td><td>Conversions API token.</td></tr>
+<tr><td><code>META_PIXEL_ID</code></td><td><code>YOUR_PIXEL_ID</code></td><td>Optional</td><td>Setting</td><td>Conversions API pixel.</td></tr>
+</table>
+    <h4>Copy into the backend <code>.env</code> (your PC)</h4>
+    <p>Values in <code>#</code> lines are left unset on purpose (they have a safe default or are for development only). Local testing normally leaves <code>REQUIRE_AUTH</code>, <code>OPERATOR_ENFORCE</code> and <code>OPERATOR_LEGACY_ADMIN_ID</code> unset.</p>
+    <div class="cmd"><pre>DB_HOST=YOUR-RDS-ENDPOINT
+DB_PORT=5432
+DB_NAME=YOUR_DATABASE_NAME
+DB_USER=YOUR_DB_USER
+DB_PASSWORD=YOUR_DB_PASSWORD
+DB_SCHEMA=clockyn_dev
+PGSSLMODE=require
+RUN_MIGRATIONS=1
+USER_AUTH=email
+AUTH_TOKEN_SECRET=YOUR_RANDOM_STRING_32_OR_MORE_CHARACTERS
+AUTH_TOKEN_TTL_DAYS=90
+# REQUIRE_AUTH=1
+OPERATOR_API_KEY=YOUR_RANDOM_STRING_24_OR_MORE_CHARACTERS
+# OPERATOR_ENFORCE=1
+# OPERATOR_LEGACY_ADMIN_ID=0
+OPERATOR_TOKEN_TTL_HOURS=12
+AUTH_EPOCH_CACHE_SECONDS=30
+# OTP_BYPASS=  (see the table above)
+OTP_MAX_PER_HOUR=5
+OTP_MIN_GAP_SECONDS=30
+CORS_ALLOWED_ORIGINS=https://YOUR-ADMIN-SITE,https://YOUR-OTHER-SITE
+TRUST_PROXY=1
+TRUSTED_PROXY_HOPS=1
+APP_ENV=production
+ENFORCE_SINGLE_DEVICE=1
+REQUESTS_ENFORCE_ACTOR=1
+ENFORCE_MANAGER_SCOPE=1
+BILLING_ENFORCE_ORG_OWNER=1
+ACCOUNT_DELETE_ANONYMISE=1
+# CRM_CARRY_FORWARD_UNASSIGN=
+RATE_LIMIT_ENABLED=1
+RATE_LIMIT_AUTH_LOGIN=30/60
+UPLOAD_MAX_MB=10
+CHAT_UPLOAD_MAX_MB=25
+SIGNED_URL_TTL_SECONDS=900
+EMAIL_USER=your-verified-sender@YOUR-DOMAIN.com
+AWS_SES_REGION=ap-south-1
+MSG91_AUTH_KEY=YOUR_MSG91_AUTH_KEY
+MSG91_TEMPLATE_ID=YOUR_MSG91_TEMPLATE_ID
+MSG91_WHATSAPP_AUTH_KEY=YOUR_MSG91_WHATSAPP_KEY
+MSG91_WHATSAPP_NUMBER=91XXXXXXXXXX
+MSG91_WHATSAPP_TEMPLATE=YOUR_APPROVED_TEMPLATE_NAME
+AWS_S3_REGION=ap-south-1
+S3_BUCKET_NAME=YOUR_BUCKET_NAME
+AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY=YOUR_SECRET_ACCESS_KEY
+FACE_BACKEND=rekognition
+REKOGNITION_REGION=ap-south-1
+REKOGNITION_COLLECTION_ID=clockyn-faces-dev
+REKOGNITION_THRESHOLD=90
+REKOGNITION_MAX_RETRIES=3
+# REKOGNITION_AUTO_CREATE=
+# FACE_PRECHECK=
+# FACE_ANTISPOOF=
+FACE_DARK_THRESHOLD=45
+FACE_BLUR_THRESHOLD=40
+FACE_MIN_SIDE=200
+FACE_MAX_WIDTH=640
+FACE_MAX_CONCURRENCY=8
+FACE_ATTEMPT_LOG=1
+# FACE_MOCK_ALWAYS_MATCH=  (see the table above)
+# FACE_SIMILARITY_THRESHOLD=  (see the table above)
+RAZORPAY_WEBHOOK_SECRET=YOUR_RANDOM_WEBHOOK_SECRET
+FCM_PROJECT_ID=YOUR_FIREBASE_PROJECT_ID
+FCM_CLIENT_EMAIL=firebase-adminsdk-xxxxx@YOUR_PROJECT.iam.gserviceaccount.com
+FCM_PRIVATE_KEY_ID=YOUR_PRIVATE_KEY_ID
+FCM_CLIENT_ID=YOUR_CLIENT_ID
+FCM_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_KEY\n-----END PRIVATE KEY-----\n
+FCM_ANDROID_CHANNEL_ID=attendance_notifications
+# FCM_SERVICE_ACCOUNT_PATH=  (see the table above)
+APP_NAME=Clockyn
+SUPPORT_EMAIL=support@YOUR-DOMAIN.com
+SUPPORT_URL=https://YOUR-DOMAIN.com/support
+WEBSITE_URL=https://YOUR-DOMAIN.com
+SELLER_NAME=YOUR LEGAL COMPANY NAME
+SELLER_ADDRESS=YOUR REGISTERED ADDRESS
+SELLER_GSTIN=YOUR_GSTIN
+SELLER_CIN=YOUR_CIN
+SELLER_EMAIL=billing@YOUR-DOMAIN.com
+SELLER_PHONE=+91XXXXXXXXXX
+SELLER_SAC=998314
+SELLER_PLACE_OF_SUPPLY=YOUR STATE
+BRAND_LOGO_FILE=brand_logo.png
+BRAND_SIGNATURE_FILE=signature.png
+ANDROID_STORE_URL=https://play.google.com/store/apps/details?id=com.clockyn.app
+IOS_STORE_URL=https://apps.apple.com/app/idYOUR_APP_ID
+DEFAULT_ODOMETER_RATE=3
+META_APP_ID=YOUR_META_APP_ID
+META_CLIENT_TOKEN=YOUR_META_CLIENT_TOKEN
+META_ACCESS_TOKEN=YOUR_SYSTEM_USER_TOKEN
+META_PIXEL_ID=YOUR_PIXEL_ID</pre><button class="copy">Copy</button></div>
+    <div class="box danger"><strong>Keep out of git.</strong> The backend <code>.env</code> and <code>primary.json</code> hold secrets. <code>.env</code> is already ignored; add <code>primary.json</code> to the backend <code>.gitignore</code>. Never set <code>OTP_BYPASS</code> or an AWS access key on the server.</div>
+    <h4>Server secrets in one place</h4>
+    <p>These are the rows to keep in the Secrets Manager secret <code>clockyn/backend</code> and in the <code>"secrets"</code> list of <code>primary.json</code>:</p>
+    <div class="cmd"><pre>DB_PASSWORD
+AUTH_TOKEN_SECRET
+OPERATOR_API_KEY
+MSG91_AUTH_KEY
+MSG91_WHATSAPP_AUTH_KEY
+RAZORPAY_WEBHOOK_SECRET
+FCM_PROJECT_ID
+FCM_CLIENT_EMAIL
+FCM_PRIVATE_KEY_ID
+FCM_CLIENT_ID
+FCM_PRIVATE_KEY
+META_CLIENT_TOKEN
+META_ACCESS_TOKEN</pre><button class="copy">Copy</button></div>
+    <p>The Meta rows are only needed if you use Meta. After you change the secret or <code>primary.json</code>, release again with the complete file (Express tab, Releasing a new version later).</p>
+  </section>
+  </div>
   <div class="panel" role="tabpanel" id="tab-trouble" aria-labelledby="btn-trouble" hidden>
   <section id="trouble">
     <h2>Troubleshooting</h2>
@@ -970,7 +1323,7 @@ eas env:create --name GOOGLE_MAPS_API_KEY --value PASTE_THE_KEY --environment pr
 </main>
 <script>
 (function () {
-  var TABS = ['run', 'rekognition', 'ecs', 'videos', 'eas', 'fcm', 'maps', 'trouble'].map(function (x) { return x; });
+  var TABS = ['run', 'rekognition', 'ecs', 'videos', 'eas', 'fcm', 'maps', 'env', 'trouble'].map(function (x) { return x; });
   var root = document.documentElement;
 
   /* ---------- tabs ---------- */

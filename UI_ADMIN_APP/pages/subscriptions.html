@@ -257,6 +257,7 @@
   </div>
 
   <script src="../js/config.js"></script>
+  <script src="../js/operator-session.js"></script>
   <script src="../js/auth.js"></script>
   <script>
     /* plan accents come from the theme tokens, so they stay readable in light and dark */
@@ -472,13 +473,26 @@
         + (rel ? '<span class="ref-sub" title="' + escHtml(rel) + '">' + escHtml(rel) + '</span>' : '');
     }
 
-    function downloadOrgInvoice(userId, orgId, invoiceNumber) {
+    /* fetch + blob (not an <a href> to the API): a plain link cannot carry the operator session header (js/operator-session.js adds it to fetch). */
+    async function downloadOrgInvoice(userId, orgId, invoiceNumber) {
       var params = new URLSearchParams({ user_id: userId, org_id: orgId, invoice_number: invoiceNumber });
-      var a = document.createElement('a');
-      a.href = API_BASE + '/invoice/download?' + params.toString();
-      a.download = 'Invoice_' + invoiceNumber + '.pdf';
-      a.target = '_blank';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      try {
+        var res = await fetch(API_BASE + '/invoice/download?' + params.toString());
+        if (!res.ok) {
+          var msg = 'Could not download the invoice.';
+          try { var j = await res.json(); if (j && j.detail && typeof j.detail === 'string') msg = j.detail; } catch (e) {}
+          showToast(msg, false);
+          return;
+        }
+        var blob = await res.blob();
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'Invoice_' + invoiceNumber + '.pdf';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 4000);
+      } catch (e) {
+        showToast('Network error. Please try again.', false);
+      }
     }
 
     async function loadPage() {

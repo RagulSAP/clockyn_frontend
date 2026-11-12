@@ -88,7 +88,9 @@
     "e2e:report": "playwright show-report e2e/.artifacts/report",
     "e2e:mock": "node e2e/mock-server/index.js",
     "e2e:mock:check": "node e2e/mock-server/selfcheck.js",
-    "e2e:typecheck": "tsc --noEmit -p e2e/tsconfig.json"
+    "e2e:typecheck": "tsc --noEmit -p e2e/tsconfig.json",
+    "e2e:console": "playwright test -c e2e/console/playwright.config.js",
+    "e2e:console:static": "node e2e/console/static-check.js"
   },
   "private": true,
   "jest": {

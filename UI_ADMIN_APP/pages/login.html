@@ -8,6 +8,7 @@
   <script src="../js/theme.js"></script>
   <link rel="stylesheet" href="../css/login.css" />
   <script src="../js/config.js"></script>
+  <script src="../js/operator-session.js"></script>
 </head>
 <body>
 
@@ -342,6 +343,11 @@
         const data = await res.json();
         if (data.success) {
           const remember = $('rememberMe').checked;
+          /* Operator session token (only when the server issues one; an old backend sends none and the legacy x-admin-id header is used).
+             Stored in sessionStorage, or localStorage with "Remember me". Never printed or put in the page. */
+          if (window.ClockynOperator) {
+            ClockynOperator.set({ token: data.access_token, expiresIn: data.expires_in, email: data.email, role: data.role_id, remember: remember });
+          }
           localStorage.setItem('admin_email', data.email);
           localStorage.setItem('gen_admin_id', data.email);
           localStorage.setItem('gen_admin_role', data.role_id);
@@ -387,6 +393,9 @@
         $('rememberMe').checked = true;
       }
       $('email').focus();
+      /* message left by operator-session.js when a 401 / an expired token sent the person back here */
+      const notice = window.ClockynOperator ? ClockynOperator.takeNotice() : '';
+      if (notice) showError(notice);
     });
   </script>
 

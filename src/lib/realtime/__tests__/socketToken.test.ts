@@ -2,7 +2,7 @@ import { chatSocketUrl } from '@/api/chat';
 import { groupSocketUrl } from '@/api/groupChat';
 import { useAuthStore } from '@/store/auth';
 
-import { buildSocketUrl, chatSocketPath, createSocket } from '../socketCore';
+import { buildSocketUrl, chatSocketPath, createSocket, WS_CLOSE_UNAUTHORIZED } from '../socketCore';
 
 class FakeWebSocket {
   static instances: FakeWebSocket[] = [];
@@ -76,6 +76,61 @@ describe('createSocket', () => {
     jest.advanceTimersByTime(1500);
     expect(FakeWebSocket.instances).toHaveLength(2);
     expect(last().url).toContain('token=two');
+    sock.close();
+  });
+});
+
+describe('close code 4401 (token refused by the server)', () => {
+  const make = (extra: Partial<Parameters<typeof createSocket>[0]> = {}) =>
+    createSocket({ path: chatSocketPath('7'), baseUrl: 'wss://host.test', WebSocketImpl: Impl, onMessage: jest.fn(), backoff: { jitter: 0 }, random: () => 0, ...extra });
+  const refuse = () => {
+    last().readyState = 3;
+    last().onclose?.({ code: WS_CLOSE_UNAUTHORIZED });
+  };
+
+  it('does not reconnect with the same token (no loop) and reports willReconnect=false', () => {
+    const onClose = jest.fn();
+    const sock = make({ getToken: () => 'dead', onClose });
+    refuse();
+    jest.advanceTimersByTime(120_000);
+    expect(FakeWebSocket.instances).toHaveLength(1);
+    expect(onClose).toHaveBeenCalledWith({ willReconnect: false, code: WS_CLOSE_UNAUTHORIZED });
+    sock.reconnectNow(); // the app came to the foreground: still the same token
+    expect(FakeWebSocket.instances).toHaveLength(1);
+    sock.close();
+  });
+
+  it('reconnects on demand once the session holds a different token', () => {
+    let token: string | undefined = 'old';
+    const sock = make({ getToken: () => token });
+    refuse();
+    token = 'new';
+    sock.reconnectNow();
+    expect(FakeWebSocket.instances).toHaveLength(2);
+    expect(last().url).toContain('token=new');
+    sock.close();
+  });
+
+  it('a refusal without any token also stops until a token exists', () => {
+    let token: string | undefined;
+    const sock = make({ getToken: () => token });
+    refuse();
+    jest.advanceTimersByTime(60_000);
+    sock.reconnectNow();
+    expect(FakeWebSocket.instances).toHaveLength(1);
+    token = 'fresh';
+    sock.reconnectNow();
+    expect(FakeWebSocket.instances).toHaveLength(2);
+    sock.close();
+  });
+
+  it('other close codes keep the backoff reconnect', () => {
+    const onClose = jest.fn();
+    const sock = make({ getToken: () => 'tok', onClose });
+    last().drop(); // 1006
+    expect(onClose).toHaveBeenCalledWith({ willReconnect: true, code: 1006 });
+    jest.advanceTimersByTime(1500);
+    expect(FakeWebSocket.instances).toHaveLength(2);
     sock.close();
   });
 });
