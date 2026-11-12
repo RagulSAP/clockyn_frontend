@@ -14,15 +14,18 @@
     .hamburger-btn .i { width: 18px; height: 18px; }
 
     .lc-content { max-width: 1480px; }
-    .page-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
     /* ── Page fits the window: the page itself does not scroll, the chat card takes exactly the room that is left
-          (a very short window scrolls the page instead of crushing the chat). ── */
+          (a very short window scrolls the page instead of crushing the chat). There is no page title block: the top bar
+          carries the title and the live / sound / notification controls, so the chat gets all the height. ── */
     body[data-page="live_chat"] .main { height: 100vh; height: 100dvh; min-height: 0; overflow-y: auto; }
-    body[data-page="live_chat"] .lc-content { display: flex; flex-direction: column; min-height: 0; padding: 20px 28px 24px; }
-    body[data-page="live_chat"] .lc-content .page-header { flex: none; margin-bottom: 16px; align-items: center; }
-    body[data-page="live_chat"] .lc-content .page-header h1 { font-size: 22px; letter-spacing: -0.4px; }
-    body[data-page="live_chat"] .lc-content .page-header p { font-size: 13px; margin-top: 2px; }
+    body[data-page="live_chat"] .lc-content { display: flex; flex-direction: column; min-height: 0; padding: 16px 24px 20px; }
+
+    /* Live status, sound and notification controls, in the top bar */
+    .lc-tools { display: flex; align-items: center; gap: 6px; padding-right: 8px; margin-right: 2px; border-right: 1px solid var(--border); }
+    .lc-tools .btn { height: 34px; padding: 0 12px; font-size: 13px; gap: 6px; white-space: nowrap; }
+    .lc-tools .btn .i { width: 15px; height: 15px; }
+    .lc-tools .badge { white-space: nowrap; }
 
     /* ── Shell: thread list | conversation ── */
     .lc {
@@ -246,18 +249,24 @@
     #lc-notify-btn.granted { cursor: default; }
     #lc-mute-btn[aria-pressed="true"] { color: var(--danger); }
 
-    /* Opening a conversation in the single-column view: the topbar already says "Live Chat", so the page title is hidden and the
-       conversation gets the whole screen. */
+    /* Narrow windows: the controls become icon-only (the tooltip keeps the full text) so the top bar stays on one row. */
+    @media (max-width: 1100px) {
+      .lc-tools .btn > span { display: none; }
+      .lc-tools .btn { width: 34px; padding: 0; justify-content: center; }
+    }
     @media (max-width: 900px) {
-      body[data-page="live_chat"] .lc-content { padding: 12px 12px 14px; }
-      body[data-page="live_chat"] .lc-content .page-header { margin-bottom: 10px; }
-      body[data-page="live_chat"] .lc-content .page-header p { display: none; }
-      body[data-page="live_chat"] .lc-content:has(.lc[data-view="conv"]) .page-header { display: none; }
+      body[data-page="live_chat"] .lc-content { padding: 10px 10px 12px; }
       .lc { min-height: 0; }
     }
+    @media (max-width: 520px) {
+      /* the connection badge shrinks to its coloured dot (the tooltip still says Live / Reconnecting) so the title stays readable */
+      .lc-tools { gap: 4px; padding-right: 0; margin-right: 0; border-right: 0; }
+      .lc-tools .badge { font-size: 0; gap: 0; padding: 7px; min-width: 0; }
+      .topbar-title { flex: none; }
+      #lc-refresh { display: none; }          /* the inbox updates live; keeps the top bar on one row */
+    }
     @media (max-height: 640px) and (min-width: 901px) {
-      body[data-page="live_chat"] .lc-content .page-header p { display: none; }
-      body[data-page="live_chat"] .lc-content { padding-top: 14px; padding-bottom: 16px; }
+      body[data-page="live_chat"] .lc-content { padding-top: 12px; padding-bottom: 14px; }
     }
 
     @media (max-width: 900px) {
@@ -297,6 +306,11 @@
       </button>
       <span class="topbar-title">Live Chat</span>
       <div class="topbar-actions" style="margin-left:auto;">
+        <div class="lc-tools">
+          <span class="badge badge-gray badge-dot" id="lc-live" title="Connection to the live inbox">Connecting...</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="lc-mute-btn" aria-pressed="false" title="Mute the new message chime"></button>
+          <button type="button" class="btn btn-ghost btn-sm" id="lc-notify-btn" hidden></button>
+        </div>
         <button type="button" class="icon-btn" id="lc-refresh" title="Refresh" aria-label="Refresh">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
         </button>
@@ -311,18 +325,6 @@
     </header>
 
     <div class="content lc-content">
-
-      <div class="page-header">
-        <div>
-          <h1>Live Chat</h1>
-          <p>Conversations with the organization admins who write to support from the Clockyn app</p>
-        </div>
-        <div class="page-header-actions">
-          <span class="badge badge-gray badge-dot" id="lc-live" title="Connection to the live inbox">Connecting...</span>
-          <button type="button" class="btn btn-ghost btn-sm" id="lc-mute-btn" aria-pressed="false" title="Mute the new message chime"></button>
-          <button type="button" class="btn btn-ghost btn-sm" id="lc-notify-btn" hidden></button>
-        </div>
-      </div>
 
       <div class="lc" id="lc-root" data-view="list">
 
@@ -1212,6 +1214,7 @@
       if (!lc) { live.className = 'badge badge-gray badge-dot'; live.textContent = 'Connecting...'; }
       else if (lc.isConnected()) { live.className = 'badge badge-green badge-dot'; live.textContent = 'Live'; }
       else { live.className = 'badge badge-orange badge-dot'; live.textContent = 'Reconnecting'; }
+      live.title = 'Live inbox: ' + live.textContent;     // the badge is only a dot on a phone
 
       var mute = $('lc-mute-btn');
       mute.setAttribute('aria-pressed', muted ? 'true' : 'false');
