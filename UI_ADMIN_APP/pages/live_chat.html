@@ -13,14 +13,22 @@
     .i-lg { width: 20px; height: 20px; }
     .hamburger-btn .i { width: 18px; height: 18px; }
 
-    .lc-content { max-width: 1400px; }
+    .lc-content { max-width: 1480px; }
     .page-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Page fits the window: the page itself does not scroll, the chat card takes exactly the room that is left
+          (a very short window scrolls the page instead of crushing the chat). ── */
+    body[data-page="live_chat"] .main { height: 100vh; height: 100dvh; min-height: 0; overflow-y: auto; }
+    body[data-page="live_chat"] .lc-content { display: flex; flex-direction: column; min-height: 0; padding: 20px 28px 24px; }
+    body[data-page="live_chat"] .lc-content .page-header { flex: none; margin-bottom: 16px; align-items: center; }
+    body[data-page="live_chat"] .lc-content .page-header h1 { font-size: 22px; letter-spacing: -0.4px; }
+    body[data-page="live_chat"] .lc-content .page-header p { font-size: 13px; margin-top: 2px; }
 
     /* ── Shell: thread list | conversation ── */
     .lc {
-      display: grid; grid-template-columns: 372px minmax(0, 1fr);
-      height: calc(100vh - var(--topbar-height) - 150px); height: calc(100dvh - var(--topbar-height) - 150px); min-height: 540px;
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+      display: grid; grid-template-columns: 360px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr);
+      flex: 1 1 0; min-height: 420px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
       box-shadow: var(--shadow-sm), inset 0 1px 0 var(--highlight); overflow: hidden;
     }
 
@@ -134,14 +142,14 @@
 
     .lc-closed-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border); font-size: 13.5px; color: var(--text-secondary); }
     .lc-closed-bar .lc-closed-text { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .lc-composer { display: flex; align-items: flex-end; gap: 8px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border); }
+    .lc-composer { flex: none; display: flex; align-items: flex-end; gap: 8px; padding: 14px 20px 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--border); }
     .lc-input {
-      flex: 1; min-width: 0; resize: none; max-height: 140px; min-height: 42px; padding: 10px 16px; border-radius: 21px; line-height: 1.4; font-size: 14px;
-      background: var(--surface-muted); border: 1px solid transparent; color: var(--text); font-family: inherit; outline: none; overflow-y: auto;
+      flex: 1; min-width: 0; resize: none; max-height: 140px; min-height: 44px; padding: 11px 18px; border-radius: 22px; line-height: 1.4; font-size: 14px;
+      background: var(--surface-muted); border: 1px solid var(--border); color: var(--text); font-family: inherit; outline: none; overflow-y: auto;
     }
     .lc-input:focus { border-color: var(--text-muted); box-shadow: 0 0 0 3px var(--ring); background: var(--surface); }
     .lc-iconbtn, .lc-send {
-      width: 42px; height: 42px; border-radius: 50%; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
       transition: background-color var(--motion-fast) var(--ease), opacity var(--motion-fast) var(--ease);
     }
     .lc-iconbtn { background: transparent; color: var(--text-secondary); }
@@ -237,6 +245,20 @@
 
     #lc-notify-btn.granted { cursor: default; }
     #lc-mute-btn[aria-pressed="true"] { color: var(--danger); }
+
+    /* Opening a conversation in the single-column view: the topbar already says "Live Chat", so the page title is hidden and the
+       conversation gets the whole screen. */
+    @media (max-width: 900px) {
+      body[data-page="live_chat"] .lc-content { padding: 12px 12px 14px; }
+      body[data-page="live_chat"] .lc-content .page-header { margin-bottom: 10px; }
+      body[data-page="live_chat"] .lc-content .page-header p { display: none; }
+      body[data-page="live_chat"] .lc-content:has(.lc[data-view="conv"]) .page-header { display: none; }
+      .lc { min-height: 0; }
+    }
+    @media (max-height: 640px) and (min-width: 901px) {
+      body[data-page="live_chat"] .lc-content .page-header p { display: none; }
+      body[data-page="live_chat"] .lc-content { padding-top: 14px; padding-bottom: 16px; }
+    }
 
     @media (max-width: 900px) {
       .lc { grid-template-columns: 1fr; border-radius: var(--radius-md); }
