@@ -34,8 +34,8 @@ async function login(page, { remember = false, email = EMAIL } = {}) {
 
 const session = (page) => page.evaluate((k) => ({
   ses: window.sessionStorage.getItem(k), loc: window.localStorage.getItem(k),
-  id: window.localStorage.getItem('gen_admin_id'), email: window.localStorage.getItem('admin_email'),
-  role: window.localStorage.getItem('gen_admin_role'), remember: window.localStorage.getItem('remember_me'),
+  id: window.localStorage.getItem('clockyn_admin_id'), email: window.localStorage.getItem('admin_email'),
+  role: window.localStorage.getItem('clockyn_admin_role'), remember: window.localStorage.getItem('remember_me'),
 }), KEY);
 
 test('static: operator-session.js once per page, before page scripts, no fetch bypass', () => {
@@ -69,7 +69,7 @@ test('login with Remember me stores the token in localStorage only', async ({ pa
 test('the login calls carry no credential even with a stale session around', async ({ page, request }) => {
   await page.goto('/pages/login.html');
   await page.evaluate((k) => {
-    window.localStorage.setItem('gen_admin_id', 'old@x.test'); window.localStorage.setItem('admin_email', 'old@x.test');
+    window.localStorage.setItem('clockyn_admin_id', 'old@x.test'); window.localStorage.setItem('admin_email', 'old@x.test');
     window.sessionStorage.setItem(k, JSON.stringify({ token: 'stale', email: 'old@x.test', expiresAt: Date.now() + 1e6 }));
   }, KEY);
   await login(page);

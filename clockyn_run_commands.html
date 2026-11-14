@@ -431,7 +431,7 @@ aws ecs run-task --cluster default --launch-type FARGATE --task-definition $cfg.
     <ol>
       <li>Open <code>https://YOUR-SERVICE-ADDRESS/health</code> (should say ok) and <code>/ready</code> (ok means the database is reachable).</li>
       <li>Open <code>/auth/config</code>. It should show <code>"user_auth": "email"</code>.</li>
-      <li>In the app, set <code>EXPO_PUBLIC_API_BASE_URL=https://YOUR-SERVICE-ADDRESS</code> (section 3 for local testing, the Expo build tab for EAS builds). In the admin web app, set <code>API_BASE</code> in <code>UI_ADMIN_APP\js\config.js</code> to the same address (it may still point at the old App Runner address).</li>
+      <li>In the app, set <code>EXPO_PUBLIC_API_BASE_URL=https://YOUR-SERVICE-ADDRESS</code> (section 3 for local testing, the Expo build tab for EAS builds). In the admin web app, set <code>API_BASE</code> in <code>UI_ADMIN_APP\js\config.js</code> to the same address (check that it points at the service you want, not an old one).</li>
       <li>Razorpay webhook: set it up and test it in Step 8 below.</li>
     </ol>
 
@@ -1004,7 +1004,7 @@ EAS_PROJECT_ID=YOUR-EAS-PROJECT-ID
 GOOGLE_MAPS_API_KEY=YOUR_ANDROID_MAPS_KEY
 GOOGLE_SERVICES_JSON=./google-services.json
 GOOGLE_SERVICE_INFO_PLIST=./GoogleService-Info.plist</pre><button class="copy">Copy</button></div>
-    <div class="box ok"><strong>Note.</strong> The current <code>.env.example</code> lists <code>EXPO_PUBLIC_API_BASE_URL</code> twice (an old App Runner address and an empty line). Keep one line with your own HTTPS address.</div>
+    <div class="box ok"><strong>Note.</strong> The <code>.env.example</code> has one empty <code>EXPO_PUBLIC_API_BASE_URL=</code> line and the app has no built-in default. Put your own HTTPS address there, otherwise the app logs an error and an EAS build stops.</div>
     <h4>For an EAS build (one environment at a time)</h4>
     <div class="cmd"><pre>eas env:create --name EXPO_PUBLIC_API_BASE_URL --value https://YOUR-BACKEND-ADDRESS --environment production --visibility plaintext
 eas env:create --name EAS_PROJECT_ID --value YOUR-EAS-PROJECT-ID --environment production --visibility plaintext
@@ -1149,7 +1149,6 @@ eas env:create --name GOOGLE_SERVICES_JSON --type file --value ./google-services
 <tr><td><code>SELLER_SAC</code></td><td><code>998314</code></td><td>Optional</td><td>Setting</td><td>SAC code on invoice items. Default 998314.</td></tr>
 <tr><td><code>SELLER_PLACE_OF_SUPPLY</code></td><td><code>YOUR STATE</code></td><td>Optional</td><td>Setting</td><td>Place of supply text. Default empty (shown as N/A).</td></tr>
 <tr><td><code>BRAND_LOGO_FILE</code></td><td><code>brand_logo.png</code></td><td>Optional</td><td>Setting</td><td>Logo file name inside static/. Default brand_logo.png.</td></tr>
-<tr><td><code>BRAND_SIGNATURE_FILE</code></td><td><code>signature.png</code></td><td>Optional</td><td>Setting</td><td>Signature image inside static/. Default signature.png.</td></tr>
 <tr><td><code>ANDROID_STORE_URL</code></td><td><code>https://play.google.com/store/apps/details?id=com.clockyn.app</code></td><td>Recommended</td><td>Setting</td><td>Returned by the version check and used in the WhatsApp invitation. (APP_PLAY_STORE_LINK is the old name, still accepted.)</td></tr>
 <tr><td><code>IOS_STORE_URL</code></td><td><code>https://apps.apple.com/app/idYOUR_APP_ID</code></td><td>Recommended</td><td>Setting</td><td>Same for iPhone. (APP_APP_STORE_LINK is the old name.)</td></tr>
 <tr><td><code>DEFAULT_ODOMETER_RATE</code></td><td><code>3</code></td><td>Optional</td><td>Setting</td><td>Rupees per km used by payroll when no rate is set. Default 3.</td></tr>
@@ -1248,7 +1247,6 @@ SELLER_PHONE=+91XXXXXXXXXX
 SELLER_SAC=998314
 SELLER_PLACE_OF_SUPPLY=YOUR STATE
 BRAND_LOGO_FILE=brand_logo.png
-BRAND_SIGNATURE_FILE=signature.png
 ANDROID_STORE_URL=https://play.google.com/store/apps/details?id=com.clockyn.app
 IOS_STORE_URL=https://apps.apple.com/app/idYOUR_APP_ID
 DEFAULT_ODOMETER_RATE=3
@@ -1283,7 +1281,7 @@ META_ACCESS_TOKEN</pre><button class="copy">Copy</button></div>
       <tr><td>The preview or production app closes the moment it opens (the development build works)</td><td>Find the cause with <code>adb logcat -b crash -d</code> (phone on USB) or in EAS Observe. Usual causes: <code>google-services.json</code> missing from the build, a variable set in the wrong EAS environment (check with <code>eas env:list --environment preview</code>), or an <code>http://</code> backend address (release builds block it). After fixing, build again with <code>--clear-cache</code>.</td></tr>
       <tr><td>The map (branch picker, staff location) is blank or says "Map unavailable" in a preview or production build, but works in a development build</td><td>Follow the <b>Maps key</b> tab. "Map unavailable" means the key was not in that build's EAS environment (<code>eas env:list --environment preview</code>). A grey or empty map means the key is there but Google rejects it: the package name or SHA-1 on the key does not match the build, or "Maps SDK for Android" is not enabled.</td></tr>
       <tr><td>Push notifications do not arrive</td><td>Follow the <b>Push (FCM)</b> tab, step by step. Most often the <code>FCM_*</code> secrets are missing from <code>primary.json</code> on the server, or the phone never registered a token.</td></tr>
-      <tr><td>The app still talks to the old backend</td><td>No <code>.env</code>, or the bundler was not restarted. Set <code>EXPO_PUBLIC_API_BASE_URL</code> and run <code>npx expo start -c</code>.</td></tr>
+      <tr><td>API calls fail or go to the wrong address</td><td>No <code>.env</code> (there is no default address any more), or the bundler was not restarted. Set <code>EXPO_PUBLIC_API_BASE_URL</code> and run <code>npx expo start -c</code>.</td></tr>
       <tr><td>Phone cannot reach <code>http://192.168.x.x:8080</code></td><td>Start the backend with <code>--host 0.0.0.0</code>, allow port 8080 in the Windows firewall, and keep the phone on the same Wi-Fi.</td></tr>
       <tr><td>Backend: <code>server closed the connection unexpectedly</code></td><td>The database instance is unhealthy or unreachable. Check it in the RDS console (status, security group, logs).</td></tr>
       <tr><td>Backend: <code>DB_SCHEMA environment variable is required</code></td><td>Set <code>DB_SCHEMA=clockyn_dev</code> in the backend <code>.env</code>.</td></tr>

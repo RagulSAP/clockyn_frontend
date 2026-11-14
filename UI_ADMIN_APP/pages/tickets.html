@@ -466,7 +466,7 @@
       var text = (input.value || '').trim();
       if (!text) { showToast('Please type a reply before sending.', 'error'); return; }
       var adminProfile = {};
-      try { adminProfile = JSON.parse(localStorage.getItem('gen_admin_profile') || '{}'); } catch(e) {}
+      try { adminProfile = JSON.parse(localStorage.getItem('clockyn_admin_profile') || '{}'); } catch(e) {}
       var btn = document.getElementById('tk-send-btn');
       if (btn) btn.classList.add('is-loading');
       try {

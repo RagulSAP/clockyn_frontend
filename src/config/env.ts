@@ -4,9 +4,16 @@
  */
 const read = (v: string | undefined, fallback = ''): string => (v && v.trim().length > 0 ? v.trim() : fallback);
 
+/** Backend base URL, no trailing slash. There is deliberately NO default: a build without it must fail loudly, not talk to some old server. */
+const apiBaseUrl = read(process.env.EXPO_PUBLIC_API_BASE_URL).replace(/\/+$/, '');
+if (!apiBaseUrl && process.env.NODE_ENV !== 'test') {
+  console.error(
+    '[config] EXPO_PUBLIC_API_BASE_URL is not set, so the app has no backend address. Set it in .env (local) or as an EAS environment variable (builds).',
+  );
+}
+
 export const env = {
-  /** Backend base URL, no trailing slash. */
-  apiBaseUrl: read(process.env.EXPO_PUBLIC_API_BASE_URL, 'https://pykmtbmmxn.ap-south-1.awsapprunner.com').replace(/\/+$/, ''),
+  apiBaseUrl,
   supportEmail: read(process.env.EXPO_PUBLIC_SUPPORT_EMAIL),
   salesEmail: read(process.env.EXPO_PUBLIC_SALES_EMAIL),
   privacyPolicyUrl: read(process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL),

@@ -1,0 +1,11 @@
+Fonts bundled with the tech-logo-generator skill (used to outline the wordmark and the binary texture; the logos contain
+paths, not the font files).
+
+Poppins (Light, Regular, Bold, ExtraBold)
+  Copyright 2020 The Poppins Project Authors (https://github.com/itfoundry/Poppins)
+JetBrains Mono (Bold)
+  Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)
+
+Both are licensed under the SIL Open Font License, Version 1.1 (https://openfontlicense.org), which allows use,
+embedding, outlining and redistribution, including in logos and commercial products. The fonts may not be sold on their own.
+Obtained from the npm packages @expo-google-fonts/poppins and @expo-google-fonts/jetbrains-mono.

@@ -1,4 +1,4 @@
-/* ── PunchApp Export Utility ── */
+/* ── Clockyn Export Utility ── */
 /* Requires: SheetJS (xlsx) + jsPDF + jsPDF-AutoTable via CDN */
 
 function exportExcel(rows, columns, filename) {

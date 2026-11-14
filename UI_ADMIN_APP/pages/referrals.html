@@ -249,7 +249,7 @@
   <script>
     var adminEmail = localStorage.getItem('admin_email') || '';
     /* same rule as faqs.html: role_id 1 is a super operator. The server still decides (require_operator_super). */
-    var isSuper = localStorage.getItem('gen_admin_role') === '1';
+    var isSuper = localStorage.getItem('clockyn_admin_role') === '1';
     var SUMMARY = null, TOP = [], ROWS = [], loadSeq = 0, searchTimer = null, pendingVoid = null, voidOpener = null;
 
     /* Lucide icon paths for markup built in JS */

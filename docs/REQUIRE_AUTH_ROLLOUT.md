@@ -27,8 +27,8 @@ Backend (`C:\POC\clockyn_backend`)
   PUBLIC answers 401 without a token (no database is touched), operator routes refuse an anonymous call and an app token (403), all
   WebSockets refuse the handshake (4401), and every PUBLIC / OPERATOR / role rule matches a mounted route. This also pins the public
   list to the documented one.
-* `tests/test_frontend_role_access.py` + `tests/data/frontend_*.json`: refreshed from this repo (they were generated from the old
-  `pa_frontend` copy and missed live-chat, referral, analytics, support FAQ / videos); `scripts/*frontend*.py` now default to this repo.
+* `tests/test_frontend_role_access.py` + `tests/data/frontend_*.json`: refreshed from this repo (they were generated from
+  an earlier copy of the app and missed live-chat, referral, analytics, support FAQ / videos); `scripts/*frontend*.py` now default to this repo.
 
 ## What was verified
 

@@ -272,7 +272,7 @@
   <script src="../js/operator-session.js"></script>
   <script src="../js/auth.js"></script>
   <script>
-    const roleId = parseInt(localStorage.getItem('gen_admin_role') || '2', 10);
+    const roleId = parseInt(localStorage.getItem('clockyn_admin_role') || '2', 10);
     const adminId = localStorage.getItem('admin_email');
     const isAdmin = roleId === 1;
 
@@ -565,11 +565,11 @@
           msg.textContent = '✓ Name updated successfully.';
           msg.style.color = 'var(--success)';
           // Update cache and UI
-          var cached = localStorage.getItem('gen_admin_profile');
+          var cached = localStorage.getItem('clockyn_admin_profile');
           if (cached) {
             var p = JSON.parse(cached);
             p.name = name;
-            localStorage.setItem('gen_admin_profile', JSON.stringify(p));
+            localStorage.setItem('clockyn_admin_profile', JSON.stringify(p));
             populateUserProfile(p);
           }
           document.getElementById('profile-name-display').textContent = name;

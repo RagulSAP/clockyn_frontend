@@ -16,7 +16,7 @@
  * WHAT THIS FILE DOES
  *  - Session record {token, expiresAt (ms), email, role}, key "clockyn_operator_session". Stored in sessionStorage
  *    (this tab only), or in localStorage when "Remember me" was ticked. Both are read (sessionStorage first), one is written.
- *    admin_email / gen_admin_id / gen_admin_role / session_last_activity / remember_me stay where login.html/auth.js put them.
+ *    admin_email / clockyn_admin_id / clockyn_admin_role / session_last_activity / remember_me stay where login.html/auth.js put them.
  *  - Wraps window.fetch for URLs that start with API_BASE (nothing else is touched: S3 links, CDNs, relative URLs):
  *      * adds `Authorization: Bearer <token>` when there is a live token and the caller set no Authorization header;
  *      * when there is no token, adds `x-admin-id: <email>` if the caller sent none (old backend / legacy mode);
@@ -108,7 +108,7 @@
   function email() {
     var s = get();
     if (s && s.email) return s.email;
-    return lsGet('gen_admin_id') ? lsGet('admin_email') : '';
+    return lsGet('clockyn_admin_id') ? lsGet('admin_email') : '';
   }
 
   /* ── notice shown by login.html after a forced sign-out ── */
@@ -132,7 +132,7 @@
   /* End the session because the server (or the clock) says it is over. Safe to call many times. */
   function expire(msg) {
     clear();
-    ['gen_admin_id', 'gen_admin_role', 'session_last_activity', 'gen_admin_profile'].forEach(function (k) {
+    ['clockyn_admin_id', 'clockyn_admin_role', 'session_last_activity', 'clockyn_admin_profile'].forEach(function (k) {
       try { window.localStorage.removeItem(k); } catch (e) { /* ignore */ }
     });
     if (redirecting || onLoginPage()) return;

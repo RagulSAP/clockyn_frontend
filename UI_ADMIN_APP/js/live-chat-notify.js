@@ -57,7 +57,7 @@
   }
 
   function loggedIn() {
-    try { return !!localStorage.getItem('gen_admin_id'); } catch (e) { return false; }
+    try { return !!localStorage.getItem('clockyn_admin_id'); } catch (e) { return false; }
   }
 
   function activeOrg() { return window.__clockynLiveChatActiveOrg || ''; }

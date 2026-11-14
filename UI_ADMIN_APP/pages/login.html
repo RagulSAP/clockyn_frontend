@@ -349,8 +349,8 @@
             ClockynOperator.set({ token: data.access_token, expiresIn: data.expires_in, email: data.email, role: data.role_id, remember: remember });
           }
           localStorage.setItem('admin_email', data.email);
-          localStorage.setItem('gen_admin_id', data.email);
-          localStorage.setItem('gen_admin_role', data.role_id);
+          localStorage.setItem('clockyn_admin_id', data.email);
+          localStorage.setItem('clockyn_admin_role', data.role_id);
           localStorage.setItem('session_last_activity', Date.now().toString());
           localStorage.setItem('remember_me', remember ? '1' : '0');
           window.location.href = 'dashboard.html';

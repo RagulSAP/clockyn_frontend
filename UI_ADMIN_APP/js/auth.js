@@ -1,7 +1,7 @@
 // Session duration: 30 minutes
 const SESSION_DURATION = 30 * 60 * 1000;
 const LAST_ACTIVITY_KEY = 'session_last_activity';
-const PROFILE_CACHE_KEY = 'gen_admin_profile';
+const PROFILE_CACHE_KEY = 'clockyn_admin_profile';
 
 // Apply logo URL from config to all sidebar logo images
 document.addEventListener('DOMContentLoaded', function() {
@@ -91,8 +91,8 @@ async function loadAndPopulateProfile() {
 function logout() {
   // Operator token (js/operator-session.js): drop it with everything else, from sessionStorage and localStorage
   if (window.ClockynOperator) window.ClockynOperator.clear();
-  localStorage.removeItem('gen_admin_id');
-  localStorage.removeItem('gen_admin_role');
+  localStorage.removeItem('clockyn_admin_id');
+  localStorage.removeItem('clockyn_admin_role');
   localStorage.removeItem('admin_email');
   localStorage.removeItem(LAST_ACTIVITY_KEY);
   localStorage.removeItem('remember_me');
@@ -158,7 +158,7 @@ function showLogoutModal() {
 }
 
 function checkSession() {
-  const adminId = localStorage.getItem('gen_admin_id');
+  const adminId = localStorage.getItem('clockyn_admin_id');
   if (!adminId) return logout();
 
   // The operator token has a server-side lifetime: once it has passed, the session is over (sends the person to login with a message)

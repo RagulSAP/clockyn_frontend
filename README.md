@@ -20,7 +20,7 @@ All `EXPO_PUBLIC_*` values are bundled into the client — never put secrets in 
 
 | Variable | Used for |
 |---|---|
-| `EXPO_PUBLIC_API_BASE_URL` | Backend base URL (a default is built in). WebSocket URLs are derived from it. |
+| `EXPO_PUBLIC_API_BASE_URL` | Backend base URL. Required, there is no built-in default: the app logs an error when it is missing and an EAS build stops. WebSocket URLs are derived from it. |
 | `EXPO_PUBLIC_SUPPORT_EMAIL`, `EXPO_PUBLIC_SALES_EMAIL` | Contact links in Settings / Help. |
 | `EXPO_PUBLIC_PRIVACY_POLICY_URL` | Privacy-policy link. |
 | `EXPO_PUBLIC_WEB_PORTAL_URL` | Web-portal link shown on mobile. |

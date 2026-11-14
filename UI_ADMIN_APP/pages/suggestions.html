@@ -470,7 +470,7 @@
       btn.disabled = true; btn.textContent = 'Sending...';
       try {
         var adminProfile = {};
-        try { adminProfile = JSON.parse(localStorage.getItem('gen_admin_profile') || '{}'); } catch(e) {}
+        try { adminProfile = JSON.parse(localStorage.getItem('clockyn_admin_profile') || '{}'); } catch(e) {}
         var adminName = adminProfile.name || 'Admin';
         var res = await fetch(API_BASE + '/company/suggest-feature/' + replyTargetLogId + '/reply', {
           method: 'POST',

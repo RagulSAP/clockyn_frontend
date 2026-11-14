@@ -13,6 +13,13 @@ const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY ?? '';
 const GOOGLE_SERVICES_JSON = process.env.GOOGLE_SERVICES_JSON ?? './google-services.json';
 const GOOGLE_SERVICE_INFO_PLIST = process.env.GOOGLE_SERVICE_INFO_PLIST ?? './GoogleService-Info.plist';
 
+// The app has no default backend address (src/config/env.ts). On EAS build servers (EAS_BUILD=true) a build without one would ship an app that
+// cannot reach any backend, so stop it here with a clear message. Create the variable for the profile's environment:
+//   eas env:create --name EXPO_PUBLIC_API_BASE_URL --value https://your-backend-address --environment preview --visibility plaintext
+if (process.env.EAS_BUILD === 'true' && !(process.env.EXPO_PUBLIC_API_BASE_URL ?? '').trim()) {
+  throw new Error('EXPO_PUBLIC_API_BASE_URL is not set for this EAS environment. Add it with `eas env:create` (see the Expo build tab of clockyn_run_commands.html), then build again.');
+}
+
 // Native push (FCM) needs per-environment Firebase files. Only wire the Firebase config plugin when
 // they exist so the app still prebuilds/runs (without push) in environments that don't have them.
 const hasAndroidFirebase = fs.existsSync(GOOGLE_SERVICES_JSON);
