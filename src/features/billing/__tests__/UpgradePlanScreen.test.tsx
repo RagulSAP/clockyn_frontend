@@ -135,6 +135,65 @@ describe('UpgradePlanScreen', () => {
     expect(screen.getByTestId('cost-box')).toHaveTextContent(/10 × ₹25 × 12m = ₹3,000/);
   });
 
+  describe('plans with free months', () => {
+    const offerSub: Subscription = { ...coreSub, planId: 5, planName: 'Core', planAmount: 49, planMonths: 12, planFreeMonths: 2 };
+    const offerCatalogue: Plan[] = [
+      { id: 5, name: 'Core', amount: 49, months: 12, freeMonths: 2, offerText: null },
+      { id: 6, name: 'Prime', amount: 99, months: 6, freeMonths: 1, offerText: null },
+      { id: 7, name: 'Prime', amount: 99, months: 12, freeMonths: 2, offerText: null },
+    ];
+    beforeEach(() => {
+      mockApi.getSubscription.mockResolvedValue(offerSub);
+      mockApi.listPlans.mockResolvedValue(offerCatalogue);
+    });
+
+    it('buy a 6 month tier with 1 free month: 5 paid months in the cost, the free month shown, credit for the PAID months of the current plan', async () => {
+      mockParams = { mode: 'new', planId: '6' };
+      await renderScreen(<UpgradePlanScreen />);
+      expect(await screen.findByText('Upgrading to: Prime')).toBeTruthy();
+      expect(screen.getByText('6 Months')).toBeTruthy();
+      expect(screen.getByTestId('duration-offer')).toHaveTextContent('1 month free · Save ₹99/staff');
+      // 12 staff × ₹99 × 5 paid months = 5,940; credit 10 × ₹49 × 10 paid months (of 12) = 4,900
+      expect(screen.getByTestId('cost-box')).toHaveTextContent(/12 × ₹99 × 5m = ₹5,940/);
+      expect(screen.getByTestId('cost-free-months')).toHaveTextContent('+1 month free (you pay for 5 of 6 months)');
+      expect(screen.getByTestId('cost-box')).toHaveTextContent(/10 × ₹49 × 10m = ₹4,900/);
+      expect(screen.getByTestId('cost-box')).toHaveTextContent(/You pay₹1,040/);
+    });
+
+    it('renew a 12 month plan with 2 free months: 10 paid months', async () => {
+      mockParams = { mode: 'renew' };
+      await renderScreen(<UpgradePlanScreen />);
+      expect(await screen.findByText('Renewing: Core')).toBeTruthy();
+      expect(screen.getByTestId('cost-box')).toHaveTextContent(/10 × ₹49 × 10m = ₹4,900/);
+      expect(screen.getByTestId('cost-free-months')).toHaveTextContent('+2 months free (you pay for 10 of 12 months)');
+    });
+
+    it('capacity upgrade is priced as before: extra staff × list price × whole months left, no free-month line', async () => {
+      mockParams = { mode: 'upgrade' };
+      await renderScreen(<UpgradePlanScreen />);
+      expect(await screen.findByText('Current Plan: Core')).toBeTruthy();
+      await fireEvent.press(screen.getByTestId('staff-plus'));
+      expect(screen.getByTestId('cost-box')).toHaveTextContent(/\+1 new staff × ₹49\/staff × \d+ months = ₹/);
+      expect(screen.queryByTestId('cost-free-months')).toBeNull();
+      expect(screen.queryByTestId('duration-offer')).toBeNull();
+    });
+
+    it('the server quote (paid months, free months) wins over the local estimate', async () => {
+      mockParams = { mode: 'new', planId: '6' };
+      mockApi.quote.mockResolvedValue({
+        mode: 'new', planId: 6, planName: 'Prime', pricePerStaffMonth: 99, chargedStaff: 12, chargedMonths: 5, termMonths: 6, freeMonths: 1,
+        staffCharge: 5940, credit: 4900, afterCredit: 1040, couponCode: null, couponApplied: false, couponMessage: null, discountPercent: null,
+        discountAmount: 0, subtotal: 1040, gstPercent: 18, gst: 187, grandTotal: 1227, amountPaise: 122700, currency: 'INR',
+        validFrom: '2026-11-14', validTill: '2027-05-14', resultingStaffLimit: 12, payable: true, referralApplied: false, referralPercent: null,
+        referralMessage: null, referral: null,
+      });
+      await renderScreen(<UpgradePlanScreen />);
+      await screen.findByText('Upgrading to: Prime');
+      await waitFor(() => expect(screen.getByTestId('cost-box')).toHaveTextContent(/You pay₹1,040/));
+      expect(screen.getByTestId('cost-free-months')).toHaveTextContent('+1 month free (you pay for 5 of 6 months)');
+    });
+  });
+
   it('upgrade / renew are locked during a free trial: "Buy a Plan" goes to the subscription, "Close" goes back', async () => {
     mockParams = { mode: 'renew' };
     mockApi.getSubscription.mockResolvedValue({ ...coreSub, planId: null, planName: 'Free Trial', planAmount: null, planMonths: null, startDate: null, endDate: '2099-01-01', isFreeTrial: true, freeTrialEnd: '2099-01-01', staffLimit: 10 });

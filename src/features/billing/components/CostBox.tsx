@@ -5,7 +5,7 @@ import { Card, Divider, Text } from '@/components/ui';
 import { formatINR } from '@/lib/format';
 import { spacing } from '@/theme';
 
-import { CREDIT_BASELINE_STAFF } from '../utils/pricing';
+import { CREDIT_BASELINE_STAFF, paidMonths } from '../utils/pricing';
 import type { OrderQuote } from '@/types/api/billing';
 
 import type { CurrentPlanInfo, Quote } from '../utils/quote';
@@ -55,20 +55,31 @@ export function CostBox({ quote, current, serverQuote }: { quote: Quote; current
   const cost = serverQuote ? serverQuote.staffCharge : quote.staffLimit * P * quote.chargedMonths;
   const youPay = serverQuote ? serverQuote.afterCredit : Math.max(0, cost - quote.credit);
   const formula = `${quote.staffLimit} × ${formatINR(P)} × ${quote.chargedMonths}m = ${formatINR(cost)}`;
+  // Free months are part of the term but not of the charge: "+1 month free (you pay for 5 of 6 months)".
+  const freeNote =
+    quote.freeMonths > 0 ? (
+      <Text variant="caption" color="success" testID="cost-free-months">
+        {`+${quote.freeMonths} ${quote.freeMonths === 1 ? 'month' : 'months'} free (you pay for ${quote.chargedMonths} of ${quote.chargedMonths + quote.freeMonths} months)`}
+      </Text>
+    ) : null;
 
   if (quote.mode === 'renew' || !quote.hasCurrentPlan) {
     return (
-      <Card variant="muted" testID="cost-box">
+      <Card variant="muted" testID="cost-box" style={{ gap: spacing.xs }}>
         <Line label={quote.mode === 'renew' ? 'Renewal cost' : 'New plan cost'} formula={formula} value={formatINR(cost)} />
+        {freeNote}
       </Card>
     );
   }
 
+  // the current plan is credited for the months it was PAID for (its free months carry no credit)
+  const creditMonths = paidMonths(current?.months ?? 1, current?.freeMonths ?? 0);
   const creditFormula =
-    quote.credit > 0 ? `− ${CREDIT_BASELINE_STAFF} × ${formatINR(current?.amount ?? 0)} × ${current?.months ?? 1}m = ${formatINR(quote.credit)}` : undefined;
+    quote.credit > 0 ? `− ${CREDIT_BASELINE_STAFF} × ${formatINR(current?.amount ?? 0)} × ${creditMonths}m = ${formatINR(quote.credit)}` : undefined;
   return (
     <Card variant="muted" testID="cost-box" style={{ gap: spacing.md }}>
       <Line label="New plan cost" formula={formula} value={formatINR(cost)} />
+      {freeNote}
       <Line label="Credit (current plan)" formula={creditFormula} value={quote.credit > 0 ? `− ${formatINR(quote.credit)}` : formatINR(0)} tone="success" />
       <Divider />
       <Line label="You pay" value={formatINR(youPay)} strong />

@@ -33,6 +33,7 @@ export function mapSubscription(input: unknown): Subscription {
     planName: optStr(pick('plan_name')) ?? null,
     planAmount: optNum(pick('plan_amount')) ?? null,
     planMonths: optNum(pick('plan_month')) ?? null,
+    planFreeMonths: optNum(pick('plan_free_months')) ?? null,
     startDate: dateOnly(pick('start_date')) ?? null,
     endDate: dateOnly(pick('end_date')) ?? null,
     staffLimit: num(pick('staff_limit'), 10) || 10,
@@ -48,7 +49,14 @@ export function mapSubscription(input: unknown): Subscription {
 /** Maps one plan of the catalogue. */
 export function mapPlan(input: unknown): Plan {
   const r = rec(input);
-  return { id: num(r.plan_id), name: str(r.plan_name), amount: num(r.plan_amount), months: num(r.plan_month) };
+  return {
+    id: num(r.plan_id),
+    name: str(r.plan_name),
+    amount: num(r.plan_amount),
+    months: num(r.plan_month),
+    freeMonths: Math.max(0, Math.trunc(optNum(r.plan_free_months) ?? 0)),
+    offerText: optStr(r.plan_offer_text)?.trim() || null,
+  };
 }
 
 /**

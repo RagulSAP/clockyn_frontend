@@ -60,8 +60,11 @@ export interface OrderQuote {
   planName: string;
   pricePerStaffMonth: number;
   chargedStaff: number;
+  /** Months PAID for (plan months minus free months; the whole calendar months left for an upgrade). */
   chargedMonths: number;
   termMonths: number;
+  /** Months of the term that are free in this purchase (0 for an upgrade or a plan without an offer). */
+  freeMonths?: number;
   staffCharge: number;
   credit: number;
   afterCredit: number;

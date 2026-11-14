@@ -68,9 +68,10 @@ export type PriceBreakdownProps = {
 /** Staff charge → credit → coupon / referral reward → subtotal → GST → grand total, exactly as the pricing rules compute them. */
 export function PriceBreakdown({ quote, totals, coupon, couponSlot, footer, discountLabel, totalLoading, referralDiscount }: PriceBreakdownProps) {
   const { plan } = quote;
+  const freeSuffix = quote.freeMonths > 0 ? ` + ${quote.freeMonths} ${quote.freeMonths === 1 ? 'month' : 'months'} free` : '';
   const staffSub = quote.isStaffUpgrade
     ? `${quote.chargedStaff} extra staff × ${formatINR(plan.amount)}/staff × ${quote.chargedMonths} months`
-    : `${quote.chargedStaff} staff × ${formatINR(plan.amount)}/staff × ${quote.chargedMonths} months`;
+    : `${quote.chargedStaff} staff × ${formatINR(plan.amount)}/staff × ${quote.chargedMonths} months${freeSuffix}`;
 
   return (
     <Card style={{ gap: spacing.lg }} testID="price-breakdown">

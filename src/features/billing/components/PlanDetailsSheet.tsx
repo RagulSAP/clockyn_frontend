@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 
 import { Badge, BottomSheet, Button, Card, ErrorState, Icon, Skeleton, Text, toneColors } from '@/components/ui';
 import { formatDate } from '@/lib/datetime';
@@ -7,7 +7,7 @@ import { formatINR } from '@/lib/format';
 import { radii, spacing, useTheme } from '@/theme';
 import type { Plan, Subscription } from '@/types/api/plans';
 
-import { monthLabel } from '../utils/pricing';
+import { monthLabel, tierSavings } from '../utils/pricing';
 import {
   BILLING_PILL,
   BILLING_TONE,
@@ -36,6 +36,9 @@ export type PlanDetailsSheetProps = {
   onContinue: (tier: Plan) => void;
 };
 
+/** Width of one duration card in the horizontally scrolling row. */
+const TIER_WIDTH = 140;
+
 function TierBox({
   tier,
   tone,
@@ -55,6 +58,9 @@ function TierBox({
   const t = toneColors(tone, colors);
   const bg = active ? colors.surfaceMuted : selected ? t.fg : colors.surface;
   const fg = selected ? colors.onPrimary : colors.text;
+  const savings = tierSavings(tier);
+  const hasOffer = savings.freeMonths > 0;
+  const offerFg = selected ? colors.onPrimary : toneColors('success', colors).fg;
   return (
     <Pressable
       onPress={onPress}
@@ -62,12 +68,13 @@ function TierBox({
       accessibilityState={{ selected, disabled }}
       // react-native-web ignores `accessibilityState`: expose the selection through the aria prop as well
       aria-selected={selected}
-      accessibilityLabel={`${monthLabel(tier.months)} ${formatINR(tier.amount)} per staff per month${active ? ', current plan' : ''}`}
+      accessibilityLabel={`${monthLabel(tier.months)} ${formatINR(tier.amount)} per staff per month${
+        hasOffer ? `, ${savings.label}, save ${formatINR(savings.savePerStaff)} per staff` : ''
+      }${active ? ', current plan' : ''}`}
       testID={`tier-${tier.id}`}
       style={{
-        flexGrow: 1,
-        flexBasis: 96,
-        minWidth: 96,
+        // fixed width: the row scrolls sideways, so every duration keeps the same size however many there are
+        width: TIER_WIDTH,
         padding: spacing.md,
         borderRadius: radii.md,
         borderWidth: 1.5,
@@ -89,6 +96,16 @@ function TierBox({
       <Text variant="caption" style={{ color: selected ? colors.onPrimary : colors.textMuted }}>
         {active ? 'Active' : '/staff/mo'}
       </Text>
+      {hasOffer ? (
+        <View style={{ marginTop: spacing.xs, gap: 2 }} testID={`tier-offer-${tier.id}`}>
+          <Text variant="caption" weight="semibold" style={{ color: offerFg }}>
+            {savings.label}
+          </Text>
+          <Text variant="caption" style={{ color: offerFg }}>
+            {`Save ${formatINR(savings.savePerStaff)}/staff`}
+          </Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -185,7 +202,13 @@ export function PlanDetailsSheet({
                   <Text variant="caption" color="textMuted">
                     Select Duration
                   </Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    testID={`tier-scroll-${group.key}`}
+                    // the cards bleed to the card's edge while scrolling; the padding keeps the first and last one un-clipped
+                    contentContainerStyle={{ gap: spacing.sm, paddingVertical: 2, paddingHorizontal: 2 }}
+                  >
                     {group.tiers.map((tier) => {
                       const active = isActiveTier(subscription, state, tier);
                       const disabled = active || isTierDisabled(activeRef, { name: tier.name, months: tier.months });
@@ -205,7 +228,7 @@ export function PlanDetailsSheet({
                         />
                       );
                     })}
-                  </View>
+                  </ScrollView>
                   {selectedHere ? (
                     <Button title="Continue to Pay" icon="lock" onPress={() => onContinue(selectedHere)} fullWidth testID="continue-to-pay" />
                   ) : null}

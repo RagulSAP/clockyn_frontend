@@ -30,6 +30,8 @@ export function withServerQuote(local: Quote, q: OrderQuote): Quote {
     plan: { ...local.plan, amount: q.pricePerStaffMonth > 0 ? q.pricePerStaffMonth : local.plan.amount },
     chargedStaff: q.chargedStaff > 0 ? q.chargedStaff : local.chargedStaff,
     chargedMonths: q.chargedMonths > 0 ? q.chargedMonths : local.chargedMonths,
+    // the months-free figure belongs to the same server answer as the paid months (an older server reports none)
+    freeMonths: q.chargedMonths > 0 ? (q.freeMonths ?? 0) : local.freeMonths,
     credit: q.credit,
     validTill: q.validTill ?? local.validTill,
   };

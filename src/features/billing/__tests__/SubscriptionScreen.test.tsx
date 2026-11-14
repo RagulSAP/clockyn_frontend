@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform } from 'react-native';
-import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 
 import { routes } from '@/config/routes';
 import type { Plan, Subscription } from '@/types/api/plans';
@@ -105,6 +105,45 @@ describe('SubscriptionScreen', () => {
     await fireEvent.press(screen.getByTestId('tier-4')); // Prime 12 months → allowed
     await fireEvent.press(await screen.findByTestId('continue-to-pay'));
     expect(mockPush).toHaveBeenLastCalledWith({ pathname: routes.admin.billing.upgrade, params: { mode: 'new', planId: '4' } });
+  });
+
+  it('Plan Details shows every duration of a plan in a horizontal row with the free months and the saving', async () => {
+    mockApi.getSubscription.mockResolvedValue({ ...paidSub, planId: null, planName: null, planAmount: null, planMonths: null, endDate: null, startDate: null });
+    mockApi.listPlans.mockResolvedValue([
+      { id: 1, name: 'Core', amount: 49, months: 1, freeMonths: 0, offerText: null },
+      { id: 11, name: 'Core', amount: 49, months: 6, freeMonths: 1, offerText: null },
+      { id: 12, name: 'Core', amount: 49, months: 12, freeMonths: 2, offerText: 'Pay 10, get 2 free' },
+      { id: 2, name: 'Prime', amount: 99, months: 1, freeMonths: 0, offerText: null },
+    ]);
+    await renderScreen(<SubscriptionScreen />);
+    await screen.findByText('NO PLAN');
+    await fireEvent.press(screen.getByTestId('action-plan-details'));
+    expect(await screen.findByText('Available Plans')).toBeTruthy();
+
+    // one sideways-scrolling row per plan, every duration of that plan in it, ascending
+    const row = screen.getByTestId('tier-scroll-core');
+    expect(row.props.horizontal).toBe(true);
+    expect(row.props.showsHorizontalScrollIndicator).toBe(false);
+    expect(within(row).getAllByTestId(/^tier-\d+$/).map((n) => n.props.testID)).toEqual(['tier-1', 'tier-11', 'tier-12']);
+    expect(within(screen.getByTestId('tier-scroll-prime')).getAllByTestId(/^tier-\d+$/)).toHaveLength(1);
+
+    // 6 and 12 months show what they save; the 1 month tier shows nothing
+    const six = within(screen.getByTestId('tier-11'));
+    expect(six.getByText('6 Months')).toBeTruthy();
+    expect(six.getByText('₹49')).toBeTruthy();
+    expect(six.getByText('1 month free')).toBeTruthy();
+    expect(six.getByText('Save ₹49/staff')).toBeTruthy();
+    const year = within(screen.getByTestId('tier-12'));
+    expect(year.getByText('1 Year')).toBeTruthy();
+    expect(year.getByText('Pay 10, get 2 free')).toBeTruthy();
+    expect(year.getByText('Save ₹98/staff')).toBeTruthy();
+    expect(screen.queryByTestId('tier-offer-1')).toBeNull();
+    expect(screen.getByTestId('tier-12').props.accessibilityLabel).toBe('1 Year ₹49 per staff per month, Pay 10, get 2 free, save ₹98 per staff');
+
+    // choosing a longer tier still offers Continue to Pay for that exact tier
+    await fireEvent.press(screen.getByTestId('tier-12'));
+    await fireEvent.press(await screen.findByTestId('continue-to-pay'));
+    expect(mockPush).toHaveBeenLastCalledWith({ pathname: routes.admin.billing.upgrade, params: { mode: 'new', planId: '12' } });
   });
 
   it('a no-plan organisation is asked to select a plan first', async () => {

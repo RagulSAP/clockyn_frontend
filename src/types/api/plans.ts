@@ -14,6 +14,8 @@ export interface Subscription {
   planAmount: number | null;
   /** Plan duration in months. */
   planMonths: number | null;
+  /** Months of `planMonths` that were given free (`null` for placeholders / older servers). */
+  planFreeMonths?: number | null;
   startDate: DateString | null;
   endDate: DateString | null;
   /** Maximum staff; defaults to 10 when the server has none. */
@@ -30,7 +32,12 @@ export interface Subscription {
 export interface Plan {
   id: number;
   name: string;
-  /** Price per period in INR (before GST). */
+  /** List price in INR per staff per MONTH (before GST); the same on every duration of a plan. */
   amount: number;
+  /** Validity of this tier in months. */
   months: number;
+  /** Months of `months` given free (pay for `months - freeMonths`). 0 when there is no offer. */
+  freeMonths?: number;
+  /** Optional marketing wording for the offer (replaces "n months free"). */
+  offerText?: string | null;
 }

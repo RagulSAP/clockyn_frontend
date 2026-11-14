@@ -148,6 +148,7 @@ export function mapOrderQuote(input: unknown): OrderQuote | null {
     chargedStaff: num(r.charged_staff),
     chargedMonths: num(r.charged_months),
     termMonths: num(r.term_months),
+    freeMonths: Math.max(0, Math.trunc(optNum(r.free_months) ?? 0)),
     staffCharge: num(r.staff_charge),
     credit: num(r.credit),
     afterCredit: num(r.after_credit),

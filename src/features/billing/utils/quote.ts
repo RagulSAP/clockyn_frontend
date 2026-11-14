@@ -12,7 +12,9 @@ import {
   calcPlanCredit,
   calcRemainingMonths,
   calcValidTill,
+  freeMonthsForTerm,
   liveStaffLimit,
+  paidMonths,
   type PurchaseMode,
 } from './pricing';
 import { deriveBillingState, type BillingState } from './planState';
@@ -23,7 +25,10 @@ export interface TargetPlan {
   name: string;
   /** INR per staff per month. */
   amount: number;
+  /** Validity of the purchase in months (renewals: 12). */
   months: number;
+  /** Months of the plan's own duration that are free (0 / absent = no offer). */
+  freeMonths?: number;
 }
 
 export interface CurrentPlanInfo {
@@ -31,6 +36,8 @@ export interface CurrentPlanInfo {
   planName: string | null;
   amount: number;
   months: number;
+  /** Free months inside `months` (0 / absent = none). */
+  freeMonths?: number;
   validTill: string | null;
   endDate: string | null;
 }
@@ -60,8 +67,10 @@ export interface Quote {
   extraStaff: number;
   /** Staff charged (extra staff for a capacity upgrade). */
   chargedStaff: number;
-  /** Months charged. */
+  /** Months PAID for (the term minus the free months; whole calendar months left for a capacity upgrade). */
   chargedMonths: number;
+  /** Months of the term that are free in this purchase (always 0 for a capacity upgrade). */
+  freeMonths: number;
   credit: number;
   validTill: string;
   isStaffUpgrade: boolean;
@@ -77,8 +86,17 @@ export function buildQuote(input: QuoteInput): Quote {
   const isPlanExpired = !!current?.validTill && current.validTill < today;
   const existingEndDate = mode === 'renew' ? (input.renewStart ?? today) : mode === 'upgrade' ? (current?.endDate ?? null) : null;
 
+  // `months` is the validity of the purchase; the free months are part of it but not charged (capacity upgrades never have any).
   const months = mode === 'renew' ? RENEW_MONTHS : target.months;
-  const chargedMonths = calcRemainingMonths({ mode, planMonths: months, existingEndDate, today });
+  const freeMonths =
+    mode === 'upgrade'
+      ? 0
+      : mode === 'renew'
+        ? current
+          ? freeMonthsForTerm(current.months, current.freeMonths ?? 0, RENEW_MONTHS)
+          : 0
+        : months - paidMonths(months, target.freeMonths ?? 0);
+  const chargedMonths = calcRemainingMonths({ mode, planMonths: months - freeMonths, existingEndDate, today });
   const extraStaff = calcExtraStaff({ mode, staffLimit, currentStaff });
   const credit = calcPlanCredit({
     hasCurrentPlan,
@@ -86,6 +104,7 @@ export function buildQuote(input: QuoteInput): Quote {
     isPlanExpired,
     currentPlanAmount: current?.amount ?? 0,
     currentPlanMonths: current?.months ?? 1,
+    currentPlanFreeMonths: current?.freeMonths ?? 0,
   });
 
   return {
@@ -100,6 +119,7 @@ export function buildQuote(input: QuoteInput): Quote {
     extraStaff,
     chargedStaff: mode === 'upgrade' ? extraStaff : staffLimit,
     chargedMonths,
+    freeMonths,
     credit,
     validTill: calcValidTill({ mode, months, existingEndDate, today }),
     isStaffUpgrade: mode === 'upgrade',
@@ -119,6 +139,7 @@ export function currentPlanFrom(sub: Subscription | null | undefined): CurrentPl
     planName: sub.planName,
     amount: sub.planAmount ?? 0,
     months: sub.planMonths ?? 1,
+    freeMonths: sub.planFreeMonths ?? 0,
     validTill: sub.endDate,
     endDate: sub.endDate,
   };
@@ -147,7 +168,7 @@ export function resolveQuoteSource(args: {
     return {
       ok: true,
       mode,
-      target: { id: tier.id, name: tier.name, amount: tier.amount, months: tier.months },
+      target: { id: tier.id, name: tier.name, amount: tier.amount, months: tier.months, freeMonths: tier.freeMonths },
       current,
       currentStaff,
       renewStart: null,
@@ -161,6 +182,7 @@ export function resolveQuoteSource(args: {
     name: subscription.planName ?? 'Selected Plan',
     amount: subscription.planAmount ?? 0,
     months: mode === 'renew' ? RENEW_MONTHS : (subscription.planMonths ?? 1),
+    freeMonths: subscription.planFreeMonths ?? 0,
   };
   const renewStart = state === 'paid-active' && subscription.endDate ? subscription.endDate : today;
   return { ok: true, mode, target, current, currentStaff, renewStart, state };

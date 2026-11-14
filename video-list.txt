@@ -301,6 +301,8 @@ V30  How do I refer another company and get 10% off my plan?
            exclusion, the 2-reward / 2-renewals rule, the Pay window and the reward turning Used. Real UI differs from the FLOW only in wording: the card title is
            "Referral reward - 10% off" with an em dash and the register card is titled "Referral code" (field: "Referral code (optional)").
            The mock's seeded referred company "Sunrise Traders" (Used reward) shows in the referred list; VIDEO_ORG_NAME does not rename it. Company shown as AuroCloud.
+           PRICES (re-recorded 14 Nov): real rates Core 49 / Prime 99 / Elite 149 per staff per month (spec sets the catalogue); the seeded Used reward shows
+           Prime - Rs 248 off (10% of 25 staff x 99); checkout is 52 staff x 99 = 5,148, reward -515, total 5,467. Web build was rebuilt (e2e:build) first.
      NOTE: the screens are built (src/features/referral, src/features/billing/components/ReferralRewardCard.tsx). Re-read them
            for the exact labels right before writing narration. Needs company name AuroCloud and e-mail sign-in like every video:
            check the seeded referred company names in e2e/mock-server/routes/referral.js do not show unwanted names in the stills.

@@ -15,7 +15,7 @@ import { StaffStepper } from '../components/StaffStepper';
 import { useBillingState, usePlanCatalogue, useSubscription } from '../hooks/useBillingData';
 import { useServerQuote } from '../hooks/useServerQuote';
 import { FEATURE_LABELS, planFeatureIds } from '../utils/planState';
-import { monthLabel, parsePurchaseMode } from '../utils/pricing';
+import { monthLabel, parsePurchaseMode, tierSavings } from '../utils/pricing';
 import { canPurchase } from '../utils/platformPolicy';
 import { buildQuote, initialStaffLimit, resolveQuoteSource } from '../utils/quote';
 import { withServerQuote } from '../utils/serverQuote';
@@ -177,6 +177,11 @@ export default function UpgradePlanScreen() {
               <Text variant="caption" color="textMuted">
                 Selected duration
               </Text>
+              {shownQuote.freeMonths > 0 ? (
+                <Text variant="caption" color="success" testID="duration-offer">
+                  {`${tierSavings({ amount: plan.amount, months: plan.months, freeMonths: shownQuote.freeMonths }).label} · Save ${formatINR(plan.amount * shownQuote.freeMonths)}/staff`}
+                </Text>
+              ) : null}
             </View>
             <Badge label={`${formatINR(plan.amount)} /staff/mo`} tone="primary" />
           </View>

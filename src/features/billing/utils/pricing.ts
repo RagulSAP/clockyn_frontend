@@ -64,16 +64,71 @@ export function calcTotals({ staff, price, months, credit = 0, couponPercent = 0
   return { staffCharge, afterCredit, discountPercent, discountAmount, subtotal, gst, grandTotal };
 }
 
-/** Credit for the current plan: fixed baseline staff × the CURRENT per-staff price × the current plan's own duration. */
+/**
+ * Months actually paid for a tier: its duration minus the free months. The free months are clamped to
+ * `[0, months - 1]` so at least one month is always paid.
+ */
+export function paidMonths(months: number, freeMonths = 0): number {
+  const m = Math.max(0, Math.trunc(months) || 0);
+  if (m === 0) return 0;
+  const free = Math.min(Math.max(0, Math.trunc(freeMonths) || 0), m - 1);
+  return m - free;
+}
+
+/**
+ * Free months that come with a purchase of `term` months of a plan whose own duration is `planMonths` with
+ * `planFree` free months: the plan's own offer for its own term, proportional (rounded down) for any other term
+ * (renewals are always 12 months).
+ */
+export function freeMonthsForTerm(planMonths: number, planFree: number, term: number): number {
+  const m = Math.max(1, Math.trunc(planMonths) || 1);
+  const free = m - paidMonths(m, planFree);
+  const t = Math.max(0, Math.trunc(term) || 0);
+  if (t === m) return free;
+  return Math.min(Math.floor((t * free) / m), Math.max(0, t - 1));
+}
+
+/** What a duration tier saves compared with paying month by month. */
+export interface TierSavings {
+  freeMonths: number;
+  /** INR saved per staff over the whole term (`amount × freeMonths`). */
+  savePerStaff: number;
+  /** Whole percent of the term that is free. */
+  percent: number;
+  /** INR per staff per month after the free months are spread over the term. */
+  effectiveMonthly: number;
+  /** Marketing wording: the tier's own offer text, else "1 month free" / "2 months free". */
+  label: string;
+}
+
+export function tierSavings(tier: { amount: number; months: number; freeMonths?: number; offerText?: string | null }): TierSavings {
+  const months = Math.max(1, Math.trunc(tier.months) || 1);
+  const paid = paidMonths(months, tier.freeMonths ?? 0);
+  const free = months - paid;
+  const text = (tier.offerText ?? '').trim();
+  return {
+    freeMonths: free,
+    savePerStaff: tier.amount * free,
+    percent: Math.round((100 * free) / months),
+    effectiveMonthly: (tier.amount * paid) / months,
+    label: text || (free === 1 ? '1 month free' : `${free} months free`),
+  };
+}
+
+/**
+ * Credit for the current plan: fixed baseline staff × the CURRENT per-staff price × the months the current plan was
+ * paid for (its own duration minus its free months).
+ */
 export function calcPlanCredit(input: {
   hasCurrentPlan: boolean;
   mode: PurchaseMode;
   isPlanExpired: boolean;
   currentPlanAmount: number;
   currentPlanMonths: number;
+  currentPlanFreeMonths?: number;
 }): number {
   if (!input.hasCurrentPlan || input.mode !== 'new' || input.isPlanExpired) return 0;
-  return CREDIT_BASELINE_STAFF * input.currentPlanAmount * input.currentPlanMonths;
+  return CREDIT_BASELINE_STAFF * input.currentPlanAmount * paidMonths(input.currentPlanMonths, input.currentPlanFreeMonths ?? 0);
 }
 
 /**

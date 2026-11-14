@@ -131,7 +131,29 @@ describe('plans', () => {
     expect((await getSubscription('org')).planId).toBe(3);
     expect(await getStaffLimit('org')).toBe(40);
     mocked.get.mockResolvedValue({ success: true, data: [{ plan_id: 1, plan_name: 'Core', plan_amount: 499, plan_month: 1 }] });
-    expect(await listPlans()).toEqual([{ id: 1, name: 'Core', amount: 499, months: 1 }]);
+    // an older server sends no offer fields: no free months, no wording
+    expect(await listPlans()).toEqual([{ id: 1, name: 'Core', amount: 499, months: 1, freeMonths: 0, offerText: null }]);
+  });
+
+  it('listPlans maps the free months and the offer wording of a duration tier', async () => {
+    mocked.get.mockResolvedValue({
+      success: true,
+      data: [
+        { plan_id: 4, plan_name: 'Core', plan_amount: '49.00', plan_month: 6, plan_free_months: 1, plan_offer_text: '  Pay 5, get 1 free ' },
+        { plan_id: 5, plan_name: 'Core', plan_amount: 49, plan_month: 12, plan_free_months: '2', plan_offer_text: '   ' },
+        { plan_id: 6, plan_name: 'Core', plan_amount: 49, plan_month: 3, plan_free_months: -1, plan_offer_text: null },
+      ],
+    });
+    expect(await listPlans()).toEqual([
+      { id: 4, name: 'Core', amount: 49, months: 6, freeMonths: 1, offerText: 'Pay 5, get 1 free' },
+      { id: 5, name: 'Core', amount: 49, months: 12, freeMonths: 2, offerText: null },
+      { id: 6, name: 'Core', amount: 49, months: 3, freeMonths: 0, offerText: null },
+    ]);
+  });
+
+  it('mapSubscription carries the free months of the running plan (null when the server has none)', () => {
+    expect(mapSubscription({ data: { plan_id: 5, plan_name: 'Core', plan_month: 12, plan_free_months: 2 } }).planFreeMonths).toBe(2);
+    expect(mapSubscription({ data: { plan_id: 1, plan_name: 'Core', plan_month: 1 } }).planFreeMonths).toBeNull();
   });
 });
 
@@ -248,10 +270,16 @@ describe('billing: server quote (POST /orders/quote)', () => {
     is_plan_expired: false, payable: true,
   };
 
+  it('maps the free months of the term (paid months in charged_months, the full validity in term_months)', () => {
+    const q = mapOrderQuote({ data: { ...wire, charged_months: 5, term_months: 6, free_months: 1, staff_charge: 2450 } });
+    expect(q).toMatchObject({ chargedMonths: 5, termMonths: 6, freeMonths: 1, staffCharge: 2450 });
+    expect(mapOrderQuote({ data: { ...wire, free_months: -2 } })?.freeMonths).toBe(0);
+  });
+
   it('maps the breakdown with numbers as numbers (a flat coupon has no percent)', () => {
     const q = mapOrderQuote({ success: true, data: wire });
     expect(q).toEqual({
-      mode: 'new', planId: 22, planName: 'Prime', pricePerStaffMonth: 40, chargedStaff: 15, chargedMonths: 12, termMonths: 12,
+      mode: 'new', planId: 22, planName: 'Prime', pricePerStaffMonth: 40, chargedStaff: 15, chargedMonths: 12, termMonths: 12, freeMonths: 0,
       staffCharge: 7200, credit: 0, afterCredit: 7200, couponCode: 'FLAT500', couponApplied: true, couponMessage: null,
       discountPercent: null, discountAmount: 500, subtotal: 6700, gstPercent: 18, gst: 1206, grandTotal: 7906, amountPaise: 790600,
       currency: 'INR', validFrom: '2026-11-02', validTill: '2027-11-02', resultingStaffLimit: 15, payable: true,
