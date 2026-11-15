@@ -2,7 +2,7 @@
  *
  * One WebSocket to the support inbox (`/ws/support-ops?token=<operator session token>`, `?admin_id=<operator e-mail>` against an old
  * backend / legacy mode; see js/operator-session.js) per tab that:
- *   - drives the sidebar badge `.nav-livechat-badge` and prefixes `document.title` with "(n) ",
+ *   - drives the unread badge `.nav-livechat-badge` (the floating chat button, js/layout.js) and prefixes `document.title` with "(n) ",
  *   - plays a sound for each new message: the file assets/sounds/notification.mp3 when it exists (see assets/sounds/README.txt),
  *     otherwise a short built-in chime (WebAudio, no asset). Muted state in localStorage 'clockyn-livechat-mute',
  *   - shows a browser Notification for an incoming ORG message when the tab is hidden / unfocused or another
@@ -223,6 +223,7 @@
         try { window.focus(); } catch (e) { /* ignore */ }
         try { n.close(); } catch (e) { /* ignore */ }
         if (onLiveChatPage()) emit('clockyn-livechat-open', { org_id: d.org_id });
+        else if (window.ClockynLiveChatPanel && typeof window.ClockynLiveChatPanel.open === 'function') window.ClockynLiveChatPanel.open(d.org_id);   /* the floating chat panel (js/layout.js) */
         else location.href = (SELF_SRC ? SELF_SRC.replace(/js\/live-chat-notify\.js.*$/, 'pages/') : '') + 'live_chat.html?org_id=' + encodeURIComponent(d.org_id);
       };
     } catch (e) { /* notifications unavailable */ }

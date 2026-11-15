@@ -1,5 +1,5 @@
 'use strict';
-/* Admin web console: operator session token (S-02). Runs against e2e/console/server.js (UI_ADMIN_APP + operator mock). */
+/* Admin web console: operator session token (S-02). Runs against e2e/console/server.js (ClockynConsole + operator mock). */
 const { test, expect } = require('@playwright/test');
 const { check } = require('./static-check');
 

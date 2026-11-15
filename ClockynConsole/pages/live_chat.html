@@ -6,9 +6,19 @@
   <title>Clockyn — Live Chat</title>
   <meta name="color-scheme" content="light dark" />
   <script src="../js/theme.js"></script>
+  <script>
+    /* embed mode: the floating chat panel (js/layout.js) shows this page in an iframe as live_chat.html?embed=1 */
+    if (/[?&]embed=1(&|$)/.test(location.search)) document.documentElement.classList.add('embed');
+  </script>
   <link rel="stylesheet" href="../css/dashboard.css" />
   <style>
     [hidden] { display: none !important; }
+    /* embed mode: only the conversation list and the conversation, filling the iframe (no sidebar, top bar or page padding) */
+    html.embed .sidebar, html.embed .sidebar-overlay, html.embed .topbar, html.embed .hamburger-btn { display: none !important; }
+    html.embed, html.embed body { height: 100%; }
+    html.embed body[data-page="live_chat"] .main { margin-left: 0; width: 100%; height: 100%; overflow: hidden; }
+    html.embed body[data-page="live_chat"] .lc-content { padding: 0; max-width: none; flex: 1 1 0; }
+    html.embed .lc { border: 0; border-radius: 0; box-shadow: none; min-height: 0; }
     .i { width: 16px; height: 16px; flex-shrink: 0; display: block; }
     .i-lg { width: 20px; height: 20px; }
     .hamburger-btn .i { width: 18px; height: 18px; }
@@ -689,7 +699,9 @@
     function setView(v) { $('lc-root').setAttribute('data-view', v); }
 
     function syncUrl(org) {
-      try { history.replaceState(null, '', location.pathname + (org ? '?org_id=' + enc(org) : '')); } catch (e) { /* file:// */ }
+      var embed = document.documentElement.classList.contains('embed');           /* keep embed=1 so a reload stays an embedded view */
+      var q = (org ? 'org_id=' + enc(org) : '') + (embed ? (org ? '&' : '') + 'embed=1' : '');
+      try { history.replaceState(null, '', location.pathname + (q ? '?' + q : '')); } catch (e) { /* file:// */ }
     }
 
     function setActive(org) {

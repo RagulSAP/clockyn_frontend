@@ -45,6 +45,26 @@
     .pt-sub strong { color: var(--text); font-variant-numeric: tabular-nums; }
     .pt-tile .progress { margin-top: 6px; background: var(--border); }
 
+    .pt-group + .pt-group { margin-top: 6px; }
+    .pt-group-title { margin: 0 0 10px; font-size: 11.5px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+    .pt-group-title::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+    .pt-group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+    .plans-list { display: block; }
+    .plans-list > .skeleton + .skeleton { margin-top: 14px; }
+    .pt-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .pt-offer { font-size: 12.5px; font-weight: 600; color: var(--success); overflow-wrap: anywhere; }
+
+    /* ── Plan form: helper text, counter, live preview ── */
+    .opt { font-weight: 400; color: var(--text-muted); }
+    .pt-counter { font-size: 11.5px; color: var(--text-muted); text-align: right; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .pt-counter.over { color: var(--danger); font-weight: 600; }
+    .plan-preview { font-size: 12.5px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-muted); color: var(--text-secondary); min-height: 38px; }
+    .plan-preview.free { background: var(--success-soft); color: var(--success); font-weight: 600; }
+    .plan-preview:empty { display: none; }
+    .modal-body .field-error { margin-top: 0; min-height: 0; }
+    .modal-body .field-error:empty { display: none; }
+    .modal-body { display: grid; gap: 14px; }
+
     /* ── Organization subscriptions table ── */
     .search-input { width: 260px; max-width: 100%; height: 36px; min-height: 36px; padding: 0 12px; font-size: 13px; border-radius: var(--radius-sm); }
     table.data { table-layout: fixed; min-width: 900px; }
@@ -118,8 +138,15 @@
       </div>
       <div class="modal-body">
         <div class="form-group"><label for="edit-name">Plan name</label><input type="text" id="edit-name" placeholder="e.g. Pro" /></div>
-        <div class="form-group"><label for="edit-amount">Amount (₹)</label><input type="number" id="edit-amount" placeholder="e.g. 999" min="0" /></div>
-        <div class="form-group"><label for="edit-months">Duration (months)</label><input type="number" id="edit-months" placeholder="e.g. 1" min="1" /></div>
+        <div class="form-group"><label for="edit-amount">Amount (₹ per staff per month)</label><input type="number" id="edit-amount" placeholder="e.g. 999" min="0" oninput="onPlanFormInput('edit')" /></div>
+        <div class="form-group"><label for="edit-months">Duration (months)</label><input type="number" id="edit-months" placeholder="e.g. 1" min="1" step="1" oninput="onPlanFormInput('edit')" /></div>
+        <div class="form-group"><label for="edit-free">Free months</label><input type="number" id="edit-free" min="0" step="1" value="0" oninput="onPlanFormInput('edit')" />
+          <div class="form-hint">Months of the duration that are not charged, e.g. 6 months with 1 free = pay for 5</div></div>
+        <div class="form-group"><label for="edit-offer">Offer text <span class="opt">(optional)</span></label><input type="text" id="edit-offer" maxlength="80" placeholder="e.g. Pay 5 months, get 1 free" autocomplete="off" oninput="onPlanFormInput('edit')" />
+          <div class="pt-counter" id="edit-offer-count" aria-hidden="true">0 / 80</div>
+          <div class="form-hint">Shown to customers on the plan card, e.g. Pay 5 months, get 1 free. Leave empty to show '1 month free' automatically</div></div>
+        <div class="plan-preview" id="edit-preview" aria-live="polite"></div>
+        <div class="field-error" id="edit-err" role="alert"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
@@ -137,8 +164,15 @@
       </div>
       <div class="modal-body">
         <div class="form-group"><label for="add-name">Plan name</label><input type="text" id="add-name" placeholder="e.g. Pro" /></div>
-        <div class="form-group"><label for="add-amount">Amount (₹)</label><input type="number" id="add-amount" placeholder="e.g. 999" min="0" /></div>
-        <div class="form-group"><label for="add-months">Duration (months)</label><input type="number" id="add-months" placeholder="e.g. 1" min="1" /></div>
+        <div class="form-group"><label for="add-amount">Amount (₹ per staff per month)</label><input type="number" id="add-amount" placeholder="e.g. 999" min="0" oninput="onPlanFormInput('add')" /></div>
+        <div class="form-group"><label for="add-months">Duration (months)</label><input type="number" id="add-months" placeholder="e.g. 1" min="1" step="1" oninput="onPlanFormInput('add')" /></div>
+        <div class="form-group"><label for="add-free">Free months</label><input type="number" id="add-free" min="0" step="1" value="0" oninput="onPlanFormInput('add')" />
+          <div class="form-hint">Months of the duration that are not charged, e.g. 6 months with 1 free = pay for 5</div></div>
+        <div class="form-group"><label for="add-offer">Offer text <span class="opt">(optional)</span></label><input type="text" id="add-offer" maxlength="80" placeholder="e.g. Pay 5 months, get 1 free" autocomplete="off" oninput="onPlanFormInput('add')" />
+          <div class="pt-counter" id="add-offer-count" aria-hidden="true">0 / 80</div>
+          <div class="form-hint">Shown to customers on the plan card, e.g. Pay 5 months, get 1 free. Leave empty to show '1 month free' automatically</div></div>
+        <div class="plan-preview" id="add-preview" aria-live="polite"></div>
+        <div class="field-error" id="add-err" role="alert"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
@@ -308,88 +342,206 @@
     }
 
     /* ── Plans ── */
+    /* One card per plan AND duration (Core 1 / 6 / 12 months ...). The list comes from /gen-dashboard/plan-breakdown (with the active
+       subscriber counts); free months and offer text come from /plans/all and are merged in by plan_id. */
+    var PLAN_ORDER = ['core', 'prime', 'elite'];
+    var OFFER_MAX = 80;
+    function monthLabel(m) { m = Number(m); return m === 1 ? '1 month' : (m === 12 ? '1 year' : m + ' months'); }
+    function rupees(n) { return '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
+    function planRank(name) { var i = PLAN_ORDER.indexOf(String(name || '').trim().toLowerCase()); return i < 0 ? PLAN_ORDER.length : i; }
+    function freeOf(p) { return Number(p.plan_free_months) || 0; }
+    function offerOf(p) { return String(p.plan_offer_text == null ? '' : p.plan_offer_text).trim(); }
+    function freeLabel(n) { return n + (n === 1 ? ' month free' : ' months free'); }
+    function sortPlans(list) {
+      return list.slice().sort(function (a, b) {
+        var ra = planRank(a.plan_name), rb = planRank(b.plan_name);
+        if (ra !== rb) return ra - rb;
+        var na = String(a.plan_name).toLowerCase(), nb = String(b.plan_name).toLowerCase();
+        if (na !== nb) return na < nb ? -1 : 1;
+        return Number(a.plan_month) - Number(b.plan_month);
+      });
+    }
+    function detailOf(res, fallback) {
+      var d = res && res.detail;
+      if (Array.isArray(d)) d = d.map(function (x) { return x && x.msg ? x.msg : ''; }).filter(Boolean).join('; ');
+      return typeof d === 'string' && d ? d : fallback;
+    }
+
     async function loadPlanBreakdown() {
       try {
-        var plans = await fetch(API_BASE + '/gen-dashboard/plan-breakdown').then(r => r.json());
-        plansData = plans;
+        var got = await Promise.all([
+          fetch(API_BASE + '/gen-dashboard/plan-breakdown').then(function (r) { return r.json(); }),
+          fetch(API_BASE + '/plans/all').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+        ]);
+        var plans = got[0];
+        if (!Array.isArray(plans)) throw new Error('bad plan list');
+        var extraRows = got[1] && Array.isArray(got[1].data) ? got[1].data : (Array.isArray(got[1]) ? got[1] : []);
+        var extra = {};
+        extraRows.forEach(function (r) { extra[r.plan_id] = r; });
+        plans = plans.map(function (p) {
+          var e = extra[p.plan_id] || {};
+          return Object.assign({}, p, {
+            plan_free_months: p.plan_free_months != null ? p.plan_free_months : (e.plan_free_months || 0),
+            plan_offer_text: p.plan_offer_text != null ? p.plan_offer_text : (e.plan_offer_text || null)
+          });
+        });
+        plansData = sortPlans(plans);
         var grid  = document.getElementById('plans-grid');
         var badge = document.getElementById('plans-total-badge');
 
-        if (!plans.length) {
+        if (!plansData.length) {
           grid.innerHTML = emptyState('No plans yet', 'Add your first plan to start selling subscriptions.', 'layers');
           badge.textContent = '';
           return;
         }
 
-        var total = plans.reduce(function(s,p){ return s + p.active_count; }, 0) || 1;
+        var total = plansData.reduce(function (s, p) { return s + p.active_count; }, 0) || 1;
         badge.textContent = total + ' active';
 
-        /* Plans list */
-        grid.innerHTML = plans.map(function(p, i) {
+        /* Plans list: the durations of one plan sit together under a small heading */
+        var html = '', lastKey = null, groupIdx = -1, color = COLORS[0];
+        plansData.forEach(function (p, i) {
+          var key = String(p.plan_name).trim().toLowerCase();
+          if (key !== lastKey) {
+            if (lastKey !== null) html += '</div></section>';
+            groupIdx += 1; color = COLORS[groupIdx % COLORS.length]; lastKey = key;
+            html += '<section class="pt-group" data-plan="' + escHtml(key) + '"><h4 class="pt-group-title">' + escHtml(p.plan_name) + '</h4><div class="pt-group-grid">';
+          }
           var pct = Math.round((p.active_count / total) * 100);
-          var color = COLORS[i % COLORS.length];
-          return '<div class="pt-tile">'
+          var free = freeOf(p), offer = offerOf(p);
+          var label = 'Edit ' + p.plan_name + ', ' + monthLabel(p.plan_month) + (free > 0 ? ', ' + freeLabel(free) : '') + (offer ? ', ' + offer : '');
+          html += '<div class="pt-tile" data-plan-id="' + escHtml(p.plan_id) + '">'
             + '<div class="pt-top">'
             +   '<span class="pt-dot" style="background:' + color + ';"></span>'
             +   '<span class="pt-name" title="' + escHtml(p.plan_name) + '">' + escHtml(p.plan_name) + '</span>'
             +   '<span class="pt-actions">'
-            +     '<button type="button" class="pt-btn" onclick="editPlan(' + i + ')" title="Edit plan" aria-label="Edit ' + escHtml(p.plan_name) + '">' + ico('pencil') + '</button>'
-            +     '<button type="button" class="pt-btn del" data-id="' + escHtml(p.plan_id) + '" data-name="' + escHtml(p.plan_name) + '" onclick="deletePlan(this.dataset.id, this.dataset.name)" title="Delete plan" aria-label="Delete ' + escHtml(p.plan_name) + '">' + ico('trash') + '</button>'
+            +     '<button type="button" class="pt-btn" onclick="editPlan(' + i + ')" title="Edit plan" aria-label="' + escHtml(label) + '">' + ico('pencil') + '</button>'
+            +     '<button type="button" class="pt-btn del" data-id="' + escHtml(p.plan_id) + '" data-name="' + escHtml(p.plan_name) + '" onclick="deletePlan(this.dataset.id, this.dataset.name)" title="Delete plan" aria-label="Delete ' + escHtml(p.plan_name) + ', ' + escHtml(monthLabel(p.plan_month)) + '">' + ico('trash') + '</button>'
             +   '</span>'
             + '</div>'
-            + '<div class="pt-price">₹' + Number(p.plan_amount).toLocaleString() + '<span>/ ' + escHtml(p.plan_month) + ' mo</span></div>'
+            + '<div class="pt-price">' + escHtml(rupees(p.plan_amount)) + '<span>/ staff / month</span></div>'
+            + '<div class="pt-badges"><span class="badge badge-gray">' + escHtml(monthLabel(p.plan_month)) + '</span>'
+            +   (free > 0 ? '<span class="badge badge-green">' + escHtml(freeLabel(free)) + '</span>' : '') + '</div>'
+            + (offer ? '<div class="pt-offer">' + escHtml(offer) + '</div>' : '')
             + '<div class="pt-sub"><strong>' + escHtml(p.active_count) + '</strong> active · ' + pct + '% of subscribers</div>'
             + '<div class="progress"><div class="progress-fill" style="width:' + pct + '%;background:' + color + ';"></div></div>'
             + '</div>';
-        }).join('');
-      } catch(e) {
+        });
+        grid.innerHTML = html + '</div></section>';
+      } catch (e) {
         document.getElementById('plans-grid').innerHTML = emptyState('Couldn’t load plans', 'Check your connection and try again.', 'alert', 'loadPlanBreakdown()');
       }
+    }
+
+    /* ── Plan form (shared by Add and Edit; `prefix` is 'add' or 'edit') ── */
+    function pf(prefix, key) { return document.getElementById(prefix + '-' + key); }
+    function readPlanForm(prefix) {
+      return {
+        name: pf(prefix, 'name').value.trim(),
+        amountRaw: pf(prefix, 'amount').value.trim(),
+        monthsRaw: pf(prefix, 'months').value.trim(),
+        freeRaw: pf(prefix, 'free').value.trim(),
+        offer: pf(prefix, 'offer').value.trim()
+      };
+    }
+    /* Mirrors the server rules. `strict` also reports missing required fields (on Save); the live check while typing only
+       reports the rules between fields and the offer length, so an empty form does not shout. Returns {error, field, plan}. */
+    function checkPlanForm(prefix, strict) {
+      var v = readPlanForm(prefix);
+      var amount = v.amountRaw === '' ? NaN : Number(v.amountRaw);
+      var monthsOk = /^\d+$/.test(v.monthsRaw) && Number(v.monthsRaw) >= 1;
+      var months = monthsOk ? Number(v.monthsRaw) : NaN;
+      var freeOk = v.freeRaw === '' || /^\d+$/.test(v.freeRaw);
+      var free = v.freeRaw === '' ? 0 : (freeOk ? Number(v.freeRaw) : NaN);
+      var out = function (error, field) { return { error: error, field: field, plan: null }; };
+      if (strict && !v.name) return out('Enter the plan name.', 'name');
+      if (strict && (isNaN(amount) || amount < 0)) return out('Enter the amount (₹ per staff per month).', 'amount');
+      if (v.amountRaw !== '' && (isNaN(amount) || amount < 0)) return out('Amount must be a number, 0 or more.', 'amount');
+      if (strict && !monthsOk) return out('Duration must be a whole number of months, 1 or more.', 'months');
+      if (v.monthsRaw !== '' && !monthsOk) return out('Duration must be a whole number of months, 1 or more.', 'months');
+      if (!freeOk) return out('Free months must be a whole number, 0 or more.', 'free');
+      if (monthsOk && free >= months) return out('Free months must be less than the duration (at most ' + (months - 1) + ').', 'free');
+      if (v.offer.length > OFFER_MAX) return out('Offer text can be at most ' + OFFER_MAX + ' characters.', 'offer');
+      return { error: '', field: '', plan: { plan_name: v.name, plan_amount: amount, plan_month: months, free_months: free, offer_text: v.offer } };
+    }
+    function onPlanFormInput(prefix) {
+      var chk = checkPlanForm(prefix, false), v = readPlanForm(prefix);
+      var count = pf(prefix, 'offer-count');
+      count.textContent = v.offer.length + ' / ' + OFFER_MAX;
+      count.classList.toggle('over', v.offer.length > OFFER_MAX);
+      pf(prefix, 'err').textContent = chk.error;
+      ['free', 'offer', 'months', 'amount'].forEach(function (k) { pf(prefix, k).removeAttribute('aria-invalid'); });
+      if (chk.error && chk.field) pf(prefix, chk.field).setAttribute('aria-invalid', 'true');
+      /* live preview: what the customer pays per staff for the whole duration */
+      var prev = pf(prefix, 'preview'), amount = v.amountRaw === '' ? NaN : Number(v.amountRaw);
+      var months = /^\d+$/.test(v.monthsRaw) ? Number(v.monthsRaw) : NaN, free = v.freeRaw === '' ? 0 : Number(v.freeRaw);
+      prev.className = 'plan-preview';
+      if (chk.error || isNaN(amount) || isNaN(months) || months < 1 || isNaN(free)) { prev.textContent = ''; return; }
+      var paid = months - free;
+      if (free > 0) {
+        prev.className = 'plan-preview free';
+        prev.textContent = 'Customer pays for ' + paid + ' of ' + months + ' months = ' + rupees(paid * amount) + ' per staff';
+      } else {
+        prev.textContent = 'Customer pays ' + rupees(months * amount) + ' per staff for ' + months + (months === 1 ? ' month' : ' months');
+      }
+    }
+    function resetPlanForm(prefix, p) {
+      pf(prefix, 'name').value = p ? p.plan_name : '';
+      pf(prefix, 'amount').value = p ? p.plan_amount : '';
+      pf(prefix, 'months').value = p ? p.plan_month : '';
+      pf(prefix, 'free').value = p ? freeOf(p) : 0;
+      pf(prefix, 'offer').value = p ? offerOf(p) : '';
+      onPlanFormInput(prefix);
+    }
+    /* the first problem is shown under the fields and in the toast, and the field gets the focus */
+    function planFormOk(prefix) {
+      var chk = checkPlanForm(prefix, true);
+      if (chk.error) {
+        pf(prefix, 'err').textContent = chk.error;
+        if (chk.field) { pf(prefix, chk.field).setAttribute('aria-invalid', 'true'); pf(prefix, chk.field).focus(); }
+        showToast(chk.error, false);
+        return null;
+      }
+      return chk.plan;
     }
 
     /* ── Edit Plan ── */
     function editPlan(i) {
       editingIndex = i;
-      var p = plansData[i];
-      document.getElementById('edit-name').value   = p.plan_name;
-      document.getElementById('edit-amount').value = p.plan_amount;
-      document.getElementById('edit-months').value = p.plan_month;
+      resetPlanForm('edit', plansData[i]);
       document.getElementById('edit-modal').classList.add('open');
     }
     function closeEditModal() { document.getElementById('edit-modal').classList.remove('open'); editingIndex = -1; }
     async function saveEditPlan() {
-      var name = document.getElementById('edit-name').value.trim();
-      var amount = parseFloat(document.getElementById('edit-amount').value);
-      var months = parseInt(document.getElementById('edit-months').value);
-      if (!name || isNaN(amount) || isNaN(months)) { showToast('Please fill all fields.', false); return; }
+      var plan = planFormOk('edit');
+      if (!plan) return;
       try {
         var p = plansData[editingIndex];
         var res = await fetch(API_BASE + '/plans/' + p.plan_id, {
           method: 'PUT', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ plan_name: name, plan_amount: amount, plan_month: months })
-        }).then(r => r.json());
-        if (!res.success) throw new Error(res.detail || 'Save failed');
+          /* offer_text "" clears the wording; free_months is always sent so an edit is explicit */
+          body: JSON.stringify({ plan_name: plan.plan_name, plan_amount: plan.plan_amount, plan_month: plan.plan_month, free_months: plan.free_months, offer_text: plan.offer_text })
+        }).then(function (r) { return r.json(); });
+        if (!res.success) throw new Error(detailOf(res, 'Save failed'));
         closeEditModal(); loadPlanBreakdown(); showToast('Plan updated');
       } catch(e) { showToast('Failed: ' + e.message, false); }
     }
 
     /* ── Add Plan ── */
     function openAddModal() {
-      document.getElementById('add-name').value = document.getElementById('add-amount').value = document.getElementById('add-months').value = '';
+      resetPlanForm('add', null);
       document.getElementById('add-modal').classList.add('open');
     }
     function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
     async function saveAddPlan() {
-      var name = document.getElementById('add-name').value.trim();
-      var amount = parseFloat(document.getElementById('add-amount').value);
-      var months = parseInt(document.getElementById('add-months').value);
-      if (!name || isNaN(amount) || isNaN(months)) { showToast('Please fill all fields.', false); return; }
+      var plan = planFormOk('add');
+      if (!plan) return;
       try {
         var res = await fetch(API_BASE + '/plans/', {
           method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ plan_name: name, plan_amount: amount, plan_month: months })
-        }).then(r => r.json());
-        if (!res.success) throw new Error(res.detail || 'Add failed');
+          body: JSON.stringify({ plan_name: plan.plan_name, plan_amount: plan.plan_amount, plan_month: plan.plan_month, free_months: plan.free_months, offer_text: plan.offer_text || null })
+        }).then(function (r) { return r.json(); });
+        if (!res.success) throw new Error(detailOf(res, 'Add failed'));
         closeAddModal(); loadPlanBreakdown(); showToast('Plan added');
       } catch(e) { showToast('Failed: ' + e.message, false); }
     }

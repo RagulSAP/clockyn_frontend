@@ -143,6 +143,11 @@
       .stat-tile { padding: 14px 16px; }
       .stat-tile .stat-val { font-size: 24px; }
     }
+
+    /* Video Hub tab strip (shared by videos.html and video_views.html): the tabs are links, so they look like the .tab buttons */
+    .vh-tabs { margin-bottom: 16px; }
+    .vh-tabs a.tab { text-decoration: none; display: inline-flex; align-items: center; }
+    .vh-tabs a.tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
   </style>
 </head>
 <body>
@@ -179,6 +184,27 @@
     </header>
 
     <div class="content">
+
+      <nav class="tabs vh-tabs" role="tablist" aria-label="Video Hub" id="vh-tabs">
+        <a class="tab active" id="vh-tab-videos" role="tab" href="videos.html" aria-selected="true" aria-current="page" tabindex="0">Videos</a>
+        <a class="tab" id="vh-tab-views" role="tab" href="video_views.html" aria-selected="false" tabindex="-1">Views</a>
+      </nav>
+      <script>
+        /* Left / Right / Home / End move between the two tabs; Enter follows the focused link. */
+        (function () {
+          var tabs = Array.prototype.slice.call(document.querySelectorAll("#vh-tabs a.tab"));
+          document.getElementById("vh-tabs").addEventListener("keydown", function (e) {
+            var i = tabs.indexOf(document.activeElement);
+            if (i < 0) return;
+            var next = e.key === "ArrowRight" ? (i + 1) % tabs.length : e.key === "ArrowLeft" ? (i + tabs.length - 1) % tabs.length
+              : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : -1;
+            if (next < 0) return;
+            e.preventDefault();
+            tabs.forEach(function (t, k) { t.tabIndex = k === next ? 0 : -1; });
+            tabs[next].focus();
+          });
+        })();
+      </script>
 
       <div class="page-header">
         <div>

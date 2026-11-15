@@ -1,11 +1,11 @@
 'use strict';
-/* Static check of the admin console (UI_ADMIN_APP): every page that talks to the API includes js/operator-session.js exactly once,
+/* Static check of the admin console (ClockynConsole): every page that talks to the API includes js/operator-session.js exactly once,
  * after config.js and before auth.js and before any page script that can call the API; nothing bypasses fetch to reach API_BASE.
  * CLI: node e2e/console/static-check.js   (exit code 1 on any problem). Also run by operator-session.spec.js. */
 const fs = require('node:fs');
 const path = require('node:path');
 
-const ROOT = path.resolve(__dirname, '..', '..', 'UI_ADMIN_APP');
+const ROOT = path.resolve(__dirname, '..', '..', 'ClockynConsole');
 const SESSION = '../js/operator-session.js';
 /* external scripts that may load before operator-session.js: they never call API_BASE at load time
  * (layout.js only injects live-chat-notify.js, which starts on DOMContentLoaded, after every synchronous script has run) */

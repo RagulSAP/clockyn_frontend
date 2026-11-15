@@ -1,6 +1,6 @@
 'use strict';
-/* Test server for the admin web console: serves C:\POC\clockyn_frontend\UI_ADMIN_APP as it is, except /js/config.js, which points
- * API_BASE at the operator mock (operator-mock.js). Nothing in UI_ADMIN_APP is modified.
+/* Test server for the admin web console: serves C:\POC\clockyn_frontend\ClockynConsole as it is, except /js/config.js, which points
+ * API_BASE at the operator mock (operator-mock.js). Nothing in ClockynConsole is modified.
  * Env: CONSOLE_WEB_PORT (8890), CONSOLE_API_PORT (8891). */
 const http = require('node:http');
 const fs = require('node:fs');
@@ -9,7 +9,7 @@ const { createOperatorMock } = require('./operator-mock');
 
 const WEB_PORT = Number(process.env.CONSOLE_WEB_PORT || 8890);
 const API_PORT = Number(process.env.CONSOLE_API_PORT || 8891);
-const ROOT = path.resolve(__dirname, '..', '..', 'UI_ADMIN_APP');
+const ROOT = path.resolve(__dirname, '..', '..', 'ClockynConsole');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.png': 'image/png', '.svg': 'image/svg+xml', '.mp3': 'audio/mpeg', '.json': 'application/json' };
 

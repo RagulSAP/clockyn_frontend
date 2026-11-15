@@ -1,5 +1,5 @@
 'use strict';
-/* Playwright config for the admin web console (UI_ADMIN_APP) operator-session checks. Run: npm run e2e:console */
+/* Playwright config for the admin web console (ClockynConsole) operator-session checks. Run: npm run e2e:console */
 const path = require('node:path');
 const { defineConfig, devices } = require('@playwright/test');
 

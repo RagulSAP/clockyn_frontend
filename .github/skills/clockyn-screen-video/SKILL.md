@@ -151,7 +151,7 @@ Output: `$W\<slug>.mp4`. Reuse `-SkipTts` when only visuals changed. First run c
 
 ## Upload to the Video Hub
 
-Web console (`UI_ADMIN_APP`) > Support > Video Hub > **Upload video**: enter a **Video name** (max 150 characters, phrase it as the question, e.g.
+Web console (`ClockynConsole`) > Support > Video Hub > **Upload video**: enter a **Video name** (max 150 characters, phrase it as the question, e.g.
 "How do I add a new staff member?") and choose the MP4 (MP4 with H.264 + AAC, max 500 MB). The app's Video Hub then lists it for users.
 
 ## Caveats to always state

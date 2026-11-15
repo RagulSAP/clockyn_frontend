@@ -109,7 +109,7 @@ test('admin approves a pending leave', async ({ page, mock }) => {
 
 ## Admin web console checks (`e2e/console/`, separate from the app harness above)
 
-`npm run e2e:console` runs Playwright against `UI_ADMIN_APP` (served as-is by `e2e/console/server.js`, with `/js/config.js` pointing `API_BASE` at an operator-API mock,
+`npm run e2e:console` runs Playwright against `ClockynConsole` (served as-is by `e2e/console/server.js`, with `/js/config.js` pointing `API_BASE` at an operator-API mock,
 `e2e/console/operator-mock.js`; ports `CONSOLE_WEB_PORT` 8890 / `CONSOLE_API_PORT` 8891). It covers the operator session token (`js/operator-session.js`): login stores the token
 (sessionStorage, or localStorage with Remember me), API calls and the live-chat socket carry it, a 401 returns to login with a message, a 403 does not log out, logout / idle logout /
 expiry clear it, and an old backend (no `access_token`) still works. `npm run e2e:console:static` checks script order and fetch bypasses in every page. Mock control: `POST /__op/state`

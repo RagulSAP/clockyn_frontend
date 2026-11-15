@@ -1,5 +1,5 @@
 'use strict';
-/* OPERATOR-CONSOLE MOCK (admin web console, UI_ADMIN_APP). Separate from the Expo-app mock in e2e/mock-server (do not merge them).
+/* OPERATOR-CONSOLE MOCK (admin web console, ClockynConsole). Separate from the Expo-app mock in e2e/mock-server (do not merge them).
  *
  * Implements just enough of the platform-operator API to test js/operator-session.js:
  *   POST /auth/admin-login                  -> {success:true}
@@ -132,6 +132,8 @@ function createOperatorMock() {
         const out = referral.handle(req.method, path, url.searchParams, body, EMAIL_ROLE[who] || 1, who);
         if (out) return done(out[0], out[1]);
       }
+      if (/^\/(plans\/|gen-dashboard\/plan-breakdown$)/.test(path)) { const pm = require('./plans-mock').handle(req.method, path, ['POST', 'PUT'].includes(req.method) ? await readBody(req) : {}); if (pm) return done(pm[0], pm[1]); }   /* plans-mock.js: GET/POST/PUT/DELETE /plans*, plan-breakdown */
+      { const sh = require('./shell-mock').handle(req.method, path, url.searchParams, ['POST', 'PUT'].includes(req.method) ? await readBody(req) : {}); if (sh) return done(sh[0], sh[1]); }   /* shell-mock.js: unread chats, sidebar badge counts, live-chat threads (shell.spec.js) */
       return done(200, sampleBody(path));
     }
     return done(404, { detail: 'Not Found' });
