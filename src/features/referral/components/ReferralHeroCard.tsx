@@ -70,7 +70,7 @@ export function ReferralHeroCard({ info, actions, canSms }: ReferralHeroCardProp
   return (
     <Card variant="gradient" padding={spacing.xl} testID="referral-hero">
       <View style={{ gap: spacing.lg }}>
-        <Badge label={`${info.percent}% off for you and your friend`} tone="primary" icon="gift" testID="referral-offer-badge" />
+        <Badge label={info.percent > 0 ? `${info.percent}% off for you and your friend` : 'A discount for you and your friend'} tone="primary" icon="gift" testID="referral-offer-badge" />
 
         <View style={{ gap: spacing.sm }}>
           <Text variant="caption" color="onGradient" style={{ opacity: 0.75 }}>
@@ -100,7 +100,7 @@ export function ReferralHeroCard({ info, actions, canSms }: ReferralHeroCardProp
         </View>
 
         <Text variant="body" color="onGradient" style={{ opacity: 0.9 }} testID="referral-offer-copy">
-          {`Your friend gets ${info.percent}% off and so do you. Valid on ${plans} plans only.`}
+          {`Your friend gets ${info.percent > 0 ? `${info.percent}% off` : 'a discount'} and so do you. Valid on ${plans} plans only.`}
         </Text>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>

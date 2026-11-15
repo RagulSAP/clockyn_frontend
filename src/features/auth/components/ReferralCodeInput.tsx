@@ -7,7 +7,13 @@ import { spacing } from '@/theme';
 import { REFERRAL_CODE_LENGTH } from '@/features/referral/utils/code';
 import type { ReferralCodeField } from '../hooks/useReferralCode';
 
-/** Optional "Referral code" field: upper-cased as you type, checked when complete / left, "Referred by <org>" when accepted. */
+/** What the user sees once a code is accepted: "Referred by <name> - 15% off Prime and Elite" (the name is the channel for a promoter code). */
+export function referralAcceptedText(field: Pick<ReferralCodeField, 'referrerOrgName' | 'percent'>): string {
+  if (!field.referrerOrgName) return field.percent ? `Referral code applied - ${field.percent}% off Prime and Elite` : 'Referral code applied';
+  return field.percent ? `Referred by ${field.referrerOrgName} - ${field.percent}% off Prime and Elite` : `Referred by ${field.referrerOrgName}`;
+}
+
+/** Optional "Referral code" field: upper-cased as you type, checked when complete / left, "Referred by <name> - N% off ..." when accepted. */
 export function ReferralCodeInput({ field }: { field: ReferralCodeField }) {
   return (
     <View style={{ gap: spacing.sm }}>
@@ -36,7 +42,7 @@ export function ReferralCodeInput({ field }: { field: ReferralCodeField }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }} testID="reg-referral-valid" accessibilityRole="text">
           <Icon name="check-circle" size={16} color="success" />
           <Text variant="callout" weight="semibold" color="success" style={{ flex: 1 }}>
-            {field.referrerOrgName ? `Referred by ${field.referrerOrgName}` : 'Referral code applied'}
+            {referralAcceptedText(field)}
           </Text>
         </View>
       ) : null}

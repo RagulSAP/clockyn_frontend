@@ -228,6 +228,24 @@ describe('referral code', () => {
     await waitFor(() => expect(api.registerCompany).toHaveBeenCalledWith(expect.objectContaining({ referralCode: 'K7M2QX' })));
   });
 
+  it('exposes the kind and percent of the accepted code (promoter code: channel name, own percent)', async () => {
+    validateCode.mockResolvedValue({ valid: true, referrerOrgName: 'Tech Talk Hindi', kind: 'b2c', percent: 15, message: '' });
+    const { result } = await renderHook(() => useRegistration({ mobileNumber: MOBILE, verifiedContact: MOBILE }));
+    await fillAndVerify(result);
+    await fillCode(result, 'chanl5');
+    await waitFor(() => expect(result.current.referral.status).toBe('valid'));
+    expect(result.current.referral).toMatchObject({ referrerOrgName: 'Tech Talk Hindi', kind: 'b2c', percent: 15 });
+  });
+
+  it('an older server (no kind, no percent) is a C2C code with an unknown percent', async () => {
+    validateCode.mockResolvedValue({ valid: true, referrerOrgName: 'Zed Corp', message: '' });
+    const { result } = await renderHook(() => useRegistration({ mobileNumber: MOBILE, verifiedContact: MOBILE }));
+    await fillAndVerify(result);
+    await fillCode(result, 'k7m2qx');
+    await waitFor(() => expect(result.current.referral.status).toBe('valid'));
+    expect(result.current.referral).toMatchObject({ referrerOrgName: 'Zed Corp', kind: 'c2c', percent: null });
+  });
+
   it('a rejected code shows the server message, blocks Register and keeps every other field', async () => {
     validateCode.mockResolvedValue({ valid: false, referrerOrgName: '', message: 'This referral code is not valid' });
     const { result } = await renderHook(() => useRegistration({ mobileNumber: MOBILE, verifiedContact: MOBILE }));

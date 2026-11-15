@@ -222,6 +222,25 @@ describe('RegisterScreen', () => {
     expect(screen.getByTestId('register-submit')).toBeDisabled();
   });
 
+  it('shows the percent with the referrer when the server sends one, and the channel name for a promoter code', async () => {
+    const validate = referralApi.validateCode as jest.Mock;
+    validate.mockResolvedValueOnce({ valid: true, referrerOrgName: 'Zed Corp', kind: 'c2c', percent: 12, message: '' });
+    await renderThemed(<RegisterScreen />);
+    await fireEvent.changeText(screen.getByTestId('reg-referral-code'), 'k7m2qx');
+    expect(await screen.findByText('Referred by Zed Corp - 12% off Prime and Elite')).toBeTruthy();
+
+    validate.mockResolvedValueOnce({ valid: true, referrerOrgName: 'Tech Talk Hindi', kind: 'b2c', percent: 15, message: '' });
+    await fireEvent.changeText(screen.getByTestId('reg-referral-code'), 'CHANL5');
+    expect(await screen.findByText('Referred by Tech Talk Hindi - 15% off Prime and Elite')).toBeTruthy();
+    expect(screen.queryByText(/Zed Corp/)).toBeNull();
+  });
+
+  it('the Referral code section promises no percent (it comes from the code)', async () => {
+    await renderThemed(<RegisterScreen />);
+    expect(screen.getByText('Optional. Got a referral code? Enter it to get a discount on Prime and Elite plans.')).toBeTruthy();
+    expect(screen.queryByText(/both get/i)).toBeNull();
+  });
+
   it('only digits are kept in the pincode and an invalid one shows an inline message after leaving the field', async () => {
     await renderThemed(<RegisterScreen />);
     const pin = screen.getByTestId('reg-pincode');

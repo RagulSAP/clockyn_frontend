@@ -34,6 +34,17 @@
     .muted { color: var(--text-muted); }
     .nowrap { white-space: nowrap; }
     .trunc { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tabs-row { margin-bottom: 20px; }
+    .pane > .stat-grid { margin-bottom: 24px; }
+
+    /* ── C2C discount card ── */
+    .disc-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 24px; }
+    .disc-main { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .disc-main .stat-ico { position: static; flex: none; }
+    .disc-title { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+    .disc-line { font-size: 15px; color: var(--text); margin-top: 2px; }
+    .disc-line b { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.3px; }
+    .disc-note { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
 
     /* ── Top referrers ── */
     .top-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; padding: 18px 20px 20px; }
@@ -60,22 +71,34 @@
     .search-box input { width: 100%; height: 40px; min-height: 0; padding: 0 14px 0 36px; font-size: 14px; border-radius: var(--radius-md); }
     .filter-select { height: 40px; min-height: 0; width: auto; border-radius: var(--radius-md); padding: 0 14px; font-size: 14px; font-weight: 500; }
     .toolbar .count { margin-left: auto; }
+    .toolbar .toolbar-end { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 
-    /* ── Referral table ── */
+    /* ── Tables ── */
     table.data { table-layout: fixed; min-width: 1000px; }
     table.data td { overflow: hidden; vertical-align: top; }
+    table.data.lite { table-layout: auto; min-width: 720px; }
     .cell-main { font-size: 13.5px; font-weight: 600; color: var(--text); display: block; }
     .cell-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; display: block; font-variant-numeric: tabular-nums; }
     .cell-sub.trunc { display: block; }
     .cell-main.wrap { overflow-wrap: anywhere; }
     .org-line { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; min-width: 0; max-width: 100%; }
-    .rw { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .rw { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
     .rw-sub { font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.45; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
     .rw-sub b { color: var(--text-secondary); font-weight: 600; }
+    .num-cell { font-variant-numeric: tabular-nums; }
     .badge.badge-void { background: var(--surface-muted); color: var(--text-muted); text-decoration: line-through; }
+    .row-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 28px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: var(--radius-xs); background: none; color: var(--text-muted); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease); }
+    .row-btn:hover, .row-btn:focus-visible { background: var(--surface-muted); color: var(--text); }
+    .row-btn.danger:hover, .row-btn.danger:focus-visible { background: var(--danger-soft); color: var(--danger); }
+    .row-btn .row-txt { display: none; }
     .void-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: var(--radius-xs); background: none; color: var(--text-muted); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease); }
     .void-btn:hover, .void-btn:focus-visible { background: var(--danger-soft); color: var(--danger); }
     .void-btn .void-txt { display: none; }
+    .link-btn { background: none; border: 0; padding: 0; margin: 0; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--text); text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+    .link-btn:hover, .link-btn:focus-visible { color: var(--primary); text-decoration: underline; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover { background: var(--surface-hover); }
+    .status-cell { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
     tbody tr.state-row:hover { background: none; }
     .state-row td { padding: 0; }
@@ -85,19 +108,75 @@
     .empty-state .empty-icon .ico { width: 24px; height: 24px; }
     .empty-icon.is-error { background: var(--danger-soft); color: var(--danger); }
 
-    /* ── Confirm dialog ── */
+    /* ── Dialogs ── */
     .modal-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.55; overflow-wrap: anywhere; }
     .modal-sub b { color: var(--text); font-weight: 600; }
     .modal-note { margin-top: 10px; font-size: 12.5px; color: var(--text-muted); }
+    .pf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+    .pf-grid .full { grid-column: 1 / -1; }
+    .pf-grid .form-group { margin-bottom: 10px; min-width: 0; }
+    .pf-grid textarea { min-height: 64px; resize: vertical; }
+    .pf-sec { grid-column: 1 / -1; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); margin: 8px 0 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .pf-sec.first { border-top: 0; padding-top: 0; margin-top: 0; }
+    .pf-code { font-family: var(--font-mono); letter-spacing: 2px; text-transform: uppercase; }
+    .cfg-input { width: 120px; }
+
+    /* ── Promoter detail ── */
+    .modal-box.pd-box { max-width: 1040px; }
+    table.data.b2c { min-width: 1160px; }
+    .pd-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pd-title { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .pd-title h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; overflow-wrap: anywhere; }
+    .pd-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pd-chips .code-chip { font-size: 13px; padding: 2px 9px; }
+    .pd-actions { display: flex; align-items: center; gap: 8px; }
+    .pd-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 20px; padding: 14px 16px; background: var(--surface-muted); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 18px; }
+    .pd-meta div { min-width: 0; }
+    .pd-meta dt { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); margin-bottom: 3px; }
+    .pd-meta dd { font-size: 13.5px; color: var(--text); overflow-wrap: anywhere; }
+    .pd-meta a { color: var(--primary); }
+    .pd-sec { margin-top: 22px; }
+    .pd-sec h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .pd-sec h4 .sub { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    tr.row-voided td { color: var(--text-muted); background: var(--surface-muted); }
+    tr.row-voided .amt { text-decoration: line-through; }
+    .void-note { display: block; margin-top: 3px; font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+    .btn-xs-danger { font-size: 12px; padding: 4px 10px; min-height: 0; }
+    .ins-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .ins { background: var(--surface-muted); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; min-width: 0; }
+    .ins span { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+    .ins b { display: block; font-size: 19px; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; color: var(--text); letter-spacing: -0.3px; overflow-wrap: anywhere; }
+    .ins em { display: block; font-style: normal; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .ins.tone-success b { color: var(--success); } .ins.tone-warning b { color: var(--warning); }
+    .pd-two { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; }
+    .trend { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; height: 150px; padding: 0 4px; }
+    .trend .col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; min-width: 0; }
+    .trend .n { font-size: 11.5px; font-weight: 700; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    .trend .barwrap { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
+    .trend .bar { width: 100%; max-width: 46px; border-radius: 6px 6px 0 0; background: rgba(var(--info-rgb), .45); display: flex; align-items: flex-end; overflow: hidden; }
+    .trend .bar .p { width: 100%; background: var(--success); }
+    .trend .m { font-size: 11.5px; color: var(--text-muted); }
+    .trend-legend { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+    .mix { display: grid; gap: 10px; }
+    .mix .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; font-size: 13px; }
+    .mix .row .t { grid-column: 1 / -1; height: 6px; background: var(--border); border-radius: var(--radius-pill); overflow: hidden; }
+    .mix .row .t i { display: block; height: 100%; background: var(--purple); border-radius: var(--radius-pill); }
+    .mix .row b { font-variant-numeric: tabular-nums; }
+    .scroll-y { max-height: 340px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
+    .scroll-y table { min-width: 0; }
+    .pd-note { font-size: 12.5px; color: var(--text-muted); padding: 16px; }
+    .copy-btn { display: inline-flex; align-items: center; gap: 5px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 3px 10px; cursor: pointer; }
+    .copy-btn:hover, .copy-btn:focus-visible { background: var(--surface-muted); color: var(--text); }
 
     /* ── Toast (colour comes from the shared #toast rules; the page JS sets the green / red background inline) ── */
     #toast { position: fixed; bottom: 20px; right: 20px; max-width: min(420px, calc(100vw - 32px)); padding: 12px 18px; font-size: 13.5px; font-weight: 600; z-index: 9999; opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .25s; pointer-events: none; }
 
     @media (max-width: 1280px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 900px) { .pd-two { grid-template-columns: 1fr; } }
 
     /* tablets and phones: every row becomes a compact card */
     @media (max-width: 1100px) {
-      table.data { table-layout: auto; min-width: 0; }
+      table.data, table.data.lite { table-layout: auto; min-width: 0; }
       table.data thead { display: none; }
       table.data, table.data tbody { display: block; width: 100%; }
       table.data tbody tr:not(.state-row) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 16px; padding: 16px; border-bottom: 1px solid var(--border); }
@@ -111,20 +190,26 @@
       table.data .state-row td { display: block; padding: 0; }
       .void-btn { width: auto; height: 28px; padding: 0 10px; border-color: var(--border); }
       .void-btn .void-txt { display: inline; }
+      .row-btn { width: auto; height: 28px; padding: 0 10px; border-color: var(--border); }
+      .row-btn .row-txt { display: inline; }
     }
     @media (max-width: 760px) {
       .kpis { gap: 12px; }
       .kpis .stat-tile { padding: 14px 16px; } .kpis .stat-tile .stat-val { font-size: 24px; }
       .kpis .stat-label { padding-right: 0; }
       .stat-ico { display: none; }
+      .disc-main .stat-ico { display: flex; }
       .toolbar { padding: 12px 16px; }
       .search-box { flex-basis: 100%; max-width: none; }
       .filter-select { flex: 1 1 140px; }
       .toolbar .count { margin-left: 0; }
+      .toolbar .toolbar-end { margin-left: 0; width: 100%; justify-content: space-between; }
       .top-list { grid-template-columns: 1fr; padding: 14px 16px 16px; }
       .page-header-actions { width: 100%; }
       .page-header-actions .btn, .page-header-actions .export-wrap { flex: 1 1 0; }
       .page-header-actions .export-wrap > .btn { width: 100%; justify-content: center; }
+      .pf-grid { grid-template-columns: 1fr; }
+      .trend { gap: 4px; }
     }
   </style>
 </head>
@@ -133,7 +218,210 @@
   <aside class="sidebar" id="app-sidebar" data-active="referrals"></aside>
   <script src="../js/layout.js"></script>
 
+  <!-- Promoter detail (B2C): customers onboarded with the code, insights and the commission ledger -->
+  <div id="pd-modal" class="modal-overlay" onclick="if (event.target === this) closeDetail()">
+    <div class="modal-box modal-lg pd-box" role="dialog" aria-modal="true" aria-labelledby="pd-title">
+      <div class="modal-header">
+        <h2 id="pd-title">Promoter</h2>
+        <button type="button" class="modal-close" id="pd-close" onclick="closeDetail()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div id="pd-body"></div>
+    </div>
+  </div>
+
+  <!-- Create / edit a promoter code (super admin) -->
+  <div id="pf-modal" class="modal-overlay" onclick="if (event.target === this) closePartnerForm()">
+    <div class="modal-box modal-lg" role="dialog" aria-modal="true" aria-labelledby="pf-title">
+      <div class="modal-header">
+        <h2 id="pf-title">New promoter code</h2>
+        <button type="button" class="modal-close" onclick="closePartnerForm()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <form id="pf-form" novalidate onsubmit="savePartner(); return false;">
+        <div class="pf-grid">
+          <div class="pf-sec first">Code and channel</div>
+          <div class="form-group" id="pf-code-group">
+            <label for="pf-code">Referral code</label>
+            <input type="text" id="pf-code" class="pf-code" autocomplete="off" spellcheck="false" placeholder="e.g. CHANL5" oninput="onCodeInput()" aria-describedby="pf-code-hint pf-code-err" />
+            <div class="form-hint" id="pf-code-hint">Type your own code - 6 letters/digits</div>
+            <div class="field-error" id="pf-code-err" role="alert"></div>
+          </div>
+          <div class="form-group">
+            <label for="pf-platform">Social platform</label>
+            <select id="pf-platform" aria-describedby="pf-platform-err">
+              <option value="">Select platform…</option>
+              <option value="youtube">YouTube</option>
+              <option value="instagram">Instagram</option>
+              <option value="facebook">Facebook</option>
+              <option value="x">X (Twitter)</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="telegram">Telegram</option>
+              <option value="blog">Blog / Website</option>
+              <option value="other">Other</option>
+            </select>
+            <div class="field-error" id="pf-platform-err" role="alert"></div>
+          </div>
+          <div class="form-group">
+            <label for="pf-channel">Channel name</label>
+            <input type="text" id="pf-channel" maxlength="150" autocomplete="off" aria-describedby="pf-channel-err" />
+            <div class="field-error" id="pf-channel-err" role="alert"></div>
+          </div>
+          <div class="form-group">
+            <label for="pf-url">Channel link (optional)</label>
+            <input type="url" id="pf-url" maxlength="300" autocomplete="off" placeholder="https://" aria-describedby="pf-url-err" />
+            <div class="field-error" id="pf-url-err" role="alert"></div>
+          </div>
+
+          <div class="pf-sec">Contact</div>
+          <div class="form-group">
+            <label for="pf-contact">Contact person</label>
+            <input type="text" id="pf-contact" maxlength="150" autocomplete="off" aria-describedby="pf-contact-err" />
+            <div class="field-error" id="pf-contact-err" role="alert"></div>
+          </div>
+          <div class="form-group">
+            <label for="pf-phone">Phone</label>
+            <input type="tel" id="pf-phone" maxlength="20" autocomplete="off" aria-describedby="pf-phone-err" />
+            <div class="field-error" id="pf-phone-err" role="alert"></div>
+          </div>
+          <div class="form-group full">
+            <label for="pf-email">Email</label>
+            <input type="email" id="pf-email" maxlength="255" autocomplete="off" aria-describedby="pf-email-err" />
+            <div class="field-error" id="pf-email-err" role="alert"></div>
+          </div>
+          <div class="form-group full">
+            <label for="pf-address">Address</label>
+            <textarea id="pf-address" maxlength="500" rows="2" aria-describedby="pf-address-err"></textarea>
+            <div class="field-error" id="pf-address-err" role="alert"></div>
+          </div>
+          <div class="form-group full">
+            <label for="pf-notes">Other details</label>
+            <textarea id="pf-notes" maxlength="1000" rows="2" aria-describedby="pf-notes-err"></textarea>
+            <div class="field-error" id="pf-notes-err" role="alert"></div>
+          </div>
+
+          <div class="pf-sec">Customer discount and promoter commission</div>
+          <div class="form-group">
+            <label for="pf-percent">Customer discount (%)</label>
+            <input type="number" id="pf-percent" min="1" max="50" step="1" inputmode="numeric" aria-describedby="pf-percent-hint pf-percent-err" />
+            <div class="form-hint" id="pf-percent-hint">Off Prime and Elite plans, 1 to 50.</div>
+            <div class="field-error" id="pf-percent-err" role="alert"></div>
+          </div>
+          <div class="form-group">
+            <label for="pf-days">Reward valid for (days after signup)</label>
+            <input type="number" id="pf-days" min="1" max="3650" step="1" inputmode="numeric" placeholder="Never expires" aria-describedby="pf-days-hint pf-days-err" />
+            <div class="form-hint" id="pf-days-hint">Empty = never expires.</div>
+            <div class="field-error" id="pf-days-err" role="alert"></div>
+          </div>
+          <div class="form-group">
+            <label for="pf-ctype">Commission</label>
+            <select id="pf-ctype" onchange="onCtypeChange()">
+              <option value="none">No commission</option>
+              <option value="percent">Percent of the first paid plan</option>
+              <option value="fixed">Fixed amount per paid customer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="pf-cvalue" id="pf-cvalue-label">Commission value</label>
+            <input type="number" id="pf-cvalue" min="0" step="0.01" inputmode="decimal" aria-describedby="pf-cvalue-hint pf-cvalue-err" />
+            <div class="form-hint" id="pf-cvalue-hint"></div>
+            <div class="field-error" id="pf-cvalue-err" role="alert"></div>
+          </div>
+          <div class="form-group" id="pf-status-group">
+            <label for="pf-status">Status</label>
+            <select id="pf-status"><option value="active">Active</option><option value="inactive">Inactive</option></select>
+            <div class="form-hint">An inactive code is refused at signup. Rewards already issued stay valid.</div>
+          </div>
+        </div>
+        <div class="field-error" id="pf-form-err" role="alert"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closePartnerForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="pf-save">Create code</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Record a payout (super admin) -->
+  <div id="pp-modal" class="modal-overlay" onclick="if (event.target === this) closePayout()">
+    <div class="modal-box modal-sm" role="dialog" aria-modal="true" aria-labelledby="pp-title" aria-describedby="pp-sub">
+      <div class="modal-header">
+        <h2 id="pp-title">Record payout</h2>
+        <button type="button" class="modal-close" onclick="closePayout()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <p class="modal-sub" id="pp-sub"></p>
+      <form id="pp-form" novalidate onsubmit="savePayout(); return false;" style="margin-top:14px;">
+        <div class="form-group">
+          <label for="pp-amount">Amount paid (₹)</label>
+          <input type="number" id="pp-amount" min="0.01" step="0.01" inputmode="decimal" aria-describedby="pp-amount-err" />
+          <div class="field-error" id="pp-amount-err" role="alert"></div>
+        </div>
+        <div class="form-group">
+          <label for="pp-date">Paid on</label>
+          <input type="date" id="pp-date" aria-describedby="pp-date-err" />
+          <div class="field-error" id="pp-date-err" role="alert"></div>
+        </div>
+        <div class="form-group">
+          <label for="pp-ref">Reference (optional)</label>
+          <input type="text" id="pp-ref" maxlength="100" autocomplete="off" placeholder="UTR / transaction id" />
+        </div>
+        <div class="form-group">
+          <label for="pp-note">Note (optional)</label>
+          <textarea id="pp-note" rows="2" maxlength="300"></textarea>
+        </div>
+        <div class="field-error" id="pp-form-err" role="alert"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closePayout()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="pp-save">Record payout</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit the C2C discount percent (super admin) -->
+  <div id="cfg-modal" class="modal-overlay" onclick="if (event.target === this) closeCfg()">
+    <div class="modal-box modal-sm" role="dialog" aria-modal="true" aria-labelledby="cfg-title" aria-describedby="cfg-note">
+      <div class="modal-header">
+        <h2 id="cfg-title">Referral discount</h2>
+        <button type="button" class="modal-close" onclick="closeCfg()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <form id="cfg-form" novalidate onsubmit="saveCfg(); return false;">
+        <div class="form-group">
+          <label for="cfg-percent">Discount for both sides (%)</label>
+          <input type="number" id="cfg-percent" class="cfg-input" step="1" inputmode="numeric" aria-describedby="cfg-hint cfg-err" />
+          <div class="form-hint" id="cfg-hint"></div>
+          <div class="field-error" id="cfg-err" role="alert"></div>
+        </div>
+        <p class="modal-note" id="cfg-note" style="margin-top:0;">Applies to NEW referrals only. Rewards that were already issued keep the percent they were issued with.</p>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeCfg()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="cfg-save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Void confirmation -->
+  <!-- Void a payout (super admin): the amount counts as due again -->
+  <div id="vp-modal" class="modal-overlay" onclick="if (event.target === this) closeVoidPayout()">
+    <div class="modal-box modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="vp-title" aria-describedby="vp-text">
+      <div class="modal-header">
+        <h2 id="vp-title">Void this payout?</h2>
+        <button type="button" class="modal-close" onclick="closeVoidPayout()" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <p class="modal-sub" id="vp-text"></p>
+      <div class="form-group" style="margin-top:14px;">
+        <label for="vp-reason">Reason (optional)</label>
+        <textarea id="vp-reason" rows="2" maxlength="300" placeholder="e.g. wrong amount, transfer failed"></textarea>
+      </div>
+      <p class="modal-note">The payout stays in the list, marked as voided, so there is a record of it. A voided payout cannot be restored: record a new payout if needed.</p>
+      <div class="field-error" id="vp-err" role="alert"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="vp-cancel" onclick="closeVoidPayout()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="vp-confirm" onclick="confirmVoidPayout()"><svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>Void payout</button>
+      </div>
+    </div>
+  </div>
+
   <div id="void-modal" class="modal-overlay" onclick="if (event.target === this) closeVoid()">
     <div class="modal-box modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="void-title" aria-describedby="void-text">
       <div class="modal-header">
@@ -173,7 +461,7 @@
       <div class="page-header">
         <div>
           <h1>Referrals</h1>
-          <p>Refer &amp; Earn: who referred whom, which rewards are earned, and how much discount has been given.</p>
+          <p>Refer &amp; Earn: customer referrals (C2C), and promoter codes for YouTube, Instagram and other channels (B2C) with commission tracking.</p>
         </div>
         <div class="page-header-actions">
           <button type="button" class="btn btn-ghost" onclick="loadPage()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Refresh</button>
@@ -191,51 +479,110 @@
         </div>
       </div>
 
-      <!-- KPI tiles -->
-      <div class="stat-grid kpis" id="kpis"></div>
-
-      <!-- Top referrers -->
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title"><h3>Top referrers</h3></div>
-            <div class="card-sub">Organizations that brought in the most sign-ups. The green part of each bar is the share that went on to pay.</div>
-          </div>
-        </div>
-        <div class="top-list" id="top-list"></div>
+      <div class="tabs tabs-row" role="tablist" aria-label="Referral type">
+        <button type="button" class="tab active" id="tab-c2c" role="tab" aria-selected="true" aria-controls="pane-c2c" onclick="switchTab('c2c')">C2C Referral</button>
+        <button type="button" class="tab" id="tab-b2c" role="tab" aria-selected="false" aria-controls="pane-b2c" onclick="switchTab('b2c')">B2C Referral</button>
       </div>
 
-      <!-- Referrals table -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <h3>All referrals</h3>
-            <span id="ref-count" class="badge badge-gray"></span>
+      <!-- ═════════ C2C: customer to customer ═════════ -->
+      <div id="pane-c2c" class="pane" role="tabpanel" aria-labelledby="tab-c2c">
+
+        <!-- Discount percent -->
+        <div class="card disc-card" id="disc-card"></div>
+
+        <!-- KPI tiles -->
+        <div class="stat-grid kpis" id="kpis"></div>
+
+        <!-- Top referrers -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><h3>Top referrers</h3></div>
+              <div class="card-sub">Organizations that brought in the most sign-ups. The green part of each bar is the share that went on to pay.</div>
+            </div>
+          </div>
+          <div class="top-list" id="top-list"></div>
+        </div>
+
+        <!-- Referrals table -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <h3>All referrals</h3>
+              <span id="ref-count" class="badge badge-gray"></span>
+            </div>
+          </div>
+          <div class="toolbar">
+            <div class="search-box">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+              <input type="search" id="ref-search" placeholder="Search organization or referral code…" aria-label="Search referrals" autocomplete="off" oninput="onSearchInput()" />
+            </div>
+            <select class="filter-select" id="ref-status" aria-label="Status" onchange="loadReferrals()">
+              <option value="all">All statuses</option>
+              <option value="signed_up">Signed up</option>
+              <option value="paid">Paid</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table class="data">
+              <thead><tr>
+                <th style="width:19%">Referrer</th>
+                <th style="width:17%">Referred org</th>
+                <th style="width:11%">Signed up</th>
+                <th style="width:10%">Status</th>
+                <th style="width:21%">Referrer reward</th>
+                <th style="width:22%">Referred reward</th>
+              </tr></thead>
+              <tbody id="ref-body"></tbody>
+            </table>
           </div>
         </div>
-        <div class="toolbar">
-          <div class="search-box">
-            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
-            <input type="search" id="ref-search" placeholder="Search organization or referral code…" aria-label="Search referrals" autocomplete="off" oninput="onSearchInput()" />
+      </div>
+
+      <!-- ═════════ B2C: promoters ═════════ -->
+      <div id="pane-b2c" class="pane hidden" role="tabpanel" aria-labelledby="tab-b2c">
+
+        <div class="stat-grid kpis" id="b-kpis"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <h3>Promoter codes</h3>
+                <span id="b-count" class="badge badge-gray"></span>
+              </div>
+              <div class="card-sub">Give a promoter a code. A customer who enters it at signup gets the discount on Prime and Elite. Click a row to see the customers and the commission.</div>
+            </div>
           </div>
-          <select class="filter-select" id="ref-status" aria-label="Status" onchange="loadReferrals()">
-            <option value="all">All statuses</option>
-            <option value="signed_up">Signed up</option>
-            <option value="paid">Paid</option>
-          </select>
-        </div>
-        <div class="table-wrap">
-          <table class="data">
-            <thead><tr>
-              <th style="width:19%">Referrer</th>
-              <th style="width:17%">Referred org</th>
-              <th style="width:11%">Signed up</th>
-              <th style="width:10%">Status</th>
-              <th style="width:21%">Referrer reward</th>
-              <th style="width:22%">Referred reward</th>
-            </tr></thead>
-            <tbody id="ref-body"></tbody>
-          </table>
+          <div class="toolbar">
+            <div class="search-box">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+              <input type="search" id="b-search" placeholder="Search code, channel, contact, phone or email…" aria-label="Search promoter codes" autocomplete="off" oninput="onBSearchInput()" />
+            </div>
+            <select class="filter-select" id="b-status" aria-label="Status" onchange="loadB2C()">
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <div class="toolbar-end">
+              <button type="button" class="btn btn-primary btn-sm hidden" id="b-new" onclick="openPartnerForm(null, this)"><svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>New code</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data b2c">
+              <thead><tr>
+                <th style="width:21%">Promoter</th>
+                <th style="width:15%">Contact</th>
+                <th style="width:11%">Discount</th>
+                <th style="width:13%">Commission</th>
+                <th style="width:9%">Customers</th>
+                <th style="width:10%">Revenue</th>
+                <th style="width:10%">Due</th>
+                <th style="width:11%">Status</th>
+              </tr></thead>
+              <tbody id="b-body"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -250,7 +597,12 @@
     var adminEmail = localStorage.getItem('admin_email') || '';
     /* same rule as faqs.html: role_id 1 is a super operator. The server still decides (require_operator_super). */
     var isSuper = localStorage.getItem('clockyn_admin_role') === '1';
+    var activeTab = 'c2c';
     var SUMMARY = null, TOP = [], ROWS = [], loadSeq = 0, searchTimer = null, pendingVoid = null, voidOpener = null;
+    var PERCENT = null, CFG = null, cfgOpener = null;
+    var B_SUMMARY = null, B_PARTNERS = [], bSeq = 0, bTimer = null, bLoaded = false;
+    var DETAIL = null, detailPid = null, detailSeq = 0, detailOpener = null;
+    var formPid = null, formOpener = null, payoutPid = null, payoutOpener = null, vpId = null, vpOpener = null;
 
     /* Lucide icon paths for markup built in JS */
     var ICONS = {
@@ -264,7 +616,11 @@
       receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
       ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
       inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
-      alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>'
+      alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+      pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+      copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+      plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+      megaphone: '<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>'
     };
     function ico(name, cls) { return '<svg class="ico ' + (cls || 'ico-sm') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>'; }
 
@@ -281,10 +637,12 @@
       var d = new Date(iso);
       return isNaN(d) ? '' : d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) + ' IST';
     }
+    function todayIso() { return new Date().toISOString().slice(0, 10); }
+    function byId(id) { return document.getElementById(id); }
 
     /* ── Toast ── */
     function showToast(msg, ok) {
-      var t = document.getElementById('toast');
+      var t = byId('toast');
       t.textContent = msg;
       t.style.background = ok === false ? '#dc2626' : '#238636';
       t.style.opacity = '1'; t.style.transform = 'translateY(0)';
@@ -301,8 +659,10 @@
       if (Array.isArray(data.detail)) return data.detail.map(function (d) { return d.msg || ''; }).filter(Boolean).join('; ');
       return '';
     }
-    async function call(method, path) {
-      var res = await fetch(API_BASE + path, { method: method, headers: { 'Content-Type': 'application/json', 'x-admin-id': adminEmail }, cache: 'no-store' });
+    async function call(method, path, body) {
+      var opts = { method: method, headers: { 'Content-Type': 'application/json', 'x-admin-id': adminEmail }, cache: 'no-store' };
+      if (body !== undefined) opts.body = JSON.stringify(body);
+      var res = await fetch(API_BASE + path, opts);
       var data = null;
       try { data = await res.json(); } catch (e) { data = null; }
       if (!res.ok) {
@@ -312,32 +672,128 @@
       }
       return data;
     }
+    function writeError(e, what) {
+      return e.status === 403 ? 'Only a super operator can ' + what + '.' : (e.message || 'Something went wrong. Please try again.');
+    }
+
+    /* ── Modals: Escape closes the top-most one, focus goes back to the button that opened it ── */
+    var MODALS = [['pd-modal', 'closeDetail'], ['pf-modal', 'closePartnerForm'], ['pp-modal', 'closePayout'], ['vp-modal', 'closeVoidPayout'], ['cfg-modal', 'closeCfg'], ['void-modal', 'closeVoid']];
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      for (var i = MODALS.length - 1; i >= 0; i--) {
+        if (byId(MODALS[i][0]).classList.contains('open')) { window[MODALS[i][1]](); e.preventDefault(); return; }
+      }
+    });
+    function restoreFocus(el) { if (el && document.contains(el)) el.focus(); }
+
+    /* ── Tabs ── */
+    function switchTab(tab) {
+      activeTab = tab === 'b2c' ? 'b2c' : 'c2c';
+      ['c2c', 'b2c'].forEach(function (t) {
+        byId('pane-' + t).classList.toggle('hidden', t !== activeTab);
+        var b = byId('tab-' + t);
+        b.classList.toggle('active', t === activeTab);
+        b.setAttribute('aria-selected', t === activeTab ? 'true' : 'false');
+      });
+      try { history.replaceState(null, '', activeTab === 'b2c' ? '#b2c' : location.pathname + location.search); } catch (e) { /* file:// or sandbox */ }
+      if (activeTab === 'b2c' && !bLoaded) loadB2C();
+    }
+    function loadPage() {
+      if (activeTab === 'b2c') loadB2C(); else { loadReferrals(); loadConfig(); }
+    }
 
     /* ── Skeletons / states ── */
-    function kpiSkeleton() {
-      var tiles = ['Total referrals', 'Converted (paid)', 'Conversion rate', 'Discount given', 'Rewards issued', 'Available', 'Pending', 'Used'];
-      document.getElementById('kpis').innerHTML = tiles.map(function (t) {
+    function kpiSkeleton(boxId, labels) {
+      byId(boxId).innerHTML = labels.map(function (t) {
         return '<div class="stat-tile"><div class="stat-label">' + t + '</div><div class="skeleton sk-val"></div></div>';
       }).join('');
     }
-    function topSkeleton() { document.getElementById('top-list').innerHTML = '<div class="skeleton top-skel"></div><div class="skeleton top-skel"></div><div class="skeleton top-skel"></div>'; }
-    function stateRow(html) { return '<tr class="state-row"><td colspan="6">' + html + '</td></tr>'; }
-    function skeletonRows() {
+    function topSkeleton() { byId('top-list').innerHTML = '<div class="skeleton top-skel"></div><div class="skeleton top-skel"></div><div class="skeleton top-skel"></div>'; }
+    function stateRow(html, cols) { return '<tr class="state-row"><td colspan="' + (cols || 6) + '">' + html + '</td></tr>'; }
+    function skeletonRows(cols) {
       var w = [100, 92, 96, 88, 94];
-      return stateRow('<div class="sk-stack">' + w.map(function (x) { return '<div class="skeleton skeleton-line" style="width:' + x + '%"></div>'; }).join('') + '</div>');
+      return stateRow('<div class="sk-stack">' + w.map(function (x) { return '<div class="skeleton skeleton-line" style="width:' + x + '%"></div>'; }).join('') + '</div>', cols);
     }
     function emptyState(title, text, icon, retry) {
       return '<div class="empty-state"><div class="empty-icon' + (icon === 'alert' ? ' is-error' : '') + '">' + ico(icon, '') + '</div><h3>' + esc(title) + '</h3>'
         + (text ? '<p>' + esc(text) + '</p>' : '')
         + (retry ? '<button type="button" class="btn btn-ghost btn-sm" onclick="loadPage()" style="margin-top:8px;">Try again</button>' : '') + '</div>';
     }
+    function tiles(boxId, list, none) {
+      byId(boxId).innerHTML = list.map(function (t) {
+        return '<div class="stat-tile"><span class="stat-ico ' + t[4] + '" aria-hidden="true">' + ico(t[3], '') + '</span><div class="stat-label">' + esc(t[0]) + '</div><div class="stat-val">' + (none ? '—' : esc(t[1])) + '</div><div class="stat-sub">' + (none ? '&nbsp;' : esc(t[2])) + '</div></div>';
+      }).join('');
+    }
+
+    /* ═════════════════════════ C2C ═════════════════════════ */
+
+    /* ── Discount percent card + editor ── */
+    function renderDiscount() {
+      var box = byId('disc-card');
+      var has = PERCENT != null && !isNaN(PERCENT);
+      var changed = CFG && CFG.updated_at ? 'Last changed ' + fmtDate(CFG.updated_at) + (CFG.updated_by ? ' by ' + CFG.updated_by : '') + '. ' : '';
+      box.innerHTML = '<div class="disc-main"><span class="stat-ico tone-purple" aria-hidden="true">' + ico('percent', '') + '</span><div style="min-width:0">'
+        + '<div class="disc-title">Referral discount</div>'
+        + '<div class="disc-line">' + (has ? '<b>' + esc(PERCENT) + '% off</b> for the new customer and for the referrer' : '<span class="muted">Not available</span>') + '</div>'
+        + '<div class="disc-note">' + esc(changed) + 'Applies to Prime and Elite plans, once per reward. A change affects new referrals only.</div></div></div>'
+        + (isSuper ? '<button type="button" class="btn btn-ghost btn-sm" id="disc-edit" onclick="openCfg(this)">' + ico('pencil', 'ico-sm') + 'Edit</button>' : '');
+    }
+    async function loadConfig() {
+      try {
+        var data = await call('GET', '/gen-dashboard/referrals/config');
+        if (data && data.c2c_percent != null) { CFG = data; PERCENT = Number(data.c2c_percent); }
+      } catch (e) { /* the card keeps the percent of the referrals payload */ }
+      renderDiscount();
+    }
+    function cfgLimits() {
+      var min = CFG && CFG.min_percent != null ? Number(CFG.min_percent) : 1;
+      var max = CFG && CFG.max_percent != null ? Number(CFG.max_percent) : 50;
+      return { min: min, max: max };
+    }
+    function openCfg(opener) {
+      if (!isSuper) return;
+      var l = cfgLimits(), input = byId('cfg-percent');
+      cfgOpener = opener || null;
+      input.min = l.min; input.max = l.max;
+      input.value = PERCENT != null ? PERCENT : '';
+      byId('cfg-hint').textContent = 'Whole number from ' + l.min + ' to ' + l.max + '.';
+      byId('cfg-err').textContent = '';
+      byId('cfg-modal').classList.add('open');
+      input.focus(); input.select();
+    }
+    function closeCfg() { byId('cfg-modal').classList.remove('open'); restoreFocus(cfgOpener); cfgOpener = null; }
+    async function saveCfg() {
+      var l = cfgLimits(), raw = byId('cfg-percent').value.trim(), n = Number(raw), err = byId('cfg-err');
+      if (raw === '' || !isFinite(n) || n !== Math.floor(n) || n < l.min || n > l.max) {
+        err.textContent = 'Discount must be a whole number from ' + l.min + ' to ' + l.max;
+        byId('cfg-percent').focus();
+        return;
+      }
+      err.textContent = '';
+      var btn = byId('cfg-save');
+      btn.classList.add('is-loading');
+      try {
+        var res = await call('PUT', '/gen-dashboard/referrals/config', { c2c_percent: n });
+        CFG = res || CFG;
+        PERCENT = res && res.c2c_percent != null ? Number(res.c2c_percent) : n;
+        closeCfg();
+        renderDiscount();
+        showToast('Referral discount is now ' + PERCENT + '%');
+      } catch (e) {
+        err.textContent = writeError(e, 'change the referral discount');
+        showToast(err.textContent, false);
+      } finally {
+        btn.classList.remove('is-loading');
+      }
+    }
 
     /* ── KPIs ── */
+    var C_KPI_LABELS = ['Total referrals', 'Converted (paid)', 'Conversion rate', 'Discount given', 'Rewards issued', 'Available', 'Pending', 'Used'];
     function renderKpis() {
       var none = !SUMMARY, s = SUMMARY || {};
       var total = Number(s.total_referrals || 0), conv = Number(s.converted || 0);
       var rate = total ? Math.round(1000 * conv / total) / 10 : 0;
-      var tiles = [
+      tiles('kpis', [
         ['Total referrals', num(total), 'Organizations that signed up with a code', 'users', ''],
         ['Converted (paid)', num(conv), 'Referred orgs that bought a plan', 'badgeCheck', 'tone-success'],
         ['Conversion rate', rate + '%', num(conv) + ' of ' + num(total) + ' signed-up orgs', 'percent', 'tone-info'],
@@ -346,15 +802,12 @@
         ['Available', num(s.rewards_available), 'Ready to use at checkout', 'circleCheck', 'tone-success'],
         ['Pending', num(s.rewards_pending), 'Waiting for the first paid plan', 'hourglass', 'tone-warning'],
         ['Used', num(s.rewards_used), 'Already applied to a purchase', 'receipt', 'tone-info']
-      ];
-      document.getElementById('kpis').innerHTML = tiles.map(function (t) {
-        return '<div class="stat-tile"><span class="stat-ico ' + t[4] + '" aria-hidden="true">' + ico(t[3], '') + '</span><div class="stat-label">' + t[0] + '</div><div class="stat-val">' + (none ? '—' : esc(t[1])) + '</div><div class="stat-sub">' + (none ? '&nbsp;' : esc(t[2])) + '</div></div>';
-      }).join('');
+      ], none);
     }
 
     /* ── Top referrers ── */
     function renderTop() {
-      var box = document.getElementById('top-list');
+      var box = byId('top-list');
       if (!TOP.length) {
         box.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:32px 24px;"><div class="empty-icon">' + ico('users', '') + '</div><h3>No referrers yet</h3><p>Organizations will show up here as soon as someone signs up with their code.</p></div>';
         return;
@@ -377,6 +830,7 @@
       pending:   { cls: 'badge-orange', label: 'Pending' },
       available: { cls: 'badge-green',  label: 'Available' },
       used:      { cls: 'badge-purple', label: 'Used' },
+      expired:   { cls: 'badge-gray',   label: 'Expired' },
       'void':    { cls: 'badge-void',   label: 'Void' }
     };
     function rewardStatus(rw) { return rw && rw.status ? String(rw.status).toLowerCase() : ''; }
@@ -406,9 +860,9 @@
     }
 
     function renderRows() {
-      var tbody = document.getElementById('ref-body');
-      var q = document.getElementById('ref-search').value.trim(), st = document.getElementById('ref-status').value;
-      document.getElementById('ref-count').textContent = ROWS.length + (ROWS.length === 1 ? ' referral' : ' referrals');
+      var tbody = byId('ref-body');
+      var q = byId('ref-search').value.trim(), st = byId('ref-status').value;
+      byId('ref-count').textContent = ROWS.length + (ROWS.length === 1 ? ' referral' : ' referrals');
       if (!ROWS.length) {
         tbody.innerHTML = stateRow((q || st !== 'all')
           ? emptyState('No matching referrals', 'Try a different search or status.', 'inbox')
@@ -434,29 +888,30 @@
     /* ── Load ── */
     async function loadReferrals() {
       var mySeq = ++loadSeq;
-      var status = document.getElementById('ref-status').value;
-      var q = document.getElementById('ref-search').value.trim();
+      var status = byId('ref-status').value;
+      var q = byId('ref-search').value.trim();
       var path = '/gen-dashboard/referrals?status=' + encodeURIComponent(status) + (q ? '&q=' + encodeURIComponent(q) : '');
-      document.getElementById('ref-body').innerHTML = skeletonRows();
+      byId('ref-body').innerHTML = skeletonRows(6);
       try {
         var data = await call('GET', path);
         if (mySeq !== loadSeq) return;                         /* a newer request is in flight: ignore this answer */
+        data = data || {};
         SUMMARY = data.summary || {}; TOP = data.top_referrers || []; ROWS = data.referrals || [];
-        renderKpis(); renderTop(); renderRows();
+        if (data.percent != null && !isNaN(Number(data.percent))) PERCENT = Number(data.percent);
+        renderDiscount(); renderKpis(); renderTop(); renderRows();
       } catch (e) {
         if (mySeq !== loadSeq) return;
         SUMMARY = null; TOP = []; ROWS = [];
         renderKpis();
-        document.getElementById('top-list').innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:32px 24px;"><div class="empty-icon is-error">' + ico('alert', '') + '</div><h3>Couldn’t load top referrers</h3></div>';
-        document.getElementById('ref-count').textContent = '';
-        document.getElementById('ref-body').innerHTML = stateRow(emptyState('Couldn’t load referrals', e.message || 'Check your connection and try again.', 'alert', true));
+        byId('top-list').innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:32px 24px;"><div class="empty-icon is-error">' + ico('alert', '') + '</div><h3>Couldn’t load top referrers</h3></div>';
+        byId('ref-count').textContent = '';
+        byId('ref-body').innerHTML = stateRow(emptyState('Couldn’t load referrals', e.message || 'Check your connection and try again.', 'alert', true));
       }
     }
-    function loadPage() { loadReferrals(); }
     function onSearchInput() { clearTimeout(searchTimer); searchTimer = setTimeout(loadReferrals, 350); }
 
     /* ── Void (styled confirmation, same pattern as coupons.html) ── */
-    document.getElementById('ref-body').addEventListener('click', function (e) {
+    byId('ref-body').addEventListener('click', function (e) {
       var btn = e.target.closest('button.void-btn');
       if (!btn) return;
       var row = ROWS.filter(function (r) { return String(r.referral_id) === btn.getAttribute('data-ref'); })[0];
@@ -470,23 +925,20 @@
       var owner = isReferrer ? row.referrer_org_name : row.referred_org_name;
       pendingVoid = { rewardId: rw.reward_id, owner: owner };
       voidOpener = opener || null;
-      document.getElementById('void-text').innerHTML = 'Void the <b>' + esc(rewardStatus(rw)) + '</b> 10% reward of <b>' + esc(owner || 'this organization') + '</b> ('
+      byId('void-text').innerHTML = 'Void the <b>' + esc(rewardStatus(rw)) + '</b> ' + (rw.percent != null ? esc(rw.percent) + '% ' : '') + 'reward of <b>' + esc(owner || 'this organization') + '</b> ('
         + (isReferrer ? 'referrer of ' + esc(row.referred_org_name || 'this org') : 'referred by ' + esc(row.referrer_org_name || 'this org')) + ')?';
-      document.getElementById('void-modal').classList.add('open');
-      document.getElementById('void-cancel').focus();
+      byId('void-modal').classList.add('open');
+      byId('void-cancel').focus();
     }
     function closeVoid() {
-      document.getElementById('void-modal').classList.remove('open');
+      byId('void-modal').classList.remove('open');
       pendingVoid = null;
-      if (voidOpener && document.contains(voidOpener)) voidOpener.focus();
+      restoreFocus(voidOpener);
       voidOpener = null;
     }
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && document.getElementById('void-modal').classList.contains('open')) closeVoid();
-    });
     async function confirmVoid() {
       if (!pendingVoid) return;
-      var job = pendingVoid, btn = document.getElementById('void-confirm');
+      var job = pendingVoid, btn = byId('void-confirm');
       btn.classList.add('is-loading');
       try {
         await call('POST', '/gen-dashboard/referrals/rewards/' + encodeURIComponent(job.rewardId) + '/void');
@@ -495,20 +947,481 @@
         loadReferrals();
       } catch (e) {
         closeVoid();
-        var msg = e.status === 403 ? 'Only a super operator can void rewards.' : (e.message || 'Could not void the reward.');
-        showToast(msg, false);
+        showToast(writeError(e, 'void rewards'), false);
         if (e.status === 409) loadReferrals();                  /* it was already used / voided: show the current state */
       } finally {
         btn.classList.remove('is-loading');
       }
     }
 
-    /* ── Export (current table, flattened) ── */
+    /* ═════════════════════════ B2C ═════════════════════════ */
+    var PLATFORMS = {
+      youtube: ['YouTube', 'badge-red'], instagram: ['Instagram', 'badge-purple'], facebook: ['Facebook', 'badge-blue'],
+      x: ['X (Twitter)', 'badge-gray'], linkedin: ['LinkedIn', 'badge-blue'], whatsapp: ['WhatsApp', 'badge-green'],
+      telegram: ['Telegram', 'badge-blue'], blog: ['Blog / Website', 'badge-orange'], other: ['Other', 'badge-gray']
+    };
+    function platformLabel(slug) { var p = PLATFORMS[String(slug || '').toLowerCase()]; return p ? p[0] : (slug ? String(slug).charAt(0).toUpperCase() + String(slug).slice(1) : '—'); }
+    function platformBadge(slug) { var p = PLATFORMS[String(slug || '').toLowerCase()]; return '<span class="badge ' + (p ? p[1] : 'badge-gray') + '">' + esc(platformLabel(slug)) + '</span>'; }
+    function statusBadge(p) { var on = String(p.status || '').toLowerCase() === 'active'; return '<span class="badge badge-dot ' + (on ? 'badge-green' : 'badge-gray') + '">' + (on ? 'Active' : 'Inactive') + '</span>'; }
+    function expiryText(d) { var n = d == null || d === '' ? null : Number(d); return n ? n + (n === 1 ? ' day' : ' days') : 'No expiry'; }
+    function commissionText(p) {
+      var t = String(p.commission_type || 'none').toLowerCase(), v = Number(p.commission_value || 0);
+      if (t === 'percent') return v + '% of first plan';
+      if (t === 'fixed') return money(v) + ' per paid customer';
+      return 'None';
+    }
+    function safeUrl(u) { return /^https?:\/\/[^\s]+$/i.test(String(u || '')) ? String(u) : ''; }
+    function findPartner(pid) {
+      if (DETAIL && DETAIL.partner && String(DETAIL.partner.partner_id) === String(pid)) return DETAIL.partner;
+      return B_PARTNERS.filter(function (p) { return String(p.partner_id) === String(pid); })[0] || null;
+    }
+
+    var B_KPI_LABELS = ['Promoters', 'Signups', 'Paid customers', 'Revenue', 'Discount given', 'Commission earned', 'Commission paid', 'Commission due'];
+    function renderBKpis() {
+      var none = !B_SUMMARY, s = B_SUMMARY || {};
+      var signups = Number(s.signups || 0), conv = Number(s.converted || 0);
+      var rate = signups ? Math.round(1000 * conv / signups) / 10 : 0;
+      tiles('b-kpis', [
+        ['Promoters', num(s.partners), num(s.active) + ' active', 'megaphone', ''],
+        ['Signups', num(signups), 'Organizations that used a promoter code', 'users', 'tone-info'],
+        ['Paid customers', num(conv), rate + '% of signups', 'badgeCheck', 'tone-success'],
+        ['Revenue', money(s.revenue), 'Plan amount excl. GST from these customers', 'rupee', 'tone-purple'],
+        ['Discount given', money(s.discount_given), 'Total value of rewards used', 'percent', ''],
+        ['Commission earned', money(s.commission_earned), 'On first paid plans', 'receipt', 'tone-warning'],
+        ['Commission paid', money(s.commission_paid), 'Payouts recorded', 'circleCheck', 'tone-success'],
+        ['Commission due', money(s.commission_due), 'Still to pay to promoters', 'hourglass', 'tone-warning']
+      ], none);
+    }
+
+    function renderBRows() {
+      var tbody = byId('b-body');
+      var q = byId('b-search').value.trim(), st = byId('b-status').value;
+      byId('b-count').textContent = B_PARTNERS.length + (B_PARTNERS.length === 1 ? ' code' : ' codes');
+      if (!B_PARTNERS.length) {
+        tbody.innerHTML = stateRow((q || st !== 'all')
+          ? emptyState('No matching promoter codes', 'Try a different search or status.', 'inbox')
+          : emptyState('No promoter codes yet', isSuper ? 'Use “New code” to create the first code for a YouTube, Instagram or other channel.' : 'A super operator can create promoter codes.', 'megaphone'), 8);
+        return;
+      }
+      tbody.innerHTML = B_PARTNERS.map(function (p) {
+        var contact = [p.contact_name, p.phone, p.email].filter(Boolean);
+        var contactHtml = contact.length
+          ? '<span class="cell-main wrap">' + esc(p.contact_name || p.phone || p.email) + '</span>' + contact.slice(1).map(function (c) { return '<span class="cell-sub trunc" title="' + esc(c) + '">' + esc(c) + '</span>'; }).join('')
+          : '<span class="muted">—</span>';
+        var due = Number(p.commission_due || 0);
+        return '<tr class="clickable" data-pid="' + esc(p.partner_id) + '">'
+          + '<td data-label="" class="c-main"><div class="org-line"><button type="button" class="link-btn" data-open="' + esc(p.partner_id) + '" title="Open details">' + esc(p.channel_name || '—') + '</button>'
+          + '<div class="rw"><span class="code-chip" title="Referral code">' + esc(p.code) + '</span>' + platformBadge(p.platform) + '</div></div></td>'
+          + '<td data-label="Contact">' + contactHtml + '</td>'
+          + '<td data-label="Discount"><span class="cell-main">' + esc(p.discount_percent) + '% off</span><span class="cell-sub">' + esc(expiryText(p.reward_valid_days)) + '</span></td>'
+          + '<td data-label="Commission"><span class="cell-main wrap">' + esc(commissionText(p)) + '</span></td>'
+          + '<td data-label="Customers" class="num-cell"><span class="cell-main">' + num(p.signups) + ' signup' + (Number(p.signups) === 1 ? '' : 's') + '</span><span class="cell-sub">' + num(p.converted) + ' paid</span></td>'
+          + '<td data-label="Revenue" class="num-cell"><span class="cell-main">' + esc(money(p.revenue)) + '</span></td>'
+          + '<td data-label="Commission due" class="num-cell" title="Commission still to pay"><span class="cell-main"' + (due > 0 ? ' style="color:var(--warning)"' : '') + '>' + esc(money(due)) + '</span><span class="cell-sub">of ' + esc(money(p.commission_earned)) + ' earned</span></td>'
+          + '<td data-label="" class="c-status"><div class="status-cell">' + statusBadge(p)
+          + (isSuper ? '<button type="button" class="row-btn" data-edit="' + esc(p.partner_id) + '" title="Edit" aria-label="Edit ' + esc(p.code) + '">' + ico('pencil', 'ico-xs') + '<span class="row-txt">Edit</span></button>' : '')
+          + '</div></td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    async function loadB2C() {
+      var mySeq = ++bSeq;
+      var status = byId('b-status').value, q = byId('b-search').value.trim();
+      var path = '/gen-dashboard/referrals/b2c?status=' + encodeURIComponent(status) + (q ? '&q=' + encodeURIComponent(q) : '');
+      byId('b-new').classList.toggle('hidden', !isSuper);
+      if (!bLoaded) kpiSkeleton('b-kpis', B_KPI_LABELS);
+      byId('b-body').innerHTML = skeletonRows(8);
+      try {
+        var data = await call('GET', path);
+        if (mySeq !== bSeq) return;
+        data = data || {};
+        bLoaded = true;
+        B_SUMMARY = data.summary || {}; B_PARTNERS = data.partners || [];
+        renderBKpis(); renderBRows();
+      } catch (e) {
+        if (mySeq !== bSeq) return;
+        B_SUMMARY = null; B_PARTNERS = []; bLoaded = true;
+        renderBKpis();
+        byId('b-count').textContent = '';
+        byId('b-body').innerHTML = stateRow(emptyState('Couldn’t load promoter codes', e.message || 'Check your connection and try again.', 'alert', true), 8);
+      }
+    }
+    function onBSearchInput() { clearTimeout(bTimer); bTimer = setTimeout(loadB2C, 350); }
+
+    byId('b-body').addEventListener('click', function (e) {
+      var edit = e.target.closest('button[data-edit]');
+      if (edit) { openPartnerForm(edit.getAttribute('data-edit'), edit); return; }
+      var tr = e.target.closest('tr[data-pid]');
+      if (!tr) return;
+      var opener = tr.querySelector('button[data-open]');
+      openDetail(tr.getAttribute('data-pid'), opener || tr);
+    });
+
+    /* ── Promoter detail ── */
+    function openDetail(pid, opener) {
+      detailPid = pid; detailOpener = opener || null; DETAIL = null;
+      var p = findPartner(pid);
+      byId('pd-title').textContent = p ? p.channel_name : 'Promoter';
+      byId('pd-body').innerHTML = '<div class="sk-stack" style="padding:8px 0"><div class="skeleton skeleton-line" style="width:60%"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line" style="width:90%"></div><div class="skeleton skeleton-line" style="width:80%"></div></div>';
+      byId('pd-modal').classList.add('open');
+      byId('pd-close').focus();
+      loadDetail(pid);
+    }
+    function closeDetail() {
+      byId('pd-modal').classList.remove('open');
+      detailPid = null; DETAIL = null; detailSeq++;
+      restoreFocus(detailOpener);
+      detailOpener = null;
+    }
+    async function loadDetail(pid) {
+      var mySeq = ++detailSeq;
+      try {
+        var data = await call('GET', '/gen-dashboard/referrals/b2c/' + encodeURIComponent(pid));
+        if (mySeq !== detailSeq || String(detailPid) !== String(pid)) return;
+        DETAIL = data || {};
+        renderDetail();
+      } catch (e) {
+        if (mySeq !== detailSeq) return;
+        byId('pd-body').innerHTML = emptyState('Couldn’t load this promoter', e.message || 'Check your connection and try again.', 'alert', false)
+          + '<div style="text-align:center"><button type="button" class="btn btn-ghost btn-sm" onclick="loadDetail(detailPid)">Try again</button></div>';
+      }
+    }
+
+    function insTile(label, value, sub, tone) { return '<div class="ins' + (tone ? ' tone-' + tone : '') + '"><span>' + esc(label) + '</span><b>' + esc(value) + '</b>' + (sub ? '<em>' + esc(sub) + '</em>' : '') + '</div>'; }
+    function monthLabel(m) {
+      var d = new Date(String(m) + '-01T00:00:00');
+      return isNaN(d) ? String(m) : d.toLocaleDateString('en-IN', { month: 'short' });
+    }
+    function monthTitle(m) {
+      var d = new Date(String(m) + '-01T00:00:00');
+      return isNaN(d) ? String(m) : d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    }
+    function renderTrend(list) {
+      if (!list.length) return '<div class="pd-note">No sign-ups yet.</div>';
+      var max = list.reduce(function (m, r) { return Math.max(m, Number(r.signups || 0)); }, 1);
+      return '<div class="trend" role="list">' + list.map(function (r) {
+        var s = Number(r.signups || 0), c = Math.min(Number(r.converted || 0), s);
+        var h = s ? Math.max(6, Math.round(100 * s / max)) : 0, hp = s ? Math.round(100 * c / s) : 0;
+        var title = monthTitle(r.month) + ': ' + s + ' signup' + (s === 1 ? '' : 's') + ', ' + c + ' paid, ' + money(r.revenue) + ' revenue';
+        return '<div class="col" role="listitem" title="' + esc(title) + '" aria-label="' + esc(title) + '"><span class="n">' + num(s) + '</span>'
+          + '<div class="barwrap"><div class="bar" style="height:' + h + '%"><div class="p" style="height:' + hp + '%"></div></div></div><span class="m">' + esc(monthLabel(r.month)) + '</span></div>';
+      }).join('') + '</div><div class="trend-legend">Bar = sign-ups per month, green part = customers who paid.</div>';
+    }
+    function renderMix(list) {
+      if (!list.length) return '<div class="pd-note" style="padding:0">No paid plans yet.</div>';
+      var max = list.reduce(function (m, r) { return Math.max(m, Number(r.customers || 0)); }, 1);
+      return '<div class="mix">' + list.map(function (r) {
+        return '<div class="row"><span>' + esc(r.plan_name || '—') + '</span><b>' + num(r.customers) + '</b><span class="t"><i style="width:' + Math.max(4, Math.round(100 * Number(r.customers || 0) / max)) + '%"></i></span></div>';
+      }).join('') + '</div>';
+    }
+    function rewardBadge(c) {
+      var st = String(c.reward_status || '').toLowerCase();
+      if (!REWARD[st]) return '<span class="muted">—</span>';
+      var sub = '';
+      if (st === 'used' && c.discount_amount != null) sub = '<span class="cell-sub">−' + esc(money(c.discount_amount)) + '</span>';
+      else if (st === 'available' && c.reward_expires_at) sub = '<span class="cell-sub">Expires ' + esc(fmtDate(c.reward_expires_at)) + '</span>';
+      else if (st === 'expired' && c.reward_expires_at) sub = '<span class="cell-sub">Expired ' + esc(fmtDate(c.reward_expires_at)) + '</span>';
+      return '<span class="badge badge-dot ' + REWARD[st].cls + '">' + REWARD[st].label + '</span>' + sub;
+    }
+    function renderCustomers(list) {
+      if (!list.length) return '<div class="pd-note">No customer has signed up with this code yet.</div>';
+      return '<div class="scroll-y"><table class="data lite"><thead><tr><th>Organization</th><th>Signed up</th><th>Status</th><th>First plan</th><th>Reward</th><th>Commission</th></tr></thead><tbody>'
+        + list.map(function (c) {
+          var paid = c.status === 'paid';
+          return '<tr>'
+            + '<td data-label="" class="c-main"><span class="cell-main wrap">' + esc(c.org_name || '—') + '</span></td>'
+            + '<td data-label="Signed up"><span class="nowrap" title="' + esc(fmtDateTime(c.signed_up_at)) + '">' + esc(fmtDate(c.signed_up_at) || '—') + '</span></td>'
+            + '<td data-label="" class="c-status"><span class="badge badge-dot ' + (paid ? 'badge-green' : 'badge-blue') + '">' + (paid ? 'Paid' : 'Signed up') + '</span>'
+            + (paid && c.qualified_at ? '<span class="cell-sub nowrap">' + esc(fmtDate(c.qualified_at)) + '</span>' : '') + '</td>'
+            + '<td data-label="First plan">' + (c.plan_name ? '<span class="cell-main">' + esc(c.plan_name) + '</span><span class="cell-sub">' + esc(c.first_payment != null ? money(c.first_payment) : '') + '</span>' : '<span class="muted">—</span>') + '</td>'
+            + '<td data-label="Reward" class="c-reward">' + rewardBadge(c) + '</td>'
+            + '<td data-label="Commission" class="num-cell">' + (c.commission_amount != null ? esc(money(c.commission_amount)) : '<span class="muted">—</span>') + '</td>'
+            + '</tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    function payoutVoided(r) { return r && String(r.status || '').toLowerCase() === 'voided'; }
+    function payoutCountText(list) {
+      var voided = list.filter(payoutVoided).length, live = list.length - voided;
+      return num(live) + ' payout' + (live === 1 ? '' : 's') + (voided ? ', ' + num(voided) + ' voided' : '');
+    }
+    function renderPayouts(list) {
+      if (!list.length) return '<div class="pd-note" style="padding:12px 0 0">No payouts recorded yet.</div>';
+      return '<div class="scroll-y" style="margin-top:12px"><table class="data lite"><thead><tr><th>Paid on</th><th>Amount</th><th>Reference</th><th>Note</th><th>Recorded by</th><th>Status</th></tr></thead><tbody>'
+        + list.map(function (r) {
+          var voided = payoutVoided(r);
+          var status = voided
+            ? '<span class="badge badge-void badge-gray">Voided</span><span class="void-note">Voided'
+              + (r.voided_by ? ' by ' + esc(r.voided_by) : '') + (r.voided_at ? ' on ' + esc(fmtDate(r.voided_at)) : '')
+              + (r.void_reason ? ' - ' + esc(r.void_reason) : '') + '</span>'
+            : '<span class="badge badge-dot badge-green">Paid</span>'
+              + (isSuper ? ' <button type="button" class="btn btn-ghost btn-sm btn-xs-danger" data-void-payout="' + esc(r.payout_id) + '" onclick="openVoidPayout(' + Number(r.payout_id) + ', this)" aria-label="Void the payout of ' + esc(money(r.amount)) + ' paid on ' + esc(fmtDate(r.paid_on) || r.paid_on || '') + '">Void</button>' : '');
+          return '<tr' + (voided ? ' class="row-voided" data-voided="1"' : '') + ' data-payout="' + esc(r.payout_id) + '"><td data-label="Paid on" class="c-main"><span class="nowrap">' + esc(fmtDate(r.paid_on) || r.paid_on || '—') + '</span></td>'
+            + '<td data-label="Amount" class="num-cell"><span class="cell-main amt">' + esc(money(r.amount)) + '</span></td>'
+            + '<td data-label="Reference">' + esc(r.reference || '—') + '</td>'
+            + '<td data-label="Note"><span class="cell-sub wrap" style="margin:0">' + esc(r.note || '—') + '</span></td>'
+            + '<td data-label="Recorded by"><span class="cell-sub" style="margin:0">' + esc(r.created_by || '—') + '</span></td>'
+            + '<td data-label="Status">' + status + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    function renderDetail() {
+      var d = DETAIL || {}, p = d.partner || findPartner(detailPid) || {}, ins = d.insights || {};
+      var customers = d.customers || [], payouts = d.payouts || [], monthly = ins.monthly || [], plans = ins.plans || [];
+      byId('pd-title').textContent = p.channel_name || 'Promoter';
+      var due = Number(ins.commission_due != null ? ins.commission_due : p.commission_due || 0);
+      var url = safeUrl(p.channel_url);
+      var meta = [
+        ['Contact person', p.contact_name], ['Phone', p.phone], ['Email', p.email], ['Address', p.address],
+        ['Channel link', url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(url) + '</a>' : '', true],
+        ['Notes', p.notes]
+      ].filter(function (m) { return m[1]; });
+      byId('pd-body').innerHTML =
+        '<div class="pd-head"><div class="pd-title"><div class="pd-chips"><span class="code-chip" title="Referral code">' + esc(p.code) + '</span>'
+        + '<button type="button" class="copy-btn" id="pd-copy" onclick="copyCode(this)" data-code="' + esc(p.code) + '" aria-label="Copy code ' + esc(p.code) + '">' + ico('copy', 'ico-xs') + 'Copy</button>'
+        + platformBadge(p.platform) + statusBadge(p) + '</div>'
+        + '<div class="card-sub" style="margin:0">' + esc(p.discount_percent) + '% off Prime and Elite · reward valid: ' + esc(expiryText(p.reward_valid_days)) + ' · commission: ' + esc(commissionText(p))
+        + (p.created_at ? ' · created ' + esc(fmtDate(p.created_at)) + (p.created_by ? ' by ' + esc(p.created_by) : '') : '') + '</div></div>'
+        + '<div class="pd-actions">' + (isSuper ? '<button type="button" class="btn btn-ghost btn-sm" onclick="openPartnerForm(detailPid, this)">' + ico('pencil', 'ico-sm') + 'Edit</button>' : '') + '</div></div>'
+        + (meta.length ? '<dl class="pd-meta">' + meta.map(function (m) { return '<div><dt>' + esc(m[0]) + '</dt><dd>' + (m[2] ? m[1] : esc(m[1])) + '</dd></div>'; }).join('') + '</dl>' : '')
+        + '<div class="ins-grid">'
+        + insTile('Signups', num(ins.signups), ins.last_signup_at ? 'Last ' + fmtDate(ins.last_signup_at) : 'No sign-up yet')
+        + insTile('Paid customers', num(ins.converted), Number(ins.conversion_rate || 0) + '% conversion', 'success')
+        + insTile('Revenue', money(ins.revenue), 'Excl. GST, all paid orders')
+        + insTile('Discount given', money(ins.discount_given), num(ins.rewards_used) + ' reward' + (Number(ins.rewards_used) === 1 ? '' : 's') + ' used')
+        + insTile('Rewards expired', num(ins.rewards_expired), 'Never used in time')
+        + '</div>'
+        + '<div class="pd-two pd-sec"><div><h4>Sign-ups by month <span class="sub">last 6 months</span></h4>' + renderTrend(monthly) + '</div>'
+        + '<div><h4>Plans bought</h4>' + renderMix(plans) + '</div></div>'
+        + '<div class="pd-sec"><h4>Customers onboarded <span class="sub">' + num(customers.length) + ' total</span></h4>' + renderCustomers(customers) + '</div>'
+        + '<div class="pd-sec"><h4>Commission <span class="sub">' + esc(commissionText(p)) + '</span>'
+        + (isSuper ? '<button type="button" class="btn btn-primary btn-sm" id="pd-payout"' + (due > 0 ? '' : ' disabled title="Nothing is due"') + ' onclick="openPayout(detailPid, this)">' + ico('plus', 'ico-sm') + 'Record payout</button>' : '') + '</h4>'
+        + '<div class="ins-grid">' + insTile('Earned', money(ins.commission_earned), 'On first paid plans') + insTile('Paid', money(ins.commission_paid), payoutCountText(payouts), 'success') + insTile('Due', money(due), 'Still to pay', due > 0 ? 'warning' : '') + '</div>'
+        + renderPayouts(payouts) + '</div>';
+    }
+    function copyCode(btn) {
+      var code = btn.getAttribute('data-code') || '';
+      function done(ok) { showToast(ok ? 'Code ' + code + ' copied' : 'Could not copy the code', ok); }
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(code).then(function () { done(true); }, function () { done(false); }); return; }
+      try {
+        var ta = document.createElement('textarea'); ta.value = code; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); var ok = document.execCommand('copy'); document.body.removeChild(ta); done(ok);
+      } catch (e) { done(false); }
+    }
+
+    /* ── Create / edit a code ── */
+    var FIELD_IDS = ['code', 'platform', 'channel', 'url', 'contact', 'phone', 'email', 'address', 'notes', 'percent', 'days', 'cvalue'];
+    function clearFormErrors() { FIELD_IDS.forEach(function (f) { byId('pf-' + f + '-err').textContent = ''; }); byId('pf-form-err').textContent = ''; }
+    function fieldError(f, msg) { byId('pf-' + f + '-err').textContent = msg; }
+    function onCodeInput() {
+      var el = byId('pf-code'), v = el.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+      if (el.value !== v) el.value = v;
+      byId('pf-code-hint').textContent = 'Type your own code - 6 letters/digits' + (v ? ' (' + v.length + '/6)' : '');
+      byId('pf-code-err').textContent = '';
+    }
+    function onCtypeChange() {
+      var t = byId('pf-ctype').value, input = byId('pf-cvalue'), label = byId('pf-cvalue-label'), hint = byId('pf-cvalue-hint');
+      input.disabled = t === 'none';
+      if (t === 'none') { input.value = ''; label.textContent = 'Commission value'; hint.textContent = 'No commission is tracked for this promoter.'; input.removeAttribute('max'); input.placeholder = ''; }
+      else if (t === 'percent') { label.textContent = 'Commission (% of first paid plan)'; hint.textContent = 'Of the customer’s first paid plan amount, excluding GST. Above 0, up to 100.'; input.max = 100; input.placeholder = 'e.g. 10'; }
+      else { label.textContent = 'Commission per paid customer (₹)'; hint.textContent = 'A fixed amount for every customer who pays for a plan.'; input.removeAttribute('max'); input.placeholder = 'e.g. 500'; }
+    }
+    function openPartnerForm(pid, opener) {
+      if (!isSuper) return;
+      formPid = pid || null; formOpener = opener || null;
+      var p = formPid ? findPartner(formPid) : null;
+      if (formPid && !p) return;
+      clearFormErrors();
+      byId('pf-title').textContent = p ? 'Edit promoter — ' + p.code : 'New promoter code';
+      byId('pf-save').textContent = p ? 'Save changes' : 'Create code';
+      var codeEl = byId('pf-code');
+      codeEl.value = p ? p.code : ''; codeEl.readOnly = !!p;
+      byId('pf-code-hint').textContent = p ? 'The code cannot be changed.' : 'Type your own code - 6 letters/digits';
+      byId('pf-status-group').classList.toggle('hidden', !p);
+      var v = function (x) { return x == null ? '' : x; };
+      byId('pf-platform').value = p ? (p.platform || '') : '';
+      byId('pf-channel').value = p ? v(p.channel_name) : '';
+      byId('pf-url').value = p ? v(p.channel_url) : '';
+      byId('pf-contact').value = p ? v(p.contact_name) : '';
+      byId('pf-phone').value = p ? v(p.phone) : '';
+      byId('pf-email').value = p ? v(p.email) : '';
+      byId('pf-address').value = p ? v(p.address) : '';
+      byId('pf-notes').value = p ? v(p.notes) : '';
+      byId('pf-percent').value = p ? v(p.discount_percent) : '';
+      byId('pf-days').value = p ? v(p.reward_valid_days) : '';
+      byId('pf-ctype').value = p ? String(p.commission_type || 'none').toLowerCase() : 'none';
+      byId('pf-status').value = p ? String(p.status || 'active').toLowerCase() : 'active';
+      onCtypeChange();
+      byId('pf-cvalue').value = p && byId('pf-ctype').value !== 'none' ? v(p.commission_value) : '';
+      byId('pf-modal').classList.add('open');
+      (p ? byId('pf-platform') : codeEl).focus();
+    }
+    function closePartnerForm() { byId('pf-modal').classList.remove('open'); restoreFocus(formOpener); formOpener = null; }
+
+    function collectPartner(creating) {
+      var errors = [], first = null;
+      function bad(f, msg) { fieldError(f, msg); errors.push(f); if (!first) first = 'pf-' + f; }
+      var g = function (id) { return byId('pf-' + id).value.trim(); };
+      var opt = function (s) { return s === '' ? null : s; };
+      var body = {};
+      if (creating) {
+        var code = g('code').toUpperCase();
+        if (!/^[A-Z0-9]{6}$/.test(code)) bad('code', 'Code must be exactly 6 letters or digits'); else body.code = code;
+      }
+      var platform = g('platform');
+      if (!platform || !PLATFORMS[platform]) bad('platform', 'Choose a platform'); else body.platform = platform;
+      var channel = g('channel');
+      if (!channel) bad('channel', 'Enter the channel name'); else body.channel_name = channel;
+      var url = g('url');
+      if (url && !safeUrl(url)) bad('url', 'Enter a valid link starting with http:// or https://'); else body.channel_url = opt(url);
+      body.contact_name = opt(g('contact'));
+      var phone = g('phone');
+      if (phone && !(/^[+0-9][0-9 ()\-]{5,18}$/.test(phone) && phone.replace(/\D/g, '').length >= 7 && phone.replace(/\D/g, '').length <= 15)) bad('phone', 'Enter a valid phone number'); else body.phone = opt(phone);
+      var email = g('email');
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) bad('email', 'Enter a valid email address'); else body.email = opt(email);
+      body.address = opt(g('address'));
+      body.notes = opt(g('notes'));
+      var pr = g('percent'), pn = Number(pr);
+      if (pr === '' || !isFinite(pn) || pn !== Math.floor(pn) || pn < 1 || pn > 50) bad('percent', 'Discount must be a whole number from 1 to 50'); else body.discount_percent = pn;
+      var dr = g('days'), dn = Number(dr);
+      if (dr === '') body.reward_valid_days = null;
+      else if (!isFinite(dn) || dn !== Math.floor(dn) || dn < 1 || dn > 3650) bad('days', 'Enter a whole number of days (1 or more), or leave it empty');
+      else body.reward_valid_days = dn;
+      var ct = g('ctype'), cr = g('cvalue'), cn = Number(cr);
+      body.commission_type = ct;
+      if (ct === 'none') body.commission_value = 0;
+      else if (ct === 'percent') { if (cr === '' || !isFinite(cn) || cn <= 0 || cn > 100) bad('cvalue', 'Commission percent must be above 0 and at most 100'); else body.commission_value = cn; }
+      else { if (cr === '' || !isFinite(cn) || cn <= 0) bad('cvalue', 'Commission amount must be above 0'); else body.commission_value = cn; }
+      if (!creating) body.status = byId('pf-status').value === 'inactive' ? 'inactive' : 'active';
+      return { body: body, errors: errors, first: first };
+    }
+    async function savePartner() {
+      if (!isSuper) return;
+      clearFormErrors();
+      var creating = !formPid, r = collectPartner(creating);
+      if (r.errors.length) { byId(r.first).focus(); return; }
+      var btn = byId('pf-save');
+      btn.classList.add('is-loading');
+      try {
+        var res = creating
+          ? await call('POST', '/gen-dashboard/referrals/b2c', r.body)
+          : await call('PUT', '/gen-dashboard/referrals/b2c/' + encodeURIComponent(formPid), r.body);
+        var saved = res && res.partner ? res.partner : null;
+        var pid = formPid;
+        closePartnerForm();
+        showToast(creating ? 'Code ' + (saved ? saved.code : r.body.code) + ' created' : 'Promoter updated');
+        loadB2C();
+        if (!creating && detailPid != null && String(detailPid) === String(pid)) loadDetail(pid);
+      } catch (e) {
+        var msg = writeError(e, creating ? 'create promoter codes' : 'edit promoter codes');
+        if (e.status === 409 && creating) fieldError('code', msg); else byId('pf-form-err').textContent = msg;
+        showToast(msg, false);
+      } finally {
+        btn.classList.remove('is-loading');
+      }
+    }
+
+    /* ── Record a payout ── */
+    function openPayout(pid, opener) {
+      if (!isSuper) return;
+      var p = findPartner(pid), due = DETAIL && DETAIL.insights && DETAIL.insights.commission_due != null ? Number(DETAIL.insights.commission_due) : Number(p && p.commission_due || 0);
+      payoutPid = pid; payoutOpener = opener || null;
+      byId('pp-sub').innerHTML = 'Payout to <b>' + esc(p ? p.channel_name : 'the promoter') + '</b> (' + esc(p ? p.code : '') + '). Commission due: <b>' + esc(money(due)) + '</b>.';
+      byId('pp-amount').value = due > 0 ? due : ''; byId('pp-amount').max = due > 0 ? due : '';
+      byId('pp-date').value = todayIso(); byId('pp-date').max = todayIso();
+      byId('pp-ref').value = ''; byId('pp-note').value = '';
+      byId('pp-amount-err').textContent = ''; byId('pp-date-err').textContent = ''; byId('pp-form-err').textContent = '';
+      byId('pp-modal').dataset.due = String(due);
+      byId('pp-modal').classList.add('open');
+      byId('pp-amount').focus(); byId('pp-amount').select();
+    }
+    function closePayout() { byId('pp-modal').classList.remove('open'); restoreFocus(payoutOpener); payoutOpener = null; }
+    async function savePayout() {
+      if (!isSuper || payoutPid == null) return;
+      var due = Number(byId('pp-modal').dataset.due || 0), raw = byId('pp-amount').value.trim(), amount = Number(raw), date = byId('pp-date').value;
+      var ok = true;
+      byId('pp-amount-err').textContent = ''; byId('pp-date-err').textContent = ''; byId('pp-form-err').textContent = '';
+      if (raw === '' || !isFinite(amount) || amount <= 0) { byId('pp-amount-err').textContent = 'Enter an amount above 0'; ok = false; }
+      else if (amount > due + 0.005) { byId('pp-amount-err').textContent = 'The amount cannot be more than the commission due (' + money(due) + ')'; ok = false; }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { byId('pp-date-err').textContent = 'Choose the date of the payment'; ok = false; }
+      else if (date > todayIso()) { byId('pp-date-err').textContent = 'The date cannot be in the future'; ok = false; }
+      if (!ok) { (byId('pp-amount-err').textContent ? byId('pp-amount') : byId('pp-date')).focus(); return; }
+      var body = { amount: Math.round(amount * 100) / 100, paid_on: date };
+      var ref = byId('pp-ref').value.trim(), note = byId('pp-note').value.trim();
+      if (ref) body.reference = ref;
+      if (note) body.note = note;
+      var btn = byId('pp-save'), pid = payoutPid;
+      btn.classList.add('is-loading');
+      try {
+        await call('POST', '/gen-dashboard/referrals/b2c/' + encodeURIComponent(pid) + '/payouts', body);
+        closePayout();
+        showToast('Payout of ' + money(body.amount) + ' recorded');
+        loadB2C();
+        if (detailPid != null && String(detailPid) === String(pid)) loadDetail(pid);
+      } catch (e) {
+        var msg = writeError(e, 'record payouts');
+        byId('pp-form-err').textContent = msg;
+        showToast(msg, false);
+      } finally {
+        btn.classList.remove('is-loading');
+      }
+    }
+
+    /* ── Void a payout ── */
+    function findPayout(id) {
+      var list = (DETAIL && DETAIL.payouts) || [];
+      for (var i = 0; i < list.length; i++) if (String(list[i].payout_id) === String(id)) return list[i];
+      return null;
+    }
+    function openVoidPayout(id, opener) {
+      if (!isSuper) return;
+      var r = findPayout(id);
+      if (!r || payoutVoided(r)) return;
+      vpId = id; vpOpener = opener || null;
+      byId('vp-text').textContent = 'Void this payout of ' + money(r.amount) + ' paid on ' + (fmtDate(r.paid_on) || r.paid_on || '') + '? The amount will count as due again.';
+      byId('vp-reason').value = ''; byId('vp-err').textContent = '';
+      byId('vp-modal').classList.add('open');
+      byId('vp-reason').focus();
+    }
+    function closeVoidPayout() { byId('vp-modal').classList.remove('open'); restoreFocus(vpOpener); vpOpener = null; vpId = null; }
+    async function confirmVoidPayout() {
+      if (!isSuper || vpId == null || detailPid == null) return;
+      var id = vpId, pid = detailPid, btn = byId('vp-confirm'), reason = byId('vp-reason').value.trim();
+      var body = reason ? { reason: reason.slice(0, 300) } : {};
+      btn.classList.add('is-loading');
+      byId('vp-err').textContent = '';
+      try {
+        await call('POST', '/gen-dashboard/referrals/b2c/' + encodeURIComponent(pid) + '/payouts/' + encodeURIComponent(id) + '/void', body);
+        closeVoidPayout();
+        showToast('Payout voided');
+        loadB2C();
+        if (detailPid != null && String(detailPid) === String(pid)) loadDetail(pid);
+      } catch (e) {
+        var msg = writeError(e, 'void payouts');
+        showToast(msg, false);
+        if (e.status === 409 || e.status === 404) {          /* it was voided (or removed) meanwhile: show the current state */
+          closeVoidPayout();
+          loadB2C();
+          if (detailPid != null && String(detailPid) === String(pid)) loadDetail(pid);
+        } else {
+          byId('vp-err').textContent = msg;
+        }
+      } finally {
+        btn.classList.remove('is-loading');
+      }
+    }
+
+    /* ── Export (the tab that is open, flattened) ── */
     var COLS = [
       { key: 'referrer', label: 'Referrer' }, { key: 'code', label: 'Code' }, { key: 'referred', label: 'Referred org' },
       { key: 'signed_up', label: 'Signed up' }, { key: 'status', label: 'Status' },
       { key: 'ref_reward', label: 'Referrer reward' }, { key: 'ref_detail', label: 'Referrer reward detail' },
       { key: 'red_reward', label: 'Referred reward' }, { key: 'red_detail', label: 'Referred reward detail' }
+    ];
+    var B_COLS = [
+      { key: 'code', label: 'Code' }, { key: 'platform', label: 'Platform' }, { key: 'channel', label: 'Channel' }, { key: 'contact', label: 'Contact person' },
+      { key: 'phone', label: 'Phone' }, { key: 'email', label: 'Email' }, { key: 'discount', label: 'Customer discount' }, { key: 'expiry', label: 'Reward validity' },
+      { key: 'commission', label: 'Commission' }, { key: 'signups', label: 'Signups' }, { key: 'paid', label: 'Paid customers' }, { key: 'revenue', label: 'Revenue (excl. GST)' },
+      { key: 'earned', label: 'Commission earned' }, { key: 'paid_out', label: 'Commission paid' }, { key: 'due', label: 'Commission due' }, { key: 'status', label: 'Status' }
     ];
     function rewardText(rw) { return rw && rw.status ? (REWARD[rewardStatus(rw)] || { label: rw.status }).label : '—'; }
     function rewardDetail(rw) {
@@ -525,20 +1438,39 @@
         };
       });
     }
-    function exportReady(libs) {
-      if (!ROWS.length) { showToast('Nothing to export', false); return false; }
+    function bExportRows() {
+      return B_PARTNERS.map(function (p) {
+        return {
+          code: p.code || '', platform: platformLabel(p.platform), channel: p.channel_name || '', contact: p.contact_name || '', phone: p.phone || '', email: p.email || '',
+          discount: p.discount_percent + '%', expiry: expiryText(p.reward_valid_days), commission: commissionText(p),
+          signups: Number(p.signups || 0), paid: Number(p.converted || 0), revenue: Number(p.revenue || 0),
+          earned: Number(p.commission_earned || 0), paid_out: Number(p.commission_paid || 0), due: Number(p.commission_due || 0),
+          status: String(p.status || '').toLowerCase() === 'active' ? 'Active' : 'Inactive'
+        };
+      });
+    }
+    function exportReady(libs, rows) {
+      if (!rows.length) { showToast('Nothing to export', false); return false; }
       if (libs.some(function (l) { return typeof window[l] === 'undefined'; })) { showToast('Export library did not load. Check your connection.', false); return false; }
       return true;
     }
-    function doExportExcel() { document.getElementById('ref-export-menu').classList.remove('open'); if (exportReady(['XLSX'])) exportExcel(exportRows(), COLS, 'Clockyn_Referrals_' + new Date().toISOString().slice(0, 10)); }
-    function doExportPDF() { document.getElementById('ref-export-menu').classList.remove('open'); if (exportReady(['jspdf'])) exportPDF(exportRows(), COLS, 'Clockyn_Referrals_' + new Date().toISOString().slice(0, 10), 'Clockyn - Referrals'); }
+    function exportSet() {
+      return activeTab === 'b2c'
+        ? { rows: bExportRows(), cols: B_COLS, name: 'Clockyn_Promoter_Referrals_', title: 'Clockyn - Promoter (B2C) referrals' }
+        : { rows: exportRows(), cols: COLS, name: 'Clockyn_Referrals_', title: 'Clockyn - Referrals' };
+    }
+    function doExportExcel() { byId('ref-export-menu').classList.remove('open'); var s = exportSet(); if (exportReady(['XLSX'], s.rows)) exportExcel(s.rows, s.cols, s.name + new Date().toISOString().slice(0, 10)); }
+    function doExportPDF() { byId('ref-export-menu').classList.remove('open'); var s = exportSet(); if (exportReady(['jspdf'], s.rows)) exportPDF(s.rows, s.cols, s.name + new Date().toISOString().slice(0, 10), s.title); }
 
     function handleLogout() { showLogoutModal(); }
-    function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open'); }
-    function closeSidebar() { document.querySelector('.sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('open'); }
+    function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('open'); byId('sidebar-overlay').classList.toggle('open'); }
+    function closeSidebar() { document.querySelector('.sidebar').classList.remove('open'); byId('sidebar-overlay').classList.remove('open'); }
 
-    kpiSkeleton(); topSkeleton();
+    kpiSkeleton('kpis', C_KPI_LABELS); topSkeleton(); renderDiscount();
+    byId('b-new').classList.toggle('hidden', !isSuper);
     loadReferrals();
+    loadConfig();
+    if (location.hash === '#b2c') switchTab('b2c');
   </script>
 
 </body>

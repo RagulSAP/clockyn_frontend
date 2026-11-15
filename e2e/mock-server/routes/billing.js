@@ -16,15 +16,16 @@ const RENEW_MONTHS = 12;
 // ── referral rewards (contract: referral_contract.md) ──────────────────────────────────────────────────────────────
 // A reward is usable once, on `new` / `renew` of Prime or Elite (the real server keys this on plan ids 2/3 in one constant; the
 // mock keys on the plan NAME because its catalogues carry several ids per tier), never together with a coupon, 10 % of the staff
-// charge after plan credit. Availability reads the Refer & Earn state (`s.referral`, routes/referral.js) when it exists; before
+// charge after plan credit (the C2C percent comes from routes/referral.js; a B2C reward carries its own). Availability reads the Refer & Earn state (`s.referral`, routes/referral.js) when it exists; before
 // that page is first opened the seed has exactly ONE available reward. Paying with a reward uses it up (`/payments/verify`).
-const REFERRAL_PERCENT = 10;
+const { C2C_PERCENT, expireDue } = require('./referral');
 const REFERRAL_PLANS = ['prime', 'elite'];
 const REFERRAL_SEED_AVAILABLE = 1;
 
 function referralRewardsOf(s, orgId) {
   const r = s.referral;
   if (!r) return null;
+  expireDue(s);
   const rows = (r.rows && r.rows[orgId]) || [];
   return rows.map((x) => x.reward).concat(r.mine && r.mine[orgId] ? [r.mine[orgId]] : []).filter(Boolean);
 }
@@ -33,6 +34,13 @@ function referralAvailable(s, orgId) {
   const rewards = referralRewardsOf(s, orgId);
   if (rewards) return rewards.filter((x) => x.status === 'available').length;
   return Math.max(0, REFERRAL_SEED_AVAILABLE - (s.referralConsumed || 0));
+}
+
+/** Percent of the reward that would be used (the oldest available one), else the C2C percent. */
+function referralPercentOf(s, orgId) {
+  const rewards = referralRewardsOf(s, orgId);
+  const reward = rewards && rewards.find((x) => x.status === 'available');
+  return reward && reward.percent ? reward.percent : C2C_PERCENT;
 }
 
 /** Marks one available reward as used by the paid order (no-op for the pre-page seed, which only counts). */
@@ -123,6 +131,7 @@ function computeQuote(s, b) {
   // 400, like the real server; any other refusal is reported in `referral_message` on the quote, /orders/create answers 400).
   const orgId = D.resolveOrg(s, b.org_id);
   const available = referralAvailable(s, orgId);
+  const referralPercent = referralPercentOf(s, orgId);
   let referralEligible = true;
   let referralNote = null;
   if (mode === 'upgrade') {
@@ -144,7 +153,7 @@ function computeQuote(s, b) {
     else if (!referralEligible) referralMessage = referralNote;
     else {
       referralApplied = true;
-      referralDiscount = Math.max(0, Math.min(Math.round((afterCredit * REFERRAL_PERCENT) / 100), afterCredit));
+      referralDiscount = Math.max(0, Math.min(Math.round((afterCredit * referralPercent) / 100), afterCredit));
     }
   }
   if (referralApplied) discountAmount = referralDiscount;
@@ -184,9 +193,9 @@ function computeQuote(s, b) {
     is_plan_expired: expired,
     payable: grandTotal > 0,
     referral_applied: referralApplied,
-    referral_percent: REFERRAL_PERCENT,
+    referral_percent: referralPercent,
     referral_message: referralMessage,
-    referral: { available_count: available, eligible: referralEligible, percent: REFERRAL_PERCENT, message: referralEligible ? null : referralNote },
+    referral: { available_count: available, eligible: referralEligible, percent: referralPercent, message: referralEligible ? null : referralNote },
   };
 }
 

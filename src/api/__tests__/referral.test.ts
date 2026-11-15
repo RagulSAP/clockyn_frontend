@@ -64,9 +64,38 @@ describe('mapReferralInfo', () => {
       ['B', 'paid', 'available'],
     ]);
     expect(info.eligiblePlans).toEqual(['Prime', 'Elite']);
-    expect(info.percent).toBe(10);
+    expect(info.percent).toBe(0); // the server did not say: no number is invented
     expect(info.shareMessage).toContain('ABC234');
+    expect(info.shareMessage).not.toMatch(/\d+%/);
+    expect(info.myReward).toMatchObject({ kind: 'c2c', expiresAt: null });
     expect(info.summary).toEqual({ referredCount: 4, convertedCount: 1, rewardsAvailable: 1, rewardsPending: 1, rewardsUsed: 1 });
+  });
+
+  it('takes the C2C percent from the server (not always 10) and puts it in the default share message', () => {
+    const info = mapReferralInfo({ code: 'abc234', percent: 12, referrals: [], my_reward: { status: 'available', percent: 12, referred_by_org_name: 'Z' } });
+    expect(info.percent).toBe(12);
+    expect(info.shareMessage).toContain('we both get 12% off our plan');
+    expect(info.myReward?.percent).toBe(12);
+  });
+
+  it('maps a B2C reward: kind, expiry, and the "expired" status', () => {
+    const b2c = { reward_id: 9, status: 'available', percent: 15, kind: 'b2c', expires_at: '2026-12-14T23:59:59+05:30', referred_by_org_name: 'Tech Talk Hindi' };
+    expect(mapReferralInfo({ ...FULL, my_reward: b2c }).myReward).toMatchObject({
+      status: 'available',
+      percent: 15,
+      kind: 'b2c',
+      expiresAt: '2026-12-14T23:59:59+05:30',
+      referredByOrgName: 'Tech Talk Hindi',
+    });
+    expect(mapReferralInfo({ ...FULL, my_reward: { ...b2c, status: 'expired' } }).myReward?.status).toBe('expired');
+    // an unknown kind (or none: an older server) is a customer-to-customer reward
+    expect(mapReferralInfo({ ...FULL, my_reward: { ...b2c, kind: 'weird' } }).myReward?.kind).toBe('c2c');
+    expect(mapReferralInfo(FULL).myReward).toMatchObject({ kind: 'c2c', expiresAt: null });
+  });
+
+  it('an expired reward is in no "available" count derived from the rows', () => {
+    const info = mapReferralInfo({ code: 'abc234', referrals: [], my_reward: { status: 'expired', percent: 15, kind: 'b2c' } });
+    expect(info.summary).toEqual({ referredCount: 0, convertedCount: 0, rewardsAvailable: 0, rewardsPending: 0, rewardsUsed: 0 });
   });
 
   it('survives a non-object body', () => {
@@ -99,8 +128,19 @@ describe('getMyReferral', () => {
 describe('validateCode', () => {
   it('sends the upper-cased code as a query value and maps a valid answer', async () => {
     mocked.get.mockResolvedValue({ valid: true, referrer_org_name: 'Zed Corp' });
-    await expect(validateCode(' k7m2qx ')).resolves.toEqual({ valid: true, referrerOrgName: 'Zed Corp', message: '' });
+    await expect(validateCode(' k7m2qx ')).resolves.toEqual({ valid: true, referrerOrgName: 'Zed Corp', kind: 'c2c', percent: null, message: '' });
     expect(mocked.get).toHaveBeenCalledWith('/referral/validate', { code: 'K7M2QX' });
+  });
+
+  it('maps kind and percent: a promoter (B2C) code shows its channel name and its own percent', async () => {
+    mocked.get.mockResolvedValueOnce({ valid: true, referrer_org_name: 'Tech Talk Hindi', kind: 'b2c', percent: 15 });
+    await expect(validateCode('CHANL5')).resolves.toEqual({ valid: true, referrerOrgName: 'Tech Talk Hindi', kind: 'b2c', percent: 15, message: '' });
+    mocked.get.mockResolvedValueOnce({ valid: true, referrer_org_name: 'Acme', kind: 'c2c', percent: 12 });
+    await expect(validateCode('K7M2QX')).resolves.toMatchObject({ kind: 'c2c', percent: 12 });
+  });
+
+  it('an older server (no kind, no percent) reads as a C2C code with an unknown percent', () => {
+    expect(mapCodeCheck({ valid: true, referrer_org_name: 'Zed Corp' })).toEqual({ valid: true, referrerOrgName: 'Zed Corp', kind: 'c2c', percent: null, message: '' });
   });
 
   it('maps an invalid answer to the server message (or the default)', async () => {

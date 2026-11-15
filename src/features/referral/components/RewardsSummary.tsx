@@ -5,7 +5,7 @@ import { Badge, Card, Icon, Text } from '@/components/ui';
 import { radii, spacing, useTheme } from '@/theme';
 import type { MyReferralReward, ReferralSummary } from '@/types/api/referral';
 
-import { myRewardTitle, redeemHint, rewardCaption, rewardChip } from '../utils/status';
+import { myRewardTitle, redeemHint, rewardCaption, rewardChip, rewardValidity } from '../utils/status';
 
 function Cell({ label, value, color, testID }: { label: string; value: number; color: 'success' | 'warning' | 'textSecondary'; testID: string }) {
   return (
@@ -62,9 +62,14 @@ export function RewardsSummary({ summary, myReward, canBuy }: RewardsSummaryProp
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' }}>
                 <Badge label={chip.label} tone={chip.tone} size="sm" testID="referral-my-reward-status" />
-                {myReward.status === 'used' ? (
-                  <Text variant="caption" color="textMuted" style={{ flexShrink: 1 }}>
+                {myReward.status === 'used' || myReward.status === 'expired' ? (
+                  <Text variant="caption" color="textMuted" style={{ flexShrink: 1 }} testID="referral-my-reward-note">
                     {rewardCaption(myReward)}
+                  </Text>
+                ) : null}
+                {rewardValidity(myReward) ? (
+                  <Text variant="caption" color="textMuted" style={{ flexShrink: 1 }} testID="referral-my-reward-validity">
+                    {rewardValidity(myReward)}
                   </Text>
                 ) : null}
               </View>

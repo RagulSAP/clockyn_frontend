@@ -5,16 +5,20 @@
  *
  * Seed for the demo org `org-0001` (code K7M2QX): three referred organisations — one paid whose reward is USED (Prime, Rs 200 off),
  * one paid whose reward is AVAILABLE and one only signed up (reward PENDING). `ZED4PQ` belongs to the external "Zed Corp".
+ * `CHANL5` is a B2C (promoter) code of the channel "Tech Talk Hindi": 15 % off, the reward is valid for 30 days after sign-up.
+ * C2C_PERCENT is the ONE place the mock's customer-to-customer percent lives (billing.js imports it); B2C codes carry their own.
  * State is created lazily per tenant (`s.referral`) and dropped by `/__test/reset` like everything else.
  */
 const { fail } = require('../lib/http');
 const D = require('../domain');
 const T = require('../lib/time');
 
-const PERCENT = 10;
+const C2C_PERCENT = 10;
+const PERCENT = C2C_PERCENT;
 const INVALID = 'This referral code is not valid';
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const EXTERNAL = { ZED4PQ: 'Zed Corp' };
+const B2C = { CHANL5: { name: 'Tech Talk Hindi', percent: 15, validDays: 30 } };
 const DEMO_CODE = 'K7M2QX';
 
 const daysAgo = (n) => `${T.addDays(T.today(), -n)}T09:30:00+05:30`;
@@ -51,12 +55,13 @@ function codeFor(s, orgId) {
   return r.codes[orgId];
 }
 
-/** Who owns `code`: `{ orgId, name }` for a real org of the tenant or an external referrer, else null. */
+/** Who owns `code`: `{ orgId, name, kind, percent }` for a real org of the tenant, an external referrer or a B2C channel, else null. */
 function ownerOf(s, code) {
   const c = String(code || '').trim().toUpperCase();
   const r = state(s);
-  for (const org of s.orgs) if (codeFor(s, org.org_id) === c) return { orgId: org.org_id, name: org.org_name };
-  if (EXTERNAL[c]) return { orgId: null, name: EXTERNAL[c] };
+  for (const org of s.orgs) if (codeFor(s, org.org_id) === c) return { orgId: org.org_id, name: org.org_name, kind: 'c2c', percent: C2C_PERCENT };
+  if (EXTERNAL[c]) return { orgId: null, name: EXTERNAL[c], kind: 'c2c', percent: C2C_PERCENT };
+  if (B2C[c]) return { orgId: null, name: B2C[c].name, kind: 'b2c', percent: B2C[c].percent, validDays: B2C[c].validDays };
   return null;
 }
 
@@ -73,7 +78,17 @@ function referralAtSignup(s, referralCode, newOrg) {
   const owner = ownerOf(s, referralCode);
   if (!owner) return;
   const r = state(s);
-  r.mine[newOrg.org_id] = { reward_id: (r.nextRewardId += 1), status: 'available', percent: PERCENT, referred_by_org_name: owner.name, used_at: null, plan_name: null, discount_amount: null };
+  r.mine[newOrg.org_id] = {
+    reward_id: (r.nextRewardId += 1),
+    status: 'available',
+    percent: owner.percent,
+    kind: owner.kind,
+    expires_at: owner.validDays ? `${T.addDays(T.today(), owner.validDays)}T23:59:59+05:30` : null,
+    referred_by_org_name: owner.name,
+    used_at: null,
+    plan_name: null,
+    discount_amount: null,
+  };
   if (owner.orgId) {
     (r.rows[owner.orgId] = r.rows[owner.orgId] || []).push({
       referral_id: (r.nextReferralId += 1),
@@ -85,18 +100,29 @@ function referralAtSignup(s, referralCode, newOrg) {
   }
 }
 
+/** A reward with a validity period whose end has passed can no longer be used (what the real server reports as `expired`). */
+function expireDue(s) {
+  const r = s.referral;
+  if (!r) return;
+  const now = T.now().getTime();   // the mock clock, so a shifted test clock expires rewards consistently
+  for (const rw of Object.values(r.mine)) {
+    if (rw.status === 'available' && rw.expires_at && Date.parse(rw.expires_at) < now) rw.status = 'expired';
+  }
+}
+
 function page(s, orgId) {
+  expireDue(s);
   const r = state(s);
   const code = codeFor(s, orgId);
   const rows = (r.rows[orgId] || []).slice().sort((a, b) => (a.joined_at < b.joined_at ? 1 : -1));
-  const mine = r.mine[orgId] || null;
+  const mine = r.mine[orgId] ? { kind: 'c2c', expires_at: null, ...r.mine[orgId] } : null;
   const rewards = rows.map((x) => x.reward).concat(mine ? [mine] : []);
   const count = (st) => rewards.filter((x) => x.status === st).length;
   return {
     code,
-    percent: PERCENT,
+    percent: C2C_PERCENT,
     eligible_plans: ['Prime', 'Elite'],
-    share_message: `Join me on Clockyn, the staff attendance and workforce app. Use my referral code ${code} when you create your account and we both get ${PERCENT}% off our plan.`,
+    share_message: `Join me on Clockyn, the staff attendance and workforce app. Use my referral code ${code} when you create your account and we both get ${C2C_PERCENT}% off our plan.`,
     summary: { referred_count: rows.length, converted_count: rows.filter((x) => x.status === 'paid').length, rewards_available: count('available'), rewards_pending: count('pending'), rewards_used: count('used') },
     referrals: rows,
     my_reward: mine,
@@ -108,9 +134,9 @@ function register(r) {
   r.get('/referral/validate', (c) => {
     const code = String(c.q.code || '').trim().toUpperCase();
     const owner = /^[A-Z0-9]{6}$/.test(code) ? ownerOf(c.s, code) : null;
-    return owner ? { valid: true, referrer_org_name: owner.name } : { valid: false, message: INVALID };
+    return owner ? { valid: true, referrer_org_name: owner.name, kind: owner.kind, percent: owner.percent } : { valid: false, message: INVALID };
   });
   r.get('/referral/:org_id', (c) => page(c.s, D.resolveOrg(c.s, c.p.org_id)));
 }
 
-module.exports = { register, assertReferralCode, referralAtSignup };
+module.exports = { register, assertReferralCode, referralAtSignup, expireDue, C2C_PERCENT };

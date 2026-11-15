@@ -27,7 +27,16 @@ const getMyReferral = referralApi.getMyReferral as jest.Mock;
 const copy = copyToClipboard as jest.Mock;
 const share = shareText as jest.Mock;
 
-const reward = (status: 'pending' | 'available' | 'used' | 'void', over = {}) => ({ id: 1, status, percent: 10, usedAt: null, planName: null, discountAmount: null, ...over });
+const reward = (status: 'pending' | 'available' | 'used' | 'void' | 'expired', over = {}) => ({
+  id: 1,
+  status,
+  percent: 10,
+  usedAt: null,
+  planName: null,
+  discountAmount: null,
+  expiresAt: null,
+  ...over,
+});
 
 const INFO: ReferralInfo = {
   code: 'K7M2QX',
@@ -47,7 +56,7 @@ const INFO: ReferralInfo = {
     },
     { id: 4, orgName: 'Old Co', joinedAt: null, status: 'signed_up', reward: reward('void') },
   ],
-  myReward: { ...reward('available'), id: 9, referredByOrgName: 'Zed Corp' },
+  myReward: { ...reward('available'), id: 9, referredByOrgName: 'Zed Corp', kind: 'c2c' },
 };
 
 async function renderReferral() {
@@ -133,6 +142,66 @@ describe('ReferralScreen', () => {
     await renderReferral();
     expect(await screen.findByTestId('referral-my-reward-title')).toHaveTextContent('Referral reward from Zed Corp: 10% off your first plan');
     expect(screen.getByTestId('referral-my-reward-status').props.accessibilityLabel).toBe('Available');
+  });
+
+  it('uses the percent the server sends (12 here), everywhere on the screen', async () => {
+    getMyReferral.mockResolvedValue({
+      ...INFO,
+      percent: 12,
+      shareMessage: 'Use my referral code K7M2QX and we both get 12% off.',
+      myReward: { ...INFO.myReward, percent: 12 },
+    });
+    await renderReferral();
+    expect(await screen.findByText('12% off for you and your friend')).toBeTruthy();
+    expect(screen.getByTestId('referral-offer-copy')).toHaveTextContent(/^Your friend gets 12% off and so do you\./);
+    expect(screen.getByTestId('referral-step-2')).toHaveTextContent(/get 12% off right away/);
+    expect(screen.getByTestId('referral-step-3')).toHaveTextContent(/your 12% reward unlocks too/);
+    expect(screen.getByText('12% off a Prime or Elite plan, once per purchase')).toBeTruthy();
+    expect(screen.getByTestId('referral-my-reward-title')).toHaveTextContent('Referral reward from Zed Corp: 12% off your first plan');
+    expect(screen.getByTestId('referral-hero')).not.toHaveTextContent(/\b10%/);
+    expect(screen.getByTestId('referral-how-it-works')).not.toHaveTextContent(/\b10%/);
+  });
+
+  it('never invents a percent when the server sent none', async () => {
+    getMyReferral.mockResolvedValue({ ...INFO, percent: 0, myReward: { ...INFO.myReward, percent: 0 } });
+    await renderReferral();
+    expect(await screen.findByText('A discount for you and your friend')).toBeTruthy();
+    expect(screen.getByTestId('referral-offer-copy')).toHaveTextContent(/^Your friend gets a discount and so do you\./);
+    expect(screen.getByTestId('referral-my-reward-title')).toHaveTextContent('Referral reward from Zed Corp: a discount on your first plan');
+    expect(screen.getByTestId('referral-step-2')).toHaveTextContent(/get a discount right away/);
+    expect(screen.getByText('A discount on a Prime or Elite plan, once per purchase')).toBeTruthy();
+    expect(screen.getByTestId('referral-offer-badge')).not.toHaveTextContent(/\d/);
+  });
+
+  it('a B2C reward shows the channel, its own percent and until when it can be used (no "you both get" wording)', async () => {
+    getMyReferral.mockResolvedValue({
+      ...INFO,
+      myReward: { ...reward('available', { percent: 15, expiresAt: '2026-12-14T23:59:59+05:30' }), id: 9, referredByOrgName: 'Tech Talk Hindi', kind: 'b2c' },
+    });
+    await renderReferral();
+    expect(await screen.findByTestId('referral-my-reward-title')).toHaveTextContent('Referral reward from Tech Talk Hindi: 15% off your first plan');
+    expect(screen.getByTestId('referral-my-reward-status').props.accessibilityLabel).toBe('Available');
+    expect(screen.getByTestId('referral-my-reward-validity')).toHaveTextContent('Valid until 14 Dec 2026');
+    expect(screen.queryByText(/both get/i)).toBeNull();
+  });
+
+  it('an expired reward shows the Expired chip with when it ended, and is not counted as available', async () => {
+    getMyReferral.mockResolvedValue({
+      ...INFO,
+      summary: { ...INFO.summary, rewardsAvailable: 0 },
+      myReward: { ...reward('expired', { percent: 15, expiresAt: '2026-12-14T23:59:59+05:30' }), id: 9, referredByOrgName: 'Tech Talk Hindi', kind: 'b2c' },
+    });
+    await renderReferral();
+    expect(await screen.findByTestId('referral-my-reward-status')).toHaveTextContent('Expired');
+    expect(screen.getByTestId('referral-my-reward-note')).toHaveTextContent('Expired on 14 Dec 2026');
+    expect(screen.queryByTestId('referral-my-reward-validity')).toBeNull();
+    expect(screen.getByTestId('rewards-available-count').props.children).toBe('0');
+  });
+
+  it('a reward without an end date shows no validity line', async () => {
+    await renderReferral();
+    await screen.findByTestId('referral-my-reward');
+    expect(screen.queryByTestId('referral-my-reward-validity')).toBeNull();
   });
 
   it('hides the own-reward card when the organisation was not referred', async () => {

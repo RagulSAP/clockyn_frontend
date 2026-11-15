@@ -18,6 +18,7 @@
  */
 const http = require('node:http');
 const { WebSocketServer } = require('ws');
+const { createReferralMock } = require('./referral-mock');
 
 const OTP = '123456';
 const EMAIL_ROLE = { 'admin@clockyn.test': 1, 'staff@clockyn.test': 2 };
@@ -25,10 +26,11 @@ const EMAIL_ROLE = { 'admin@clockyn.test': 1, 'staff@clockyn.test': 2 };
 function createOperatorMock() {
   let seq = 0;
   const st = { mode: 'token', enforce: false, expiresIn: 43200, force: null, revoked: false, tokens: new Map(), log: [] };
+  const referral = createReferralMock();          /* /gen-dashboard/referrals* (C2C percent, B2C promoter codes, payouts) */
 
   function resetState() {
     st.mode = 'token'; st.enforce = false; st.expiresIn = 43200; st.force = null; st.revoked = false;
-    st.tokens = new Map(); st.log = []; seq = 0;
+    st.tokens = new Map(); st.log = []; seq = 0; referral.reset();
   }
 
   function cors(res) {
@@ -122,6 +124,13 @@ function createOperatorMock() {
       if (st.mode === 'token' && st.enforce) {
         if (bs === 'expired') return done(401, { detail: 'Token expired' });
         if (bs !== 'valid') return done(401, { detail: 'Not authenticated' });
+      }
+      if (path.indexOf('/gen-dashboard/referrals') === 0) {
+        const body = req.method === 'POST' || req.method === 'PUT' ? await readBody(req) : {};
+        const tok = /^Bearer (.+)$/i.exec(req.headers.authorization || '');
+        const who = (tok && st.tokens.get(tok[1]) ? st.tokens.get(tok[1]).email : String(req.headers['x-admin-id'] || '')).toLowerCase();
+        const out = referral.handle(req.method, path, url.searchParams, body, EMAIL_ROLE[who] || 1, who);
+        if (out) return done(out[0], out[1]);
       }
       return done(200, sampleBody(path));
     }

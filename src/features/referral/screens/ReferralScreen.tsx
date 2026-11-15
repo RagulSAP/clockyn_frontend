@@ -16,6 +16,7 @@ import { RewardsSummary } from '../components/RewardsSummary';
 import { useReferral } from '../hooks/useReferral';
 import { useReferralActions } from '../hooks/useReferralActions';
 import { canSendSms } from '../utils/share';
+import { percentOff } from '../utils/status';
 
 function ReferralSkeleton() {
   return (
@@ -82,7 +83,7 @@ export default function ReferralScreen() {
 
   const rewards = info ? (
     <Reveal index={2} style={{ gap: spacing.md }}>
-      <SectionHeader title="Your rewards" subtitle={`${info.percent}% off a Prime or Elite plan, once per purchase`} />
+      <SectionHeader title="Your rewards" subtitle={`${percentOff(info.percent)} a Prime or Elite plan, once per purchase`} />
       <RewardsSummary summary={info.summary} myReward={info.myReward} canBuy={canPurchase()} />
     </Reveal>
   ) : null;

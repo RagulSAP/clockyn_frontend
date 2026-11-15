@@ -196,9 +196,33 @@ test.describe('Referral code on sign-up', () => {
     await code.pressSequentially('k7m-2qx9!');
     await expect(code).toHaveValue('K7M2QX');
     await code.blur();
-    await expect(page.getByTestId('reg-referral-valid')).toContainText('Referred by Acme Traders');
+    await expect(page.getByTestId('reg-referral-valid')).toContainText('Referred by Acme Traders - 10% off Prime and Elite');
     await code.scrollIntoViewIfNeeded();
     await snap(page, testInfo, 'signup-referral-valid', { settle: 5000 });
+  });
+
+  test('a promoter (B2C) code shows the channel name and its own percent', async ({ page }) => {
+    await toRegister(page);
+    const code = page.getByTestId('reg-referral-code');
+    await code.scrollIntoViewIfNeeded();
+    await code.fill('chanl5');
+    await expect(page.getByTestId('reg-referral-valid')).toHaveText('Referred by Tech Talk Hindi - 15% off Prime and Elite');
+  });
+
+  test('registering with a promoter code gives the new org a 15% reward that is valid until a date', async ({ page, mock }) => {
+    await toRegister(page);
+    await fillCompany(page);
+    await page.getByTestId('reg-referral-code').fill('CHANL5');
+    await expect(page.getByTestId('reg-referral-valid')).toContainText('Tech Talk Hindi - 15% off');
+    await page.getByTestId('register-submit').click();
+    await page.waitForURL('**/admin/home');
+    const reg = await mock.lastRequest('/auth/register', 'POST');
+    expect(reg?.body).toMatchObject({ referral_code: 'CHANL5' });
+
+    await visit(page, '/admin/referral');
+    await expect(page.getByTestId('referral-my-reward-title')).toHaveText('Referral reward from Tech Talk Hindi: 15% off your first plan');
+    await expect(page.getByTestId('referral-my-reward-status')).toContainText('Available');
+    await expect(page.getByTestId('referral-my-reward-validity')).toContainText('Valid until');
   });
 
   test('a bad code shows the server message, blocks Register and keeps what was typed; clearing it unblocks', async ({ page }, testInfo) => {

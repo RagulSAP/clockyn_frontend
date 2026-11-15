@@ -169,7 +169,7 @@ function RegisterForm({ mode }: { mode: UserAuthMode }) {
           />
         </FormSection>
 
-        <FormSection title="Referral code" description="Optional. Got a code from a friend? You both get 10% off Prime and Elite plans.">
+        <FormSection title="Referral code" description="Optional. Got a referral code? Enter it to get a discount on Prime and Elite plans.">
           <ReferralCodeInput field={reg.referral} />
         </FormSection>
 

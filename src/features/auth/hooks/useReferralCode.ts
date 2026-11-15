@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import { referralApi } from '@/api';
 import { ApiError } from '@/lib/api/errors';
 import { INVALID_CODE_MESSAGE } from '@/api/referral';
+import type { ReferralKind } from '@/types/api/referral';
 import { REFERRAL_CODE_LENGTH, normalizeReferralCode } from '@/features/referral/utils/code';
 
 export const REFERRAL_SHORT_MESSAGE = `A referral code has ${REFERRAL_CODE_LENGTH} letters or digits`;
@@ -13,8 +14,12 @@ export interface ReferralCodeField {
   /** Normalised text of the field (upper-case, alphanumeric, at most 6). */
   code: string;
   status: ReferralCheck;
-  /** "Referred by <org>" once the code is accepted. */
+  /** "Referred by <org>" once the code is accepted: the referring organisation, or the channel name of a promoter code. */
   referrerOrgName: string;
+  /** `b2c` for a promoter / channel code, else `c2c`. */
+  kind: ReferralKind;
+  /** Percent the accepted code gives (`null` while unchecked or when an older server does not say). */
+  percent: number | null;
   /** Error shown under the field (invalid code, or an unfinished code after the field was left). */
   error: string;
   /** The code cannot be used as it stands (unfinished or rejected): registering must wait for a fix or an empty field. */
@@ -43,6 +48,8 @@ export function useReferralCode(): ReferralCodeField {
   const [code, setCodeState] = useState('');
   const [status, setStatus] = useState<ReferralCheck>('idle');
   const [referrerOrgName, setReferrer] = useState('');
+  const [kind, setKind] = useState<ReferralKind>('c2c');
+  const [percent, setPercent] = useState<number | null>(null);
   const [message, setMessage] = useState('');
   const [left, setLeft] = useState(false);
   const [, setBump] = useState(0);
@@ -51,10 +58,12 @@ export function useReferralCode(): ReferralCodeField {
   const codeRef = useRef('');
   const statusRef = useRef<ReferralCheck>('idle');
 
-  const apply = useCallback((s: ReferralCheck, org = '', msg = '') => {
+  const apply = useCallback((s: ReferralCheck, org = '', msg = '', info?: { kind: ReferralKind; percent: number | null }) => {
     statusRef.current = s;
     setStatus(s);
     setReferrer(org);
+    setKind(info?.kind ?? 'c2c');
+    setPercent(info?.percent ?? null);
     setMessage(msg);
   }, []);
 
@@ -66,7 +75,7 @@ export function useReferralCode(): ReferralCodeField {
         const res = await referralApi.validateCode(value);
         if (mine !== seq.current) return res.valid ? { ok: true } : { ok: false, message: res.message };
         if (res.valid) {
-          apply('valid', res.referrerOrgName);
+          apply('valid', res.referrerOrgName, '', { kind: res.kind, percent: res.percent });
           return { ok: true };
         }
         apply('invalid', '', res.message || INVALID_CODE_MESSAGE);
@@ -129,6 +138,8 @@ export function useReferralCode(): ReferralCodeField {
     code,
     status,
     referrerOrgName,
+    kind,
+    percent,
     error,
     blocking: short || status === 'invalid',
     value: code === '' ? undefined : code,

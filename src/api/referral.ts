@@ -9,6 +9,7 @@ import { api } from '@/lib/api/client';
 import type {
   MyReferralReward,
   ReferralCodeCheck,
+  ReferralKind,
   ReferralInfo,
   ReferralReward,
   ReferralRewardStatus,
@@ -19,11 +20,13 @@ import type {
 import { arr, isRecord, optNum, optStr, pick, rec, str } from './mappers/common';
 import { ensureSuccess, requireId, seg } from './sharedHelpers';
 
-export const REFERRAL_PERCENT = 10;
 export const DEFAULT_ELIGIBLE_PLANS = ['Prime', 'Elite'];
 export const INVALID_CODE_MESSAGE = 'This referral code is not valid';
 
-const REWARD_STATUSES: readonly ReferralRewardStatus[] = ['pending', 'available', 'used', 'void'];
+const REWARD_STATUSES: readonly ReferralRewardStatus[] = ['pending', 'available', 'used', 'void', 'expired'];
+
+/** Unknown / missing kind reads as a customer-to-customer code (what every older server sends). */
+const referralKind = (v: unknown): ReferralKind => (str(v).toLowerCase() === 'b2c' ? 'b2c' : 'c2c');
 
 /** Unknown / missing reward status reads as `pending` (never shows a reward as spendable by mistake). */
 function rewardStatus(v: unknown): ReferralRewardStatus {
@@ -41,17 +44,19 @@ export function mapReward(input: unknown): ReferralReward | null {
   return {
     id: optNum(input.reward_id) ?? null,
     status: rewardStatus(input.status),
-    percent: optNum(input.percent) ?? REFERRAL_PERCENT,
+    percent: optNum(input.percent) ?? 0,
     usedAt: optStr(input.used_at) ?? null,
     planName: optStr(input.plan_name) ?? null,
     discountAmount: optNum(input.discount_amount) ?? null,
+    expiresAt: optStr(input.expires_at) ?? null,
   };
 }
 
 export function mapMyReward(input: unknown): MyReferralReward | null {
   const reward = mapReward(input);
   if (!reward) return null;
-  return { ...reward, referredByOrgName: str(rec(input).referred_by_org_name) };
+  const r = rec(input);
+  return { ...reward, referredByOrgName: str(r.referred_by_org_name), kind: referralKind(r.kind) };
 }
 
 export function mapReferredOrg(input: unknown): ReferredOrg {
@@ -79,14 +84,15 @@ function deriveSummary(rows: ReferredOrg[], myReward: MyReferralReward | null): 
   };
 }
 
-export function defaultShareMessage(code: string, percent = REFERRAL_PERCENT): string {
-  return `Join me on Clockyn, the staff attendance and workforce app. Use my referral code ${code} when you create your account and we both get ${percent}% off our plan.`;
+export function defaultShareMessage(code: string, percent = 0): string {
+  const off = percent > 0 ? `${percent}% off` : 'a discount on';
+  return `Join me on Clockyn, the staff attendance and workforce app. Use my referral code ${code} when you create your account and we both get ${off} our plan.`;
 }
 
 export function mapReferralInfo(body: unknown): ReferralInfo {
   const r = rec(body);
   const code = str(r.code).toUpperCase();
-  const percent = optNum(r.percent) ?? REFERRAL_PERCENT;
+  const percent = optNum(r.percent) ?? 0;
   const referrals = arr(r.referrals).map(mapReferredOrg);
   const myReward = mapMyReward(r.my_reward);
   const derived = deriveSummary(referrals, myReward);
@@ -126,6 +132,8 @@ export function mapCodeCheck(body: unknown): ReferralCodeCheck {
   return {
     valid,
     referrerOrgName: str(pick(r, 'referrer_org_name', 'org_name')),
+    kind: referralKind(r.kind),
+    percent: optNum(r.percent) ?? null,
     message: valid ? '' : str(pick(r, 'message', 'detail')) || INVALID_CODE_MESSAGE,
   };
 }
@@ -133,7 +141,7 @@ export function mapCodeCheck(body: unknown): ReferralCodeCheck {
 /** `GET /referral/validate?code=ABC123` — public (no login). A malformed code is answered locally without a request. */
 export async function validateCode(code: string): Promise<ReferralCodeCheck> {
   const clean = code.trim().toUpperCase();
-  if (!/^[A-Z0-9]{6}$/.test(clean)) return { valid: false, referrerOrgName: '', message: INVALID_CODE_MESSAGE };
+  if (!/^[A-Z0-9]{6}$/.test(clean)) return { valid: false, referrerOrgName: '', kind: 'c2c', percent: null, message: INVALID_CODE_MESSAGE };
   const body = await api.get<unknown>('/referral/validate', { code: clean });
   return mapCodeCheck(body);
 }
