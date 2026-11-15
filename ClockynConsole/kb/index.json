@@ -1,0 +1,3372 @@
+{
+  "generated": "2026-11-15",
+  "count": 32,
+  "categories": [
+    "Getting started",
+    "Operations",
+    "Billing & growth",
+    "Support",
+    "Reference",
+    "Maintainers"
+  ],
+  "docs": [
+    {
+      "id": "welcome",
+      "title": "Welcome to the Clockyn Console",
+      "summary": "What the Clockyn Console is, who uses it, what Clockyn does for its customers, how this knowledge base is organised and what to do on your first day.",
+      "category": "Getting started",
+      "audience": "all",
+      "tags": [
+        "welcome",
+        "introduction",
+        "overview",
+        "start",
+        "new employee",
+        "onboarding",
+        "first day",
+        "what is clockyn console",
+        "knowledge base",
+        "how to use"
+      ],
+      "page": "",
+      "updated": "2026-11-15",
+      "related": [
+        "signing-in",
+        "roles-and-permissions",
+        "console-tour",
+        "daily-checklist",
+        "glossary"
+      ],
+      "path": "getting-started/welcome.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "What Clockyn does for its customers",
+          "id": "what-clockyn-does-for-its-customers"
+        },
+        {
+          "level": 2,
+          "text": "What the console is for",
+          "id": "what-the-console-is-for"
+        },
+        {
+          "level": 2,
+          "text": "Who uses the console",
+          "id": "who-uses-the-console"
+        },
+        {
+          "level": 2,
+          "text": "How this knowledge base is organised",
+          "id": "how-this-knowledge-base-is-organised"
+        },
+        {
+          "level": 2,
+          "text": "Your first day",
+          "id": "your-first-day"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Is the Clockyn Console the same as the Clockyn app?",
+          "id": "is-the-clockyn-console-the-same-as-the-clockyn-app"
+        },
+        {
+          "level": 3,
+          "text": "Do I need to install anything?",
+          "id": "do-i-need-to-install-anything"
+        },
+        {
+          "level": 3,
+          "text": "Who gives me access?",
+          "id": "who-gives-me-access"
+        },
+        {
+          "level": 3,
+          "text": "Where do I get help if something does not work?",
+          "id": "where-do-i-get-help-if-something-does-not-work"
+        },
+        {
+          "level": 3,
+          "text": "Can I use the console on a phone?",
+          "id": "can-i-use-the-console-on-a-phone"
+        }
+      ],
+      "words": 861,
+      "order": 1
+    },
+    {
+      "id": "signing-in",
+      "title": "Signing in to the console",
+      "summary": "How an operator signs in with an e-mail code, how long a session lasts, what Remember me does, what happens when a session ends, and how to log out.",
+      "category": "Getting started",
+      "audience": "all",
+      "tags": [
+        "login",
+        "sign in",
+        "otp",
+        "email code",
+        "one time code",
+        "password",
+        "session",
+        "remember me",
+        "timeout",
+        "expired",
+        "log out",
+        "logout",
+        "401",
+        "403",
+        "access"
+      ],
+      "page": "login.html",
+      "updated": "2026-11-15",
+      "related": [
+        "roles-and-permissions",
+        "troubleshooting",
+        "settings-page"
+      ],
+      "path": "getting-started/signing-in.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Sign in step by step",
+          "id": "sign-in-step-by-step"
+        },
+        {
+          "level": 2,
+          "text": "About the code",
+          "id": "about-the-code"
+        },
+        {
+          "level": 2,
+          "text": "How long a session lasts",
+          "id": "how-long-a-session-lasts"
+        },
+        {
+          "level": 2,
+          "text": "What you see when a session ends",
+          "id": "what-you-see-when-a-session-ends"
+        },
+        {
+          "level": 2,
+          "text": "Log out",
+          "id": "log-out"
+        },
+        {
+          "level": 2,
+          "text": "Extra code checks for destructive actions",
+          "id": "extra-code-checks-for-destructive-actions"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Why is there no password?",
+          "id": "why-is-there-no-password"
+        },
+        {
+          "level": 3,
+          "text": "I signed in yesterday. Why am I asked again?",
+          "id": "i-signed-in-yesterday-why-am-i-asked-again"
+        },
+        {
+          "level": 3,
+          "text": "I changed my e-mail address. What now?",
+          "id": "i-changed-my-e-mail-address-what-now"
+        },
+        {
+          "level": 3,
+          "text": "What happens after a console update?",
+          "id": "what-happens-after-a-console-update"
+        }
+      ],
+      "words": 1084,
+      "order": 2
+    },
+    {
+      "id": "roles-and-permissions",
+      "title": "Roles and permissions",
+      "summary": "The two console roles (super admin and Staff operator), which actions only a super admin can do, how roles are set, and why a console operator is not a company Admin in the Clockyn app.",
+      "category": "Getting started",
+      "audience": "all",
+      "tags": [
+        "roles",
+        "permissions",
+        "super admin",
+        "role 1",
+        "role 2",
+        "staff",
+        "operator",
+        "admin",
+        "access",
+        "cannot see button",
+        "read only",
+        "who can",
+        "add user",
+        "authorization"
+      ],
+      "page": "settings.html",
+      "updated": "2026-11-15",
+      "related": [
+        "signing-in",
+        "settings-page",
+        "referrals-c2c",
+        "referrals-b2c",
+        "video-hub",
+        "faq-hub"
+      ],
+      "path": "getting-started/roles-and-permissions.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Console operator or company Admin?",
+          "id": "console-operator-or-company-admin"
+        },
+        {
+          "level": 2,
+          "text": "Who can do what",
+          "id": "who-can-do-what"
+        },
+        {
+          "level": 2,
+          "text": "What \"read only\" means",
+          "id": "what-read-only-means"
+        },
+        {
+          "level": 2,
+          "text": "How roles are set and where operators live",
+          "id": "how-roles-are-set-and-where-operators-live"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Why can I not see the Void button on a referral reward?",
+          "id": "why-can-i-not-see-the-void-button-on-a-referral-reward"
+        },
+        {
+          "level": 3,
+          "text": "Can a Staff operator change a customer's plan?",
+          "id": "can-a-staff-operator-change-a-customer-s-plan"
+        },
+        {
+          "level": 3,
+          "text": "How many super admins should we have?",
+          "id": "how-many-super-admins-should-we-have"
+        },
+        {
+          "level": 3,
+          "text": "Is a company Admin able to sign in here?",
+          "id": "is-a-company-admin-able-to-sign-in-here"
+        }
+      ],
+      "words": 1054,
+      "order": 3
+    },
+    {
+      "id": "console-tour",
+      "title": "A tour of the console screen",
+      "summary": "Every part of the console screen: the left menu and badges, the top bar, the bell, the floating chat button, and patterns shared by all pages such as search, filters, export and refresh.",
+      "category": "Getting started",
+      "audience": "all",
+      "tags": [
+        "tour",
+        "navigation",
+        "menu",
+        "sidebar",
+        "topbar",
+        "bell",
+        "notifications",
+        "chat button",
+        "theme",
+        "dark mode",
+        "export",
+        "excel",
+        "pdf",
+        "refresh",
+        "search",
+        "filter",
+        "toast",
+        "phone",
+        "mobile"
+      ],
+      "page": "",
+      "updated": "2026-11-15",
+      "related": [
+        "welcome",
+        "daily-checklist",
+        "settings-page",
+        "live-chat",
+        "dashboard"
+      ],
+      "path": "getting-started/console-tour.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "The left menu",
+          "id": "the-left-menu"
+        },
+        {
+          "level": 2,
+          "text": "The top bar",
+          "id": "the-top-bar"
+        },
+        {
+          "level": 2,
+          "text": "The notifications bell",
+          "id": "the-notifications-bell"
+        },
+        {
+          "level": 2,
+          "text": "The floating chat button",
+          "id": "the-floating-chat-button"
+        },
+        {
+          "level": 2,
+          "text": "Patterns shared by most pages",
+          "id": "patterns-shared-by-most-pages"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Where did Live Chat go?",
+          "id": "where-did-live-chat-go"
+        },
+        {
+          "level": 3,
+          "text": "Why does the Suggestions badge never reach zero?",
+          "id": "why-does-the-suggestions-badge-never-reach-zero"
+        },
+        {
+          "level": 3,
+          "text": "Does the theme change for everyone?",
+          "id": "does-the-theme-change-for-everyone"
+        },
+        {
+          "level": 3,
+          "text": "Where is the Knowledge Base?",
+          "id": "where-is-the-knowledge-base"
+        }
+      ],
+      "words": 1068,
+      "order": 4
+    },
+    {
+      "id": "daily-checklist",
+      "title": "Daily and weekly checklist for operators",
+      "summary": "A practical routine for each day, week and month, built from the real console pages: chats, deletion requests, tickets, suggestions, payments, expiring subscriptions and referral payouts.",
+      "category": "Getting started",
+      "audience": "operator",
+      "tags": [
+        "checklist",
+        "routine",
+        "daily",
+        "weekly",
+        "monthly",
+        "start of day",
+        "what to check",
+        "expiring subscriptions",
+        "failed payments",
+        "unread chat",
+        "tickets",
+        "payouts",
+        "handover"
+      ],
+      "page": "",
+      "updated": "2026-11-15",
+      "related": [
+        "welcome",
+        "console-tour",
+        "live-chat",
+        "payments",
+        "subscriptions-and-plans",
+        "referrals-b2c"
+      ],
+      "path": "getting-started/daily-checklist.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Start of every day",
+          "id": "start-of-every-day"
+        },
+        {
+          "level": 2,
+          "text": "End of every week",
+          "id": "end-of-every-week"
+        },
+        {
+          "level": 2,
+          "text": "Start of every month",
+          "id": "start-of-every-month"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "How long should the daily check take?",
+          "id": "how-long-should-the-daily-check-take"
+        },
+        {
+          "level": 3,
+          "text": "Which task is the most urgent?",
+          "id": "which-task-is-the-most-urgent"
+        },
+        {
+          "level": 3,
+          "text": "Do I need to do everything every day?",
+          "id": "do-i-need-to-do-everything-every-day"
+        },
+        {
+          "level": 3,
+          "text": "What do I hand over at the end of the day?",
+          "id": "what-do-i-hand-over-at-the-end-of-the-day"
+        },
+        {
+          "level": 3,
+          "text": "I am new. Where do I start?",
+          "id": "i-am-new-where-do-i-start"
+        }
+      ],
+      "words": 915,
+      "order": 5
+    },
+    {
+      "id": "dashboard",
+      "title": "Dashboard (Admin Overview)",
+      "summary": "What every tile, chart and list on the console Dashboard shows, where each number comes from, and why it can differ from other pages.",
+      "category": "Operations",
+      "audience": "all",
+      "tags": [
+        "dashboard",
+        "overview",
+        "home",
+        "stats",
+        "tiles",
+        "revenue",
+        "active today",
+        "plan distribution",
+        "recent organizations",
+        "active plans",
+        "free trial",
+        "numbers"
+      ],
+      "page": "dashboard.html",
+      "updated": "2026-11-15",
+      "related": [
+        "organizations",
+        "organization-analytics",
+        "users",
+        "subscriptions-and-plans",
+        "payments",
+        "console-tour"
+      ],
+      "path": "operations/dashboard.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "What loads and when",
+          "id": "what-loads-and-when"
+        },
+        {
+          "level": 2,
+          "text": "The four tiles",
+          "id": "the-four-tiles"
+        },
+        {
+          "level": 2,
+          "text": "Active Today",
+          "id": "active-today"
+        },
+        {
+          "level": 2,
+          "text": "Monthly Revenue chart",
+          "id": "monthly-revenue-chart"
+        },
+        {
+          "level": 2,
+          "text": "Plan Distribution and Subscription Plans",
+          "id": "plan-distribution-and-subscription-plans"
+        },
+        {
+          "level": 2,
+          "text": "Recent Organizations",
+          "id": "recent-organizations"
+        },
+        {
+          "level": 2,
+          "text": "The top bar",
+          "id": "the-top-bar"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Why does Active Plans here differ from Active plans on the Organizations page?",
+          "id": "why-does-active-plans-here-differ-from-active-plans-on-the-organizations-page"
+        },
+        {
+          "level": 3,
+          "text": "Why is an Expired organization listed under Active Today?",
+          "id": "why-is-an-expired-organization-listed-under-active-today"
+        },
+        {
+          "level": 3,
+          "text": "Why does the Users tile include company owners?",
+          "id": "why-does-the-users-tile-include-company-owners"
+        },
+        {
+          "level": 3,
+          "text": "Why is a month missing from the revenue chart?",
+          "id": "why-is-a-month-missing-from-the-revenue-chart"
+        },
+        {
+          "level": 3,
+          "text": "Why does the search box at the top do nothing?",
+          "id": "why-does-the-search-box-at-the-top-do-nothing"
+        },
+        {
+          "level": 3,
+          "text": "How current is the data?",
+          "id": "how-current-is-the-data"
+        }
+      ],
+      "words": 1034,
+      "order": 6
+    },
+    {
+      "id": "organizations",
+      "title": "Organizations (list, register, activate, deactivate, delete)",
+      "summary": "How to read the Organizations list and how to register, deactivate, reactivate, delete and export companies, including what each action really does.",
+      "category": "Operations",
+      "audience": "operator",
+      "tags": [
+        "organizations",
+        "companies",
+        "org",
+        "customers",
+        "register company",
+        "add organization",
+        "deactivate",
+        "activate",
+        "delete",
+        "status",
+        "free trial",
+        "expired",
+        "staff count",
+        "export",
+        "filter",
+        "sort"
+      ],
+      "page": "organizations.html",
+      "updated": "2026-11-15",
+      "related": [
+        "organization-analytics",
+        "users",
+        "subscriptions-and-plans",
+        "account-deletion-requests",
+        "roles-and-permissions"
+      ],
+      "path": "operations/organizations.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Summary tiles",
+          "id": "summary-tiles"
+        },
+        {
+          "level": 2,
+          "text": "Columns",
+          "id": "columns"
+        },
+        {
+          "level": 2,
+          "text": "Search, filter and sort",
+          "id": "search-filter-and-sort"
+        },
+        {
+          "level": 2,
+          "text": "Open a company",
+          "id": "open-a-company"
+        },
+        {
+          "level": 2,
+          "text": "Register a company on someone's behalf",
+          "id": "register-a-company-on-someone-s-behalf"
+        },
+        {
+          "level": 2,
+          "text": "Deactivate or activate a company",
+          "id": "deactivate-or-activate-a-company"
+        },
+        {
+          "level": 2,
+          "text": "Delete a company",
+          "id": "delete-a-company"
+        },
+        {
+          "level": 2,
+          "text": "Edit company details",
+          "id": "edit-company-details"
+        },
+        {
+          "level": 2,
+          "text": "Export",
+          "id": "export"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Why does the Free trial tile count a company shown as Expired?",
+          "id": "why-does-the-free-trial-tile-count-a-company-shown-as-expired"
+        },
+        {
+          "level": 3,
+          "text": "Why can I filter by Inactive but see no results?",
+          "id": "why-can-i-filter-by-inactive-but-see-no-results"
+        },
+        {
+          "level": 3,
+          "text": "Does deactivating stop billing?",
+          "id": "does-deactivating-stop-billing"
+        },
+        {
+          "level": 3,
+          "text": "Can I see which operator deactivated a company?",
+          "id": "can-i-see-which-operator-deactivated-a-company"
+        },
+        {
+          "level": 3,
+          "text": "Why is the Joined date later than I expected?",
+          "id": "why-is-the-joined-date-later-than-i-expected"
+        }
+      ],
+      "words": 1026,
+      "order": 7
+    },
+    {
+      "id": "organization-analytics",
+      "title": "Organization analytics (one company's details, attendance and staff)",
+      "summary": "How to read a single company's page: its details card, attendance tiles, bar chart, timeline, daily punch photos and employee list.",
+      "category": "Operations",
+      "audience": "operator",
+      "tags": [
+        "organization analytics",
+        "org analytics",
+        "company details",
+        "attendance",
+        "present today",
+        "punch photos",
+        "employees",
+        "timeline",
+        "attendance rate",
+        "staff limit",
+        "copy org id",
+        "support"
+      ],
+      "page": "org_analytics.html",
+      "updated": "2026-11-15",
+      "related": [
+        "organizations",
+        "users",
+        "dashboard",
+        "roles-and-permissions",
+        "glossary"
+      ],
+      "path": "operations/organization-analytics.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Organization Details card",
+          "id": "organization-details-card"
+        },
+        {
+          "level": 2,
+          "text": "Tiles",
+          "id": "tiles"
+        },
+        {
+          "level": 2,
+          "text": "Period buttons",
+          "id": "period-buttons"
+        },
+        {
+          "level": 2,
+          "text": "Bar chart: Total Employees vs Active (Present) Employees",
+          "id": "bar-chart-total-employees-vs-active-present-employees"
+        },
+        {
+          "level": 2,
+          "text": "Attendance Timeline",
+          "id": "attendance-timeline"
+        },
+        {
+          "level": 2,
+          "text": "Day attendance and punch photos",
+          "id": "day-attendance-and-punch-photos"
+        },
+        {
+          "level": 2,
+          "text": "Employees table",
+          "id": "employees-table"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "How do I find a company's Org ID?",
+          "id": "how-do-i-find-a-company-s-org-id"
+        },
+        {
+          "level": 3,
+          "text": "Why does the Plan say \"No Plan\" when the company paid before?",
+          "id": "why-does-the-plan-say-no-plan-when-the-company-paid-before"
+        },
+        {
+          "level": 3,
+          "text": "Why is Total Employees lower than the Employees table count?",
+          "id": "why-is-total-employees-lower-than-the-employees-table-count"
+        },
+        {
+          "level": 3,
+          "text": "Can I change anything from this page?",
+          "id": "can-i-change-anything-from-this-page"
+        },
+        {
+          "level": 3,
+          "text": "What does Absent mean exactly?",
+          "id": "what-does-absent-mean-exactly"
+        }
+      ],
+      "words": 820,
+      "order": 8
+    },
+    {
+      "id": "users",
+      "title": "Users (managers and employees across all organizations)",
+      "summary": "How to search, filter and export users across companies, read their attendance and punch photos, and what the Users page cannot do.",
+      "category": "Operations",
+      "audience": "operator",
+      "tags": [
+        "users",
+        "employees",
+        "managers",
+        "staff",
+        "search user",
+        "attendance",
+        "punch photo",
+        "export",
+        "role",
+        "status",
+        "delete user",
+        "deletion requests",
+        "emp id"
+      ],
+      "page": "users.html",
+      "updated": "2026-11-15",
+      "related": [
+        "organizations",
+        "organization-analytics",
+        "account-deletion-requests",
+        "roles-and-permissions",
+        "glossary"
+      ],
+      "path": "operations/users.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Page layout",
+          "id": "page-layout"
+        },
+        {
+          "level": 2,
+          "text": "The tiles",
+          "id": "the-tiles"
+        },
+        {
+          "level": 2,
+          "text": "The table",
+          "id": "the-table"
+        },
+        {
+          "level": 2,
+          "text": "Search and filter",
+          "id": "search-and-filter"
+        },
+        {
+          "level": 2,
+          "text": "Check someone's attendance and punch photos",
+          "id": "check-someone-s-attendance-and-punch-photos"
+        },
+        {
+          "level": 2,
+          "text": "Export",
+          "id": "export"
+        },
+        {
+          "level": 2,
+          "text": "What the page cannot do",
+          "id": "what-the-page-cannot-do"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Why can I not find a company owner here?",
+          "id": "why-can-i-not-find-a-company-owner-here"
+        },
+        {
+          "level": 3,
+          "text": "Why is Today always a dash?",
+          "id": "why-is-today-always-a-dash"
+        },
+        {
+          "level": 3,
+          "text": "What does Inactive mean?",
+          "id": "what-does-inactive-mean"
+        },
+        {
+          "level": 3,
+          "text": "Why did Delete user fail?",
+          "id": "why-did-delete-user-fail"
+        },
+        {
+          "level": 3,
+          "text": "Does the export respect my filters?",
+          "id": "does-the-export-respect-my-filters"
+        }
+      ],
+      "words": 809,
+      "order": 9
+    },
+    {
+      "id": "account-deletion-requests",
+      "title": "Account deletion requests (review and delete an owner's account)",
+      "summary": "How a company owner asks for deletion in the app, how an operator handles the request in the console, what the deletion removes for good, and a checklist to run first.",
+      "category": "Operations",
+      "audience": "operator",
+      "tags": [
+        "account deletion",
+        "delete account",
+        "deletion request",
+        "privacy",
+        "data removal",
+        "right to erasure",
+        "owner",
+        "one-time code",
+        "otp",
+        "anonymise",
+        "retention",
+        "irreversible"
+      ],
+      "page": "delete_account.html",
+      "updated": "2026-11-15",
+      "related": [
+        "users",
+        "organizations",
+        "roles-and-permissions",
+        "troubleshooting",
+        "security-settings"
+      ],
+      "path": "operations/account-deletion-requests.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "How the owner sends a request",
+          "id": "how-the-owner-sends-a-request"
+        },
+        {
+          "level": 2,
+          "text": "Where you see requests",
+          "id": "where-you-see-requests"
+        },
+        {
+          "level": 2,
+          "text": "Delete an account",
+          "id": "delete-an-account"
+        },
+        {
+          "level": 2,
+          "text": "What is deleted",
+          "id": "what-is-deleted"
+        },
+        {
+          "level": 2,
+          "text": "Staff removed by a company admin",
+          "id": "staff-removed-by-a-company-admin"
+        },
+        {
+          "level": 2,
+          "text": "Checklist before you delete",
+          "id": "checklist-before-you-delete"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Can I reject a request or put it on hold?",
+          "id": "can-i-reject-a-request-or-put-it-on-hold"
+        },
+        {
+          "level": 3,
+          "text": "What does the owner see after requesting?",
+          "id": "what-does-the-owner-see-after-requesting"
+        },
+        {
+          "level": 3,
+          "text": "Does deleting remove invoices and payments?",
+          "id": "does-deleting-remove-invoices-and-payments"
+        },
+        {
+          "level": 3,
+          "text": "Why is the newest request at the top?",
+          "id": "why-is-the-newest-request-at-the-top"
+        },
+        {
+          "level": 3,
+          "text": "Who gets the verification code?",
+          "id": "who-gets-the-verification-code"
+        },
+        {
+          "level": 3,
+          "text": "Can the console restore a deleted account?",
+          "id": "can-the-console-restore-a-deleted-account"
+        }
+      ],
+      "words": 990,
+      "order": 10
+    },
+    {
+      "id": "subscriptions-and-plans",
+      "title": "Subscriptions and plans (plan cards, free months, pricing rules)",
+      "summary": "How to read the Subscriptions page, add or edit plans with free months and offer text, and how a purchase price is worked out.",
+      "category": "Billing & growth",
+      "audience": "operator",
+      "tags": [
+        "subscriptions",
+        "plans",
+        "plan card",
+        "pricing",
+        "free months",
+        "offer text",
+        "duration",
+        "core",
+        "prime",
+        "elite",
+        "renewal",
+        "credit",
+        "gst",
+        "add plan",
+        "delete plan"
+      ],
+      "page": "subscriptions.html",
+      "updated": "2026-11-15",
+      "related": [
+        "payments",
+        "coupons",
+        "referrals-c2c",
+        "glossary"
+      ],
+      "path": "billing/subscriptions-and-plans.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "The three tiles at the top",
+          "id": "the-three-tiles-at-the-top"
+        },
+        {
+          "level": 2,
+          "text": "Plan cards",
+          "id": "plan-cards"
+        },
+        {
+          "level": 2,
+          "text": "Add a plan",
+          "id": "add-a-plan"
+        },
+        {
+          "level": 2,
+          "text": "Edit or delete a plan",
+          "id": "edit-or-delete-a-plan"
+        },
+        {
+          "level": 2,
+          "text": "How the app shows durations and savings",
+          "id": "how-the-app-shows-durations-and-savings"
+        },
+        {
+          "level": 2,
+          "text": "How the price is worked out",
+          "id": "how-the-price-is-worked-out"
+        },
+        {
+          "level": 2,
+          "text": "Organization subscriptions table",
+          "id": "organization-subscriptions-table"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Why does a 12-month plan show the same price as a 1-month plan?",
+          "id": "why-does-a-12-month-plan-show-the-same-price-as-a-1-month-plan"
+        },
+        {
+          "level": 3,
+          "text": "Does adding staff get the free months?",
+          "id": "does-adding-staff-get-the-free-months"
+        },
+        {
+          "level": 3,
+          "text": "Why is the Failed payments tile 0?",
+          "id": "why-is-the-failed-payments-tile-0"
+        },
+        {
+          "level": 3,
+          "text": "Can I make a plan 15 months long?",
+          "id": "can-i-make-a-plan-15-months-long"
+        }
+      ],
+      "words": 1101,
+      "order": 11
+    },
+    {
+      "id": "payments",
+      "title": "Payments page, how a payment becomes a subscription, and payment flags",
+      "summary": "How to read the Payments page and its tiles, download invoices, and what happens between a customer paying and the plan being activated.",
+      "category": "Billing & growth",
+      "audience": "operator",
+      "tags": [
+        "payments",
+        "razorpay",
+        "invoice",
+        "revenue",
+        "bulk invoice",
+        "refund",
+        "failed payment",
+        "pending",
+        "webhook",
+        "amount mismatch",
+        "payment flag",
+        "export"
+      ],
+      "page": "payments.html",
+      "updated": "2026-11-15",
+      "related": [
+        "subscriptions-and-plans",
+        "coupons",
+        "referrals-c2c",
+        "troubleshooting"
+      ],
+      "path": "billing/payments.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "What is listed",
+          "id": "what-is-listed"
+        },
+        {
+          "level": 2,
+          "text": "The six tiles",
+          "id": "the-six-tiles"
+        },
+        {
+          "level": 2,
+          "text": "Filters, charts and exports",
+          "id": "filters-charts-and-exports"
+        },
+        {
+          "level": 2,
+          "text": "Download invoices in bulk",
+          "id": "download-invoices-in-bulk"
+        },
+        {
+          "level": 2,
+          "text": "From checkout to an active plan",
+          "id": "from-checkout-to-an-active-plan"
+        },
+        {
+          "level": 2,
+          "text": "Failed and abandoned attempts",
+          "id": "failed-and-abandoned-attempts"
+        },
+        {
+          "level": 2,
+          "text": "Payment flags",
+          "id": "payment-flags"
+        },
+        {
+          "level": 2,
+          "text": "Refunds",
+          "id": "refunds"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Why do I only see Paid rows?",
+          "id": "why-do-i-only-see-paid-rows"
+        },
+        {
+          "level": 3,
+          "text": "Is Total Revenue before or after GST?",
+          "id": "is-total-revenue-before-or-after-gst"
+        },
+        {
+          "level": 3,
+          "text": "Where do I find one customer's invoice?",
+          "id": "where-do-i-find-one-customer-s-invoice"
+        },
+        {
+          "level": 3,
+          "text": "Can I resend an invoice e-mail?",
+          "id": "can-i-resend-an-invoice-e-mail"
+        },
+        {
+          "level": 3,
+          "text": "Why is the date range ignored by the Free Trial tile?",
+          "id": "why-is-the-date-range-ignored-by-the-free-trial-tile"
+        }
+      ],
+      "words": 1014,
+      "order": 12
+    },
+    {
+      "id": "coupons",
+      "title": "Coupons: create, edit, disable and how checkout applies them",
+      "summary": "How to manage discount coupons on the Coupons page, and the rules the server applies when a customer uses one at checkout.",
+      "category": "Billing & growth",
+      "audience": "operator",
+      "tags": [
+        "coupon",
+        "discount",
+        "promo code",
+        "percent",
+        "welcome coupon",
+        "deactivate",
+        "delete coupon",
+        "checkout",
+        "expiry",
+        "flat discount"
+      ],
+      "page": "coupons.html",
+      "updated": "2026-11-15",
+      "related": [
+        "subscriptions-and-plans",
+        "payments",
+        "referrals-c2c",
+        "referrals-b2c"
+      ],
+      "path": "billing/coupons.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "What the page shows",
+          "id": "what-the-page-shows"
+        },
+        {
+          "level": 2,
+          "text": "Add a coupon",
+          "id": "add-a-coupon"
+        },
+        {
+          "level": 2,
+          "text": "Edit, switch off or delete",
+          "id": "edit-switch-off-or-delete"
+        },
+        {
+          "level": 2,
+          "text": "How checkout applies a coupon",
+          "id": "how-checkout-applies-a-coupon"
+        },
+        {
+          "level": 2,
+          "text": "Rules that are not in the console",
+          "id": "rules-that-are-not-in-the-console"
+        },
+        {
+          "level": 2,
+          "text": "The welcome coupon",
+          "id": "the-welcome-coupon"
+        },
+        {
+          "level": 2,
+          "text": "Where you can see coupon use",
+          "id": "where-you-can-see-coupon-use"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Can I give a coupon a fixed rupee value?",
+          "id": "can-i-give-a-coupon-a-fixed-rupee-value"
+        },
+        {
+          "level": 3,
+          "text": "Does a coupon work on renewals?",
+          "id": "does-a-coupon-work-on-renewals"
+        },
+        {
+          "level": 3,
+          "text": "Can a customer use a coupon and a referral reward together?",
+          "id": "can-a-customer-use-a-coupon-and-a-referral-reward-together"
+        },
+        {
+          "level": 3,
+          "text": "Why did my coupon not change after I edited it?",
+          "id": "why-did-my-coupon-not-change-after-i-edited-it"
+        },
+        {
+          "level": 3,
+          "text": "Is a coupon the same as a promoter code?",
+          "id": "is-a-coupon-the-same-as-a-promoter-code"
+        }
+      ],
+      "words": 873,
+      "order": 13
+    },
+    {
+      "id": "referrals-c2c",
+      "title": "C2C referrals: customer-to-customer rewards, the discount percent and voiding",
+      "summary": "How the customer referral programme works, how to read the C2C Referral tab, change the discount percent (super admin) and void a reward.",
+      "category": "Billing & growth",
+      "audience": "operator",
+      "tags": [
+        "referral",
+        "refer and earn",
+        "c2c",
+        "customer referral",
+        "reward",
+        "discount percent",
+        "referrer",
+        "referred",
+        "void reward",
+        "top referrers",
+        "pending",
+        "available",
+        "used"
+      ],
+      "page": "referrals.html",
+      "updated": "2026-11-15",
+      "related": [
+        "referrals-b2c",
+        "subscriptions-and-plans",
+        "coupons",
+        "roles-and-permissions"
+      ],
+      "path": "billing/referrals-c2c.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "How the programme works",
+          "id": "how-the-programme-works"
+        },
+        {
+          "level": 2,
+          "text": "The discount percent",
+          "id": "the-discount-percent"
+        },
+        {
+          "level": 2,
+          "text": "The tiles",
+          "id": "the-tiles"
+        },
+        {
+          "level": 2,
+          "text": "Top referrers and the table",
+          "id": "top-referrers-and-the-table"
+        },
+        {
+          "level": 2,
+          "text": "Void a reward",
+          "id": "void-a-reward"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Why can I not see the Void button?",
+          "id": "why-can-i-not-see-the-void-button"
+        },
+        {
+          "level": 3,
+          "text": "Does changing the percent change rewards already issued?",
+          "id": "does-changing-the-percent-change-rewards-already-issued"
+        },
+        {
+          "level": 3,
+          "text": "Can a company add a referral code after registering?",
+          "id": "can-a-company-add-a-referral-code-after-registering"
+        },
+        {
+          "level": 3,
+          "text": "Does the reward work on the Core plan?",
+          "id": "does-the-reward-work-on-the-core-plan"
+        },
+        {
+          "level": 3,
+          "text": "Where do I see a company's own referral code?",
+          "id": "where-do-i-see-a-company-s-own-referral-code"
+        },
+        {
+          "level": 3,
+          "text": "Can a company get more than one reward?",
+          "id": "can-a-company-get-more-than-one-reward"
+        }
+      ],
+      "words": 974,
+      "order": 14
+    },
+    {
+      "id": "referrals-b2c",
+      "title": "B2C referrals: promoter codes for YouTube, Instagram and other channels",
+      "summary": "How to create and manage promoter codes on the B2C Referral tab, what customers get, and how to read a promoter's detail view and insights.",
+      "category": "Billing & growth",
+      "audience": "operator",
+      "tags": [
+        "b2c",
+        "promoter",
+        "promoter code",
+        "influencer",
+        "youtube",
+        "instagram",
+        "facebook",
+        "channel",
+        "referral code",
+        "discount",
+        "reward expiry",
+        "onboarded customers",
+        "insights"
+      ],
+      "page": "referrals.html",
+      "updated": "2026-11-15",
+      "related": [
+        "b2c-commission-and-payouts",
+        "referrals-c2c",
+        "roles-and-permissions",
+        "coupons"
+      ],
+      "path": "billing/referrals-b2c.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "What a customer experiences",
+          "id": "what-a-customer-experiences"
+        },
+        {
+          "level": 2,
+          "text": "Create a code",
+          "id": "create-a-code"
+        },
+        {
+          "level": 2,
+          "text": "Edit or deactivate a code",
+          "id": "edit-or-deactivate-a-code"
+        },
+        {
+          "level": 2,
+          "text": "The tab",
+          "id": "the-tab"
+        },
+        {
+          "level": 2,
+          "text": "The detail view",
+          "id": "the-detail-view"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Can I change a code after creating it?",
+          "id": "can-i-change-a-code-after-creating-it"
+        },
+        {
+          "level": 3,
+          "text": "What does Inactive do to customers who already signed up?",
+          "id": "what-does-inactive-do-to-customers-who-already-signed-up"
+        },
+        {
+          "level": 3,
+          "text": "Why is the percentage limited to 50?",
+          "id": "why-is-the-percentage-limited-to-50"
+        },
+        {
+          "level": 3,
+          "text": "Can two promoters share a code?",
+          "id": "can-two-promoters-share-a-code"
+        },
+        {
+          "level": 3,
+          "text": "Where do I see who signed up with a code?",
+          "id": "where-do-i-see-who-signed-up-with-a-code"
+        }
+      ],
+      "words": 1038,
+      "order": 15
+    },
+    {
+      "id": "b2c-commission-and-payouts",
+      "title": "Promoter commission, payouts and voiding a payout",
+      "summary": "How a promoter's commission is earned and tracked, how to record or void a payout, and a month-end routine for paying promoters.",
+      "category": "Billing & growth",
+      "audience": "super_admin",
+      "tags": [
+        "commission",
+        "payout",
+        "promoter payment",
+        "void payout",
+        "commission due",
+        "ledger",
+        "utr",
+        "month end",
+        "b2c",
+        "earned",
+        "paid"
+      ],
+      "page": "referrals.html",
+      "updated": "2026-11-15",
+      "related": [
+        "referrals-b2c",
+        "payments",
+        "roles-and-permissions"
+      ],
+      "path": "billing/b2c-commission-and-payouts.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "How commission is earned",
+          "id": "how-commission-is-earned"
+        },
+        {
+          "level": 2,
+          "text": "The numbers on the screen",
+          "id": "the-numbers-on-the-screen"
+        },
+        {
+          "level": 2,
+          "text": "Record a payout",
+          "id": "record-a-payout"
+        },
+        {
+          "level": 2,
+          "text": "Void a payout",
+          "id": "void-a-payout"
+        },
+        {
+          "level": 2,
+          "text": "Ledger columns",
+          "id": "ledger-columns"
+        },
+        {
+          "level": 2,
+          "text": "Month-end routine",
+          "id": "month-end-routine"
+        },
+        {
+          "level": 2,
+          "text": "What the system does not do",
+          "id": "what-the-system-does-not-do"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Does the commission include GST?",
+          "id": "does-the-commission-include-gst"
+        },
+        {
+          "level": 3,
+          "text": "Do renewals earn commission?",
+          "id": "do-renewals-earn-commission"
+        },
+        {
+          "level": 3,
+          "text": "I recorded the wrong amount. How do I fix it?",
+          "id": "i-recorded-the-wrong-amount-how-do-i-fix-it"
+        },
+        {
+          "level": 3,
+          "text": "Can I delete a payout?",
+          "id": "can-i-delete-a-payout"
+        },
+        {
+          "level": 3,
+          "text": "Why did Due go up after I voided a payout?",
+          "id": "why-did-due-go-up-after-i-voided-a-payout"
+        }
+      ],
+      "words": 1111,
+      "order": 16
+    },
+    {
+      "id": "suggestions",
+      "title": "Suggestions (feature requests from companies)",
+      "summary": "How feature ideas reach the Suggestions page, how to read, search and reply to them, and what the suggestion counter really counts.",
+      "category": "Support",
+      "audience": "operator",
+      "tags": [
+        "suggestions",
+        "feature request",
+        "feedback",
+        "ideas",
+        "reply",
+        "suggest a feature",
+        "counter",
+        "badge"
+      ],
+      "page": "suggestions.html",
+      "updated": "2026-11-15",
+      "related": [
+        "tickets-and-bugs",
+        "live-chat",
+        "console-tour"
+      ],
+      "path": "support/suggestions.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "How a suggestion reaches the Suggestions page",
+          "id": "how-a-suggestion-reaches-the-suggestions-page"
+        },
+        {
+          "level": 2,
+          "text": "What the Suggestions page shows",
+          "id": "what-the-suggestions-page-shows"
+        },
+        {
+          "level": 2,
+          "text": "Reply to a suggestion",
+          "id": "reply-to-a-suggestion"
+        },
+        {
+          "level": 2,
+          "text": "What the suggestion counter counts",
+          "id": "what-the-suggestion-counter-counts"
+        },
+        {
+          "level": 2,
+          "text": "What this page does not have",
+          "id": "what-this-page-does-not-have"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Why does the suggestion counter not go down after I reply?",
+          "id": "why-does-the-suggestion-counter-not-go-down-after-i-reply"
+        },
+        {
+          "level": 3,
+          "text": "Can the company see my reply?",
+          "id": "can-the-company-see-my-reply"
+        },
+        {
+          "level": 3,
+          "text": "Can I mark a suggestion as done or delete it?",
+          "id": "can-i-mark-a-suggestion-as-done-or-delete-it"
+        },
+        {
+          "level": 3,
+          "text": "Who receives the e-mail copy of a suggestion?",
+          "id": "who-receives-the-e-mail-copy-of-a-suggestion"
+        },
+        {
+          "level": 3,
+          "text": "Is the search case sensitive?",
+          "id": "is-the-search-case-sensitive"
+        },
+        {
+          "level": 3,
+          "text": "How many suggestions can one person send?",
+          "id": "how-many-suggestions-can-one-person-send"
+        }
+      ],
+      "words": 913,
+      "order": 17
+    },
+    {
+      "id": "tickets-and-bugs",
+      "title": "Tickets and bugs (support requests)",
+      "summary": "How support tickets from companies arrive, what Open, In Progress and Resolved mean, and how to reply, resolve and reopen a ticket on the Ticketing and Bugs page.",
+      "category": "Support",
+      "audience": "operator",
+      "tags": [
+        "tickets",
+        "ticketing",
+        "bugs",
+        "support request",
+        "issue",
+        "reply",
+        "resolve",
+        "reopen",
+        "status",
+        "attachment",
+        "photo"
+      ],
+      "page": "tickets.html",
+      "updated": "2026-11-15",
+      "related": [
+        "live-chat",
+        "suggestions",
+        "faq-hub",
+        "troubleshooting"
+      ],
+      "path": "support/tickets-and-bugs.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "How a ticket reaches the page",
+          "id": "how-a-ticket-reaches-the-page"
+        },
+        {
+          "level": 2,
+          "text": "The two tables and the tiles",
+          "id": "the-two-tables-and-the-tiles"
+        },
+        {
+          "level": 2,
+          "text": "What the statuses mean",
+          "id": "what-the-statuses-mean"
+        },
+        {
+          "level": 2,
+          "text": "Reply to a ticket",
+          "id": "reply-to-a-ticket"
+        },
+        {
+          "level": 2,
+          "text": "Resolve or reopen a ticket",
+          "id": "resolve-or-reopen-a-ticket"
+        },
+        {
+          "level": 2,
+          "text": "Getting alerted",
+          "id": "getting-alerted"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "What is the difference between a ticket and a bug?",
+          "id": "what-is-the-difference-between-a-ticket-and-a-bug"
+        },
+        {
+          "level": 3,
+          "text": "How do I know a company has answered me?",
+          "id": "how-do-i-know-a-company-has-answered-me"
+        },
+        {
+          "level": 3,
+          "text": "Can I assign a ticket to a colleague?",
+          "id": "can-i-assign-a-ticket-to-a-colleague"
+        },
+        {
+          "level": 3,
+          "text": "Does Mark Resolved tell the company?",
+          "id": "does-mark-resolved-tell-the-company"
+        },
+        {
+          "level": 3,
+          "text": "Why does a new reply from me turn Open into In Progress?",
+          "id": "why-does-a-new-reply-from-me-turn-open-into-in-progress"
+        },
+        {
+          "level": 3,
+          "text": "Can I delete a ticket?",
+          "id": "can-i-delete-a-ticket"
+        }
+      ],
+      "words": 1002,
+      "order": 18
+    },
+    {
+      "id": "live-chat",
+      "title": "Live Chat with companies",
+      "summary": "How company admins start a chat in the app and how operators answer in the console: floating button, full page, unread counts, closing, attachments, sound.",
+      "category": "Support",
+      "audience": "operator",
+      "tags": [
+        "live chat",
+        "chat",
+        "support chat",
+        "reply",
+        "unread",
+        "close conversation",
+        "reopen",
+        "attachment",
+        "notification",
+        "chime",
+        "floating button",
+        "panel",
+        "offline",
+        "reconnecting"
+      ],
+      "page": "live_chat.html",
+      "updated": "2026-11-15",
+      "related": [
+        "tickets-and-bugs",
+        "console-tour",
+        "troubleshooting"
+      ],
+      "path": "support/live-chat.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "How a conversation starts",
+          "id": "how-a-conversation-starts"
+        },
+        {
+          "level": 2,
+          "text": "Where to find Live Chat in the console",
+          "id": "where-to-find-live-chat-in-the-console"
+        },
+        {
+          "level": 2,
+          "text": "The conversation list",
+          "id": "the-conversation-list"
+        },
+        {
+          "level": 2,
+          "text": "Reply to a company",
+          "id": "reply-to-a-company"
+        },
+        {
+          "level": 2,
+          "text": "Close and reopen a conversation",
+          "id": "close-and-reopen-a-conversation"
+        },
+        {
+          "level": 2,
+          "text": "Delete a message",
+          "id": "delete-a-message"
+        },
+        {
+          "level": 2,
+          "text": "Sound, desktop notifications and the unread badge",
+          "id": "sound-desktop-notifications-and-the-unread-badge"
+        },
+        {
+          "level": 2,
+          "text": "What happens when the connection drops",
+          "id": "what-happens-when-the-connection-drops"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Can I start a chat with a company?",
+          "id": "can-i-start-a-chat-with-a-company"
+        },
+        {
+          "level": 3,
+          "text": "Why does the panel not have the sound button?",
+          "id": "why-does-the-panel-not-have-the-sound-button"
+        },
+        {
+          "level": 3,
+          "text": "Does the unread number clear for everyone when I read a chat?",
+          "id": "does-the-unread-number-clear-for-everyone-when-i-read-a-chat"
+        },
+        {
+          "level": 3,
+          "text": "What do the two ticks mean?",
+          "id": "what-do-the-two-ticks-mean"
+        },
+        {
+          "level": 3,
+          "text": "Will a company see that I deleted a message?",
+          "id": "will-a-company-see-that-i-deleted-a-message"
+        },
+        {
+          "level": 3,
+          "text": "Can managers or staff use Live Chat?",
+          "id": "can-managers-or-staff-use-live-chat"
+        }
+      ],
+      "words": 1162,
+      "order": 19
+    },
+    {
+      "id": "video-hub",
+      "title": "Video Hub (guide videos for the app)",
+      "summary": "How to upload, preview, rename, hide and delete the guide videos that appear in the app's Support > Video Hub, and what the Videos tab shows.",
+      "category": "Support",
+      "audience": "operator",
+      "tags": [
+        "video hub",
+        "videos",
+        "guide video",
+        "upload",
+        "mp4",
+        "preview",
+        "rename",
+        "activate",
+        "deactivate",
+        "delete",
+        "s3",
+        "support tab"
+      ],
+      "page": "videos.html",
+      "updated": "2026-11-15",
+      "related": [
+        "video-views",
+        "faq-hub",
+        "live-chat",
+        "roles-and-permissions"
+      ],
+      "path": "support/video-hub.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "How the app uses the videos",
+          "id": "how-the-app-uses-the-videos"
+        },
+        {
+          "level": 2,
+          "text": "What the Videos tab shows",
+          "id": "what-the-videos-tab-shows"
+        },
+        {
+          "level": 2,
+          "text": "Upload a video",
+          "id": "upload-a-video"
+        },
+        {
+          "level": 2,
+          "text": "Preview, hide, rename and delete",
+          "id": "preview-hide-rename-and-delete"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "How do I change the order of videos?",
+          "id": "how-do-i-change-the-order-of-videos"
+        },
+        {
+          "level": 3,
+          "text": "Can I replace a video file but keep its view count?",
+          "id": "can-i-replace-a-video-file-but-keep-its-view-count"
+        },
+        {
+          "level": 3,
+          "text": "Is there a size or length limit?",
+          "id": "is-there-a-size-or-length-limit"
+        },
+        {
+          "level": 3,
+          "text": "What happens to views when I delete a video?",
+          "id": "what-happens-to-views-when-i-delete-a-video"
+        },
+        {
+          "level": 3,
+          "text": "Do companies see Inactive videos?",
+          "id": "do-companies-see-inactive-videos"
+        },
+        {
+          "level": 3,
+          "text": "Who can see the Videos tab?",
+          "id": "who-can-see-the-videos-tab"
+        }
+      ],
+      "words": 999,
+      "order": 20
+    },
+    {
+      "id": "video-views",
+      "title": "Video Views (who watched which guide video)",
+      "summary": "How to read the Views tab of Video Hub, what counts as a view, what the tiles and the Activity and By Organization tables mean, and how to use them to spot features that confuse companies.",
+      "category": "Support",
+      "audience": "operator",
+      "tags": [
+        "video views",
+        "views",
+        "watched",
+        "activity",
+        "by organization",
+        "analytics",
+        "engagement",
+        "export",
+        "most watched"
+      ],
+      "page": "video_views.html",
+      "updated": "2026-11-15",
+      "related": [
+        "video-hub",
+        "clickstream",
+        "faq-hub"
+      ],
+      "path": "support/video-views.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "What counts as a view",
+          "id": "what-counts-as-a-view"
+        },
+        {
+          "level": 2,
+          "text": "What is loaded",
+          "id": "what-is-loaded"
+        },
+        {
+          "level": 2,
+          "text": "The tiles",
+          "id": "the-tiles"
+        },
+        {
+          "level": 2,
+          "text": "Filters and export",
+          "id": "filters-and-export"
+        },
+        {
+          "level": 2,
+          "text": "The two sub-tabs",
+          "id": "the-two-sub-tabs"
+        },
+        {
+          "level": 2,
+          "text": "Use the views to find confusing features",
+          "id": "use-the-views-to-find-confusing-features"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Does a view mean the person watched the whole video?",
+          "id": "does-a-view-mean-the-person-watched-the-whole-video"
+        },
+        {
+          "level": 3,
+          "text": "Why do some rows show Manager or Staff?",
+          "id": "why-do-some-rows-show-manager-or-staff"
+        },
+        {
+          "level": 3,
+          "text": "Can I see views for just one company?",
+          "id": "can-i-see-views-for-just-one-company"
+        },
+        {
+          "level": 3,
+          "text": "How far back does the list go?",
+          "id": "how-far-back-does-the-list-go"
+        },
+        {
+          "level": 3,
+          "text": "Can I download the data?",
+          "id": "can-i-download-the-data"
+        },
+        {
+          "level": 3,
+          "text": "Are deleted videos still in the list?",
+          "id": "are-deleted-videos-still-in-the-list"
+        }
+      ],
+      "words": 783,
+      "order": 21
+    },
+    {
+      "id": "faq-hub",
+      "title": "FAQ Hub (questions and answers shown in the app)",
+      "summary": "How the FAQ library is organised into buckets and categories, how to add, edit, reorder, hide, rename and delete FAQs, and how to keep them in step with product changes.",
+      "category": "Support",
+      "audience": "operator",
+      "tags": [
+        "faq",
+        "faq hub",
+        "questions",
+        "answers",
+        "bucket",
+        "category",
+        "sort order",
+        "active",
+        "inactive",
+        "add faq",
+        "edit",
+        "rename",
+        "starter set",
+        "support tab"
+      ],
+      "page": "faqs.html",
+      "updated": "2026-11-15",
+      "related": [
+        "video-hub",
+        "tickets-and-bugs",
+        "live-chat",
+        "glossary"
+      ],
+      "path": "support/faq-hub.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "How FAQs are organised",
+          "id": "how-faqs-are-organised"
+        },
+        {
+          "level": 2,
+          "text": "What the FAQ Hub page shows",
+          "id": "what-the-faq-hub-page-shows"
+        },
+        {
+          "level": 2,
+          "text": "Add a FAQ",
+          "id": "add-a-faq"
+        },
+        {
+          "level": 2,
+          "text": "Edit, reorder, hide and delete",
+          "id": "edit-reorder-hide-and-delete"
+        },
+        {
+          "level": 2,
+          "text": "The starter set and updates for existing databases",
+          "id": "the-starter-set-and-updates-for-existing-databases"
+        },
+        {
+          "level": 2,
+          "text": "Keep FAQs in step with product changes",
+          "id": "keep-faqs-in-step-with-product-changes"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "How do I move a FAQ to a different bucket?",
+          "id": "how-do-i-move-a-faq-to-a-different-bucket"
+        },
+        {
+          "level": 3,
+          "text": "Can I use bold text, links or images in an answer?",
+          "id": "can-i-use-bold-text-links-or-images-in-an-answer"
+        },
+        {
+          "level": 3,
+          "text": "Does hiding a FAQ delete it?",
+          "id": "does-hiding-a-faq-delete-it"
+        },
+        {
+          "level": 3,
+          "text": "Who decides the order buckets appear in?",
+          "id": "who-decides-the-order-buckets-appear-in"
+        },
+        {
+          "level": 3,
+          "text": "Can two FAQs have the same question?",
+          "id": "can-two-faqs-have-the-same-question"
+        },
+        {
+          "level": 3,
+          "text": "Is there a limit on answer length?",
+          "id": "is-there-a-limit-on-answer-length"
+        }
+      ],
+      "words": 1154,
+      "order": 22
+    },
+    {
+      "id": "clickstream",
+      "title": "Clickstream (how people use the app)",
+      "summary": "What the Clickstream page collects and shows across its four tabs (Overview, Behaviour, Business, Live stream), how every tile, chart and funnel is calculated, the privacy rules, and how to read it.",
+      "category": "Support",
+      "audience": "operator",
+      "tags": [
+        "clickstream",
+        "analytics",
+        "usage",
+        "screens",
+        "taps",
+        "funnel",
+        "stickiness",
+        "sessions",
+        "active users",
+        "drop off",
+        "retention",
+        "privacy",
+        "purge",
+        "live stream",
+        "heatmap"
+      ],
+      "page": "clickstream.html",
+      "updated": "2026-11-15",
+      "related": [
+        "video-views",
+        "organizations",
+        "faq-hub",
+        "security-settings"
+      ],
+      "path": "support/clickstream.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "What the app collects",
+          "id": "what-the-app-collects"
+        },
+        {
+          "level": 2,
+          "text": "The filters",
+          "id": "the-filters"
+        },
+        {
+          "level": 2,
+          "text": "Overview tab",
+          "id": "overview-tab"
+        },
+        {
+          "level": 2,
+          "text": "Behaviour tab",
+          "id": "behaviour-tab"
+        },
+        {
+          "level": 2,
+          "text": "Business tab",
+          "id": "business-tab"
+        },
+        {
+          "level": 2,
+          "text": "Live stream tab",
+          "id": "live-stream-tab"
+        },
+        {
+          "level": 2,
+          "text": "How to read it",
+          "id": "how-to-read-it"
+        },
+        {
+          "level": 2,
+          "text": "Retention and purge",
+          "id": "retention-and-purge"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Is typed text ever stored?",
+          "id": "is-typed-text-ever-stored"
+        },
+        {
+          "level": 3,
+          "text": "What is stickiness?",
+          "id": "what-is-stickiness"
+        },
+        {
+          "level": 3,
+          "text": "Can I see longer than 90 days?",
+          "id": "can-i-see-longer-than-90-days"
+        },
+        {
+          "level": 3,
+          "text": "Does it sample the data?",
+          "id": "does-it-sample-the-data"
+        },
+        {
+          "level": 3,
+          "text": "How do I delete old events?",
+          "id": "how-do-i-delete-old-events"
+        }
+      ],
+      "words": 1129,
+      "order": 23
+    },
+    {
+      "id": "glossary",
+      "title": "Glossary of terms",
+      "summary": "Plain-language definitions of the words you meet in the Clockyn Console and in Clockyn itself, in alphabetical order, from account deletion request to void.",
+      "category": "Reference",
+      "audience": "all",
+      "tags": [
+        "glossary",
+        "definitions",
+        "terms",
+        "words",
+        "meaning",
+        "what does mean",
+        "vocabulary",
+        "abbreviations",
+        "c2c",
+        "b2c",
+        "tier",
+        "trial",
+        "otp",
+        "gst"
+      ],
+      "page": "",
+      "updated": "2026-11-15",
+      "related": [
+        "welcome",
+        "roles-and-permissions",
+        "subscriptions-and-plans",
+        "referrals-c2c",
+        "referrals-b2c"
+      ],
+      "path": "reference/glossary.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Terms",
+          "id": "terms"
+        },
+        {
+          "level": 3,
+          "text": "Account deletion request",
+          "id": "account-deletion-request"
+        },
+        {
+          "level": 3,
+          "text": "Active Today",
+          "id": "active-today"
+        },
+        {
+          "level": 3,
+          "text": "Admin (company Admin)",
+          "id": "admin-company-admin"
+        },
+        {
+          "level": 3,
+          "text": "B2C referral",
+          "id": "b2c-referral"
+        },
+        {
+          "level": 3,
+          "text": "Bell",
+          "id": "bell"
+        },
+        {
+          "level": 3,
+          "text": "Branch",
+          "id": "branch"
+        },
+        {
+          "level": 3,
+          "text": "C2C referral",
+          "id": "c2c-referral"
+        },
+        {
+          "level": 3,
+          "text": "Clickstream",
+          "id": "clickstream"
+        },
+        {
+          "level": 3,
+          "text": "Commission",
+          "id": "commission"
+        },
+        {
+          "level": 3,
+          "text": "Console",
+          "id": "console"
+        },
+        {
+          "level": 3,
+          "text": "Coupon",
+          "id": "coupon"
+        },
+        {
+          "level": 3,
+          "text": "Credit",
+          "id": "credit"
+        },
+        {
+          "level": 3,
+          "text": "Department",
+          "id": "department"
+        },
+        {
+          "level": 3,
+          "text": "Duration",
+          "id": "duration"
+        },
+        {
+          "level": 3,
+          "text": "Employee",
+          "id": "employee"
+        },
+        {
+          "level": 3,
+          "text": "Expiring",
+          "id": "expiring"
+        },
+        {
+          "level": 3,
+          "text": "Face punch",
+          "id": "face-punch"
+        },
+        {
+          "level": 3,
+          "text": "FAQ bucket",
+          "id": "faq-bucket"
+        },
+        {
+          "level": 3,
+          "text": "Free months",
+          "id": "free-months"
+        },
+        {
+          "level": 3,
+          "text": "Free trial",
+          "id": "free-trial"
+        },
+        {
+          "level": 3,
+          "text": "Geofence",
+          "id": "geofence"
+        },
+        {
+          "level": 3,
+          "text": "GST",
+          "id": "gst"
+        },
+        {
+          "level": 3,
+          "text": "Invoice",
+          "id": "invoice"
+        },
+        {
+          "level": 3,
+          "text": "Live Chat",
+          "id": "live-chat"
+        },
+        {
+          "level": 3,
+          "text": "Manager",
+          "id": "manager"
+        },
+        {
+          "level": 3,
+          "text": "Offer text",
+          "id": "offer-text"
+        },
+        {
+          "level": 3,
+          "text": "One-time code (OTP)",
+          "id": "one-time-code-otp"
+        },
+        {
+          "level": 3,
+          "text": "Operator",
+          "id": "operator"
+        },
+        {
+          "level": 3,
+          "text": "Organisation",
+          "id": "organisation"
+        },
+        {
+          "level": 3,
+          "text": "Payout",
+          "id": "payout"
+        },
+        {
+          "level": 3,
+          "text": "Payroll",
+          "id": "payroll"
+        },
+        {
+          "level": 3,
+          "text": "Plan",
+          "id": "plan"
+        },
+        {
+          "level": 3,
+          "text": "Promoter code",
+          "id": "promoter-code"
+        },
+        {
+          "level": 3,
+          "text": "Referral reward",
+          "id": "referral-reward"
+        },
+        {
+          "level": 3,
+          "text": "Remember me",
+          "id": "remember-me"
+        },
+        {
+          "level": 3,
+          "text": "Renewal",
+          "id": "renewal"
+        },
+        {
+          "level": 3,
+          "text": "Shift",
+          "id": "shift"
+        },
+        {
+          "level": 3,
+          "text": "Staff",
+          "id": "staff"
+        },
+        {
+          "level": 3,
+          "text": "Subscription",
+          "id": "subscription"
+        },
+        {
+          "level": 3,
+          "text": "Super admin",
+          "id": "super-admin"
+        },
+        {
+          "level": 3,
+          "text": "Ticket",
+          "id": "ticket"
+        },
+        {
+          "level": 3,
+          "text": "Tier",
+          "id": "tier"
+        },
+        {
+          "level": 3,
+          "text": "Upgrade (adding staff)",
+          "id": "upgrade-adding-staff"
+        },
+        {
+          "level": 3,
+          "text": "Video Hub",
+          "id": "video-hub"
+        },
+        {
+          "level": 3,
+          "text": "Video Views",
+          "id": "video-views"
+        },
+        {
+          "level": 3,
+          "text": "Void",
+          "id": "void"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "What is the difference between Admin and super admin?",
+          "id": "what-is-the-difference-between-admin-and-super-admin"
+        },
+        {
+          "level": 3,
+          "text": "What is the difference between a tier and a duration?",
+          "id": "what-is-the-difference-between-a-tier-and-a-duration"
+        },
+        {
+          "level": 3,
+          "text": "Is \"Staff\" a person in a company or a console role?",
+          "id": "is-staff-a-person-in-a-company-or-a-console-role"
+        },
+        {
+          "level": 3,
+          "text": "What does \"excluding GST\" mean?",
+          "id": "what-does-excluding-gst-mean"
+        }
+      ],
+      "words": 1118,
+      "order": 24
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Troubleshooting the console",
+      "summary": "Symptom, cause and fix for common operator problems: blank pages, sign-in loops, 401 and 403 errors, Failed to load and CORS errors, stale numbers, chat or bell issues and export problems.",
+      "category": "Reference",
+      "audience": "all",
+      "tags": [
+        "troubleshooting",
+        "problem",
+        "error",
+        "not working",
+        "blank page",
+        "failed to load",
+        "cors",
+        "401",
+        "403",
+        "session expired",
+        "loop",
+        "stale",
+        "not refreshing",
+        "chat not updating",
+        "bell",
+        "export",
+        "environment",
+        "api",
+        "cache",
+        "ctrl f5"
+      ],
+      "page": "",
+      "updated": "2026-11-15",
+      "related": [
+        "signing-in",
+        "roles-and-permissions",
+        "console-tour",
+        "live-chat",
+        "how-the-console-works"
+      ],
+      "path": "reference/troubleshooting.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Quick table",
+          "id": "quick-table"
+        },
+        {
+          "level": 2,
+          "text": "Blank page or an old version of a page",
+          "id": "blank-page-or-an-old-version-of-a-page"
+        },
+        {
+          "level": 2,
+          "text": "Session expired loops",
+          "id": "session-expired-loops"
+        },
+        {
+          "level": 2,
+          "text": "401 and 403 messages",
+          "id": "401-and-403-messages"
+        },
+        {
+          "level": 2,
+          "text": "Failed to load and CORS errors",
+          "id": "failed-to-load-and-cors-errors"
+        },
+        {
+          "level": 2,
+          "text": "Numbers look old or do not match",
+          "id": "numbers-look-old-or-do-not-match"
+        },
+        {
+          "level": 2,
+          "text": "Chat not updating",
+          "id": "chat-not-updating"
+        },
+        {
+          "level": 2,
+          "text": "Bell dot stuck",
+          "id": "bell-dot-stuck"
+        },
+        {
+          "level": 2,
+          "text": "Export does nothing",
+          "id": "export-does-nothing"
+        },
+        {
+          "level": 2,
+          "text": "Wrong environment",
+          "id": "wrong-environment"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Who do I tell when the whole console is down?",
+          "id": "who-do-i-tell-when-the-whole-console-is-down"
+        },
+        {
+          "level": 3,
+          "text": "Why does Export not include everyone?",
+          "id": "why-does-export-not-include-everyone"
+        },
+        {
+          "level": 3,
+          "text": "I changed a plan and the app still shows the old price. Why?",
+          "id": "i-changed-a-plan-and-the-app-still-shows-the-old-price-why"
+        },
+        {
+          "level": 3,
+          "text": "Does a hard refresh sign me out?",
+          "id": "does-a-hard-refresh-sign-me-out"
+        }
+      ],
+      "words": 1112,
+      "order": 25
+    },
+    {
+      "id": "settings-page",
+      "title": "Settings page",
+      "summary": "Every section of the Settings page (profile, light or dark theme, console users), who can use each, what saving does and the mistakes to avoid when adding or deleting users.",
+      "category": "Reference",
+      "audience": "all",
+      "tags": [
+        "settings",
+        "profile",
+        "display name",
+        "theme",
+        "dark mode",
+        "light mode",
+        "users",
+        "add user",
+        "edit user",
+        "delete user",
+        "console users",
+        "operators",
+        "super admin",
+        "role"
+      ],
+      "page": "settings.html",
+      "updated": "2026-11-15",
+      "related": [
+        "roles-and-permissions",
+        "signing-in",
+        "console-tour"
+      ],
+      "path": "reference/settings-page.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "My Profile",
+          "id": "my-profile"
+        },
+        {
+          "level": 2,
+          "text": "Appearance",
+          "id": "appearance"
+        },
+        {
+          "level": 2,
+          "text": "Users (console users)",
+          "id": "users-console-users"
+        },
+        {
+          "level": 3,
+          "text": "Add a user",
+          "id": "add-a-user"
+        },
+        {
+          "level": 3,
+          "text": "Edit a user",
+          "id": "edit-a-user"
+        },
+        {
+          "level": 3,
+          "text": "Delete a user",
+          "id": "delete-a-user"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Can I change my role myself?",
+          "id": "can-i-change-my-role-myself"
+        },
+        {
+          "level": 3,
+          "text": "Can I change my e-mail address?",
+          "id": "can-i-change-my-e-mail-address"
+        },
+        {
+          "level": 3,
+          "text": "Why does my role say Admin but the table says Super Admin?",
+          "id": "why-does-my-role-say-admin-but-the-table-says-super-admin"
+        },
+        {
+          "level": 3,
+          "text": "Is the theme the same on all my devices?",
+          "id": "is-the-theme-the-same-on-all-my-devices"
+        },
+        {
+          "level": 3,
+          "text": "What happens to someone I delete who is signed in?",
+          "id": "what-happens-to-someone-i-delete-who-is-signed-in"
+        }
+      ],
+      "words": 927,
+      "order": 26
+    },
+    {
+      "id": "how-the-console-works",
+      "title": "How the console works (architecture)",
+      "summary": "Explains how ClockynConsole is built (static HTML, CSS and JavaScript, no build step), what each shared script does, how a page is structured and how data and sign-in flow to the backend.",
+      "category": "Maintainers",
+      "audience": "maintainer",
+      "tags": [
+        "architecture",
+        "static site",
+        "layout.js",
+        "auth.js",
+        "operator-session.js",
+        "config.js",
+        "fetch wrapper",
+        "session",
+        "how it works",
+        "developer",
+        "code layout"
+      ],
+      "page": "",
+      "updated": "2026-11-15",
+      "related": [
+        "api-map",
+        "security-settings",
+        "adding-a-page",
+        "running-and-testing-locally"
+      ],
+      "path": "maintainers/how-the-console-works.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Folder layout",
+          "id": "folder-layout"
+        },
+        {
+          "level": 2,
+          "text": "How a page is structured",
+          "id": "how-a-page-is-structured"
+        },
+        {
+          "level": 2,
+          "text": "The shell (js/layout.js)",
+          "id": "the-shell-js-layout-js"
+        },
+        {
+          "level": 2,
+          "text": "Sign-in and the session",
+          "id": "sign-in-and-the-session"
+        },
+        {
+          "level": 2,
+          "text": "How data flows",
+          "id": "how-data-flows"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Where do I change the backend address?",
+          "id": "where-do-i-change-the-backend-address"
+        },
+        {
+          "level": 3,
+          "text": "Why is there no build step?",
+          "id": "why-is-there-no-build-step"
+        },
+        {
+          "level": 3,
+          "text": "Where is the super admin check on the page?",
+          "id": "where-is-the-super-admin-check-on-the-page"
+        },
+        {
+          "level": 3,
+          "text": "Why does Live Chat have no sidebar item?",
+          "id": "why-does-live-chat-have-no-sidebar-item"
+        }
+      ],
+      "words": 1015,
+      "order": 27
+    },
+    {
+      "id": "running-and-testing-locally",
+      "title": "Run and test the console locally",
+      "summary": "How to serve ClockynConsole on your PC, point it at a backend, and run its checks (static check, brand check, Playwright e2e with mocks, backend tests, schema checks).",
+      "category": "Maintainers",
+      "audience": "maintainer",
+      "tags": [
+        "local",
+        "run",
+        "serve",
+        "http.server",
+        "e2e",
+        "playwright",
+        "mock",
+        "tests",
+        "pytest",
+        "static check",
+        "ports",
+        "test results",
+        "developer setup"
+      ],
+      "page": "",
+      "updated": "2026-11-15",
+      "related": [
+        "how-the-console-works",
+        "adding-a-page",
+        "deploying-the-console"
+      ],
+      "path": "maintainers/running-and-testing-locally.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Serve the console on your PC",
+          "id": "serve-the-console-on-your-pc"
+        },
+        {
+          "level": 2,
+          "text": "End-to-end tests (Playwright, no real backend)",
+          "id": "end-to-end-tests-playwright-no-real-backend"
+        },
+        {
+          "level": 3,
+          "text": "Do not run two Playwright runs at the same time",
+          "id": "do-not-run-two-playwright-runs-at-the-same-time"
+        },
+        {
+          "level": 2,
+          "text": "Other checks to run",
+          "id": "other-checks-to-run"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Do the e2e tests need the real backend or a database?",
+          "id": "do-the-e2e-tests-need-the-real-backend-or-a-database"
+        },
+        {
+          "level": 3,
+          "text": "How do I test a super admin and a normal operator?",
+          "id": "how-do-i-test-a-super-admin-and-a-normal-operator"
+        },
+        {
+          "level": 3,
+          "text": "Why do the specs use a Remember me or storage check?",
+          "id": "why-do-the-specs-use-a-remember-me-or-storage-check"
+        },
+        {
+          "level": 3,
+          "text": "Can I test the live chat socket?",
+          "id": "can-i-test-the-live-chat-socket"
+        }
+      ],
+      "words": 880,
+      "order": 28
+    },
+    {
+      "id": "deploying-the-console",
+      "title": "Deploy the console and its backend changes",
+      "summary": "How to publish ClockynConsole as static files, the safe order with database migrations, backend and app, what to set for CORS and caching, and how to roll back.",
+      "category": "Maintainers",
+      "audience": "maintainer",
+      "tags": [
+        "deploy",
+        "release",
+        "publish",
+        "hosting",
+        "static files",
+        "cache",
+        "ctrl+f5",
+        "cors",
+        "migrations",
+        "migrate.py",
+        "rollback",
+        "order",
+        "038",
+        "039",
+        "040",
+        "041"
+      ],
+      "page": "",
+      "updated": "2026-11-15",
+      "related": [
+        "running-and-testing-locally",
+        "security-settings",
+        "how-the-console-works"
+      ],
+      "path": "maintainers/deploying-the-console.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "What you publish",
+          "id": "what-you-publish"
+        },
+        {
+          "level": 2,
+          "text": "The safe order",
+          "id": "the-safe-order"
+        },
+        {
+          "level": 2,
+          "text": "Migrations 038 to 041 in short",
+          "id": "migrations-038-to-041-in-short"
+        },
+        {
+          "level": 2,
+          "text": "Hosting settings that matter",
+          "id": "hosting-settings-that-matter"
+        },
+        {
+          "level": 2,
+          "text": "Rollback",
+          "id": "rollback"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Do I need to restart anything for a console-only change?",
+          "id": "do-i-need-to-restart-anything-for-a-console-only-change"
+        },
+        {
+          "level": 3,
+          "text": "Which deploy can I skip if I only changed documentation?",
+          "id": "which-deploy-can-i-skip-if-i-only-changed-documentation"
+        },
+        {
+          "level": 3,
+          "text": "Can I run migrations while users are online?",
+          "id": "can-i-run-migrations-while-users-are-online"
+        }
+      ],
+      "words": 788,
+      "order": 29
+    },
+    {
+      "id": "adding-a-page",
+      "title": "Add a new page to the console",
+      "summary": "Step-by-step checklist for adding a console page - file skeleton, script order, sidebar entry, API calls, role checks, tests, and the knowledge base document.",
+      "category": "Maintainers",
+      "audience": "maintainer",
+      "tags": [
+        "new page",
+        "add page",
+        "nav item",
+        "sidebar",
+        "layout.js",
+        "static check",
+        "script order",
+        "skeleton",
+        "checklist",
+        "developer"
+      ],
+      "page": "",
+      "updated": "2026-11-15",
+      "related": [
+        "how-the-console-works",
+        "api-map",
+        "running-and-testing-locally",
+        "security-settings"
+      ],
+      "path": "maintainers/adding-a-page.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Steps",
+          "id": "steps"
+        },
+        {
+          "level": 2,
+          "text": "Body skeleton",
+          "id": "body-skeleton"
+        },
+        {
+          "level": 2,
+          "text": "What the static check enforces",
+          "id": "what-the-static-check-enforces"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Do I need to register the page anywhere else?",
+          "id": "do-i-need-to-register-the-page-anywhere-else"
+        },
+        {
+          "level": 3,
+          "text": "Can I add a page without a sidebar item?",
+          "id": "can-i-add-a-page-without-a-sidebar-item"
+        },
+        {
+          "level": 3,
+          "text": "How do I show different content to super admins?",
+          "id": "how-do-i-show-different-content-to-super-admins"
+        }
+      ],
+      "words": 712,
+      "order": 30
+    },
+    {
+      "id": "api-map",
+      "title": "Console API map (page to endpoint to backend to tables)",
+      "summary": "Table of every backend endpoint each console page calls, who may call it, the backend function behind it and the main database tables.",
+      "category": "Maintainers",
+      "audience": "maintainer",
+      "tags": [
+        "api",
+        "endpoints",
+        "routes",
+        "backend",
+        "tables",
+        "gen-dashboard",
+        "require_operator",
+        "require_operator_super",
+        "map",
+        "reference"
+      ],
+      "page": "",
+      "updated": "2026-11-15",
+      "related": [
+        "how-the-console-works",
+        "security-settings",
+        "adding-a-page"
+      ],
+      "path": "maintainers/api-map.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Every page (shell)",
+          "id": "every-page-shell"
+        },
+        {
+          "level": 2,
+          "text": "Login (login.html) and Settings",
+          "id": "login-login-html-and-settings"
+        },
+        {
+          "level": 2,
+          "text": "Operations pages",
+          "id": "operations-pages"
+        },
+        {
+          "level": 2,
+          "text": "Billing and growth pages",
+          "id": "billing-and-growth-pages"
+        },
+        {
+          "level": 2,
+          "text": "Support pages",
+          "id": "support-pages"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "How do I find which table a screen reads?",
+          "id": "how-do-i-find-which-table-a-screen-reads"
+        },
+        {
+          "level": 3,
+          "text": "Why are plans under /plans but referrals under /gen-dashboard?",
+          "id": "why-are-plans-under-plans-but-referrals-under-gen-dashboard"
+        },
+        {
+          "level": 3,
+          "text": "Where is the operator guard decided?",
+          "id": "where-is-the-operator-guard-decided"
+        }
+      ],
+      "words": 1020,
+      "order": 31
+    },
+    {
+      "id": "security-settings",
+      "title": "Console security settings and rollout order",
+      "summary": "The backend settings that protect the operator console routes, the rate limits, which routes carry personal data, recommended production values and the safe rollout order.",
+      "category": "Maintainers",
+      "audience": "maintainer",
+      "tags": [
+        "security",
+        "operator",
+        "enforce",
+        "legacy",
+        "x-admin-id",
+        "api key",
+        "token secret",
+        "require_auth",
+        "rate limit",
+        "personal data",
+        "rollout",
+        "production",
+        "401",
+        "403"
+      ],
+      "page": "",
+      "updated": "2026-11-15",
+      "related": [
+        "how-the-console-works",
+        "deploying-the-console",
+        "api-map"
+      ],
+      "path": "maintainers/security-settings.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "How an operator is checked",
+          "id": "how-an-operator-is-checked"
+        },
+        {
+          "level": 2,
+          "text": "The settings",
+          "id": "the-settings"
+        },
+        {
+          "level": 2,
+          "text": "Rate limits that protect sign-in",
+          "id": "rate-limits-that-protect-sign-in"
+        },
+        {
+          "level": 2,
+          "text": "The start-up warnings",
+          "id": "the-start-up-warnings"
+        },
+        {
+          "level": 2,
+          "text": "Routes that carry personal data",
+          "id": "routes-that-carry-personal-data"
+        },
+        {
+          "level": 2,
+          "text": "Recommended rollout order",
+          "id": "recommended-rollout-order"
+        },
+        {
+          "level": 2,
+          "text": "Known gaps to verify before turning REQUIRE_AUTH on",
+          "id": "known-gaps-to-verify-before-turning-requireauth-on"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Can I put the operator key in the console?",
+          "id": "can-i-put-the-operator-key-in-the-console"
+        },
+        {
+          "level": 3,
+          "text": "Does removing an operator log them out immediately?",
+          "id": "does-removing-an-operator-log-them-out-immediately"
+        },
+        {
+          "level": 3,
+          "text": "Why are there two sign-in headers?",
+          "id": "why-are-there-two-sign-in-headers"
+        }
+      ],
+      "words": 971,
+      "order": 32
+    }
+  ]
+}

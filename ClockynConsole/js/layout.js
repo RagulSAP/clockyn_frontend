@@ -6,7 +6,7 @@
  *   <script src="../js/layout.js"></script>
  *
  * `data-active` is one of: dashboard, organizations, users, subscriptions, payments, coupons, suggestions, tickets, videos,
- * clickstream, faqs, referrals, settings (live_chat has no sidebar item: it is the floating chat button). When it is missing the key
+ * clickstream, faqs, referrals, kb (Knowledge Base), settings (live_chat has no sidebar item: it is the floating chat button). When it is missing the key
  * is derived from the file name; video_views is part of Video Hub, org_analytics of Organizations, delete_account of Users.
  * The markup is written synchronously (no flash) and before auth.js runs its DOMContentLoaded handler, so auth.js
  * finds the ids/classes it fills: .sidebar-logo-img, #sidebar-avatar, #sidebar-user-name, #sidebar-user-mobile,
@@ -42,6 +42,7 @@
     videos: [["path",{"d":"M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"}],["circle",{"cx":"12","cy":"12","r":"10"}]],
     clickstream: [["path",{"d":"M14 4.1 12 6"}],["path",{"d":"m5.1 8-2.9-.8"}],["path",{"d":"m6 12-1.9 2"}],["path",{"d":"M7.2 2.2 8 5.1"}],["path",{"d":"M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"}]],
     faqs: [["circle",{"cx":"12","cy":"12","r":"10"}],["path",{"d":"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"}],["path",{"d":"M12 17h.01"}]],
+    kb: [["path",{"d":"M12 7v14"}],["path",{"d":"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"}]],
     settings: [["path",{"d":"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"}],["circle",{"cx":"12","cy":"12","r":"3"}]],
     check: [["path",{"d":"M20 6 9 17l-5-5"}]],
     close: [["path",{"d":"M18 6 6 18"}],["path",{"d":"m6 6 12 12"}]],
@@ -68,6 +69,7 @@
       { key: 'faqs', label: 'FAQ Hub', href: 'faqs.html' }
     ] },
     { section: 'System', items: [
+      { key: 'kb', label: 'Knowledge Base', href: 'kb.html' },
       { key: 'settings', label: 'Settings', href: 'settings.html' }
     ] }
   ];

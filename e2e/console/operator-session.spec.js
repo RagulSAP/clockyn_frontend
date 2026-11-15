@@ -40,7 +40,7 @@ const session = (page) => page.evaluate((k) => ({
 
 test('static: operator-session.js once per page, before page scripts, no fetch bypass', () => {
   const { pages, problems } = check();
-  expect(pages.length).toBe(18);
+  expect(pages.length).toBe(19);   // 18 + kb.html (Knowledge Base)
   expect(problems).toEqual([]);
 });
 

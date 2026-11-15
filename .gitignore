@@ -29,3 +29,6 @@ e2e/.artifacts-*/
 e2e/.artifacts-*
 __pycache__/
 *.pyc
+
+# Knowledge Base export for AWS Bedrock (node scripts/build-kb.js --out kb-dist)
+kb-dist/

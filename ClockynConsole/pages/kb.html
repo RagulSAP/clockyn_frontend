@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clockyn — Knowledge Base</title>
+  <meta name="color-scheme" content="light dark" />
+  <script src="../js/theme.js"></script>
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <style>
+    .i { width: 16px; height: 16px; flex-shrink: 0; display: block; }
+    .hamburger-btn .i { width: 18px; height: 18px; }
+
+    /* ── page layout: topics column + reading column ── */
+    .kb-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 24px; align-items: start; }
+    .kb-side { position: sticky; top: calc(var(--topbar-height) + 16px); max-height: calc(100vh - var(--topbar-height) - 32px); overflow: auto;
+      display: flex; flex-direction: column; gap: 12px; min-width: 0; padding-right: 2px; }
+    .kb-search { position: relative; }
+    .kb-search input { width: 100%; height: 42px; padding: 0 70px 0 40px; border-radius: var(--radius-pill); font-size: 14px; }
+    .kb-search input[type="search"]::-webkit-search-cancel-button, .kb-search input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+    .kb-search .kb-search-ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); pointer-events: none; }
+    .kb-search .kb-kbd { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 700; color: var(--text-muted);
+      border: 1px solid var(--border-strong); border-radius: 6px; padding: 1px 7px; background: var(--surface-muted); pointer-events: none; }
+    .kb-search.has-value .kb-kbd { display: none; }
+    .kb-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent;
+      color: var(--text-muted); cursor: pointer; display: none; align-items: center; justify-content: center; }
+    .kb-search.has-value .kb-clear { display: inline-flex; }
+    .kb-clear:hover { background: var(--surface-muted); color: var(--text); }
+    .kb-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .kb-chips .chip { cursor: pointer; }
+    .kb-topics > summary { list-style: none; display: none; cursor: pointer; font-size: 13px; font-weight: 700; padding: 8px 4px; color: var(--text); }
+    .kb-topics > summary::-webkit-details-marker { display: none; }
+    .kb-cat + .kb-cat { margin-top: 14px; }
+    .kb-cat-title { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 4px; padding: 0 10px; }
+    .kb-cat ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+    .kb-cat a { display: block; padding: 7px 10px; border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 500; color: var(--text-secondary); text-decoration: none; line-height: 1.35; }
+    .kb-cat a:hover { background: var(--surface-muted); color: var(--text); }
+    .kb-cat a[aria-current="page"] { background: var(--primary); color: var(--on-primary); font-weight: 600; }
+    .kb-cat a:focus-visible, .kb-card:focus-visible, .kb-result a:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+    .kb-empty-nav { font-size: 13px; color: var(--text-muted); padding: 8px 10px; }
+
+    /* ── reading column ── */
+    .kb-main { min-width: 0; }
+    .kb-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm), inset 0 1px 0 var(--highlight); padding: 28px 32px 32px; min-width: 0; }
+    .kb-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px; }
+    .kb-article h1 { font-size: 28px; font-weight: 700; letter-spacing: -.6px; line-height: 1.2; margin: 0 0 8px; outline: none; }
+    .kb-lead { font-size: 15.5px; color: var(--text-secondary); line-height: 1.55; margin: 0 0 16px; max-width: 70ch; }
+    .kb-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+    .kb-toc { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-muted); margin: 0 0 22px; }
+    .kb-toc > summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 10px 14px; list-style: none; }
+    .kb-toc > summary::-webkit-details-marker { display: none; }
+    .kb-toc > summary::after { content: "+"; float: right; color: var(--text-muted); font-weight: 700; }
+    .kb-toc[open] > summary::after { content: "–"; }
+    .kb-toc ol { list-style: none; margin: 0; padding: 0 14px 12px; display: grid; gap: 4px; }
+    .kb-toc li.l3 { padding-left: 14px; }
+    .kb-toc a { font-size: 13px; color: var(--text-secondary); text-decoration: none; line-height: 1.4; }
+    .kb-toc a:hover { color: var(--text); text-decoration: underline; }
+    .kb-toc-aside { display: none; }
+    .kb-body { max-width: 74ch; font-size: 15px; line-height: 1.7; color: var(--text); }
+    .kb-body > :first-child { margin-top: 0; }
+    .kb-body p { margin: 0 0 14px; }
+    .kb-body h2 { font-size: 21px; font-weight: 700; letter-spacing: -.3px; margin: 34px 0 10px; padding-top: 6px; scroll-margin-top: calc(var(--topbar-height) + 16px); line-height: 1.3; }
+    .kb-body h3 { font-size: 16.5px; font-weight: 700; margin: 24px 0 8px; scroll-margin-top: calc(var(--topbar-height) + 16px); line-height: 1.35; }
+    .kb-anchor { opacity: 0; margin-left: 6px; font-weight: 500; color: var(--text-muted); text-decoration: none; font-size: .85em; }
+    .kb-body h2:hover .kb-anchor, .kb-body h3:hover .kb-anchor, .kb-anchor:focus { opacity: 1; }
+    .kb-body ul, .kb-body ol { margin: 0 0 16px; padding-left: 22px; }
+    .kb-body li { margin: 4px 0; }
+    .kb-body li > ul, .kb-body li > ol { margin: 6px 0 4px; }
+    .kb-body a { color: var(--info); text-underline-offset: 2px; }
+    .kb-body code { font-family: var(--font-mono); font-size: .88em; background: var(--surface-muted); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
+    .kb-code { position: relative; margin: 0 0 16px; }
+    .kb-code pre { margin: 0; padding: 14px 16px; background: var(--surface-muted); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow-x: auto; font-size: 13px; line-height: 1.55; }
+    .kb-code pre code { background: none; border: 0; padding: 0; font-size: inherit; overflow-wrap: normal; }
+    .kb-copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 11.5px; font-weight: 700; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-secondary);
+      border-radius: 6px; padding: 3px 10px; cursor: pointer; opacity: .9; }
+    .kb-copy:hover { background: var(--surface-muted); color: var(--text); }
+    .kb-table { margin: 0 0 18px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+    .kb-table table { font-size: 13.5px; }
+    .kb-table th, .kb-table td { text-align: left; vertical-align: top; padding: 9px 12px; }
+    .kb-callout { border: 1px solid var(--border); border-left-width: 4px; border-radius: var(--radius-sm); padding: 12px 16px; margin: 0 0 16px; background: var(--surface-muted); }
+    .kb-callout p { margin: 0; }
+    .kb-callout p + p { margin-top: 8px; }
+    .kb-callout-title { display: block; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 3px; }
+    .kb-note { border-left-color: var(--info); background: var(--info-soft); } .kb-note .kb-callout-title { color: var(--info); }
+    .kb-tip { border-left-color: var(--success); background: var(--success-soft); } .kb-tip .kb-callout-title { color: var(--success); }
+    .kb-warning { border-left-color: var(--warning); background: var(--warning-soft); } .kb-warning .kb-callout-title { color: var(--warning); }
+    .kb-quote { margin: 0 0 16px; padding: 4px 16px; border-left: 3px solid var(--border-strong); color: var(--text-secondary); }
+    .kb-foot { margin-top: 36px; display: grid; gap: 22px; }
+    .kb-foot h2 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 8px; }
+    .kb-related { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+    .kb-pn { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kb-pn .next { text-align: right; }
+    .kb-card { display: block; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; background: var(--surface); color: var(--text); text-decoration: none; min-width: 0; }
+    .kb-card:hover { border-color: var(--border-strong); background: var(--surface-muted); }
+    .kb-card b { display: block; font-size: 14px; line-height: 1.35; }
+    .kb-card span { display: block; font-size: 12.5px; color: var(--text-muted); margin-top: 3px; line-height: 1.45; }
+    .kb-card small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
+
+    /* ── landing ── */
+    .kb-hero h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -.5px; outline: none; }
+    .kb-hero p { margin: 0; color: var(--text-secondary); max-width: 66ch; line-height: 1.6; }
+    .kb-start { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 22px 0 6px; }
+    .kb-section-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin: 26px 0 10px; }
+    .kb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+
+    /* ── search results ── */
+    .kb-results-head { font-size: 14px; color: var(--text-secondary); margin: 0 0 14px; }
+    .kb-results { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+    .kb-result { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+    .kb-result a { display: block; padding: 14px 16px; text-decoration: none; color: var(--text); border-radius: var(--radius-md); }
+    .kb-result.active, .kb-result:hover { border-color: var(--border-strong); background: var(--surface-muted); }
+    .kb-result.active { box-shadow: 0 0 0 3px var(--ring); }
+    .kb-result b { font-size: 15px; line-height: 1.35; }
+    .kb-result .kb-where { font-size: 12px; color: var(--text-muted); margin: 3px 0 4px; }
+    .kb-result .kb-snip { font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; overflow-wrap: anywhere; }
+    mark { background: var(--warning-soft); color: inherit; border-radius: 3px; padding: 0 2px; }
+
+    /* ── states ── */
+    .kb-state { text-align: center; padding: 56px 24px; color: var(--text-muted); }
+    .kb-state h2 { font-size: 18px; color: var(--text); margin: 0 0 8px; }
+    .kb-state p { max-width: 460px; margin: 0 auto 16px; line-height: 1.55; }
+    .kb-skel { display: grid; gap: 12px; }
+    .kb-skel i { display: block; height: 14px; border-radius: 7px; background: var(--skeleton); }
+    .kb-note-line { font-size: 12.5px; color: var(--warning); margin: 0 0 12px; }
+    #toast { position: fixed; bottom: 20px; left: 20px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; z-index: 9999; opacity: 0; transform: translateY(8px);
+      transition: opacity .2s, transform .2s; pointer-events: none; max-width: calc(100vw - 40px); }
+
+    @media (min-width: 1500px) {
+      .kb-article-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 30px; align-items: start; }
+      .kb-toc-inline { display: none; }
+      .kb-toc-aside { display: block; position: sticky; top: calc(var(--topbar-height) + 16px); }
+      .kb-toc-aside .kb-toc { margin: 0; }
+    }
+    @media (max-width: 1000px) {
+      .kb-layout { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+      .kb-side { position: static; max-height: none; overflow: visible; }
+      .kb-topics > summary { display: block; }
+      .kb-topics { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); padding: 0 8px; }
+      .kb-topics[open] { padding-bottom: 10px; }
+      .kb-panel { padding: 20px 18px 24px; }
+    }
+    @media (max-width: 640px) {
+      .kb-article h1 { font-size: 24px; }
+      .kb-pn { grid-template-columns: 1fr; }
+      .kb-pn .next { text-align: left; }
+      .kb-body { font-size: 14.5px; }
+      .page-header-actions { width: 100%; }
+    }
+    @media print {
+      .sidebar, .topbar, .kb-side, .kb-actions, .kb-toc, .kb-foot, .kb-copy, .kb-anchor, .page-header, #toast, .ck-chat-fab, .ck-chat-panel { display: none !important; }
+      .main { margin-left: 0 !important; } .content { padding: 0 !important; max-width: none !important; }
+      .kb-layout { display: block; } .kb-panel { border: 0; box-shadow: none; padding: 0; } .kb-body { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar" id="app-sidebar" data-active="kb"></aside>
+  <script src="../js/layout.js"></script>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu">
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+      </button>
+      <span class="topbar-title">Knowledge Base</span>
+      <div class="topbar-actions">
+        <button class="icon-btn" aria-label="Notifications" title="Notifications">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+          <span class="dot"></span>
+        </button>
+        <button type="button" class="icon-btn" id="kb-refresh" title="Reload the knowledge base" aria-label="Reload the knowledge base">
+          <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        </button>
+        <div class="topbar-user-pill">
+          <div class="avatar" id="topbar-avatar" style="cursor:pointer;">SA</div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name" id="topbar-user-name">Super Admin</div>
+            <div class="topbar-user-role" id="topbar-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="page-header">
+        <div>
+          <h1>Knowledge Base</h1>
+          <p>How to run the Clockyn Console: every page, every task, and what to do when something goes wrong</p>
+        </div>
+      </div>
+
+      <div class="kb-layout">
+        <aside class="kb-side" aria-label="Find a topic">
+          <div class="kb-search" id="kb-search-wrap">
+            <svg class="kb-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <label class="sr-only" for="kb-q">Search the knowledge base</label>
+            <input type="search" id="kb-q" placeholder="Search articles" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="kb-results" aria-autocomplete="list" />
+            <span class="kb-kbd" aria-hidden="true">/</span>
+            <button type="button" class="kb-clear" id="kb-clear" aria-label="Clear the search"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+          </div>
+          <div class="kb-chips" role="group" aria-label="Show topics for">
+            <button type="button" class="chip active" data-aud="all" aria-pressed="true">All</button>
+            <button type="button" class="chip" data-aud="operator" aria-pressed="false">Operators</button>
+            <button type="button" class="chip" data-aud="super_admin" aria-pressed="false">Super admin</button>
+            <button type="button" class="chip" data-aud="maintainer" aria-pressed="false">Maintainers</button>
+          </div>
+          <details class="kb-topics" id="kb-topics" open>
+            <summary>Topics</summary>
+            <nav id="kb-nav" aria-label="Knowledge base topics"></nav>
+          </details>
+        </aside>
+
+        <section class="kb-main" id="kb-main" aria-label="Knowledge base content"></section>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/operator-session.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/kb-render.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var R = window.KbRender;
+      var BASE = '../kb/';
+      var INDEX = null;                 // kb/index.json
+      var DOCS = {};                    // slug -> { body, html, headings, sections, plain }
+      var FAILED = {};                  // slug -> true when its file could not be loaded
+      var ALL = null;                   // promise: every document loaded (for search)
+      var AUDIENCE = 'all';
+      var CURRENT = '';                 // slug of the article on screen
+      var results = [];                 // current search results
+      var active = -1;
+      var searchTimer = null;
+      var BASE_TITLE = 'Clockyn — Knowledge Base';
+
+      var AUD_LABEL = { all: 'For everyone', operator: 'For operators', super_admin: 'Super admin only', maintainer: 'For maintainers' };
+      var AUD_BADGE = { all: 'badge-gray', operator: 'badge-blue', super_admin: 'badge-purple', maintainer: 'badge-orange' };
+      var START = ['welcome', 'signing-in', 'console-tour', 'daily-checklist'];
+
+      function $(id) { return document.getElementById(id); }
+      var esc = R.esc;
+
+      try { AUDIENCE = localStorage.getItem('kb_audience') || 'all'; } catch (e) { AUDIENCE = 'all'; }
+      if (!/^(all|operator|super_admin|maintainer)$/.test(AUDIENCE)) AUDIENCE = 'all';
+
+      /* ── helpers ── */
+      function toast(msg, ok) {
+        var t = $('toast');
+        t.textContent = msg;
+        t.style.background = ok === false ? '#dc2626' : '#238636';
+        t.style.opacity = '1'; t.style.transform = 'translateY(0)';
+        clearTimeout(t._timer);
+        t._timer = setTimeout(function () { t.style.opacity = '0'; t.style.transform = 'translateY(8px)'; }, ok === false ? 4200 : 2200);
+      }
+      function fmtDate(iso) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+        if (!m) return iso || '';
+        var names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return +m[3] + ' ' + names[+m[2] - 1] + ' ' + m[1];
+      }
+      function allowed(doc) {
+        if (AUDIENCE === 'all') return true;
+        if (doc.audience === 'all') return true;
+        if (AUDIENCE === 'operator') return doc.audience === 'operator';
+        if (AUDIENCE === 'super_admin') return doc.audience === 'operator' || doc.audience === 'super_admin';
+        return doc.audience === 'maintainer';
+      }
+      function docById(id) {
+        if (!INDEX) return null;
+        for (var i = 0; i < INDEX.docs.length; i++) if (INDEX.docs[i].id === id) return INDEX.docs[i];
+        return null;
+      }
+      function badge(text, cls) { return '<span class="badge ' + cls + '">' + esc(text) + '</span>'; }
+      function mainEl() { return $('kb-main'); }
+      function narrow() { return window.matchMedia('(max-width: 1000px)').matches; }
+
+      function fetchText(url) {
+        return fetch(url, { cache: 'no-cache' }).then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        });
+      }
+
+      /* ── states ── */
+      function skeleton() {
+        mainEl().innerHTML = '<div class="kb-panel" aria-busy="true"><div class="kb-skel"><i style="width:30%"></i><i style="width:70%;height:26px"></i><i style="width:90%"></i><i style="width:84%"></i><i style="width:60%"></i></div></div>';
+      }
+      function errorState(title, text, retry) {
+        mainEl().innerHTML = '<div class="kb-panel"><div class="kb-state" role="alert"><h2>' + esc(title) + '</h2><p>' + esc(text) + '</p>' +
+          (retry ? '<button type="button" class="btn btn-primary" id="kb-retry">Try again</button>' : '') + '</div></div>';
+        if (retry) $('kb-retry').addEventListener('click', retry);
+      }
+
+      /* ── index ── */
+      function loadIndex() {
+        skeleton();
+        INDEX = null; DOCS = {}; FAILED = {}; ALL = null;
+        return fetchText(BASE + 'index.json').then(function (t) {
+          var data = JSON.parse(t);
+          if (!data || !Array.isArray(data.docs)) throw new Error('bad index');
+          INDEX = data;
+          renderNav();
+          route();
+        }).catch(function () {
+          $('kb-nav').innerHTML = '';
+          errorState('The knowledge base could not be loaded', 'The topic list (kb/index.json) is missing or could not be read. Check your connection and try again. If it keeps failing, tell the console maintainers.', loadIndex);
+        });
+      }
+
+      function renderNav() {
+        var html = '';
+        INDEX.categories.forEach(function (cat) {
+          var docs = INDEX.docs.filter(function (d) { return d.category === cat && allowed(d); });
+          if (!docs.length) return;
+          html += '<div class="kb-cat"><h2 class="kb-cat-title">' + esc(cat) + '</h2><ul>' +
+            docs.map(function (d) {
+              return '<li><a href="#' + esc(d.id) + '" data-slug="' + esc(d.id) + '"' + (d.id === CURRENT ? ' aria-current="page"' : '') + '>' + esc(d.title) + '</a></li>';
+            }).join('') + '</ul></div>';
+        });
+        $('kb-nav').innerHTML = html || '<p class="kb-empty-nav">No topics for this audience.</p>';
+      }
+      function markActive() {
+        var links = $('kb-nav').querySelectorAll('a[data-slug]');
+        for (var i = 0; i < links.length; i++) {
+          if (links[i].getAttribute('data-slug') === CURRENT) links[i].setAttribute('aria-current', 'page');
+          else links[i].removeAttribute('aria-current');
+        }
+      }
+
+      /* ── landing ── */
+      function card(d, small) {
+        return '<a class="kb-card" href="#' + esc(d.id) + '">' + (small ? '<small>' + esc(small) + '</small>' : '') + '<b>' + esc(d.title) + '</b><span>' + esc(d.summary) + '</span></a>';
+      }
+      function landing() {
+        CURRENT = ''; markActive();
+        document.title = BASE_TITLE;
+        var startDocs = START.map(docById).filter(function (d) { return d && allowed(d); });
+        var html = '<div class="kb-panel kb-hero"><h1 id="kb-title" tabindex="-1">Welcome to the Clockyn Console knowledge base</h1>' +
+          '<p>Everything a new team member needs to run the console: what each page shows, step-by-step tasks, who is allowed to do what, and fixes for common problems. ' +
+          'Search above, or pick a topic. ' + INDEX.count + ' articles.</p>';
+        if (startDocs.length) html += '<div class="kb-section-title">Start here</div><div class="kb-start">' + startDocs.map(function (d, i) { return card(d, 'Step ' + (i + 1)); }).join('') + '</div>';
+        INDEX.categories.forEach(function (cat) {
+          var docs = INDEX.docs.filter(function (d) { return d.category === cat && allowed(d); });
+          if (!docs.length) return;
+          html += '<div class="kb-section-title">' + esc(cat) + '</div><div class="kb-grid">' + docs.map(function (d) { return card(d); }).join('') + '</div>';
+        });
+        if (!INDEX.docs.some(allowed)) html += '<p class="kb-empty-nav">No articles for this audience yet.</p>';
+        html += '</div>';
+        mainEl().innerHTML = html;
+        focusTitle(true);
+      }
+
+      /* ── article ── */
+      function loadDoc(doc) {
+        if (DOCS[doc.id]) return Promise.resolve(DOCS[doc.id]);
+        return fetchText(BASE + doc.path).then(function (text) {
+          var fm = R.parseFrontMatter(text);
+          var out = R.render(fm.body, { slug: doc.id });
+          var secs = R.sections(fm.body);
+          var d = { body: fm.body, html: out.html, headings: out.headings, sections: secs, plain: secs.map(function (s) { return s.heading + ' ' + s.text; }).join(' ') };
+          DOCS[doc.id] = d;
+          delete FAILED[doc.id];
+          return d;
+        });
+      }
+      function tocHtml(headings) {
+        if (!headings.length) return '';
+        // a long list of ### questions would push the article down: past 12 entries the contents show the ## sections only
+        if (headings.length > 12) headings = headings.filter(function (h) { return h.level === 2; });
+        return '<ol>' + headings.map(function (h) { return '<li class="l' + h.level + '"><a href="#' + esc(CURRENT) + '/' + esc(h.id) + '">' + esc(h.text) + '</a></li>'; }).join('') + '</ol>';
+      }
+      function neighbours(doc) {
+        var list = INDEX.docs.filter(function (d) { return d.category === doc.category && (allowed(d) || d.id === doc.id); });
+        var at = -1;
+        for (var i = 0; i < list.length; i++) if (list[i].id === doc.id) at = i;
+        return { prev: at > 0 ? list[at - 1] : null, next: at >= 0 && at < list.length - 1 ? list[at + 1] : null };
+      }
+      function showArticle(slug, section) {
+        var doc = docById(slug);
+        if (!doc) {
+          CURRENT = ''; markActive();
+          mainEl().innerHTML = '<div class="kb-panel"><div class="kb-state"><h2>That topic does not exist</h2><p>The link may be old or mistyped. Pick a topic from the list or search for it.</p><a class="btn btn-primary" href="kb.html">Back to the knowledge base</a></div></div>';
+          document.title = BASE_TITLE;
+          return;
+        }
+        var same = CURRENT === slug && mainEl().querySelector('.kb-article');
+        CURRENT = slug; markActive();
+        document.title = doc.title + ' - Knowledge Base';
+        if (same) { scrollToSection(section); return; }
+        skeleton();
+        loadDoc(doc).then(function (d) {
+          if (CURRENT !== slug) return;                           // the user moved on while it loaded
+          var toc = tocHtml(d.headings);
+          var tocBox = toc ? '<details class="kb-toc"' + (narrow() ? '' : ' open') + '><summary>On this page</summary>' + toc + '</details>' : '';
+          var tocAside = toc ? '<aside class="kb-toc-aside" aria-label="On this page"><div class="kb-toc"><div style="font-size:13px;font-weight:700;padding:10px 14px 6px">On this page</div>' + toc + '</div></aside>' : '';
+          var nb = neighbours(doc);
+          var related = (doc.related || []).map(docById).filter(Boolean);
+          var html = '<div class="kb-panel"><div class="kb-article-wrap"><article class="kb-article">' +
+            '<div class="kb-meta">' + badge(doc.category, 'badge-gray') + badge(AUD_LABEL[doc.audience] || doc.audience, AUD_BADGE[doc.audience] || 'badge-gray') +
+              (doc.updated ? '<span class="card-sub">Updated ' + esc(fmtDate(doc.updated)) + '</span>' : '') + '</div>' +
+            '<h1 id="kb-title" tabindex="-1">' + esc(doc.title) + '</h1>' +
+            '<p class="kb-lead">' + esc(doc.summary) + '</p>' +
+            '<div class="kb-actions"><button type="button" class="btn btn-ghost btn-sm" id="kb-copylink">Copy link</button>' +
+              (doc.page && /^[a-z0-9_]+\.html$/.test(doc.page) ? '<a class="btn btn-ghost btn-sm" href="' + esc(doc.page) + '">Open this page in the console</a>' : '') + '</div>' +
+            '<div class="kb-toc-inline">' + tocBox + '</div>' +
+            '<div class="kb-body">' + d.html + '</div>' +
+            '<div class="kb-foot">' +
+              (related.length ? '<section aria-label="Related topics"><h2>Related</h2><div class="kb-related">' + related.map(function (r) { return card(r); }).join('') + '</div></section>' : '') +
+              ((nb.prev || nb.next) ? '<nav class="kb-pn" aria-label="Previous and next topic">' +
+                (nb.prev ? '<a class="kb-card prev" href="#' + esc(nb.prev.id) + '"><small>Previous</small><b>' + esc(nb.prev.title) + '</b></a>' : '<span></span>') +
+                (nb.next ? '<a class="kb-card next" href="#' + esc(nb.next.id) + '"><small>Next</small><b>' + esc(nb.next.title) + '</b></a>' : '<span></span>') + '</nav>' : '') +
+            '</div></article>' + tocAside + '</div></div>';
+          mainEl().innerHTML = html;
+          $('kb-copylink').addEventListener('click', function () { copyText(location.href.split('#')[0] + '#' + slug, 'Link copied'); });
+          if (section) scrollToSection(section); else focusTitle(true);
+        }).catch(function () {
+          if (CURRENT !== slug) return;
+          FAILED[slug] = true;
+          errorState('This topic could not be loaded', 'The file for "' + doc.title + '" could not be read. Check your connection and try again.', function () { CURRENT = ''; showArticle(slug, section); });
+        });
+      }
+      function scrollToSection(id) {
+        var el = id ? document.getElementById(id) : null;
+        if (el) { el.scrollIntoView({ block: 'start' }); el.setAttribute('tabindex', '-1'); el.focus({ preventScroll: true }); }
+        else focusTitle(true);
+      }
+      function focusTitle(top) {
+        var t = $('kb-title');
+        if (top) window.scrollTo(0, 0);
+        if (t) t.focus({ preventScroll: true });
+      }
+      function copyText(text, okMsg) {
+        function fallback() {
+          var ta = document.createElement('textarea');
+          ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          var ok = false;
+          try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+          document.body.removeChild(ta);
+          toast(ok ? okMsg : 'Could not copy', ok);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast(okMsg, true); }, fallback);
+        else fallback();
+      }
+
+      /* ── routing ── */
+      function parseHash() {
+        var h = (location.hash || '').replace(/^#/, '');
+        try { h = decodeURIComponent(h); } catch (e) { /* keep as is */ }
+        var parts = h.split('/');
+        return { slug: parts[0] || '', section: parts[1] || '' };
+      }
+      function route() {
+        if (!INDEX) return;
+        setQuery('');
+        var r = parseHash();
+        if (!r.slug) landing(); else showArticle(r.slug, r.section);
+        if (narrow()) $('kb-topics').open = false;
+      }
+
+      /* ── search ── */
+      function setQuery(v) {
+        var q = $('kb-q');
+        if (q.value !== v) q.value = v;
+        $('kb-search-wrap').classList.toggle('has-value', !!v);
+        q.setAttribute('aria-expanded', v ? 'true' : 'false');
+        q.removeAttribute('aria-activedescendant');
+        results = []; active = -1;
+      }
+      function ensureAll(onProgress) {
+        if (ALL) return ALL;
+        var done = 0, total = INDEX.docs.length;
+        ALL = Promise.all(INDEX.docs.map(function (doc) {
+          return loadDoc(doc).catch(function () { FAILED[doc.id] = true; }).then(function () { done++; if (onProgress) onProgress(done, total); });
+        }));
+        return ALL;
+      }
+      function countOcc(hay, needle) {
+        var n = 0, i = hay.indexOf(needle);
+        while (i >= 0 && n < 50) { n++; i = hay.indexOf(needle, i + needle.length); }
+        return n;
+      }
+      function searchDocs(q) {
+        var tokens = q.toLowerCase().split(/\s+/).filter(Boolean).slice(0, 8);
+        var out = [];
+        INDEX.docs.forEach(function (doc) {
+          if (!allowed(doc)) return;
+          var d = DOCS[doc.id];
+          var title = doc.title.toLowerCase(), tags = (doc.tags || []).join(' '), heads = (doc.headings || []).map(function (h) { return h.text; }).join(' ').toLowerCase();
+          var summary = (doc.summary || '').toLowerCase(), body = d ? d.plain.toLowerCase() : '';
+          var score = 0, ok = true;
+          tokens.forEach(function (t) {
+            var s = 0;
+            if (title.indexOf(t) >= 0) s += title.split(/[^a-z0-9]+/).indexOf(t) >= 0 ? 14 : 10;
+            if (tags.indexOf(t) >= 0) s += 6;
+            if (heads.indexOf(t) >= 0) s += 4;
+            if (summary.indexOf(t) >= 0) s += 3;
+            if (body) s += Math.min(countOcc(body, t), 5);
+            if (!s) ok = false;
+            score += s;
+          });
+          if (!ok) return;
+          if (title.indexOf(q.toLowerCase()) >= 0) score += 8;
+          var best = null, bestScore = -1;
+          if (d) d.sections.forEach(function (sec) {
+            var h = sec.heading.toLowerCase(), tx = sec.text.toLowerCase(), sc = 0;
+            tokens.forEach(function (t) { sc += countOcc(tx, t) + 3 * countOcc(h, t); });
+            if (sc > bestScore) { bestScore = sc; best = sec; }
+          });
+          out.push({ doc: doc, score: score, section: best, tokens: tokens });
+        });
+        out.sort(function (a, b) { return b.score - a.score || a.doc.order - b.doc.order; });
+        return out;
+      }
+      function highlight(text, tokens) {
+        if (!tokens.length) return esc(text);
+        var re = new RegExp('(' + tokens.map(function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')', 'gi');
+        return text.split(re).map(function (part, i) { return i % 2 ? '<mark>' + esc(part) + '</mark>' : esc(part); }).join('');
+      }
+      function snippet(res) {
+        var sec = res.section;
+        var text = sec && sec.text ? sec.text : res.doc.summary;
+        var low = text.toLowerCase(), at = -1;
+        for (var i = 0; i < res.tokens.length; i++) { var p = low.indexOf(res.tokens[i]); if (p >= 0 && (at < 0 || p < at)) at = p; }
+        var start = Math.max(0, (at < 0 ? 0 : at) - 60);
+        var piece = text.slice(start, start + 190);
+        return (start > 0 ? '… ' : '') + highlight(piece, res.tokens) + (start + 190 < text.length ? ' …' : '');
+      }
+      function runSearch() {
+        var q = $('kb-q').value.trim();
+        $('kb-search-wrap').classList.toggle('has-value', !!$('kb-q').value);
+        if (!q) { setQuery(''); route(); return; }
+        CURRENT = ''; markActive();
+        $('kb-q').setAttribute('aria-expanded', 'true');
+        document.title = 'Search: ' + q + ' - Knowledge Base';
+        var stamp = q;
+        if (!ALL) mainEl().innerHTML = '<div class="kb-panel" aria-busy="true"><p class="kb-results-head" id="kb-prog">Searching…</p><div class="kb-skel"><i style="width:60%"></i><i style="width:90%"></i><i style="width:75%"></i></div></div>';
+        ensureAll(function (done, total) { var p = $('kb-prog'); if (p) p.textContent = 'Searching… ' + done + ' of ' + total + ' articles read'; }).then(function () {
+          if ($('kb-q').value.trim() !== stamp) return;           // the query changed while loading
+          results = searchDocs(stamp);
+          active = results.length ? 0 : -1;
+          var failed = Object.keys(FAILED).length;
+          var head = '<p class="kb-results-head" role="status" aria-live="polite">' + results.length + (results.length === 1 ? ' result' : ' results') + ' for “' + esc(stamp) + '”</p>' +
+            (failed ? '<p class="kb-note-line">' + failed + ' article' + (failed === 1 ? '' : 's') + ' could not be read, so the results may be incomplete.</p>' : '');
+          if (!results.length) {
+            mainEl().innerHTML = '<div class="kb-panel">' + head + '<div class="kb-state"><h2>Nothing matches “' + esc(stamp) + '”</h2><p>Try fewer or different words, or browse the topics on the left. If the answer should be here but is not, tell the console maintainers so it can be added.</p><button type="button" class="btn btn-ghost" id="kb-clear-results">Clear the search</button></div></div>';
+            $('kb-clear-results').addEventListener('click', clearSearch);
+            $('kb-q').removeAttribute('aria-activedescendant');
+            return;
+          }
+          mainEl().innerHTML = '<div class="kb-panel">' + head + '<ol class="kb-results" id="kb-results" role="listbox" aria-label="Search results">' + results.map(function (r, i) {
+            var secLink = r.section && r.section.id ? '/' + r.section.id : '';
+            return '<li class="kb-result' + (i === 0 ? ' active' : '') + '" role="option" id="kb-r-' + i + '" aria-selected="' + (i === 0) + '"><a href="#' + esc(r.doc.id) + esc(secLink) + '">' +
+              '<b>' + highlight(r.doc.title, r.tokens) + '</b>' +
+              '<div class="kb-where">' + esc(r.doc.category) + (r.section && r.section.heading ? ' · ' + esc(r.section.heading) : '') + '</div>' +
+              '<div class="kb-snip">' + snippet(r) + '</div></a></li>';
+          }).join('') + '</ol></div>';
+          $('kb-q').setAttribute('aria-activedescendant', 'kb-r-0');
+        });
+      }
+      function clearSearch() {
+        setQuery('');
+        route();
+        $('kb-q').focus();
+      }
+      function moveActive(delta) {
+        if (!results.length) return;
+        active = (active + delta + results.length) % results.length;
+        var items = document.querySelectorAll('.kb-result');
+        for (var i = 0; i < items.length; i++) {
+          var on = i === active;
+          items[i].classList.toggle('active', on);
+          items[i].setAttribute('aria-selected', on ? 'true' : 'false');
+        }
+        $('kb-q').setAttribute('aria-activedescendant', 'kb-r-' + active);
+        if (items[active]) items[active].scrollIntoView({ block: 'nearest' });
+      }
+      function openActive() {
+        if (active < 0 || !results[active]) return;
+        var r = results[active];
+        var target = '#' + r.doc.id + (r.section && r.section.id ? '/' + r.section.id : '');
+        if (location.hash === target) route(); else location.hash = target;
+      }
+
+      /* ── events ── */
+      $('kb-q').addEventListener('input', function () {
+        $('kb-search-wrap').classList.toggle('has-value', !!this.value);
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(runSearch, 140);
+      });
+      $('kb-q').addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown') { e.preventDefault(); moveActive(1); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); moveActive(-1); }
+        else if (e.key === 'Enter') { e.preventDefault(); clearTimeout(searchTimer); if (results.length && $('kb-q').value.trim()) openActive(); else runSearch(); }
+        else if (e.key === 'Escape') { if (this.value) { e.preventDefault(); clearSearch(); } }
+      });
+      $('kb-clear').addEventListener('click', clearSearch);
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+        var t = e.target, tag = t && t.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+        e.preventDefault();
+        $('kb-q').focus();
+        $('kb-q').select();
+      });
+      $('kb-nav').addEventListener('click', function (e) {
+        var a = e.target.closest && e.target.closest('a[data-slug]');
+        if (a && location.hash === '#' + a.getAttribute('data-slug')) { e.preventDefault(); route(); }
+      });
+      mainEl().addEventListener('click', function (e) {
+        var btn = e.target.closest && e.target.closest('.kb-copy');
+        if (btn) {
+          var code = btn.parentNode.querySelector('code');
+          copyText(code ? code.textContent : '', 'Code copied');
+          return;
+        }
+        var a = e.target.closest && e.target.closest('a[href^="#"]');
+        if (a && a.getAttribute('href') === location.hash) { e.preventDefault(); route(); }
+      });
+      document.querySelector('.kb-chips').addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('.chip');
+        if (!b) return;
+        AUDIENCE = b.getAttribute('data-aud');
+        try { localStorage.setItem('kb_audience', AUDIENCE); } catch (err) { /* private mode: the choice just is not remembered */ }
+        syncChips();
+        if (INDEX) {
+          renderNav();
+          if ($('kb-q').value.trim()) runSearch();
+          else if (!CURRENT) landing();
+        }
+      });
+      function syncChips() {
+        var chips = document.querySelectorAll('.kb-chips .chip');
+        for (var i = 0; i < chips.length; i++) {
+          var on = chips[i].getAttribute('data-aud') === AUDIENCE;
+          chips[i].classList.toggle('active', on);
+          chips[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+        }
+      }
+      $('kb-refresh').addEventListener('click', function () { setQuery(''); loadIndex(); });
+      window.addEventListener('hashchange', route);
+      window.addEventListener('resize', function () { if (!narrow()) $('kb-topics').open = true; });
+
+      syncChips();
+      if (narrow()) $('kb-topics').open = false;
+      loadIndex();
+    })();
+
+    function handleLogout() { showLogoutModal(); }
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+  </script>
+
+</body>
+</html>
