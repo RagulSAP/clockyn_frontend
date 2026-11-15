@@ -1,15 +1,15 @@
 ---
-title: Organizations (list, register, activate, deactivate, delete)
-summary: How to read the Organizations list and how to register, deactivate, reactivate, delete and export companies, including what each action really does.
+title: Organizations (list, filters, expiring plans, export)
+summary: How to read the Organizations list, search, filter and sort it, find companies whose plan is about to expire, and export it.
 category: Operations
 audience: operator
-tags: organizations, companies, org, customers, register company, add organization, deactivate, activate, delete, status, free trial, expired, staff count, export, filter, sort
+tags: organizations, companies, org, customers, status, free trial, expired, staff count, export, filter, sort, expiring, renewal, expiring today, expiring this week, plan end date
 page: organizations.html
 updated: 2026-11-15
-related: organization-analytics, users, subscriptions-and-plans, account-deletion-requests, roles-and-permissions
+related: dashboard, organization-actions, organization-analytics, users, subscriptions-and-plans, account-deletion-requests, roles-and-permissions, start-a-chat-with-a-company
 ---
 
-The Organizations page lists every company registered on Clockyn with its owner contact, location, plan, status and headcount. From here you can open a company, register a new one on its behalf, switch a company off or on, delete it, and export the list. Any operator can use all of these actions; they are not limited to super admins.
+The Organizations page lists every company registered on Clockyn with its owner contact, location, plan, status and headcount. From here you can open a company, chat with its admin, find plans that are about to end, and export the list. Registering, deactivating and deleting companies are covered in [Register, deactivate, activate and delete organizations](kb:organization-actions). Any operator can use all of these actions.
 
 ## Summary tiles
 
@@ -37,50 +37,32 @@ The Organizations page lists every company registered on Clockyn with its owner 
 Who can do this: any operator.
 
 1. Type in the search box at the top: it matches name, email, mobile, state, district and pincode.
-2. Use the dropdowns for Status, State and District. Choosing a state narrows the district list.
+2. Use the dropdowns for Status, Expiring, State and District. Choosing a state narrows the district list.
 3. Use the sort dropdown: Latest joined (default), Active Employee Punch In / Punch Out Count (today's punches of active staff), Employee Count, Free Trial Count, Active Count or Expired Count. The last three put matching companies first.
-4. Refresh (top bar) reloads the list and clears all filters.
+4. Refresh (top bar) reloads the list and clears all filters, including Expiring.
+
+## Expiring filter
+
+On the Organizations page, the **Expiring** dropdown shows the customers whose paid plan is about to end. Its choices are **Any expiry**, **Expiring today**, **Expiring in 7 days** and **Expiring in 30 days**. Any operator can use it.
+
+- **Opened from the Dashboard.** Clicking a row of the Subscriptions expiring card opens this page with the filter already chosen (the address ends in `?expiring=today`, `?expiring=7d` or `?expiring=30d`). An unknown value is ignored.
+- **The rule.** A company is listed when its plan status is Active, it is not deleted, and its plan end date is from today up to the end of the window, counted from today's date in India (not your computer's date). Today is included, so "7 days" means today plus the next seven days. Free trials, Expired plans, deleted companies and companies with no plan end date never appear. A deactivated company with an active plan does appear.
+- **Same numbers as the Dashboard.** The list has exactly as many companies as the number on the Dashboard row you clicked. See [Dashboard](kb:dashboard).
+- **The hint bar.** While the filter is on, a line above the table says which window is shown and how many companies match, with a **Clear filter** button. Clear filter, choosing **Any expiry**, or **Refresh** all switch it off.
+- **Order.** The list is sorted soonest end date first, then by name, unless you choose another sort.
+- **Combining.** The filter works together with search, Status, State and District. Status Expired together with Expiring shows nothing, because an Expired plan is never in the expiring windows.
 
 ## Open a company
 
 Click anywhere on a row (except the action buttons) to open the [organization analytics](kb:organization-analytics) page for it.
 
-## Register a company on someone's behalf
+## Chat with a company
 
-Who can do this: any operator. Use it when a customer cannot register in the app.
+Who can do this: any operator. Click the **Chat** icon in the row's **Actions** cell. The support chat opens for that company, ready for your message. A deleted company or one with no active admin cannot be messaged. Details are in [Start a chat with a company](kb:start-a-chat-with-a-company).
 
-1. Click **Add organization**.
-2. Fill Company name and Company address (required), and optionally state, district, pincode and GST number.
-3. Under Contact, enter the Mobile number and click **Get OTP**; the code goes to that number. Enter it and click **Verify**. Do the same for the Email ID. Both must show Verified.
-4. Under Structure, enter at least one Branch (use **Add branch** for more). Departments are optional; if you add none, the department "General" is created.
-5. Optionally upload a logo, or open **Add more details** for PAN, website, CIN, TAN, MSME and business category.
-6. Click **Register Organization**. The list reloads.
+## Register, deactivate, activate or delete a company
 
-The company name is also used as the owner's name on the new account.
-
-## Deactivate or activate a company
-
-Who can do this: any operator. You are asked to confirm, and the button uses your signed-in email as the "changed by" name.
-
-1. Find the row and click **Deactivate** (or **Activate**).
-2. Confirm in the browser prompt.
-
-Deactivate marks the company and all of its users inactive. Managers and employees who are signed in are signed out. Each change is recorded with the operator's email.
-
-> **Warning** **Activate** switches on every user of the company and its owner, including people who were switched off or removed earlier. Check with the customer before reactivating a company that had staff removed.
-
-## Delete a company
-
-Who can do this: any operator. Deleting needs a one-time code sent to your own login email.
-
-1. Click **Delete** on the row. An OTP is sent to your email.
-2. Enter the 6-digit code in "Confirm delete" and click **Delete**.
-
-> **Warning** The confirmation says it cannot be undone. In practice the console marks the company inactive and every user of it as deleted (status 2); it does not erase rows. After you refresh, the company can reappear in the list as inactive. Permanent removal of an owner's data is done through [account deletion requests](kb:account-deletion-requests).
-
-## Edit company details
-
-The backend can update a company's name, address, GST, state, district, pincode and the owner's mobile and email, and the page contains an Edit dialog. At the moment no button on the page opens that dialog, so editing is not available from the console. Ask a maintainer if a customer needs a correction.
+Every row has buttons to switch a company off or on and to delete it, and the page can register a new company for a customer. These actions, with their warnings, are explained in [Register, deactivate, activate and delete organizations](kb:organization-actions).
 
 ## Export
 
@@ -89,8 +71,7 @@ Use the export button above the table for Excel or PDF. The file contains the ro
 ## What can go wrong
 
 - **"Couldn't load organizations":** the backend answered with an error or could not be reached. Press Try again; see [Troubleshooting](kb:troubleshooting).
-- **Get OTP says failed:** the mobile must be 10 digits and the email must contain "@"; otherwise the backend message is shown.
-- **Deleted company still listed:** expected, see the Delete warning above.
+- **A deleted company is still listed:** expected; see [Register, deactivate, activate and delete organizations](kb:organization-actions).
 
 ## Common questions
 
@@ -100,11 +81,11 @@ The tile counts the stored plan status. A trial that ended without payment is di
 ### Why can I filter by Inactive but see no results?
 That filter matches the plan status Inactive. A deactivated company keeps its plan status, so it is not matched.
 
-### Does deactivating stop billing?
-No. It only changes user and company status. The subscription is untouched.
+### Why does Expiring in 30 days show fewer companies than the Expired filter?
+They are different groups. Expiring lists paid plans that are still Active and end soon; Expired lists plans that have already ended.
 
-### Can I see which operator deactivated a company?
-Each change is stored with the operator's email (first 20 characters). It is not shown in the console.
+### A company is about to expire but is not in the Expiring list. Why?
+Check its Status: a free trial, an already Expired plan, a deleted company, or a missing plan end date is never listed. Its latest subscription may also be a newer one that ends later.
 
-### Why is the Joined date later than I expected?
-It shows the last-changed date when one exists.
+### How do I message a company's admin?
+Click the Chat icon in the company's Actions cell and send the first message. See [Start a chat with a company](kb:start-a-chat-with-a-company).

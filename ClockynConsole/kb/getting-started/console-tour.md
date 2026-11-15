@@ -16,8 +16,8 @@ The left menu (the sidebar) is the same on every page. It has the Clockyn logo a
 
 | Group | Item | What it opens |
 | --- | --- | --- |
-| Overview | Dashboard | Live numbers across all organisations, who is active today and a revenue chart |
-| Management | Organizations | Every registered company with its plan, status and head count; open one for its analytics |
+| Overview | Dashboard | Live numbers across all organisations, who is active today, a revenue chart and how many paid plans end today, within 7 days and within 30 days (click one to see the companies) |
+| Management | Organizations | Every registered company with its plan, status and head count, with an Expiring filter; open one for its analytics, or use the Chat icon to message its admin |
 | Management | Users | Managers and employees across all organisations; also the account deletion requests |
 | Management | Subscriptions | The plan catalogue (Core, Prime, Elite and their durations) and every organisation's subscription |
 | Management | Referrals | Customer referrals (C2C) and promoter codes with commission (B2C) |

@@ -139,6 +139,78 @@ describe('LiveChatScreen', () => {
     expect(screen.getByText('Our support team will reply here.')).toBeTruthy();
   });
 
+  describe('a conversation that support started', () => {
+    const supportFirst = (over: Partial<LiveChatMessage> = {}) =>
+      live({ id: 's1', senderName: 'Meera', text: 'Hi, this is Clockyn support. We saw your plan renewal and wanted to check in.', ...over });
+
+    it('shows the first support message with the agent name, no empty state, and the admin can reply', async () => {
+      badges.set('liveChat', 1);
+      mockGetMessages.mockResolvedValue(history([supportFirst()]));
+      mockSend.mockResolvedValue(live({ id: 'o1', senderType: 'org', senderId: 'user-1', senderName: 'Owner', text: 'Thanks, all good', sentAt: iso(0) }));
+      await renderScreen(<LiveChatScreen />);
+      expect(await screen.findByText(/We saw your plan renewal/)).toBeTruthy();
+      expect(screen.getByText('Meera')).toBeTruthy();
+      expect(screen.queryByText('Start a conversation')).toBeNull();
+      // opening the conversation clears the unread badge and tells the server
+      expect(badges.get().liveChat).toBe(0);
+      expect(mockMarkRead).toHaveBeenCalledWith('org-1', 'user-1');
+      // and the admin can answer it
+      await fireEvent.changeText(screen.getByTestId('chat-input'), 'Thanks, all good');
+      await fireEvent.press(screen.getByLabelText('Send message'));
+      expect(await screen.findByText('Thanks, all good')).toBeTruthy();
+      expect(mockSend).toHaveBeenCalledWith({ orgId: 'org-1', userId: 'user-1', message: 'Thanks, all good' });
+    });
+
+    it('falls back to "Clockyn Support" above a first message that carries no agent name', async () => {
+      mockGetMessages.mockResolvedValue(history([supportFirst({ senderName: '   ' })]));
+      await renderScreen(<LiveChatScreen />);
+      await screen.findByText(/We saw your plan renewal/);
+      expect(screen.getAllByText('Clockyn Support').length).toBeGreaterThan(0);
+    });
+
+    it('shows no "busy" note when the only message is support\'s own', async () => {
+      mockGetMessages.mockResolvedValue(history([supportFirst({ sentAt: iso(60) })]));
+      await renderScreen(<LiveChatScreen />);
+      await screen.findByText(/We saw your plan renewal/);
+      expect(screen.queryByTestId('support-delay-notice')).toBeNull();
+    });
+
+    it('does not flash "Start a conversation" from a cached EMPTY history while the real one reloads', async () => {
+      let setShown: (v: boolean) => void = () => undefined;
+      function Toggle() {
+        const [shown, set] = React.useState(true);
+        setShown = set;
+        return shown ? <LiveChatScreen /> : null;
+      }
+      mockGetMessages.mockResolvedValue(history([], null));
+      await renderScreen(<Toggle />);
+      await screen.findByText('Start a conversation'); // the admin opened Live Chat, nothing there yet
+      await act(async () => setShown(false)); // ... and left; the (empty) history stays cached for a while
+
+      // support writes first; the admin comes back: the cached empty history must not be shown as the answer
+      let resolveHistory: (h: LiveChatHistory) => void = () => undefined;
+      mockGetMessages.mockReturnValue(new Promise<LiveChatHistory>((resolve) => (resolveHistory = resolve)));
+      await act(async () => setShown(true));
+      expect(screen.getByTestId('messages-loading')).toBeTruthy();
+      expect(screen.queryByText('Start a conversation')).toBeNull();
+
+      await act(async () => resolveHistory(history([supportFirst()])));
+      expect(await screen.findByText(/We saw your plan renewal/)).toBeTruthy();
+      expect(screen.queryByText('Start a conversation')).toBeNull();
+    });
+
+    it('keeps a message that arrives on the socket while the first history is still loading', async () => {
+      let resolveHistory: (h: LiveChatHistory) => void = () => undefined;
+      mockGetMessages.mockReturnValue(new Promise<LiveChatHistory>((resolve) => (resolveHistory = resolve)));
+      await renderScreen(<LiveChatScreen />);
+      const first = supportFirst({ sentAt: iso(0) });
+      await act(async () => mockSockets.chat?.(messageFrame(first))); // the conversation was just created by support
+      await act(async () => resolveHistory(history([], 'open'))); // the history request was answered before the message was stored
+      expect(await screen.findByText(/We saw your plan renewal/)).toBeTruthy();
+      expect(screen.getAllByText(/We saw your plan renewal/)).toHaveLength(1);
+    });
+  });
+
   it('marks the conversation open and read: clears the Support badge and tells the server', async () => {
     badges.set('liveChat', 3);
     await renderScreen(<LiveChatScreen />);

@@ -189,6 +189,9 @@ export function useLiveChat(): LiveChatState {
   const uploading = useMemo(() => items.some((i) => i.state === 'sending' && i.retry?.kind === 'file'), [items]);
   const reopened = reopenedAt !== null && history.dataUpdatedAt <= reopenedAt;
   const status: LiveChatStatus | null = reopened ? 'open' : (history.data?.status ?? null);
+  // A cached EMPTY history is not an answer while it reloads: support may have started the conversation since the last visit, and
+  // "Start a conversation" must not flash over a message that is on its way. Pending (optimistic) items count as content.
+  const isLoading = history.isLoading || (history.isFetching && items.length === 0);
 
-  return { items, isLoading: history.isLoading, error: history.error, refetch, status, uploading, sendText, sendAttachment, retry, discard };
+  return { items, isLoading, error: history.error, refetch, status, uploading, sendText, sendAttachment, retry, discard };
 }

@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-15",
-  "count": 32,
+  "count": 34,
   "categories": [
     "Getting started",
     "Operations",
@@ -376,7 +376,7 @@
           "id": "where-is-the-knowledge-base"
         }
       ],
-      "words": 1068,
+      "words": 1100,
       "order": 4
     },
     {
@@ -405,6 +405,7 @@
       "related": [
         "welcome",
         "console-tour",
+        "dashboard",
         "live-chat",
         "payments",
         "subscriptions-and-plans",
@@ -463,13 +464,13 @@
           "id": "i-am-new-where-do-i-start"
         }
       ],
-      "words": 915,
+      "words": 1002,
       "order": 5
     },
     {
       "id": "dashboard",
       "title": "Dashboard (Admin Overview)",
-      "summary": "What every tile, chart and list on the console Dashboard shows, where each number comes from, and why it can differ from other pages.",
+      "summary": "What every tile, chart and list on the console Dashboard shows, including the Subscriptions expiring card, where each number comes from, and why it can differ from other pages.",
       "category": "Operations",
       "audience": "all",
       "tags": [
@@ -484,7 +485,11 @@
         "recent organizations",
         "active plans",
         "free trial",
-        "numbers"
+        "numbers",
+        "expiring subscriptions",
+        "renewals",
+        "expiring today",
+        "expiring this week"
       ],
       "page": "dashboard.html",
       "updated": "2026-11-15",
@@ -494,7 +499,8 @@
         "users",
         "subscriptions-and-plans",
         "payments",
-        "console-tour"
+        "console-tour",
+        "daily-checklist"
       ],
       "path": "operations/dashboard.md",
       "headings": [
@@ -520,8 +526,18 @@
         },
         {
           "level": 2,
-          "text": "Plan Distribution and Subscription Plans",
-          "id": "plan-distribution-and-subscription-plans"
+          "text": "Plan Distribution",
+          "id": "plan-distribution"
+        },
+        {
+          "level": 2,
+          "text": "Subscriptions expiring",
+          "id": "subscriptions-expiring"
+        },
+        {
+          "level": 3,
+          "text": "A renewal routine",
+          "id": "a-renewal-routine"
         },
         {
           "level": 2,
@@ -550,37 +566,22 @@
         },
         {
           "level": 3,
-          "text": "Why is an Expired organization listed under Active Today?",
-          "id": "why-is-an-expired-organization-listed-under-active-today"
-        },
-        {
-          "level": 3,
-          "text": "Why does the Users tile include company owners?",
-          "id": "why-does-the-users-tile-include-company-owners"
+          "text": "How is Next 7 days different from the Expiring badge on Subscriptions?",
+          "id": "how-is-next-7-days-different-from-the-expiring-badge-on-subscriptions"
         },
         {
           "level": 3,
           "text": "Why is a month missing from the revenue chart?",
           "id": "why-is-a-month-missing-from-the-revenue-chart"
-        },
-        {
-          "level": 3,
-          "text": "Why does the search box at the top do nothing?",
-          "id": "why-does-the-search-box-at-the-top-do-nothing"
-        },
-        {
-          "level": 3,
-          "text": "How current is the data?",
-          "id": "how-current-is-the-data"
         }
       ],
-      "words": 1034,
+      "words": 1141,
       "order": 6
     },
     {
       "id": "organizations",
-      "title": "Organizations (list, register, activate, deactivate, delete)",
-      "summary": "How to read the Organizations list and how to register, deactivate, reactivate, delete and export companies, including what each action really does.",
+      "title": "Organizations (list, filters, expiring plans, export)",
+      "summary": "How to read the Organizations list, search, filter and sort it, find companies whose plan is about to expire, and export it.",
       "category": "Operations",
       "audience": "operator",
       "tags": [
@@ -588,27 +589,30 @@
         "companies",
         "org",
         "customers",
-        "register company",
-        "add organization",
-        "deactivate",
-        "activate",
-        "delete",
         "status",
         "free trial",
         "expired",
         "staff count",
         "export",
         "filter",
-        "sort"
+        "sort",
+        "expiring",
+        "renewal",
+        "expiring today",
+        "expiring this week",
+        "plan end date"
       ],
       "page": "organizations.html",
       "updated": "2026-11-15",
       "related": [
+        "dashboard",
+        "organization-actions",
         "organization-analytics",
         "users",
         "subscriptions-and-plans",
         "account-deletion-requests",
-        "roles-and-permissions"
+        "roles-and-permissions",
+        "start-a-chat-with-a-company"
       ],
       "path": "operations/organizations.md",
       "headings": [
@@ -629,28 +633,23 @@
         },
         {
           "level": 2,
+          "text": "Expiring filter",
+          "id": "expiring-filter"
+        },
+        {
+          "level": 2,
           "text": "Open a company",
           "id": "open-a-company"
         },
         {
           "level": 2,
-          "text": "Register a company on someone's behalf",
-          "id": "register-a-company-on-someone-s-behalf"
+          "text": "Chat with a company",
+          "id": "chat-with-a-company"
         },
         {
           "level": 2,
-          "text": "Deactivate or activate a company",
-          "id": "deactivate-or-activate-a-company"
-        },
-        {
-          "level": 2,
-          "text": "Delete a company",
-          "id": "delete-a-company"
-        },
-        {
-          "level": 2,
-          "text": "Edit company details",
-          "id": "edit-company-details"
+          "text": "Register, deactivate, activate or delete a company",
+          "id": "register-deactivate-activate-or-delete-a-company"
         },
         {
           "level": 2,
@@ -679,21 +678,21 @@
         },
         {
           "level": 3,
-          "text": "Does deactivating stop billing?",
-          "id": "does-deactivating-stop-billing"
+          "text": "Why does Expiring in 30 days show fewer companies than the Expired filter?",
+          "id": "why-does-expiring-in-30-days-show-fewer-companies-than-the-expired-filter"
         },
         {
           "level": 3,
-          "text": "Can I see which operator deactivated a company?",
-          "id": "can-i-see-which-operator-deactivated-a-company"
+          "text": "A company is about to expire but is not in the Expiring list. Why?",
+          "id": "a-company-is-about-to-expire-but-is-not-in-the-expiring-list-why"
         },
         {
           "level": 3,
-          "text": "Why is the Joined date later than I expected?",
-          "id": "why-is-the-joined-date-later-than-i-expected"
+          "text": "How do I message a company's admin?",
+          "id": "how-do-i-message-a-company-s-admin"
         }
       ],
-      "words": 1026,
+      "words": 1031,
       "order": 7
     },
     {
@@ -1013,6 +1012,94 @@
       "order": 10
     },
     {
+      "id": "organization-actions",
+      "title": "Register, deactivate, activate and delete organizations",
+      "summary": "How to register a company on its owner's behalf and how to deactivate, reactivate or delete a company from the Organizations page, including what each action really does.",
+      "category": "Operations",
+      "audience": "operator",
+      "tags": [
+        "register company",
+        "add organization",
+        "deactivate",
+        "activate",
+        "delete organization",
+        "switch off company",
+        "reactivate",
+        "edit company",
+        "otp",
+        "soft delete",
+        "remove company"
+      ],
+      "page": "organizations.html",
+      "updated": "2026-11-15",
+      "related": [
+        "organizations",
+        "account-deletion-requests",
+        "roles-and-permissions",
+        "users"
+      ],
+      "path": "operations/organization-actions.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Register a company on someone's behalf",
+          "id": "register-a-company-on-someone-s-behalf"
+        },
+        {
+          "level": 2,
+          "text": "Deactivate or activate a company",
+          "id": "deactivate-or-activate-a-company"
+        },
+        {
+          "level": 2,
+          "text": "Delete a company",
+          "id": "delete-a-company"
+        },
+        {
+          "level": 2,
+          "text": "Edit company details",
+          "id": "edit-company-details"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Does deactivating stop billing?",
+          "id": "does-deactivating-stop-billing"
+        },
+        {
+          "level": 3,
+          "text": "Can I see which operator deactivated a company?",
+          "id": "can-i-see-which-operator-deactivated-a-company"
+        },
+        {
+          "level": 3,
+          "text": "Can I undo a delete?",
+          "id": "can-i-undo-a-delete"
+        },
+        {
+          "level": 3,
+          "text": "Why can I not edit a company's name or address?",
+          "id": "why-can-i-not-edit-a-company-s-name-or-address"
+        },
+        {
+          "level": 3,
+          "text": "A customer cannot register in the app. What can I do?",
+          "id": "a-customer-cannot-register-in-the-app-what-can-i-do"
+        }
+      ],
+      "words": 653,
+      "order": 11
+    },
+    {
       "id": "subscriptions-and-plans",
       "title": "Subscriptions and plans (plan cards, free months, pricing rules)",
       "summary": "How to read the Subscriptions page, add or edit plans with free months and offer text, and how a purchase price is worked out.",
@@ -1112,7 +1199,7 @@
         }
       ],
       "words": 1101,
-      "order": 11
+      "order": 12
     },
     {
       "id": "payments",
@@ -1221,7 +1308,7 @@
         }
       ],
       "words": 1014,
-      "order": 12
+      "order": 13
     },
     {
       "id": "coupons",
@@ -1323,7 +1410,7 @@
         }
       ],
       "words": 873,
-      "order": 13
+      "order": 14
     },
     {
       "id": "referrals-c2c",
@@ -1423,7 +1510,7 @@
         }
       ],
       "words": 974,
-      "order": 14
+      "order": 15
     },
     {
       "id": "referrals-b2c",
@@ -1518,7 +1605,7 @@
         }
       ],
       "words": 1038,
-      "order": 15
+      "order": 16
     },
     {
       "id": "b2c-commission-and-payouts",
@@ -1620,7 +1707,7 @@
         }
       ],
       "words": 1111,
-      "order": 16
+      "order": 17
     },
     {
       "id": "suggestions",
@@ -1714,7 +1801,7 @@
         }
       ],
       "words": 913,
-      "order": 17
+      "order": 18
     },
     {
       "id": "tickets-and-bugs",
@@ -1817,12 +1904,12 @@
         }
       ],
       "words": 1002,
-      "order": 18
+      "order": 19
     },
     {
       "id": "live-chat",
       "title": "Live Chat with companies",
-      "summary": "How company admins start a chat in the app and how operators answer in the console: floating button, full page, unread counts, closing, attachments, sound.",
+      "summary": "How a chat starts (from the app, or from the Organizations page) and how operators answer in the console: floating button, full page, unread counts, closing, attachments, sound.",
       "category": "Support",
       "audience": "operator",
       "tags": [
@@ -1830,6 +1917,8 @@
         "chat",
         "support chat",
         "reply",
+        "start chat",
+        "new conversation",
         "unread",
         "close conversation",
         "reopen",
@@ -1844,6 +1933,7 @@
       "page": "live_chat.html",
       "updated": "2026-11-15",
       "related": [
+        "start-a-chat-with-a-company",
         "tickets-and-bugs",
         "console-tour",
         "troubleshooting"
@@ -1922,17 +2012,12 @@
         },
         {
           "level": 3,
-          "text": "Will a company see that I deleted a message?",
-          "id": "will-a-company-see-that-i-deleted-a-message"
-        },
-        {
-          "level": 3,
           "text": "Can managers or staff use Live Chat?",
           "id": "can-managers-or-staff-use-live-chat"
         }
       ],
-      "words": 1162,
-      "order": 19
+      "words": 1190,
+      "order": 20
     },
     {
       "id": "video-hub",
@@ -2026,7 +2111,7 @@
         }
       ],
       "words": 999,
-      "order": 20
+      "order": 21
     },
     {
       "id": "video-views",
@@ -2126,7 +2211,7 @@
         }
       ],
       "words": 783,
-      "order": 21
+      "order": 22
     },
     {
       "id": "faq-hub",
@@ -2232,7 +2317,7 @@
         }
       ],
       "words": 1154,
-      "order": 22
+      "order": 23
     },
     {
       "id": "clickstream",
@@ -2344,7 +2429,111 @@
         }
       ],
       "words": 1129,
-      "order": 23
+      "order": 24
+    },
+    {
+      "id": "start-a-chat-with-a-company",
+      "title": "Start a chat with a company",
+      "summary": "How an operator opens a Live Chat conversation with any company from the Organizations page, what the company sees, and good practice for messages you start yourself.",
+      "category": "Support",
+      "audience": "operator",
+      "tags": [
+        "start chat",
+        "new conversation",
+        "message a company",
+        "proactive",
+        "outreach",
+        "chat icon",
+        "organizations actions",
+        "renewal reminder",
+        "onboarding help",
+        "first message",
+        "live chat",
+        "contact customer"
+      ],
+      "page": "organizations.html",
+      "updated": "2026-11-15",
+      "related": [
+        "live-chat",
+        "organizations",
+        "tickets-and-bugs",
+        "daily-checklist"
+      ],
+      "path": "support/start-a-chat-with-a-company.md",
+      "headings": [
+        {
+          "level": 2,
+          "text": "What it does",
+          "id": "what-it-does"
+        },
+        {
+          "level": 2,
+          "text": "Start a conversation",
+          "id": "start-a-conversation"
+        },
+        {
+          "level": 2,
+          "text": "What the company sees",
+          "id": "what-the-company-sees"
+        },
+        {
+          "level": 2,
+          "text": "When to start a chat",
+          "id": "when-to-start-a-chat"
+        },
+        {
+          "level": 2,
+          "text": "When not to start a chat",
+          "id": "when-not-to-start-a-chat"
+        },
+        {
+          "level": 2,
+          "text": "What to say first",
+          "id": "what-to-say-first"
+        },
+        {
+          "level": 2,
+          "text": "What can go wrong",
+          "id": "what-can-go-wrong"
+        },
+        {
+          "level": 2,
+          "text": "Common questions",
+          "id": "common-questions"
+        },
+        {
+          "level": 3,
+          "text": "Does opening the chat notify the company?",
+          "id": "does-opening-the-chat-notify-the-company"
+        },
+        {
+          "level": 3,
+          "text": "Can a manager or staff member receive the message?",
+          "id": "can-a-manager-or-staff-member-receive-the-message"
+        },
+        {
+          "level": 3,
+          "text": "Can I start a chat with a company whose plan has expired?",
+          "id": "can-i-start-a-chat-with-a-company-whose-plan-has-expired"
+        },
+        {
+          "level": 3,
+          "text": "Can I start chats in bulk?",
+          "id": "can-i-start-chats-in-bulk"
+        },
+        {
+          "level": 3,
+          "text": "Who sees what I wrote?",
+          "id": "who-sees-what-i-wrote"
+        },
+        {
+          "level": 3,
+          "text": "I started a chat by mistake. Can I undo it?",
+          "id": "i-started-a-chat-by-mistake-can-i-undo-it"
+        }
+      ],
+      "words": 884,
+      "order": 25
     },
     {
       "id": "glossary",
@@ -2641,7 +2830,7 @@
         }
       ],
       "words": 1118,
-      "order": 24
+      "order": 26
     },
     {
       "id": "troubleshooting",
@@ -2759,7 +2948,7 @@
         }
       ],
       "words": 1112,
-      "order": 25
+      "order": 27
     },
     {
       "id": "settings-page",
@@ -2859,7 +3048,7 @@
         }
       ],
       "words": 927,
-      "order": 26
+      "order": 28
     },
     {
       "id": "how-the-console-works",
@@ -2947,7 +3136,7 @@
         }
       ],
       "words": 1015,
-      "order": 27
+      "order": 29
     },
     {
       "id": "running-and-testing-locally",
@@ -3031,7 +3220,7 @@
         }
       ],
       "words": 880,
-      "order": 28
+      "order": 30
     },
     {
       "id": "deploying-the-console",
@@ -3118,7 +3307,7 @@
         }
       ],
       "words": 788,
-      "order": 29
+      "order": 31
     },
     {
       "id": "adding-a-page",
@@ -3190,7 +3379,7 @@
         }
       ],
       "words": 712,
-      "order": 30
+      "order": 32
     },
     {
       "id": "api-map",
@@ -3271,7 +3460,7 @@
         }
       ],
       "words": 1020,
-      "order": 31
+      "order": 33
     },
     {
       "id": "security-settings",
@@ -3366,7 +3555,7 @@
         }
       ],
       "words": 971,
-      "order": 32
+      "order": 34
     }
   ]
 }

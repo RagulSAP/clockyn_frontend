@@ -132,7 +132,9 @@ function createOperatorMock() {
         const out = referral.handle(req.method, path, url.searchParams, body, EMAIL_ROLE[who] || 1, who);
         if (out) return done(out[0], out[1]);
       }
+      if (/^\/gen-dashboard\/(__orgchat\/|organizations$|live-chat\/)/.test(path) && !/\/messages\/file$/.test(path)) { const ocm = require('./orgchat-mock'); if (ocm.active() || /\/__orgchat\/state$/.test(path)) { const oc = ocm.handle(req.method, path, url.searchParams, ['POST', 'PUT'].includes(req.method) ? await readBody(req) : {}); if (oc) return done(oc[0], oc[1]); } }   /* orgchat-mock.js: support starts a conversation. The body is read ONLY while it is active (a request body can be read once, the next mock needs it). */
       if (/^\/(plans\/|gen-dashboard\/plan-breakdown$)/.test(path)) { const pm = require('./plans-mock').handle(req.method, path, ['POST', 'PUT'].includes(req.method) ? await readBody(req) : {}); if (pm) return done(pm[0], pm[1]); }   /* plans-mock.js: GET/POST/PUT/DELETE /plans*, plan-breakdown */
+      if (/^\/gen-dashboard\/(__expiry\/|stats$|organizations$|monthly-revenue$|recent-orgs$|active-orgs$)/.test(path)) { const ex = require('./expiry-mock').handle(req.method, path, url.searchParams, req.method === 'POST' ? await readBody(req) : {}); if (ex) return done(ex[0], ex[1]); }   /* expiry-mock.js: only answers while switched on (dashboard-expiry.spec.js) */
       { const sh = require('./shell-mock').handle(req.method, path, url.searchParams, ['POST', 'PUT'].includes(req.method) ? await readBody(req) : {}); if (sh) return done(sh[0], sh[1]); }   /* shell-mock.js: unread chats, sidebar badge counts, live-chat threads (shell.spec.js) */
       return done(200, sampleBody(path));
     }

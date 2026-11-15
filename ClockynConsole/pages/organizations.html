@@ -30,6 +30,9 @@
     /* ── Table card + toolbar ── */
     .table-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 20px; border-bottom: 1px solid var(--border); }
     .table-toolbar .grow { flex: 1; }
+    .expiry-hint { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 20px; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+    .expiry-hint[hidden] { display: none; }
+    .expiry-hint button { border: 0; background: none; padding: 0; font: inherit; color: var(--text); text-decoration: underline; cursor: pointer; }
     .filter-select { height: 36px; min-height: 36px; padding: 0 12px; font-size: 13px; color: var(--text-secondary); border-radius: var(--radius-sm); max-width: 100%; }
     .filter-select.sort-select { min-width: 220px; }
     .filter-select.sort-select.active { border-color: var(--text); color: var(--text); box-shadow: 0 0 0 3px var(--ring); }
@@ -60,6 +63,7 @@
     .act-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .act-btn.toggle-inactive:hover:not(:disabled) { background: var(--warning-soft); border-color: transparent; color: var(--warning); }
     .act-btn.toggle-active:hover:not(:disabled) { background: var(--success-soft); border-color: transparent; color: var(--success); }
+    .act-btn.chat:hover:not(:disabled) { background: var(--primary-soft, var(--surface-2, rgba(127,127,127,.12))); border-color: transparent; color: var(--text); }
     .act-btn.del:hover:not(:disabled) { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
 
     /* loading / empty / error states inside the table */
@@ -221,6 +225,12 @@
             <option value="INACTIVE">Inactive</option>
             <option value="EXPIRED">Expired</option>
           </select>
+          <select class="filter-select" id="expiry-filter" onchange="applyFilters()" aria-label="Filter by plan expiry">
+            <option value="">Any expiry</option>
+            <option value="today">Expiring today</option>
+            <option value="7d">Expiring in 7 days</option>
+            <option value="30d">Expiring in 30 days</option>
+          </select>
           <select class="filter-select" id="state-filter" onchange="onStateFilterChange()" aria-label="Filter by state">
             <option value="">All states</option>
           </select>
@@ -236,6 +246,7 @@
             <option value="expired">Expired Count</option>
           </select>
         </div>
+        <div class="expiry-hint" id="expiry-hint" role="status" hidden></div>
         <div class="table-wrap">
           <table class="data">
             <thead>
@@ -247,7 +258,7 @@
                 <th style="width:10%">Status</th>
                 <th class="num" style="width:8%">Staff</th>
                 <th style="width:11%">Plan period</th>
-                <th class="num" style="width:112px">Actions</th>
+                <th class="num" style="width:146px">Actions</th>
               </tr>
             </thead>
             <tbody id="orgs-tbody">
@@ -450,6 +461,7 @@
       power: '<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>',
       check: '<circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/>',
       trash: '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+      chat: '<path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/>',
       x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
       building: '<path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 6h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M8 6h.01"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><rect x="4" y="2" width="16" height="20" rx="2"/>',
       alert: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>'
@@ -736,6 +748,7 @@
         var toggleBtn = isDeleted ? '' : (isActive
           ? '<button type="button" class="act-btn toggle-inactive" title="Deactivate" aria-label="Deactivate organization" onclick="toggleOrgStatus(event,\'' + id + '\',false)">' + ico('power') + '<span class="act-label">Deactivate</span></button>'
           : '<button type="button" class="act-btn toggle-active" title="Activate" aria-label="Activate organization" onclick="toggleOrgStatus(event,\'' + id + '\',true)">' + ico('check') + '<span class="act-label">Activate</span></button>');
+        var chatBtn = isDeleted ? '' : '<button type="button" class="act-btn chat" title="Chat with ' + esc(r.org_name) + '" aria-label="Chat with ' + esc(r.org_name) + '" data-chat-org="' + id + '" onclick="openOrgChat(event,\'' + id + '\')">' + ico('chat') + '<span class="act-label">Chat</span></button>';
         var deleteBtn = isDeleted ? '' : '<button type="button" class="act-btn del" title="Delete" aria-label="Delete organization" onclick="deleteOrg(event,\'' + id + '\')">' + ico('trash') + '<span class="act-label">Delete</span></button>';
         var hasEnd = r.end_date && r.end_date !== '—';
         var hasStart = r.start_date && r.start_date !== '—';
@@ -760,10 +773,18 @@
           + '<td data-label="Employees" class="num td-primary">' + esc(r.emp_count) + '</td>'
           + '<td data-label="Plan period"><div class="contact-cell">' + endCell + (hasEnd && hasStart ? '<span class="contact-phone nowrap">from ' + esc(r.start_date) + '</span>' : '') + '</div></td>'
           + '<td data-label="" class="num c-actions" onclick="event.stopPropagation()"><div class="actions-cell">'
-          +   toggleBtn + deleteBtn
+          +   chatBtn + toggleBtn + deleteBtn
           + '</div></td>'
           + '</tr>';
       }).join('');
+    }
+
+    /* Chat with this organization: opens the support chat (the floating panel from js/layout.js, else the full page) on it. An
+       organization that never wrote to us has no conversation yet: the chat opens empty and the first message you send starts it. */
+    function openOrgChat(e, orgId) {
+      e.stopPropagation();
+      if (window.ClockynLiveChatPanel && typeof window.ClockynLiveChatPanel.open === 'function') window.ClockynLiveChatPanel.open(orgId);
+      else window.location.href = 'live_chat.html?org_id=' + encodeURIComponent(orgId);
     }
 
     function openEditModal(e, r) {
@@ -910,11 +931,13 @@
       }
     }
 
+    /* Orange "Plan Expires" date: today in India through the next 30 days (today included), the same window as the
+       "Expiring in 30 days" filter, so a plan ending today is highlighted and the highlight never depends on the browser's time zone. */
     function isExpiringSoon(dateStr) {
-      if (!dateStr || dateStr === '—') return false;
-      var d = new Date(dateStr);
-      var diff = (d - new Date()) / (1000 * 60 * 60 * 24);
-      return diff >= 0 && diff <= 30;
+      var end = String(dateStr || '').slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(end)) return false;
+      var today = istToday();
+      return end >= today && end <= addDaysStr(today, 30);
     }
 
     function sortOrgs(rows) {
@@ -947,11 +970,48 @@
       });
     }
 
+    /* ── Expiry filter (opened from the dashboard "Subscriptions expiring" card as organizations.html?expiring=today|7d|30d).
+       Same rule as the dashboard numbers: the latest plan is ACTIVE, the organization is not deleted, and the plan ends in the
+       window counted from TODAY IN INDIA (not the browser's date), today included. ── */
+    var EXPIRY_KEYS = ['today', '7d', '30d'];
+    var EXPIRY_TEXT = { today: 'ends today', '7d': 'ends within the next 7 days (today included)', '30d': 'ends within the next 30 days (today included)' };
+    var pendingExpiry = (function () {
+      var v = new URLSearchParams(window.location.search).get('expiring') || '';
+      return EXPIRY_KEYS.indexOf(v) >= 0 ? v : '';
+    })();
+    function istToday() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); }
+    function addDaysStr(ymd, n) {
+      var p = ymd.split('-');
+      return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)).toISOString().slice(0, 10);
+    }
+    function inExpiryWindow(r, key) {
+      if (r.sub_status !== 'ACTIVE' || r.org_status === 2) return false;
+      var end = String(r.end_date || '').slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(end)) return false;
+      var today = istToday();
+      var last = key === 'today' ? today : addDaysStr(today, key === '7d' ? 7 : 30);
+      return end >= today && end <= last;
+    }
+    function updateExpiryHint() {
+      var key = document.getElementById('expiry-filter').value;
+      var el = document.getElementById('expiry-hint');
+      if (!key) { el.hidden = true; el.textContent = ''; return; }
+      el.hidden = false;
+      el.innerHTML = '<span>Showing organizations whose paid plan ' + esc(EXPIRY_TEXT[key]) + ': <b>' + filteredOrgs.length + '</b></span>'
+        + '<button type="button" onclick="clearExpiryFilter()">Clear filter</button>';
+    }
+    function clearExpiryFilter() {
+      document.getElementById('expiry-filter').value = '';
+      if (window.history && history.replaceState) history.replaceState(null, '', window.location.pathname);
+      applyFilters();
+    }
+
     function applyFilters() {
       var search   = document.getElementById('search-input').value.toLowerCase();
       var status   = document.getElementById('status-filter').value;
       var state    = document.getElementById('state-filter').value.toLowerCase();
       var district = document.getElementById('district-filter').value.toLowerCase();
+      var expiry   = document.getElementById('expiry-filter').value;
       filteredOrgs = allOrgs.filter(function(r) {
         var matchSearch = !search
           || r.org_name.toLowerCase().includes(search)
@@ -963,10 +1023,15 @@
         var matchStatus   = !status   || getDisplayStatus(r) === status;
         var matchState    = !state    || (r.state || '').toLowerCase() === state;
         var matchDistrict = !district || (r.district || '').toLowerCase() === district;
-        return matchSearch && matchStatus && matchState && matchDistrict;
+        var matchExpiry   = !expiry   || inExpiryWindow(r, expiry);
+        return matchSearch && matchStatus && matchState && matchDistrict && matchExpiry;
       });
       filteredOrgs = sortOrgs(filteredOrgs);
+      if (expiry && !document.getElementById('sort-by').value) {   // soonest first when you are chasing renewals
+        filteredOrgs.sort(function (a, b) { return String(a.end_date).localeCompare(String(b.end_date)) || a.org_name.localeCompare(b.org_name); });
+      }
       renderTable(filteredOrgs);
+      updateExpiryHint();
     }
 
     function populateStateFilter() {
@@ -1005,6 +1070,8 @@
       tbody.innerHTML = loadingRows();
       document.getElementById('search-input').value = '';
       document.getElementById('status-filter').value = '';
+      document.getElementById('expiry-filter').value = pendingExpiry;   // set once by the dashboard link, cleared by Refresh
+      pendingExpiry = '';
       document.getElementById('state-filter').value = '';
       document.getElementById('district-filter').value = '';
       document.getElementById('sort-by').value = '';

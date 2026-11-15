@@ -769,6 +769,7 @@
       var t = S.thread || {};
       var name = t.org_name || 'Organization';
       var closed = t.status === 'closed';
+      var fresh = t.exists === false;                       /* support is about to write the first message */
       var contact = '';
       if (t.admin_name) contact += '<span class="lc-contact-item">' + escHtml(t.admin_name) + '</span>';
       if (t.admin_email) contact += '<span class="lc-contact-item">' + escHtml(t.admin_email) + '<button type="button" class="lc-copy" data-copy="' + escHtml(t.admin_email) + '" aria-label="Copy email" title="Copy email">' + ic('copy') + '</button></span>';
@@ -778,12 +779,13 @@
         '<span class="lc-avatar lc-avatar-lg ' + tone(S.org) + '" aria-hidden="true">' + escHtml(initials(name)) + '</span>' +
         '<div class="lc-head-main">' +
           '<div class="lc-head-title"><a class="lc-org-link" href="org_analytics.html?org_id=' + enc(S.org) + '&org_name=' + enc(name) + '" title="Open the organization"><span>' + escHtml(name) + '</span>' + ic('external') + '</a>' +
-            '<span class="badge ' + (closed ? 'badge-gray' : 'badge-green') + ' badge-dot" id="lc-status-chip">' + (closed ? 'Closed' : 'Open') + '</span></div>' +
+            '<span class="badge ' + (fresh ? 'badge-blue' : closed ? 'badge-gray' : 'badge-green') + ' badge-dot" id="lc-status-chip">' + (fresh ? 'New conversation' : closed ? 'Closed' : 'Open') + '</span></div>' +
           '<div class="lc-contact">' + contact + '</div>' +
         '</div>' +
-        '<button type="button" class="btn btn-ghost btn-sm" id="lc-status-btn">' + (closed ? 'Reopen' : 'Close conversation') + '</button>';
+        '<button type="button" class="btn btn-ghost btn-sm" id="lc-status-btn"' + (fresh ? ' hidden style="display:none"' : '') + '>' + (closed ? 'Reopen' : 'Close conversation') + '</button>';
       $('lc-closed-bar').hidden = !closed;
       $('lc-composer').hidden = closed;
+      $('lc-input').placeholder = fresh ? 'Write your first message' : 'Write a reply';
     }
 
     function renderMessages() {
@@ -793,7 +795,12 @@
         box.innerHTML = '<div class="lc-center"><div class="empty-state"><div class="empty-icon">' + ic('alert', 'i-lg') + '</div><h3>Could not load this conversation</h3><p>' + escHtml(S.msgsError) + '</p><button type="button" class="btn btn-ghost btn-sm" id="lc-retry-msgs">Try again</button></div></div>';
         return;
       }
-      if (!S.msgs.length) { box.innerHTML = '<div class="lc-center">No messages yet.</div>'; return; }
+      if (!S.msgs.length) {
+        box.innerHTML = S.thread && S.thread.exists === false
+          ? '<div class="lc-center" id="lc-new-hint">No messages yet. Your first message starts the conversation and the company admin is notified in the app.</div>'
+          : '<div class="lc-center">No messages yet.</div>';
+        return;
+      }
       var html = '', prev = null, day = '';
       S.msgs.forEach(function (m) {
         var k = dayKey(m.timestamp);
@@ -872,6 +879,15 @@
         var info = res && res.thread ? res.thread : {};
         S.msgs = mergeServer((res && res.messages) || []);
         S.msgsLoading = false;
+        if (info.exists === false) {
+          /* support starts this conversation: no thread exists yet. Show the empty conversation (header from the thread header),
+             keep it OUT of the left list until the first message is sent (see deliver()). */
+          if (known) S.threads = S.threads.filter(function (x) { return x.org_id !== org; });
+          S.thread = Object.assign({}, S.thread, info, { org_id: org, status: 'open', unread_count: 0, exists: false });
+          renderList(); renderConversation();
+          $('lc-input').focus({ preventScroll: true });
+          return;
+        }
         var last = S.msgs.length ? S.msgs[S.msgs.length - 1] : null;
         var t = upsertThread(Object.assign({ org_id: org }, info), known ? null : last);
         S.thread = Object.assign({}, t);
@@ -899,7 +915,8 @@
       return api('GET', '/threads/' + enc(org) + '/messages').then(function (res) {
         if (org !== S.org || !res) return;
         S.msgs = mergeServer(res.messages || []);
-        if (res.thread) { var t = upsertThread(Object.assign({ org_id: org }, res.thread)); S.thread = Object.assign({}, t); renderHead(); }
+        if (res.thread && res.thread.exists === false) { S.thread = Object.assign({}, S.thread, res.thread, { org_id: org, exists: false }); renderHead(); }
+        else if (res.thread) { var t = upsertThread(Object.assign({ org_id: org }, res.thread)); S.thread = Object.assign({}, t); renderHead(); }
         scheduleRender();
         markRead();
       }).catch(function () { /* stays on what we have */ });
@@ -953,6 +970,12 @@
         var org = local._org;
         var t = threadOf(org);
         if (t && m) { setPreview(t, m); if (t.status === 'closed') t.status = 'open'; sortThreads(); renderList(); }
+        else if (!t && m) {                                   /* the first message of a conversation support started */
+          var base = org === S.org && S.thread ? S.thread : { org_id: org };
+          upsertThread(Object.assign({}, base, { org_id: org, status: 'open', unread_count: 0, exists: true }), m);
+          renderList();
+          if (org === S.org && S.thread) { S.thread.exists = true; S.thread.status = 'open'; renderHead(); }
+        }
         if (org !== S.org || !m) return;
         var idx = S.msgs.indexOf(local);
         var exists = S.msgs.some(function (x) { return x.message_id === m.message_id; });
@@ -961,6 +984,20 @@
         revoke(local);
         scheduleRender();
       }).catch(function (e) {
+        var refused = e && (e.status === 409 || e.status === 404) && local._org === S.org && S.thread && S.thread.exists === false;
+        if (refused) {
+          /* nobody can receive this first message (no active admin) or the organization is gone: nothing was created, so take the
+             bubble back and put the text in the composer again instead of leaving a failed message behind */
+          var i = S.msgs.indexOf(local);
+          if (i >= 0) S.msgs.splice(i, 1);
+          revoke(local);
+          var ta = $('lc-input');
+          if (local.message_type === 'text' && !ta.value) { ta.value = local.message; growInput(); }
+          scheduleRender();
+          toast(e.message || 'Could not start the conversation', false);
+          ta.focus({ preventScroll: true });
+          return;
+        }
         local._state = 'failed';
         scheduleRender();
         toast((e && e.message) || 'Could not send the message', false);
@@ -1177,6 +1214,7 @@
       var unknown = !t;
       t = upsertThread({ org_id: d.org_id, org_name: d.org_name, status: d.thread_status }, d);
       if (d.org_id === S.org) {
+        if (S.thread && S.thread.exists === false) S.thread.exists = true;
         if (S.thread && d.thread_status) S.thread.status = d.thread_status;
         if (ingest(d)) {
           if (isOrg) {

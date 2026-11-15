@@ -96,17 +96,18 @@
     tr.row-link:focus-visible { outline: 2px solid var(--text-muted); outline-offset: -2px; }
     tr.row-link:hover .org-name { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-strong); }
 
-    /* ── Subscription plans list ── */
-    .plans-list { padding: 8px 20px 16px; }
-    .plan-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
-    .plan-row:last-child { border-bottom: none; }
-    .pl-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
-    .pl-info { flex: 1; min-width: 0; }
-    .pl-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-    .pl-name { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pl-count { font-size: 17px; font-weight: 700; letter-spacing: -.3px; color: var(--text); font-variant-numeric: tabular-nums; }
-    .pl-meta { font-size: 12px; color: var(--text-muted); margin-top: 1px; font-variant-numeric: tabular-nums; }
-    .plans-list .progress { margin-top: 8px; height: 5px; }
+    /* ── Subscriptions expiring (clickable rows to the Organizations page) ── */
+    .expiry-list { padding: 6px 12px 4px; display: flex; flex-direction: column; gap: 8px; }
+    .expiry-row { display: flex; align-items: center; gap: 12px; padding: 14px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); text-decoration: none; }
+    .expiry-row:hover { border-color: var(--border-strong); }
+    .expiry-row:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 2px; }
+    .expiry-info { flex: 1; min-width: 0; }
+    .expiry-label { font-size: 13.5px; font-weight: 600; }
+    .expiry-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .expiry-count { font-size: 22px; font-weight: 700; letter-spacing: -.4px; font-variant-numeric: tabular-nums; }
+    .expiry-row.hot .expiry-count { color: var(--danger, #dc2626); }
+    .expiry-go { color: var(--text-muted); display: inline-flex; }
+    .expiry-note { font-size: 12px; color: var(--text-muted); padding: 4px 20px 16px; margin: 0; }
 
     /* ── Loading / empty / error ── */
     .state-pad { padding: 8px 20px 20px; }
@@ -314,16 +315,29 @@
           </div>
         </section>
 
-        <!-- Plan donut legend / plan cards -->
-        <section class="card" aria-labelledby="plans-title">
+        <!-- Subscriptions about to expire: each row opens the Organizations page with that filter -->
+        <section class="card" aria-labelledby="expiry-title">
           <div class="card-header">
-            <h3 id="plans-title">Subscription Plans</h3>
+            <h3 id="expiry-title">Subscriptions expiring</h3>
           </div>
-          <div class="plans-list" id="plans-grid" aria-busy="true">
-            <div class="skeleton skel-line" style="height:46px;margin:12px 0"></div>
-            <div class="skeleton skel-line" style="height:46px;margin:12px 0"></div>
-            <div class="skeleton skel-line" style="height:46px;margin:12px 0"></div>
+          <div class="expiry-list" id="expiry-list">
+            <a class="expiry-row" id="exp-row-today" href="organizations.html?expiring=today">
+              <div class="expiry-info"><div class="expiry-label">Today</div><div class="expiry-sub">Paid plans that end today</div></div>
+              <div class="expiry-count" id="exp-today">—</div>
+              <span class="expiry-go" aria-hidden="true"><svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+            </a>
+            <a class="expiry-row" id="exp-row-7d" href="organizations.html?expiring=7d">
+              <div class="expiry-info"><div class="expiry-label">Next 7 days</div><div class="expiry-sub">Paid plans ending within 7 days, today included</div></div>
+              <div class="expiry-count" id="exp-7d">—</div>
+              <span class="expiry-go" aria-hidden="true"><svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+            </a>
+            <a class="expiry-row" id="exp-row-30d" href="organizations.html?expiring=30d">
+              <div class="expiry-info"><div class="expiry-label">Next 30 days</div><div class="expiry-sub">Paid plans ending within 30 days, today included</div></div>
+              <div class="expiry-count" id="exp-30d">—</div>
+              <span class="expiry-go" aria-hidden="true"><svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+            </a>
           </div>
+          <p class="expiry-note">Customers whose current paid plan is about to run out. Click a row to see them on the Organizations page.</p>
         </section>
 
       </div>
@@ -404,7 +418,21 @@
         document.getElementById('stat-total-users').textContent  = d.total_users.toLocaleString();
         document.getElementById('stat-revenue').textContent      = formatRevenue(d.revenue_this_month);
         document.getElementById('stat-active-subs').textContent  = d.active_subscriptions.toLocaleString();
+        renderExpiring(d.expiring);
       } catch(e) { console.error('Stats failed', e); }
+    }
+
+    /* ── Subscriptions expiring: the same rule as the Organizations page filter (latest plan ACTIVE, ends in the window, IST) ── */
+    function renderExpiring(e) {
+      var names = { today: 'Today', '7d': 'Next 7 days', '30d': 'Next 30 days' };
+      var vals  = e ? { today: e.today, '7d': e.within_7_days, '30d': e.within_30_days } : null;
+      Object.keys(names).forEach(function(k) {
+        var n = vals && typeof vals[k] === 'number' ? vals[k] : null;
+        document.getElementById('exp-' + k).textContent = n === null ? '—' : n.toLocaleString();
+        var row = document.getElementById('exp-row-' + k);
+        row.classList.toggle('hot', k === 'today' && n > 0);
+        row.setAttribute('aria-label', names[k] + (n === null ? '' : ': ' + n + (n === 1 ? ' organization' : ' organizations')) + '. Open the list');
+      });
     }
 
     /* ── Revenue Chart ── */
@@ -458,14 +486,12 @@
     async function loadPlanBreakdown() {
       var legend = document.getElementById('donut-legend');
       var svgEl  = document.getElementById('donut-svg');
-      var grid   = document.getElementById('plans-grid');
       try {
         var plans = await fetch(API_BASE + '/gen-dashboard/plan-breakdown').then(r => r.json());
-        legend.removeAttribute('aria-busy'); grid.removeAttribute('aria-busy');
+        legend.removeAttribute('aria-busy');
 
         if (!plans.length) {
           legend.innerHTML = '<div class="bar-chart-loading">No plans</div>';
-          grid.innerHTML = '<div class="state-pad">' + emptyBlock('inbox', 'No plans yet', 'Plans appear here once organizations subscribe.') + '</div>';
           return;
         }
 
@@ -496,23 +522,10 @@
             + '<div class="donut-legend-count">' + p.active_count + '</div>'
             + '</div>';
         }).join('');
-
-        grid.innerHTML = plans.map(function(p, i) {
-          var pct = Math.round((p.active_count / total) * 100);
-          return '<div class="plan-row">'
-            + '<span class="pl-dot" style="background:' + tone(i) + '"></span>'
-            + '<div class="pl-info">'
-            +   '<div class="pl-top"><span class="pl-name" title="' + escHtml(p.plan_name) + '">' + escHtml(p.plan_name) + '</span><span class="pl-count">' + p.active_count + '</span></div>'
-            +   '<div class="pl-meta">₹' + p.plan_amount.toLocaleString('en-IN') + ' · ' + p.plan_month + ' mo · ' + pct + '%</div>'
-            +   '<div class="progress"><div class="progress-fill" style="width:' + pct + '%;background:' + tone(i) + '"></div></div>'
-            + '</div>'
-            + '</div>';
-        }).join('');
       } catch(e) {
         console.error('Plan breakdown failed', e);
-        legend.removeAttribute('aria-busy'); grid.removeAttribute('aria-busy');
+        legend.removeAttribute('aria-busy');
         legend.innerHTML = '<div class="bar-chart-loading">Couldn’t load plans. <a href="#" onclick="loadPlanBreakdown();return false;">Try again</a></div>';
-        grid.innerHTML = '<div class="state-pad">' + emptyBlock('alert', 'Couldn’t load plans', 'Check your connection and try again.', 'loadPlanBreakdown') + '</div>';
       }
     }
 
