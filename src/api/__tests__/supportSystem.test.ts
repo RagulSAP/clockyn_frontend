@@ -1,6 +1,6 @@
 import { api } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/errors';
-import { listFaqs, listSupportSubjects, listSupportVideos, listTickets, recordVideoView, mapSupportTicket, mapTicketStatus, replyToTicket, submitTicket } from '../support';
+import { listFaqs, listSupportVideos, recordVideoView } from '../support';
 import {
   addHoliday,
   addHolidayDates,
@@ -30,38 +30,6 @@ beforeEach(() => {
 });
 
 describe('support', () => {
-  it('maps status values', () => {
-    expect(mapTicketStatus('created')).toBe('open');
-    expect(mapTicketStatus('In Progress')).toBe('in_progress');
-    expect(mapTicketStatus('resolved')).toBe('resolved');
-    expect(mapTicketStatus(undefined)).toBe('open');
-  });
-
-  it('maps tickets with replies and converts a legacy single reply', () => {
-    const t = mapSupportTicket({
-      id: 4,
-      sub_id: 2,
-      sub_name: 'Billing',
-      client_msg: 'Help',
-      status: 'in_progress',
-      photo_url: null,
-      created_at: '2026-10-01T00:00:00Z',
-      replies: [{ reply_text: 'On it', author_name: 'Agent', is_admin: true, created_at: '2026-10-02T00:00:00Z' }],
-    });
-    expect(t).toMatchObject({ id: '4', subject: 'Billing', message: 'Help', status: 'in_progress', photoUrl: null });
-    expect(t.replies).toEqual([{ text: 'On it', authorName: 'Agent', isAdmin: true, createdAt: '2026-10-02T00:00:00Z' }]);
-    const legacy = mapSupportTicket({ id: 5, client_msg: 'x', reply: 'Fixed', replies: [] });
-    expect(legacy.replies[0]).toMatchObject({ text: 'Fixed', isAdmin: true, authorName: 'Admin Reply' }); // support spec §3: legacy single reply is labelled "Admin Reply"
-  });
-
-  it('lists subjects and tickets', async () => {
-    mocked.get.mockResolvedValueOnce([{ sub_id: 1, sub_name: 'Login' }]);
-    expect(await listSupportSubjects()).toEqual([{ id: '1', name: 'Login' }]);
-    mocked.get.mockResolvedValueOnce([{ id: 1, client_msg: 'm' }]);
-    expect(await listTickets('org')).toHaveLength(1);
-    expect(mocked.get).toHaveBeenLastCalledWith('/support/requests/org');
-  });
-
   it('lists the Video Hub videos and drops entries without a name or an http(s) link', async () => {
     mocked.get.mockResolvedValueOnce([
       { id: 1, name: ' Getting started ', url: 'https://bucket.s3.amazonaws.com/guide/a.mp4?X-Amz-Signature=1' },
@@ -102,47 +70,6 @@ describe('support', () => {
     expect(mocked.post).toHaveBeenCalledWith('/support/videos/7/view', { user_id: 'u1', org_id: 'org1' });
   });
 
-  it('submitTicket without a photo posts form data', async () => {
-    mocked.post.mockResolvedValue({ success: true });
-    await submitTicket({ userId: 'u', orgId: 'org', subject: ' Billing ', message: ' Help ' });
-    const [path, form] = mocked.post.mock.calls[0];
-    expect(path).toBe('/support/submit');
-    expect(form).toBeInstanceOf(FormData);
-    expect((form as FormData).get('subject')).toBe('Billing');
-    expect((form as FormData).get('message')).toBe('Help');
-    expect((form as FormData).get('user_id')).toBe('u');
-    expect((form as FormData).get('org_id')).toBe('org');
-  });
-
-  it('submitTicket with a photo uses the multipart upload', async () => {
-    mocked.upload.mockResolvedValue({ success: true });
-    await submitTicket({ userId: 'u', orgId: 'org', subject: 'Billing', message: 'Help', photo: { uri: 'file:///a.png', mimeType: 'image/png', fileName: 'a.png' } });
-    expect(mocked.upload).toHaveBeenCalledWith(
-      '/support/submit',
-      expect.objectContaining({
-        fileUri: 'file:///a.png',
-        fieldName: 'photo',
-        fileName: 'a.png',
-        mimeType: 'image/png',
-        fields: { subject: 'Billing', message: 'Help', user_id: 'u', org_id: 'org' },
-      }),
-      { timeoutMs: 30000 },
-    );
-  });
-
-  it('submitTicket validates and surfaces failures', async () => {
-    await expect(submitTicket({ userId: 'u', orgId: 'o', subject: '', message: 'x' })).rejects.toThrow('Select a subject');
-    await expect(submitTicket({ userId: 'u', orgId: 'o', subject: 's', message: ' ' })).rejects.toThrow('Enter your message');
-    mocked.post.mockResolvedValue({ success: false, message: 'Subject not found' });
-    await expect(submitTicket({ userId: 'u', orgId: 'o', subject: 's', message: 'm' })).rejects.toThrow('Subject not found');
-  });
-
-  it('replyToTicket posts the v1 body', async () => {
-    mocked.post.mockResolvedValue({ success: true });
-    await replyToTicket('4', { text: ' thanks ', authorName: 'Asha' });
-    expect(mocked.post).toHaveBeenCalledWith('/support/4/reply', { reply_text: 'thanks', author_name: 'Asha', is_admin: false });
-    await expect(replyToTicket('4', { text: '  ', authorName: 'A' })).rejects.toThrow('Enter your reply');
-  });
 });
 
 describe('system: version, suggestions, deletion', () => {

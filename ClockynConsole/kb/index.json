@@ -1,6 +1,6 @@
 {
-  "generated": "2026-11-15",
-  "count": 34,
+  "generated": "2026-11-16",
+  "count": 33,
   "categories": [
     "Getting started",
     "Operations",
@@ -95,7 +95,7 @@
           "id": "can-i-use-the-console-on-a-phone"
         }
       ],
-      "words": 861,
+      "words": 856,
       "order": 1
     },
     {
@@ -279,7 +279,7 @@
           "id": "is-a-company-admin-able-to-sign-in-here"
         }
       ],
-      "words": 1054,
+      "words": 1051,
       "order": 3
     },
     {
@@ -376,13 +376,13 @@
           "id": "where-is-the-knowledge-base"
         }
       ],
-      "words": 1100,
+      "words": 1092,
       "order": 4
     },
     {
       "id": "daily-checklist",
       "title": "Daily and weekly checklist for operators",
-      "summary": "A practical routine for each day, week and month, built from the real console pages: chats, deletion requests, tickets, suggestions, payments, expiring subscriptions and referral payouts.",
+      "summary": "A practical routine for each day, week and month, built from the real console pages: chats, deletion requests, suggestions, payments, expiring subscriptions and referral payouts.",
       "category": "Getting started",
       "audience": "operator",
       "tags": [
@@ -396,7 +396,6 @@
         "expiring subscriptions",
         "failed payments",
         "unread chat",
-        "tickets",
         "payouts",
         "handover"
       ],
@@ -464,7 +463,7 @@
           "id": "i-am-new-where-do-i-start"
         }
       ],
-      "words": 1002,
+      "words": 959,
       "order": 5
     },
     {
@@ -927,7 +926,7 @@
         "irreversible"
       ],
       "page": "delete_account.html",
-      "updated": "2026-11-15",
+      "updated": "2026-11-16",
       "related": [
         "users",
         "organizations",
@@ -1008,7 +1007,7 @@
           "id": "can-the-console-restore-a-deleted-account"
         }
       ],
-      "words": 990,
+      "words": 1065,
       "order": 10
     },
     {
@@ -1728,7 +1727,6 @@
       "page": "suggestions.html",
       "updated": "2026-11-15",
       "related": [
-        "tickets-and-bugs",
         "live-chat",
         "console-tour"
       ],
@@ -1804,109 +1802,6 @@
       "order": 18
     },
     {
-      "id": "tickets-and-bugs",
-      "title": "Tickets and bugs (support requests)",
-      "summary": "How support tickets from companies arrive, what Open, In Progress and Resolved mean, and how to reply, resolve and reopen a ticket on the Ticketing and Bugs page.",
-      "category": "Support",
-      "audience": "operator",
-      "tags": [
-        "tickets",
-        "ticketing",
-        "bugs",
-        "support request",
-        "issue",
-        "reply",
-        "resolve",
-        "reopen",
-        "status",
-        "attachment",
-        "photo"
-      ],
-      "page": "tickets.html",
-      "updated": "2026-11-15",
-      "related": [
-        "live-chat",
-        "suggestions",
-        "faq-hub",
-        "troubleshooting"
-      ],
-      "path": "support/tickets-and-bugs.md",
-      "headings": [
-        {
-          "level": 2,
-          "text": "How a ticket reaches the page",
-          "id": "how-a-ticket-reaches-the-page"
-        },
-        {
-          "level": 2,
-          "text": "The two tables and the tiles",
-          "id": "the-two-tables-and-the-tiles"
-        },
-        {
-          "level": 2,
-          "text": "What the statuses mean",
-          "id": "what-the-statuses-mean"
-        },
-        {
-          "level": 2,
-          "text": "Reply to a ticket",
-          "id": "reply-to-a-ticket"
-        },
-        {
-          "level": 2,
-          "text": "Resolve or reopen a ticket",
-          "id": "resolve-or-reopen-a-ticket"
-        },
-        {
-          "level": 2,
-          "text": "Getting alerted",
-          "id": "getting-alerted"
-        },
-        {
-          "level": 2,
-          "text": "What can go wrong",
-          "id": "what-can-go-wrong"
-        },
-        {
-          "level": 2,
-          "text": "Common questions",
-          "id": "common-questions"
-        },
-        {
-          "level": 3,
-          "text": "What is the difference between a ticket and a bug?",
-          "id": "what-is-the-difference-between-a-ticket-and-a-bug"
-        },
-        {
-          "level": 3,
-          "text": "How do I know a company has answered me?",
-          "id": "how-do-i-know-a-company-has-answered-me"
-        },
-        {
-          "level": 3,
-          "text": "Can I assign a ticket to a colleague?",
-          "id": "can-i-assign-a-ticket-to-a-colleague"
-        },
-        {
-          "level": 3,
-          "text": "Does Mark Resolved tell the company?",
-          "id": "does-mark-resolved-tell-the-company"
-        },
-        {
-          "level": 3,
-          "text": "Why does a new reply from me turn Open into In Progress?",
-          "id": "why-does-a-new-reply-from-me-turn-open-into-in-progress"
-        },
-        {
-          "level": 3,
-          "text": "Can I delete a ticket?",
-          "id": "can-i-delete-a-ticket"
-        }
-      ],
-      "words": 1002,
-      "order": 19
-    },
-    {
       "id": "live-chat",
       "title": "Live Chat with companies",
       "summary": "How a chat starts (from the app, or from the Organizations page) and how operators answer in the console: floating button, full page, unread counts, closing, attachments, sound.",
@@ -1934,7 +1829,7 @@
       "updated": "2026-11-15",
       "related": [
         "start-a-chat-with-a-company",
-        "tickets-and-bugs",
+        "suggestions",
         "console-tour",
         "troubleshooting"
       ],
@@ -2017,7 +1912,7 @@
         }
       ],
       "words": 1190,
-      "order": 20
+      "order": 19
     },
     {
       "id": "video-hub",
@@ -2111,7 +2006,7 @@
         }
       ],
       "words": 999,
-      "order": 21
+      "order": 20
     },
     {
       "id": "video-views",
@@ -2211,7 +2106,7 @@
         }
       ],
       "words": 783,
-      "order": 22
+      "order": 21
     },
     {
       "id": "faq-hub",
@@ -2239,8 +2134,8 @@
       "updated": "2026-11-15",
       "related": [
         "video-hub",
-        "tickets-and-bugs",
         "live-chat",
+        "suggestions",
         "glossary"
       ],
       "path": "support/faq-hub.md",
@@ -2316,8 +2211,8 @@
           "id": "is-there-a-limit-on-answer-length"
         }
       ],
-      "words": 1154,
-      "order": 23
+      "words": 1152,
+      "order": 22
     },
     {
       "id": "clickstream",
@@ -2429,7 +2324,7 @@
         }
       ],
       "words": 1129,
-      "order": 24
+      "order": 23
     },
     {
       "id": "start-a-chat-with-a-company",
@@ -2456,7 +2351,7 @@
       "related": [
         "live-chat",
         "organizations",
-        "tickets-and-bugs",
+        "suggestions",
         "daily-checklist"
       ],
       "path": "support/start-a-chat-with-a-company.md",
@@ -2532,8 +2427,8 @@
           "id": "i-started-a-chat-by-mistake-can-i-undo-it"
         }
       ],
-      "words": 884,
-      "order": 25
+      "words": 879,
+      "order": 24
     },
     {
       "id": "glossary",
@@ -2775,11 +2670,6 @@
         },
         {
           "level": 3,
-          "text": "Ticket",
-          "id": "ticket"
-        },
-        {
-          "level": 3,
           "text": "Tier",
           "id": "tier"
         },
@@ -2829,8 +2719,8 @@
           "id": "what-does-excluding-gst-mean"
         }
       ],
-      "words": 1118,
-      "order": 26
+      "words": 1097,
+      "order": 25
     },
     {
       "id": "troubleshooting",
@@ -2948,7 +2838,7 @@
         }
       ],
       "words": 1112,
-      "order": 27
+      "order": 26
     },
     {
       "id": "settings-page",
@@ -3048,7 +2938,7 @@
         }
       ],
       "words": 927,
-      "order": 28
+      "order": 27
     },
     {
       "id": "how-the-console-works",
@@ -3136,7 +3026,7 @@
         }
       ],
       "words": 1015,
-      "order": 29
+      "order": 28
     },
     {
       "id": "running-and-testing-locally",
@@ -3220,7 +3110,7 @@
         }
       ],
       "words": 880,
-      "order": 30
+      "order": 29
     },
     {
       "id": "deploying-the-console",
@@ -3307,7 +3197,7 @@
         }
       ],
       "words": 788,
-      "order": 31
+      "order": 30
     },
     {
       "id": "adding-a-page",
@@ -3379,7 +3269,7 @@
         }
       ],
       "words": 712,
-      "order": 32
+      "order": 31
     },
     {
       "id": "api-map",
@@ -3459,8 +3349,8 @@
           "id": "where-is-the-operator-guard-decided"
         }
       ],
-      "words": 1020,
-      "order": 33
+      "words": 987,
+      "order": 32
     },
     {
       "id": "security-settings",
@@ -3554,8 +3444,8 @@
           "id": "why-are-there-two-sign-in-headers"
         }
       ],
-      "words": 971,
-      "order": 34
+      "words": 965,
+      "order": 33
     }
   ]
 }

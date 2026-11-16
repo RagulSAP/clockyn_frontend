@@ -6,7 +6,7 @@ audience: operator
 tags: live chat, chat, support chat, reply, start chat, new conversation, unread, close conversation, reopen, attachment, notification, chime, floating button, panel, offline, reconnecting
 page: live_chat.html
 updated: 2026-11-15
-related: start-a-chat-with-a-company, tickets-and-bugs, console-tour, troubleshooting
+related: start-a-chat-with-a-company, suggestions, console-tour, troubleshooting
 ---
 
 Live Chat is the real-time channel between a company's admin (in the Clockyn app) and the support team (operators in the console). Any operator can answer. There is one conversation per company, and you reach it from the chat button at the bottom right of every page or from the full Live Chat page.

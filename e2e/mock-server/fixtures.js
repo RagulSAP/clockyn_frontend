@@ -63,7 +63,6 @@ const IDS = {
   pendingShift: 'req-201',
   pendingDevice: 'req-301',
   announcement: 'ann-1',
-  supportTicket: 'tkt-1',
 };
 
 /** Where the browser is told it is (inside the Head Office geofence). */

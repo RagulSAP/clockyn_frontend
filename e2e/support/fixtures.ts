@@ -38,7 +38,6 @@ export const IDS: {
   pendingShift: string;
   pendingDevice: string;
   announcement: string;
-  supportTicket: string;
 } = raw.IDS;
 export const GEO: { latitude: number; longitude: number } = raw.GEO;
 

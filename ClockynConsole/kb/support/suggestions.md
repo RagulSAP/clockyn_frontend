@@ -6,7 +6,7 @@ audience: operator
 tags: suggestions, feature request, feedback, ideas, reply, suggest a feature, counter, badge
 page: suggestions.html
 updated: 2026-11-15
-related: tickets-and-bugs, live-chat, console-tour
+related: live-chat, console-tour
 ---
 
 The Suggestions page lists the feature ideas that company admins send from the Clockyn app. You read them, filter them by company, and can write a reply. Any operator can use this page (it is not limited to super admins).

@@ -5,7 +5,7 @@ import { DELETION_DEFAULT_MESSAGE, DELETION_REDIRECT_DELAY_MS, submitDeletionReq
 import { PERMISSIONS, UNKNOWN_PERMISSIONS, countGranted, permissionAction } from '../utils/permissionsLogic';
 import { salaryGate } from '../utils/salaryGate';
 import { DESKTOP_COLUMNS, INCENTIVE_OPTIONS, SETTINGS_SECTIONS, isMenuGroup } from '../utils/settingsMenu';
-import { replyAuthorLabel, ticketSubmitError, validateSuggestion, validateTicket } from '../utils/support';
+import { validateSuggestion } from '../utils/support';
 
 describe('settings menu (settings §3.1)', () => {
   it('has the spec sections in order, with Refer & Earn after the plan row and Appearance before Beyond', () => {
@@ -39,7 +39,7 @@ describe('settings menu (settings §3.1)', () => {
     expect(titles('attendance')).toEqual(['Shift Setting', 'Assign Devices', 'Attendance Rule']);
     expect(titles('expenses')).toEqual(['Odometer', 'Travel Ticket', 'Other Bills']);
     // "Our Other Applications" is intentionally not ported
-    expect(titles('beyond')).toEqual(['Suggest a Feature', 'Support', 'More Options', 'App Permissions', 'Logout']);
+    expect(titles('beyond')).toEqual(['Suggest a Feature', 'More Options', 'App Permissions', 'Logout']);
 
     const salary = SETTINGS_SECTIONS.find((s) => s.id === 'salary')?.children ?? [];
     const group = salary.find(isMenuGroup);
@@ -150,28 +150,9 @@ describe('permissions logic', () => {
 });
 
 describe('support helpers', () => {
-  it('ticket validation checks the subject first', () => {
-    expect(validateTicket('', '')).toBe('Please select a subject');
-    expect(validateTicket('Billing', '   ')).toBe('Please enter a message');
-    expect(validateTicket('Billing', 'Help')).toBeNull();
-  });
-
   it('suggestion validation checks the subject first', () => {
     expect(validateSuggestion(' ', 'x')).toBe('Please enter a subject');
     expect(validateSuggestion('Idea', '')).toBe('Please enter your message');
     expect(validateSuggestion('Idea', 'Details')).toBeNull();
-  });
-
-  it('thread author labels', () => {
-    expect(replyAuthorLabel({ isAdmin: true, authorName: 'Priya' })).toBe('Priya');
-    expect(replyAuthorLabel({ isAdmin: true, authorName: '  ' })).toBe('Admin');
-    expect(replyAuthorLabel({ isAdmin: false, authorName: 'Someone' })).toBe('You');
-  });
-
-  it('submit errors: timeout wording, server detail, HTTP status, generic', () => {
-    expect(ticketSubmitError(new ApiError({ status: 0, isTimeout: true }))).toBe('Upload timed out. Please check your connection and try again.');
-    expect(ticketSubmitError(new ApiError({ status: 400, detail: 'Invalid subject: x' }))).toBe('Invalid subject: x');
-    expect(ticketSubmitError(new ApiError({ status: 502 }))).toBe('Submission failed (HTTP 502)');
-    expect(ticketSubmitError(new Error('boom'))).toBe('boom');
   });
 });

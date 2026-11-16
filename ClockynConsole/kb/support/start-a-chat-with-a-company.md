@@ -6,10 +6,10 @@ audience: operator
 tags: start chat, new conversation, message a company, proactive, outreach, chat icon, organizations actions, renewal reminder, onboarding help, first message, live chat, contact customer
 page: organizations.html
 updated: 2026-11-15
-related: live-chat, organizations, tickets-and-bugs, daily-checklist
+related: live-chat, organizations, suggestions, daily-checklist
 ---
 
-Until now only a company's admin could start a Live Chat conversation. Now any operator can open one with any company from the Organizations page, for example to help with onboarding, remind a company that its plan ends soon, or follow up on a ticket. This page explains how, what the company sees and when to use it.
+Until now only a company's admin could start a Live Chat conversation. Now any operator can open one with any company from the Organizations page, for example to help with onboarding, remind a company that its plan ends soon, or follow up on a suggestion. This page explains how, what the company sees and when to use it.
 
 ## What it does
 On the Organizations page, each row has a **Chat** icon in its Actions cell. Clicking it opens the support chat for that company, in the floating chat panel or on the full Live Chat page. If the company already has a conversation, you see its history. If it has none, you see an empty conversation with the reply box ready.
@@ -32,7 +32,7 @@ The company's admin gets a phone notification when push is set up on their devic
 - A **renewal reminder** for a company whose plan ends soon (see the Subscriptions expiring card on the dashboard).
 - **Onboarding help** for a new company that has not added staff or branches yet.
 - A **payment problem** you found, for example a plan that did not activate after payment.
-- A **follow-up** on a ticket or suggestion, when a short chat is faster than waiting.
+- A **follow-up** on a suggestion, when a short chat is faster than waiting.
 
 ## When not to start a chat
 - **Marketing or bulk messages.** Live Chat is for support. One company, one reason.
@@ -40,7 +40,7 @@ The company's admin gets a phone notification when push is set up on their devic
 - **Sensitive requests.** Never ask for a password or a one-time code, and never ask the admin to share one.
 
 ## What to say first
-State who you are and why you are writing, in two or three sentences, and make the next step easy. For example: "Hello, this is Clockyn support. Your plan ends on the 30th. Would you like help renewing it?" Use the company's name or the admin's name. If the chat leads to an important decision or a problem you cannot solve, record it in a ticket so the history is not only in chat. See [Tickets and bugs](kb:tickets-and-bugs).
+State who you are and why you are writing, in two or three sentences, and make the next step easy. For example: "Hello, this is Clockyn support. Your plan ends on the 30th. Would you like help renewing it?" Use the company's name or the admin's name. If the chat leads to an important decision or a problem you cannot solve, note it in the chat so the history stays in one place. See [Live Chat](kb:live-chat).
 
 ## What can go wrong
 - **The company is deleted (404):** the console answers 404, as the organisation is not found, and nothing is created. A deleted company cannot be chatted with.

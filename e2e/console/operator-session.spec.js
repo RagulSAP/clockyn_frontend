@@ -40,7 +40,7 @@ const session = (page) => page.evaluate((k) => ({
 
 test('static: operator-session.js once per page, before page scripts, no fetch bypass', () => {
   const { pages, problems } = check();
-  expect(pages.length).toBe(19);   // 18 + kb.html (Knowledge Base)
+  expect(pages.length).toBe(18);   // 17 + kb.html (Knowledge Base); Ticketing & Bugs was removed 2026-11-16
   expect(problems).toEqual([]);
 });
 
@@ -231,7 +231,7 @@ test('every page loads signed in without script errors and sends only Bearer-car
   page.on('pageerror', (e) => errors.push(e.message));
   await login(page);
   const pages = ['clickstream', 'coupons', 'dashboard', 'delete_account', 'faqs', 'live_chat', 'org_analytics', 'organizations', 'payments',
-    'referrals', 'settings', 'subscriptions', 'suggestions', 'tickets', 'users', 'video_views', 'videos'];
+    'referrals', 'settings', 'subscriptions', 'suggestions', 'users', 'video_views', 'videos'];
   for (const p of pages) {
     await page.goto('/pages/' + p + '.html');
     await page.waitForLoadState('networkidle');

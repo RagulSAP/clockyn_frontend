@@ -223,10 +223,8 @@ export const queryKeys = {
 
   support: {
     all: (userId: Scope) => ['support', s(userId)] as const,
-    subjects: () => ['support', '', 'subjects'] as const,
     videos: () => ['support', '', 'videos'] as const,
     faqs: () => ['support', '', 'faqs'] as const,
-    requests: (userId: Scope) => ['support', s(userId), 'requests'] as const,
   },
   system: {
     authConfig: () => ['system', '', 'auth-config'] as const,

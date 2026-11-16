@@ -62,7 +62,7 @@ How to read it:
 | 26 | `settings` | `/admin/settings` (tab) | `src/features/settings` | B5 | Ported | Appearance card added; "Our Other Applications" row removed |
 | 27 | `subscription` | `/admin/billing` | `src/features/billing` | B5 | Ported | Explicit plan-state model |
 | 28 | `suggest_feature` | `/admin/suggest-feature` | `src/features/settings` | B5 | Ported | |
-| 29 | `support` | `/admin/support` | `src/features/settings` | B5 | Ported | Tickets refresh on focus |
+| 29 | `support` | _removed 2026-11-16_ | n/a | B5 | Dropped | Support tickets were removed; Live Chat on the Support tab replaced them |
 | 30 | `upgrade_plan` | `/admin/billing/upgrade` | `src/features/billing` | B5 | Ported | Route params reduced to `mode`, `planId`, `staff` |
 
 ### 05 Admin payroll

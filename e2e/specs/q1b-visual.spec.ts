@@ -56,14 +56,6 @@ test.describe('Q1b layout (phone stacking)', () => {
     const first = await box(page.getByTestId('action-plan-details'));
     expect(first.y - (card.y + card.height)).toBeLessThan(110); // section header + gaps only
   });
-
-  test('support: the ticket list follows the form directly', async ({ page }) => {
-    await loginAs(page, 'admin');
-    await visit(page, '/admin/support');
-    const form = await box(page.getByTestId('support-form'));
-    const ticket = await box(page.getByTestId('ticket-tkt-1'));
-    expect(ticket.y - (form.y + form.height)).toBeLessThan(100); // "My Tickets" header + gaps only
-  });
 });
 
 test.describe('Q1b layout (all viewports)', () => {

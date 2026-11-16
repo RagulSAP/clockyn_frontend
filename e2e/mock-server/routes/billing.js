@@ -1,5 +1,5 @@
 'use strict';
-/** Plans, subscription, orders, payment verification, coupons, invoices (PDF) and support tickets. */
+/** Plans, subscription, orders, payment verification, coupons, invoices (PDF) and the Support tab's videos / FAQs. */
 const { fail, bizFail, Raw } = require('../lib/http');
 const D = require('../domain');
 const T = require('../lib/time');
@@ -264,19 +264,6 @@ function register(r) {
   });
 
   // ── support ────────────────────────────────────────────────────────────────────────────────────
-  r.get('/support/subjects', (c) => c.s.subjects);
-  r.get('/support/requests/:org', (c) =>
-    c.s.tickets.filter((t) => t.org_id === D.resolveOrg(c.s, c.p.org)).map((t) => ({ id: t.id, sub_id: t.sub_id, sub_name: t.sub_name, client_msg: t.client_msg, photo_url: D.abs(c.origin, t.photo_url), status: t.status, created_at: t.created_at, replies: t.replies })),
-  );
-  r.post('/support/submit', (c) => {
-    const subject = c.s.subjects.find((x) => x.sub_name === c.b.subject);
-    if (!subject) return bizFail('Invalid subject');
-    if (!String(c.b.message || '').trim()) return bizFail('Message is required');
-    c.s.seq.ticket += 1;
-    const photo = c.files.find((f) => f.field === 'photo');
-    c.s.tickets.unshift({ id: `tkt-${c.s.seq.ticket}`, org_id: D.resolveOrg(c.s, c.b.org_id), user_id: c.b.user_id, sub_id: subject.sub_id, sub_name: subject.sub_name, client_msg: c.b.message, photo_url: photo ? `/files/support/${c.s.seq.ticket}.png` : null, status: 'open', created_at: T.isoNow(), replies: [] });
-    return ok({ message: 'Your request has been submitted' });
-  });
   r.get('/support/videos', (c) => c.s.videos.filter((v) => v.status === 1).map((v) => ({ id: v.id, name: v.video_name, url: `${c.origin}/guide/${v.path}?sig=mock` })));
   r.get('/support/faqs', (c) =>
     c.s.faqs
@@ -292,13 +279,6 @@ function register(r) {
   });
   // Clickstream intake (the app reports screen views and taps; the mock only acknowledges them).
   r.post('/analytics/events', (c) => ok({ stored: Array.isArray(c.b.events) ? c.b.events.length : 0 }));
-  r.post('/support/:id/reply', (c) => {
-    const t = c.s.tickets.find((x) => x.id === c.p.id);
-    if (!t) return bizFail('Ticket not found');
-    if (!String(c.b.reply_text || '').trim()) return bizFail('Reply cannot be empty');
-    t.replies.push({ reply_text: String(c.b.reply_text).trim(), author_name: c.b.author_name || '', is_admin: !!c.b.is_admin, created_at: T.isoNow() });
-    return ok({ message: 'Reply added' });
-  });
 }
 
 module.exports = { register };

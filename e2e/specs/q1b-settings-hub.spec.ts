@@ -88,7 +88,6 @@ test.describe('Q1b settings hub - every row navigates to its screen', () => {
     link('expenses', 'travel', '/admin/expenses/travel'),
     link('expenses', 'bills', '/admin/expenses/bills'),
     link('beyond', 'suggest', '/admin/suggest-feature'),
-    link('beyond', 'support', '/admin/support'),
     link('beyond', 'more', '/admin/more'),
     link('beyond', 'permissions', '/admin/permissions'),
   ];
@@ -222,7 +221,7 @@ test.describe('Q1b settings hub - Appearance and Logout', () => {
     await expect.poll(async () => lum(await bgOf(page))).toBeLessThan(0.2);
     await expect(page.getByTestId('appearance-control').getByRole('radio', { name: 'Dark' })).toHaveAttribute('aria-checked', 'true');
     // the choice also holds on another screen
-    await visit(page, '/admin/support');
+    await visit(page, '/admin/help');
     await expect.poll(async () => lum(await page.evaluate(() => getComputedStyle(document.body).backgroundColor))).toBeLessThan(0.2);
     await visit(page, '/admin/settings');
     await page.getByTestId('appearance-control').getByRole('radio', { name: 'Light' }).click();

@@ -45,7 +45,6 @@ const adminTabs: readonly ShellTab[] = [
     within: [
       '/admin/billing',
       routes.admin.referral,
-      routes.admin.support,
       routes.admin.suggestFeature,
       routes.admin.more,
       routes.admin.permissions,

@@ -116,7 +116,6 @@ export const SETTINGS_SECTIONS: readonly MenuSection[] = [
     kind: 'accordion',
     children: [
       go('suggest', 'Suggest a Feature', routes.admin.suggestFeature),
-      go('support', 'Support', routes.admin.support),
       go('more', 'More Options', routes.admin.more),
       go('permissions', 'App Permissions', routes.admin.permissions),
       { id: 'logout', title: 'Logout', action: { type: 'logout' } },

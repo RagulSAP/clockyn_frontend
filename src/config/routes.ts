@@ -21,7 +21,7 @@ export const routes = {
     crm: '/admin/crm',
     chat: '/admin/chat',
     settings: '/admin/settings',
-    help: '/admin/help', // "Support" tab (admin only): FAQ / Live Chat / Video Hub (ticket screen is `support` below)
+    help: '/admin/help', // "Support" tab (admin only): FAQ / Live Chat / Video Hub
     helpVideos: '/admin/help/videos',
     helpFaq: '/admin/help/faq',
     helpLiveChat: '/admin/help/live-chat',
@@ -50,7 +50,6 @@ export const routes = {
       invoices: '/admin/billing/invoices',
     },
     referral: '/admin/referral', // Refer & Earn (org admin)
-    support: '/admin/support',
     suggestFeature: '/admin/suggest-feature',
     more: '/admin/more', // privacy policy + request account deletion
     permissions: '/admin/permissions', // device permission status

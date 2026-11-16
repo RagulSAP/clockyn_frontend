@@ -6,7 +6,7 @@ audience: operator
 tags: faq, faq hub, questions, answers, bucket, category, sort order, active, inactive, add faq, edit, rename, starter set, support tab
 page: faqs.html
 updated: 2026-11-15
-related: video-hub, tickets-and-bugs, live-chat, glossary
+related: video-hub, live-chat, suggestions, glossary
 ---
 
 The FAQ Hub is where the team writes the questions and answers that company admins read in the app under Support > FAQ ("Answers to common questions"). Every operator can read the library. Only a super admin can add, edit, reorder, hide, rename or delete FAQs.
@@ -60,7 +60,7 @@ A second script, `FAQ_referral_update.sql`, is for databases that already had th
 2. Do not write numbers that can change. For example, the referral discount percent is set in the console and can change; say "the percent shown on the Refer & Earn screen".
 3. Use the exact button and screen names the app shows.
 4. Write the question the way a customer would ask it ("How do I add a new staff member?").
-5. When a [ticket](kb:tickets-and-bugs) or [chat](kb:live-chat) question repeats, add a FAQ for it.
+5. When a [chat](kb:live-chat) or [suggestion](kb:suggestions) question repeats, add a FAQ for it.
 
 ## What can go wrong
 - **No Add FAQ button, no Edit buttons**: your account is not a super admin.

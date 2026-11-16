@@ -5,7 +5,7 @@ category: Operations
 audience: operator
 tags: account deletion, delete account, deletion request, privacy, data removal, right to erasure, owner, one-time code, otp, anonymise, retention, irreversible
 page: delete_account.html
-updated: 2026-11-15
+updated: 2026-11-16
 related: users, organizations, roles-and-permissions, troubleshooting, security-settings
 ---
 
@@ -43,11 +43,12 @@ By default the backend does a **hard delete**. For each company owned by the req
 
 - all the company's staff and managers, with their attendance, payroll and pay slips, travel and odometer records, requests and leave dates, wages and incentives, and manager permissions;
 - the company's leads, shifts, holidays, activity log, additional company details, departments and branches, and the company record itself;
-- the owner's own user record and additional details.
+- the owner's own user record and additional details;
+- the company's Refer & Earn data: its referral code (so the code stops working) and every reward it holds. A reward that was waiting for this company's first payment is voided. A friend's reward that was already earned is kept, and so are the promoter (B2C) referral records, because they carry the promoter's commission.
 
 Afterwards the pending request is marked as deleted, and the stored face data of the owner and staff is removed (a best-effort step; failures are only logged). Orders, payments, invoices and subscription records are not in the deletion list, so billing history stays.
 
-A maintainer can switch the backend to **anonymise** mode (setting ACCOUNT_DELETE_ANONYMISE, off by default). In that mode rows stay but personal data is blanked: users become "Deleted user" with placeholder phone and email, the company becomes "Deleted company", leads lose their customer contact details, and punch photos and face data are removed. Billing records stay untouched. Ask a maintainer which mode is on before you describe it to a customer.
+A maintainer can switch the backend to **anonymise** mode (setting ACCOUNT_DELETE_ANONYMISE, off by default). In that mode rows stay but personal data is blanked: users become "Deleted user" with placeholder phone and email, the company becomes "Deleted company", leads lose their customer contact details, and punch photos and face data are removed. Billing records stay untouched. The company's referral code and rewards are deleted in this mode too, so an anonymised company cannot remain a valid referrer. Ask a maintainer which mode is on before you describe it to a customer.
 
 ## Staff removed by a company admin
 

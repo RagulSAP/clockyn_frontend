@@ -66,14 +66,20 @@ export function useAppRouter(): AppRouter {
       },
       dismissAll: () => safeDismissAll(r),
       canGoBack: () => r.canGoBack(),
-      goHome: (role) => r.replace(buildHref(homeForRole(role ?? 0) as AppRoute)),
+      // Clear the stack first (like sign-out does): after signing in or registering, Back must not return to the welcome / login /
+      // register screens that are still underneath (and show the old OTP).
+      goHome: (role) => {
+        safeDismissAll(r);
+        r.replace(buildHref(homeForRole(role ?? 0) as AppRoute));
+      },
     }),
     [r],
   );
 }
 
-/** Imperative: replace with the role's home. Works outside React (bootstrap, notification taps). */
+/** Imperative: clear the stack and show the role's home. Works outside React (bootstrap, notification taps). */
 export function goHome(role: number | null | undefined): void {
+  safeDismissAll(globalRouter);
   globalRouter.replace(buildHref(homeForRole(role ?? 0) as AppRoute));
 }
 

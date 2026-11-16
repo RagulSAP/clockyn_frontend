@@ -132,9 +132,6 @@ An organisation's current plan with start date, end date and staff limit. See [S
 ### Super admin
 Console role 1: can do the sensitive actions such as changing referral discounts, recording payouts and managing console users.
 
-### Ticket
-A support request from an organisation, with the status Open, In Progress or Resolved. See [Ticketing and Bugs](kb:tickets-and-bugs).
-
 ### Tier
 A plan family: Core, Prime or Elite. Core lacks staff location and CRM, Prime lacks CRM, Elite has everything. All durations of a plan share its tier.
 

@@ -5,7 +5,7 @@
  *   <aside class="sidebar" id="app-sidebar" data-active="videos"></aside>
  *   <script src="../js/layout.js"></script>
  *
- * `data-active` is one of: dashboard, organizations, users, subscriptions, payments, coupons, suggestions, tickets, videos,
+ * `data-active` is one of: dashboard, organizations, users, subscriptions, payments, coupons, suggestions, videos,
  * clickstream, faqs, referrals, kb (Knowledge Base), settings (live_chat has no sidebar item: it is the floating chat button). When it is missing the key
  * is derived from the file name; video_views is part of Video Hub, org_analytics of Organizations, delete_account of Users.
  * The markup is written synchronously (no flash) and before auth.js runs its DOMContentLoaded handler, so auth.js
@@ -37,7 +37,6 @@
     payments: [["rect",{"width":"20","height":"14","x":"2","y":"5","rx":"2"}],["line",{"x1":"2","x2":"22","y1":"10","y2":"10"}],["path",{"d":"M6 14h2"}]],
     coupons: [["path",{"d":"M2 9a3 3 0 1 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"}],["path",{"d":"M9 9h.01"}],["path",{"d":"m15 9-6 6"}],["path",{"d":"M15 15h.01"}]],
     suggestions: [["path",{"d":"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"}],["path",{"d":"M9 18h6"}],["path",{"d":"M10 22h4"}]],
-    tickets: [["circle",{"cx":"12","cy":"12","r":"10"}],["path",{"d":"m4.93 4.93 4.24 4.24"}],["path",{"d":"m14.83 9.17 4.24-4.24"}],["path",{"d":"m14.83 14.83 4.24 4.24"}],["path",{"d":"m9.17 14.83-4.24 4.24"}],["circle",{"cx":"12","cy":"12","r":"4"}]],
     live_chat: [["path",{"d":"M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"}],["path",{"d":"M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"}]],
     videos: [["path",{"d":"M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"}],["circle",{"cx":"12","cy":"12","r":"10"}]],
     clickstream: [["path",{"d":"M14 4.1 12 6"}],["path",{"d":"m5.1 8-2.9-.8"}],["path",{"d":"m6 12-1.9 2"}],["path",{"d":"M7.2 2.2 8 5.1"}],["path",{"d":"M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"}]],
@@ -63,7 +62,6 @@
       { key: 'payments', label: 'Payments', href: 'payments.html' },
       { key: 'coupons', label: 'Coupons', href: 'coupons.html' },
       { key: 'suggestions', label: 'Suggestions', href: 'suggestions.html', badge: 'nav-badge nav-suggestion-badge', badgeDisplay: 'none' },
-      { key: 'tickets', label: 'Ticketing & Bugs', href: 'tickets.html' },
       { key: 'videos', label: 'Video Hub', href: 'videos.html' },
       { key: 'clickstream', label: 'Clickstream', href: 'clickstream.html' },
       { key: 'faqs', label: 'FAQ Hub', href: 'faqs.html' }

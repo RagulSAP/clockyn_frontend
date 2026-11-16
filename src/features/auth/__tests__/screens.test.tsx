@@ -21,7 +21,13 @@ jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react');
   return {
     useRouter: () => mockRouter,
-    router: mockRouter,
+    router: {
+      push: (...a: unknown[]) => mockRouter.push(...a),
+      replace: (...a: unknown[]) => mockRouter.replace(...a),
+      back: () => mockRouter.back(),
+      canGoBack: () => mockRouter.canGoBack(),
+      dismissAll: () => mockRouter.dismissAll(),
+    },
     useFocusEffect: (cb: () => void | (() => void)) => useEffect(cb, [cb]),
     useLocalSearchParams: () => mockParams,
     Redirect: ({ href }: { href: string }) => {
@@ -248,5 +254,31 @@ describe('RegisterScreen', () => {
     expect(pin.props.value).toBe('5600');
     await fireEvent(pin, 'blur');
     expect(screen.getByText('Enter a valid 6-digit pincode')).toBeTruthy();
+  });
+});
+
+describe('a signed-in user who comes back to a sign-in screen (Back after registering / signing in)', () => {
+  const session = { userId: 'u1', orgId: 'o1', orgName: 'Alpha', roleId: 1 as const, managerPermissions: [] };
+
+  it.each([
+    ['admin login', () => <AdminLoginScreen />],
+    ['register', () => <RegisterScreen />],
+  ])('%s sends them to the role home', async (_name, ui) => {
+    useAuthStore.setState({ session });
+    await renderThemed(ui());
+    expect(mockRouter.dismissAll).toHaveBeenCalled();
+    expect(mockRouter.replace).toHaveBeenCalledWith('/admin/home');
+  });
+
+  it('staff login sends a manager to the staff home', async () => {
+    useAuthStore.setState({ session: { ...session, roleId: 3 as const } });
+    await renderThemed(<StaffLoginScreen />);
+    expect(mockRouter.replace).toHaveBeenCalledWith('/staff/home');
+  });
+
+  it('a signed-out visitor is left alone', async () => {
+    await renderThemed(<AdminLoginScreen />);
+    await renderThemed(<RegisterScreen />);
+    expect(mockRouter.replace).not.toHaveBeenCalled();
   });
 });

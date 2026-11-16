@@ -99,14 +99,13 @@ describe('SettingsScreen', () => {
     expect(screen.getByText('Monthly Fixed')).toBeTruthy();
   });
 
-  it('Beyond: suggest, support, more, permissions navigate; logout asks for confirmation then signs out', async () => {
+  it('Beyond: suggest, more, permissions navigate (no ticket Support row: Live Chat replaced it); logout asks for confirmation then signs out', async () => {
     await renderScreen(<SettingsScreen />);
     await fireEvent.press(screen.getByTestId('section-header-beyond'));
-    for (const t of ['Suggest a Feature', 'Support', 'More Options', 'App Permissions', 'Logout']) expect(screen.getByText(t)).toBeTruthy();
+    for (const t of ['Suggest a Feature', 'More Options', 'App Permissions', 'Logout']) expect(screen.getByText(t)).toBeTruthy();
+    expect(screen.queryByTestId('item-support')).toBeNull();
     await fireEvent.press(screen.getByTestId('item-suggest'));
     expect(mockPush).toHaveBeenLastCalledWith(routes.admin.suggestFeature);
-    await fireEvent.press(screen.getByTestId('item-support'));
-    expect(mockPush).toHaveBeenLastCalledWith(routes.admin.support);
     await fireEvent.press(screen.getByTestId('item-more'));
     expect(mockPush).toHaveBeenLastCalledWith(routes.admin.more);
     await fireEvent.press(screen.getByTestId('item-permissions'));

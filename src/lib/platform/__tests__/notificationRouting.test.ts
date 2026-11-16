@@ -7,11 +7,15 @@ describe('parseNotificationTarget', () => {
     expect(parseNotificationTarget({ type: 'punch_out' })).toEqual({ route: routes.admin.home, params: {} });
   });
 
-  it('routes ticket / poll / announcement to the staff home (admin home for role 1)', () => {
-    for (const type of ['ticket_resolved', 'new_poll', 'poll_approved', 'announcement']) {
+  it('routes poll / announcement to the staff home (admin home for role 1)', () => {
+    for (const type of ['new_poll', 'poll_approved', 'announcement']) {
       expect(parseNotificationTarget({ type })?.route).toBe(routes.staff.home);
       expect(parseNotificationTarget({ type, role_id: '1' })?.route).toBe(routes.admin.home);
     }
+  });
+
+  it('a ticket_resolved push (the ticket feature is gone) opens nothing', () => {
+    expect(parseNotificationTarget({ type: 'ticket_resolved' })).toBeNull();
   });
 
   it('routes chat by role and passes the sender id', () => {

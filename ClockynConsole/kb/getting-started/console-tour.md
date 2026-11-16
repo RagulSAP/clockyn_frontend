@@ -24,7 +24,6 @@ The left menu (the sidebar) is the same on every page. It has the Clockyn logo a
 | Management | Payments | Payments, revenue and invoice downloads |
 | Management | Coupons | Discount coupons for plans |
 | Management | Suggestions | Feature requests sent from the app |
-| Management | Ticketing & Bugs | Support requests from organisations |
 | Management | Video Hub | Guide videos shown in the app, with a second tab for who watched them |
 | Management | Clickstream | How people use the app: activity, what they open and tap |
 | Management | FAQ Hub | The questions and answers shown in the app's Support area |

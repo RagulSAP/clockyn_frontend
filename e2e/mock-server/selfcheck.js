@@ -336,7 +336,6 @@ async function main() {
   await call('GET', `/invoice/history?user_id=${ADM}&org_id=${ORG}`, { check: isList(3) });
   const inv = await fetch(`${BASE}/invoice/download?user_id=${ADM}&org_id=${ORG}&invoice_number=INV-2026-0001`);
   if (inv.status !== 200) { failures += 1; console.log('FAIL invoice download'); }
-  await call('GET', '/support/subjects', { check: isList(3) });
   await call('GET', '/support/videos', { check: isList(2) }); // only the active ones
   await call('GET', '/support/faqs', { check: (j) => { const l = list(j); const ids = l ? l.map((f) => f.id) : []; return l && l.length === 36 && !ids.includes(99) && ids.indexOf(28) < ids.indexOf(27) && new Set(l.map((f) => f.faq_bucket)).size === 6 && new Set(l.map((f) => f.category)).size === 18 && l.every((f) => f.faq_bucket && f.category && f.question && f.answer) ? null : 'faqs: 36 active in sort order (28 before 27), 6 buckets, 18 categories, none inactive'; } }); // only the active ones
   await call('POST', '/support/videos/1/view', { body: { user_id: ADM, org_id: ORG }, check: isOk });
@@ -352,10 +351,6 @@ async function main() {
   await call('GET', `/live-chat/messages/${ORG}?user_id=${ADM}`, { check: (j) => (j.status === 'closed' && j.messages.length === 2 ? null : 'closed thread with 2 messages') });
   await call('POST', '/live-chat/send', { body: { org_id: ORG, user_id: ADM, message: 'Still there?' }, check: isOk });
   await call('GET', `/live-chat/messages/${ORG}?user_id=${ADM}`, { check: (j) => (j.status === 'open' ? null : 'an org message reopens the thread') });
-  await call('GET', `/support/requests/${ORG}`, { check: isList(2) });
-  const sf = new FormData(); sf.append('subject', 'Other'); sf.append('message', 'help'); sf.append('user_id', ADM); sf.append('org_id', ORG);
-  await call('POST', '/support/submit', { form: sf, check: isOk });
-  await call('POST', '/support/tkt-1/reply', { body: { reply_text: 'thanks', author_name: 'Anita', is_admin: false }, check: isOk });
   await call('GET', '/version/check?platform=android&version=1.0.0', { check: (j) => (j.update_required === false ? null : 'ver') });
   await call('POST', '/company/suggest-feature', { body: { org_id: ORG, subject: 's', content: 'c', company_name: 'x', user_email: 'a@b.test' }, check: isOk });
   await call('POST', `/company/request-deletion/${ADM}`, { check: isOk });

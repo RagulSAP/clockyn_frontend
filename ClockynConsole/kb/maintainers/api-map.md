@@ -61,8 +61,6 @@ Use this map to find which backend code and tables a console page depends on. Ro
 | Page | Endpoint | Guard | Function and tables |
 | --- | --- | --- | --- |
 | Suggestions | `GET /company/suggest-feature/with-replies`, `POST /company/suggest-feature/{id}/reply` | op | `suggestion_replies`, `email_log` |
-| Tickets | `GET /support/requests/all`, `PUT /support/update/{id}` | op | `get_all_support_requests`, `update_support_request`: `admin_subject_request`, `ticket_replies` |
-| Tickets | `POST /support/{id}/reply` | app (not an operator route) | `reply_to_ticket` |
 | Live Chat | `/gen-dashboard/live-chat/threads` (list, messages, send, file, delete, read, status) | op | `op_*` functions: `live_chat_thread`, `live_chat_message` |
 | Video Hub | `GET /gen-dashboard/support-videos`, `support-video-views` | op | `support_video`, `support_video_view` |
 | Video Hub | `POST .../support-videos/upload-url`, `POST`, `PUT`, `DELETE .../support-videos/{id}` | super | `support_video` |

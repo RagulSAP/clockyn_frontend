@@ -31,7 +31,7 @@ const SLUG_ORDER = [
   'glossary', 'troubleshooting', 'settings-page',
   'dashboard', 'organizations', 'organization-analytics', 'users', 'account-deletion-requests',
   'subscriptions-and-plans', 'payments', 'coupons', 'referrals-c2c', 'referrals-b2c', 'b2c-commission-and-payouts',
-  'suggestions', 'tickets-and-bugs', 'live-chat', 'video-hub', 'video-views', 'faq-hub', 'clickstream',
+  'suggestions', 'live-chat', 'video-hub', 'video-views', 'faq-hub', 'clickstream',
   'how-the-console-works', 'running-and-testing-locally', 'deploying-the-console', 'adding-a-page', 'api-map', 'security-settings',
 ];
 

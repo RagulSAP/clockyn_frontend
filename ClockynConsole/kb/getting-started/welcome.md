@@ -8,7 +8,7 @@ updated: 2026-11-15
 related: signing-in, roles-and-permissions, console-tour, daily-checklist, glossary
 ---
 
-The Clockyn Console is the web site that Clockyn's own team uses to run the Clockyn platform. You use it to look after the companies that use Clockyn, their plans and payments, the support requests they send, and the help content shown inside the Clockyn app. This page is your starting point: it explains what the console is, who it is for, and the order in which to learn it.
+The Clockyn Console is the web site that Clockyn's own team uses to run the Clockyn platform. You use it to look after the companies that use Clockyn, their plans and payments, the chats and suggestions they send, and the help content shown inside the Clockyn app. This page is your starting point: it explains what the console is, who it is for, and the order in which to learn it.
 
 ## What Clockyn does for its customers
 
@@ -23,7 +23,7 @@ The console is not the Clockyn app. It is a separate site for Clockyn's team onl
 - see every organisation, its plan, its status and how many staff it has (Organizations, Dashboard);
 - look at all managers and employees across organisations (Users) and handle account deletion requests;
 - manage plans, subscriptions, payments, coupons and referral codes (Subscriptions, Payments, Coupons, Referrals);
-- answer customers: Live Chat, Ticketing and Bugs, Suggestions;
+- answer customers: Live Chat, Suggestions;
 - publish the help content inside the app: Video Hub (guide videos) and FAQ Hub (frequently asked questions);
 - study how people use the app (Clickstream);
 - manage who can sign in to the console itself (Settings).
@@ -39,7 +39,7 @@ Everyone who signs in is called an **operator**. There are two kinds. A **super 
 | Getting started | Welcome, signing in, roles and permissions, a tour of the screen, a daily checklist |
 | Operations | Dashboard, Organizations, Users, account deletion requests |
 | Billing and growth | Subscriptions and plans, Payments, Coupons, Referrals and promoter commission |
-| Support | Live Chat, Ticketing and Bugs, Suggestions, Video Hub, FAQ Hub, Clickstream |
+| Support | Live Chat, Suggestions, Video Hub, FAQ Hub, Clickstream |
 | Reference | Glossary, Troubleshooting, the Settings page |
 | Maintainers | How the console is built, deployed and tested (for developers) |
 

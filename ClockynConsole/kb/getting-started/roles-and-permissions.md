@@ -32,7 +32,7 @@ Who can do this: this table is the rule on both the page (the buttons) and the s
 | Dashboard, Organizations, Users, Payments | View, search, export, and the actions on the page | Same |
 | Subscriptions: plans | Add, edit and delete plans | Same |
 | Coupons | Add, edit and delete | Same |
-| Live Chat, Ticketing and Bugs, Suggestions | Read and reply | Same |
+| Live Chat, Suggestions | Read and reply | Same |
 | Account deletion requests: delete an account | Allowed (asks for an extra e-mail code) | Same |
 | Organizations: edit, activate, deactivate or delete an organisation | Allowed (deleting asks for an extra e-mail code) | Same |
 | Users: delete a manager or employee | Allowed (the browser asks you to confirm) | Same |

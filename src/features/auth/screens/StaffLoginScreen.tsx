@@ -4,6 +4,7 @@ import { AuthShell } from '../components/AuthShell';
 import { EmployeeMobileOnlyModal } from '../components/EmployeeMobileOnlyModal';
 import { LoginPortal } from '../components/LoginPortal';
 import { useBackToWelcome } from '../hooks/useBackToWelcome';
+import { useLeaveAuthWhenSignedIn } from '../hooks/useLeaveAuthWhenSignedIn';
 import { isEmployeeAccessBlocked } from '../utils/employeeAccess';
 
 /** Employee / manager login (roles 2 and 3 only) with the device-mismatch request flow. In a browser it only explains that this is for the mobile app. */
@@ -13,6 +14,7 @@ export default function StaffLoginScreen() {
 
 function StaffLogin() {
   const goBack = useBackToWelcome();
+  useLeaveAuthWhenSignedIn();
   return (
     <AuthShell onBack={goBack} testID="staff-login">
       <LoginPortal portal="staff" />

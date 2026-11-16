@@ -85,6 +85,15 @@ describe('useAppRouter', () => {
     result.current.goHome(3);
     expect(mockRouter.replace).toHaveBeenLastCalledWith('/staff/home');
   });
+  it('goHome clears the stack first so Back cannot return to the login / register screens', async () => {
+    const order: string[] = [];
+    mockRouter.dismissAll.mockImplementation(() => void order.push('dismissAll'));
+    mockRouter.replace.mockImplementation(() => void order.push('replace'));
+    const { result } = await renderHook(() => useAppRouter());
+    result.current.goHome(1);
+    expect(order).toEqual(['dismissAll', 'replace']);
+    mockRouter.replace.mockReset();
+  });
   it('keeps a stable identity across renders', async () => {
     const { result, rerender } = await renderHook(() => useAppRouter());
     const first = result.current;
@@ -96,6 +105,7 @@ describe('useAppRouter', () => {
 describe('imperative helpers', () => {
   it('goHome / goToWelcome / navigate', () => {
     goHome(1);
+    expect(mockRouter.dismissAll).toHaveBeenCalled();
     expect(mockRouter.replace).toHaveBeenLastCalledWith('/admin/home');
     goHome(null);
     expect(mockRouter.replace).toHaveBeenLastCalledWith('/staff/home');

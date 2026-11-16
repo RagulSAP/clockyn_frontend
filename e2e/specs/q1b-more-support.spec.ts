@@ -1,10 +1,10 @@
 /**
- * Q1b - More options (privacy policy, request account deletion), App permissions, Support (tickets) and Suggest a feature.
+ * Q1b - More options (privacy policy, request account deletion), App permissions and Suggest a feature (the old support-ticket screen was removed: Live Chat replaced it).
  */
 import type { Page } from '@playwright/test';
 
 import { expect, expectToast, loginAs, readSession, USERS, visit, test } from '../support';
-import { hasHorizontalOverflow, pickOption, pngFile, snapBoth } from '../support/q1';
+import { hasHorizontalOverflow, snapBoth } from '../support/q1';
 
 /** Navigate to a screen through the hub so `router.back()` has a real history entry. */
 async function viaHub(page: Page, section: string, item: string): Promise<void> {
@@ -128,144 +128,6 @@ test.describe('Q1b app permissions (web)', () => {
     await visit(page, '/admin/permissions');
     await expect(page.getByTestId('permission-state-camera')).toHaveText('OFF');
     await expect(page.getByTestId('permission-action-camera')).toBeVisible();
-  });
-});
-
-test.describe('Q1b support', () => {
-  test('lists the seeded tickets with status badges, replies and the resolved hint; empty message is rejected first', async ({ page }, testInfo) => {
-    await loginAs(page, 'admin');
-    await visit(page, '/admin/support');
-    await expect(page.getByTestId('support-screen')).toBeVisible();
-    await expect(page.getByTestId('ticket-tkt-1')).toContainText('Billing and plans');
-    await expect(page.getByTestId('ticket-status-tkt-1')).toHaveText('In Progress');
-    await expect(page.getByTestId('thread-tkt-1')).toContainText('We are on it.');
-    await expect(page.getByTestId('thread-tkt-1')).toContainText('Support');
-    await expect(page.getByTestId('ticket-status-tkt-2')).toHaveText('Resolved');
-    await expect(page.getByTestId('reply-input-tkt-2')).toHaveAttribute('placeholder', 'Reply to reopen this ticket...');
-    await expect(page.getByTestId('reply-input-tkt-1')).toHaveAttribute('placeholder', 'Type a reply...');
-    expect(await hasHorizontalOverflow(page)).toBe(false);
-    await snapBoth(page, testInfo, 'support');
-  });
-
-  test('validation order: subject, then message; nothing is posted', async ({ page, mock }) => {
-    await loginAs(page, 'admin');
-    await visit(page, '/admin/support');
-    await page.getByTestId('support-submit').click();
-    await expectToast(page, 'Please select a subject');
-    await pickOption(page, 'support-subject', 'Login issue');
-    await page.getByTestId('support-message').fill('   ');
-    await page.getByTestId('support-submit').click();
-    await expectToast(page, 'Please enter a message');
-    expect(await mock.requests({ path: '/support/submit' })).toHaveLength(0);
-  });
-
-  test('create a ticket without a photo: multipart fields carry the subject NAME, the ticket appears and the screen returns to the hub', async ({ page, mock }) => {
-    await loginAs(page, 'admin');
-    await viaHub(page, 'beyond', 'support');
-    await pickOption(page, 'support-subject', 'Attendance problem');
-    await page.getByTestId('support-message').fill('Punch-in button is slow on the web build');
-    await page.getByTestId('support-submit').click();
-    await expectToast(page, 'Support request submitted!');
-    const rec = await mock.waitForRequest('/support/submit', { method: 'POST' });
-    expect(rec.body).toMatchObject({ subject: 'Attendance problem', message: 'Punch-in button is slow on the web build', user_id: USERS.admin.userId, org_id: 'org-0001' });
-    expect(rec.files ?? []).toHaveLength(0);
-    await page.waitForURL((u) => u.pathname === '/admin/settings', { timeout: 10_000 });
-    // the ticket list was refreshed
-    await visit(page, '/admin/support');
-    await expect(page.getByText('Punch-in button is slow on the web build')).toBeVisible();
-    await expect(page.getByTestId('thread-tkt-1')).toBeVisible();
-  });
-
-  test('create a ticket with a photo: preview + remove, then the photo goes up as the `photo` part', async ({ page, mock }, testInfo) => {
-    await loginAs(page, 'admin');
-    await visit(page, '/admin/support');
-    await pickOption(page, 'support-subject', 'Other');
-    await page.getByTestId('support-message').fill('Screenshot attached');
-    let chooser = page.waitForEvent('filechooser');
-    await page.getByTestId('support-photo-add').click();
-    await (await chooser).setFiles(pngFile('shot.png'));
-    await expect(page.getByTestId('support-photo-preview')).toBeVisible();
-    await snapBoth(page, testInfo, 'support-photo-attached');
-    await page.getByTestId('support-photo-remove').click();
-    await expect(page.getByTestId('support-photo-preview')).toHaveCount(0);
-    chooser = page.waitForEvent('filechooser');
-    await page.getByTestId('support-photo-add').click();
-    await (await chooser).setFiles(pngFile('shot2.png'));
-    await expect(page.getByTestId('support-photo-preview')).toBeVisible();
-    await page.getByTestId('support-submit').click();
-    await expectToast(page, 'Support request submitted!');
-    const rec = await mock.waitForRequest('/support/submit', { method: 'POST' });
-    expect(rec.body).toMatchObject({ subject: 'Other', message: 'Screenshot attached' });
-    expect(rec.files?.[0]?.field).toBe('photo');
-    // the form resets
-    await expect(page.getByTestId('support-photo-preview')).toHaveCount(0);
-    await expect(page.getByTestId('support-message')).toHaveValue('');
-  });
-
-  test('submit failure shows the server detail, keeps the form and does not leave the screen', async ({ page, mock, issues }) => {
-    issues.allow(/support\/submit/);
-    await loginAs(page, 'admin');
-    await visit(page, '/admin/support');
-    await mock.failNext('/support/submit', { status: 500, body: { detail: 'Ticket service down' } });
-    await pickOption(page, 'support-subject', 'Login issue');
-    await page.getByTestId('support-message').fill('Cannot log in');
-    await page.getByTestId('support-submit').click();
-    await expectToast(page, 'Ticket service down');
-    await expect(page.getByTestId('support-message')).toHaveValue('Cannot log in');
-    expect(new URL(page.url()).pathname).toBe('/admin/support');
-  });
-
-  test('reply to an open ticket adds it to the thread; replying to a resolved ticket reopens it', async ({ page, mock }) => {
-    await loginAs(page, 'admin');
-    await visit(page, '/admin/support');
-    await expect(page.getByTestId('reply-send-tkt-1')).toBeDisabled();
-    await page.getByTestId('reply-input-tkt-1').fill('Any update on this?');
-    await page.getByTestId('reply-send-tkt-1').click();
-    await expectToast(page, 'Reply sent!');
-    const rec = await mock.waitForRequest('/support/tkt-1/reply', { method: 'POST' });
-    expect(rec.body).toMatchObject({ reply_text: 'Any update on this?', is_admin: false, author_name: USERS.admin.name });
-    await expect(page.getByTestId('thread-tkt-1')).toContainText('Any update on this?');
-    await expect(page.getByTestId('thread-tkt-1')).toContainText('You');
-    await expect(page.getByTestId('reply-input-tkt-1')).toHaveValue('');
-    // resolved ticket: the reply is accepted and appears
-    await page.getByTestId('reply-input-tkt-2').fill('It happened again');
-    await page.getByTestId('reply-send-tkt-2').click();
-    await expect(page.getByTestId('thread-tkt-2')).toContainText('It happened again');
-  });
-
-  test('reply failure keeps the draft', async ({ page, mock, issues }) => {
-    issues.allow(/support\/.*\/reply/);
-    await loginAs(page, 'admin');
-    await visit(page, '/admin/support');
-    await mock.failNext('/support/tkt-1/reply', { status: 500, body: { detail: 'Reply failed upstream' } });
-    await page.getByTestId('reply-input-tkt-1').fill('Please help');
-    await page.getByTestId('reply-send-tkt-1').click();
-    await expectToast(page, 'Reply failed upstream');
-    await expect(page.getByTestId('reply-input-tkt-1')).toHaveValue('Please help');
-  });
-
-  test('legacy single `reply` field is shown as "Admin Reply"', async ({ page, mock }) => {
-    await loginAs(page, 'admin');
-    await mock.failNext('/support/requests/*', {
-      status: 200,
-      times: -1,
-      body: [{ id: 'tkt-legacy', sub_id: 1, sub_name: 'Login issue', client_msg: 'Old style ticket', photo_url: null, status: 'resolved', created_at: new Date().toISOString(), reply: 'Fixed on our side.' }],
-    });
-    await visit(page, '/admin/support');
-    await expect(page.getByTestId('thread-tkt-legacy')).toContainText('Admin Reply');
-    await expect(page.getByTestId('thread-tkt-legacy')).toContainText('Fixed on our side.');
-  });
-
-  test('ticket list failure shows a retryable error; no tickets hides the section', async ({ page, mock, issues }) => {
-    issues.allow(/support\/requests/);
-    await loginAs(page, 'admin');
-    await mock.failNext('/support/requests/*', { status: 500, times: -1 });
-    await visit(page, '/admin/support');
-    await expect(page.getByText('Something went wrong')).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText('Injected failure (test)')).toBeVisible();
-    await mock.clearFailures();
-    await page.getByRole('button', { name: 'Try again' }).click();
-    await expect(page.getByTestId('ticket-tkt-1')).toBeVisible();
   });
 });
 

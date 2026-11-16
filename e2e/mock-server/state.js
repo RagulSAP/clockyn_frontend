@@ -62,7 +62,7 @@ function createState() {
   const rnd = prng(20260918);
   const s = {
     createdAt: T.isoNow(),
-    seq: { user: 100, branch: 200, dept: 200, shift: 10, req: 1000, expense: 100, reading: 100, lead: 100, category: 100, msg: 1000, group: 10, ann: 10, payslip: 10, wage: 10, inc: 10, advance: 10, holiday: 10, ticket: 10, invoice: 10, order: 10, cfr: 10, org: 1 },
+    seq: { user: 100, branch: 200, dept: 200, shift: 10, req: 1000, expense: 100, reading: 100, lead: 100, category: 100, msg: 1000, group: 10, ann: 10, payslip: 10, wage: 10, inc: 10, advance: 10, holiday: 10, invoice: 10, order: 10, cfr: 10, org: 1 },
     flags: { plan: 'elite', latencyMs: 0, failNext: [], forceLogout: [], faceMismatch: false, otp: F.OTP, locationLogStatus: null, userAuth: 'otp', requireAuth: /^(1|true|yes|on)$/i.test(process.env.MOCK_REQUIRE_AUTH || '') },
     otp: {}, // contact -> { attempts }
     tokens: {}, // access_token -> { userId, revoked } (see lib/authz.js)
@@ -97,7 +97,6 @@ function createState() {
     incentiveAssign: {}, // incentiveId -> [userIds]
     advances: [],
     paid: {}, // `${month}-${year}` -> {userId: date}
-    tickets: [],
     // Video Hub (GET /support/videos lists the active ones; POST /support/videos/:id/view logs a tap)
     videos: [
       { id: 1, video_name: 'Getting started', path: 'getting-started.mp4', status: 1 },
@@ -107,12 +106,6 @@ function createState() {
     videoViews: [],
     // FAQ Hub (GET /support/faqs lists the ACTIVE ones, ordered by sort_order then id): see faqSeed.js
     faqs: faqSeed(),
-    subjects: [
-      { sub_id: 1, sub_name: 'Login issue' },
-      { sub_id: 2, sub_name: 'Billing and plans' },
-      { sub_id: 3, sub_name: 'Attendance problem' },
-      { sub_id: 4, sub_name: 'Other' },
-    ],
     invoices: [],
     subscription: null,
     coupon: { coupon_id: 1, coupon_name: 'WELCOME10', discount: 10 },
@@ -421,15 +414,11 @@ function createState() {
     { id: 'adv-3', org_id: F.ORG.id, user_id: 'stf-0001', advance_amt: 1000, date: T.addDays(todayStr, -2), created_by: 'adm-0001' },
   );
 
-  // ── billing / support ─────────────────────────────────────────────────────────────────────────
+  // ── billing ─────────────────────────────────────────────────────────────────────────
   s.subscription = { plan_id: 3, start_date: T.addDays(todayStr, -60), end_date: T.addDays(todayStr, 120), staff_limit: 50, status: 'ACTIVE' };
   s.invoices.push(
     { invoice_number: 'INV-2026-0001', payment_date: `${T.addDays(todayStr, -60)}T10:00:00`, plan_name: 'Elite', staff_count: 50, total_amount: 3538.82, valid_till: T.addDays(todayStr, 120), user_id: 'adm-0001', org_id: F.ORG.id },
     { invoice_number: 'INV-2026-0002', payment_date: `${T.addDays(todayStr, -150)}T10:00:00`, plan_name: 'Prime', staff_count: 25, total_amount: 2358.82, valid_till: T.addDays(todayStr, -60), user_id: 'adm-0001', org_id: F.ORG.id },
-  );
-  s.tickets.push(
-    { id: 'tkt-1', org_id: F.ORG.id, user_id: 'adm-0001', sub_id: 2, sub_name: 'Billing and plans', client_msg: 'Need a GST invoice for last month.', photo_url: null, status: 'in_progress', created_at: T.isoNow(), replies: [{ reply_text: 'We are on it.', author_name: 'Support', is_admin: true, created_at: T.isoNow() }] },
-    { id: 'tkt-2', org_id: F.ORG.id, user_id: 'adm-0001', sub_id: 1, sub_name: 'Login issue', client_msg: 'OTP did not arrive once.', photo_url: null, status: 'resolved', created_at: T.isoNow(), replies: [] },
   );
 
   s.todayStr = todayStr;

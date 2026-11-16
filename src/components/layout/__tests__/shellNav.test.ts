@@ -92,11 +92,11 @@ describe('activeTabKey', () => {
     expect(activeTabKey('/staff/requests/leave', 'staff')).toBe('home');
     expect(activeTabKey('/staff/permissions', 'staff')).toBe('settings');
   });
-  it('highlights Support on its hub, the Video Hub and Live Chat, not Settings (the ticket screen stays under Settings)', () => {
+  it('highlights Support on its hub, the Video Hub and Live Chat, not Settings', () => {
     expect(activeTabKey('/admin/help', 'admin')).toBe('support');
     expect(activeTabKey('/admin/help/videos', 'admin')).toBe('support');
     expect(activeTabKey('/admin/help/live-chat', 'admin')).toBe('support');
-    expect(activeTabKey('/admin/support', 'admin')).toBe('settings');
+    expect(activeTabKey('/admin/support', 'admin')).toBeNull();                    // the old ticket screen is gone: no tab owns it
   });
   it('the staff shell highlights nothing on the (unreachable) support paths', () => {
     expect(activeTabKey('/staff/help', 'staff')).toBeNull();

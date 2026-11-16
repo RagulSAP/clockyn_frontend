@@ -13,6 +13,7 @@ import { DynamicStringList } from '../components/DynamicStringList';
 import { LogoPicker } from '../components/LogoPicker';
 import { ReferralCodeInput } from '../components/ReferralCodeInput';
 import { useAuthMode } from '../hooks/useAuthMode';
+import { useLeaveAuthWhenSignedIn } from '../hooks/useLeaveAuthWhenSignedIn';
 import { useRegistration } from '../hooks/useRegistration';
 import { PIN_LENGTH } from '../utils/validation';
 
@@ -23,6 +24,7 @@ type Params = { mobileNumber?: string; emailAddress?: string; verifiedContact?: 
  * in by e-mail), branches / departments, optional statutory details, logo.
  */
 export default function RegisterScreen() {
+  useLeaveAuthWhenSignedIn();
   const { mode, loading } = useAuthMode();
   if (loading) {
     return (

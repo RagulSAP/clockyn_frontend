@@ -47,7 +47,7 @@ When the backend starts it logs `SECURITY:` warnings for each risky setting: `RE
 - **Promoter contact details** (phone, e-mail, address): `GET /gen-dashboard/referrals/b2c` and `GET /gen-dashboard/referrals/b2c/{id}`.
 - **User lists** with names, e-mails and phone numbers: `GET /gen-dashboard/users` and `GET /gen-dashboard/org/{id}/employees`.
 - **Punch photos**: attendance endpoints return fresh pre-signed S3 links that the Users page opens.
-- **Live chat** messages and attachments, **tickets**, **deletion requests** and **invoices**.
+- **Live chat** messages and attachments, **deletion requests** and **invoices**.
 
 These are `op` routes, which are open to anyone while `OPERATOR_ENFORCE` is off. Turn enforcement on before real data is exposed.
 
@@ -61,7 +61,7 @@ These are `op` routes, which are open to anyone while `OPERATOR_ENFORCE` is off.
 
 ## Known gaps to verify before turning `REQUIRE_AUTH` on
 
-From reading the code (not tested on staging): three actions the console triggers are app routes, not operator routes. They are `DELETE /company/delete-account/{user_id}` (Account deletion page), `POST /support/{id}/reply` (Tickets reply) and `POST /auth/upload-org-logo/{id}` (adding an organisation's logo). With `REQUIRE_AUTH=1` the backend expects an app token on them, the console sends an operator token, the answer is 401, and the console treats any 401 as the end of the session and signs the operator out. Test these three on staging first, and give them operator routes if they fail.
+From reading the code (not tested on staging): two actions the console triggers are app routes, not operator routes. They are `DELETE /company/delete-account/{user_id}` (Account deletion page) and `POST /auth/upload-org-logo/{id}` (adding an organisation's logo). With `REQUIRE_AUTH=1` the backend expects an app token on them, the console sends an operator token, the answer is 401, and the console treats any 401 as the end of the session and signs the operator out. Test these two on staging first, and give them operator routes if they fail.
 
 ## What can go wrong
 

@@ -52,8 +52,7 @@ const first = (data: PushData, ...keys: string[]): string | undefined => {
  * Tap routing table (v1 table, re-expressed with the new route registry; unknown types → `null`).
  *
  *  punch_in / punch_out                          → admin home
- *  ticket_resolved / new_poll / poll_approved /
- *  announcement                                   → staff home (admin home for role 1)
+ *  new_poll / poll_approved / announcement        → staff home (admin home for role 1)
  *  new_chat_message / new_message                 → direct chat (admin | staff by role), `userId` when the payload has a sender id
  *  new_group_message                              → group chat (admin | staff by role), `groupId` when present
  *  live_chat_message                              → Live Chat (admins only; any other role: nothing to open)
@@ -77,7 +76,6 @@ export function parseNotificationTarget(
     case 'punch_in':
     case 'punch_out':
       return { route: routes.admin.home, params: {} };
-    case 'ticket_resolved':
     case 'new_poll':
     case 'poll_approved':
     case 'announcement':
